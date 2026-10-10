@@ -1,13 +1,1 @@
-{
-  "name": "racha-online",
-  "version": "1.0.0",
-  "description": "Racha (futebol de rua) com salas online: Time Vermelho, Espectadores, Equipe Azul, copa, clubes e Chat do Brasil",
-  "main": "server.js",
-  "private": true,
-  "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
-  }
-}
+{"name":"racha-online","version":"1.0.0","main":"server.js","scripts":{"start":"node server.js"},"dependencies":{"jsdom":"^24.1.0","ws":"^8.18.0"}}
