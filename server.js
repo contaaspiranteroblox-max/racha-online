@@ -12,6 +12,8 @@
      PORT          porta (a hospedagem costuma definir sozinha). Padrão: 8080
      SERVER_NAME   o nome que aparece em "Servidor: ..." na sala.  Padrão: South America
      DATA_DIR      pasta onde ficam clubes, duelos e campeões.      Padrão: ./data
+     P2P           0 = desliga a conexão direta entre os jogadores (tudo passa pelo servidor). Padrão: ligada
+     ICE_SERVERS   (avançado) os servidores STUN/TURN da conexão direta, em JSON. Padrão: STUN do Google e da Cloudflare
    ===================================================================================== */
 const http = require('http');
 const fs = require('fs');
@@ -23,17 +25,13 @@ const PORT = Number(process.env.PORT) || 8080;
 const SERVER_NAME = String(process.env.SERVER_NAME || 'South America').slice(0, 32);
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const VERSAO = '1.1.0';
-
-/* ---- a partida na nuvem (v65): o servidor simula a partida de cada sala ---- */
-const NUVEM = process.env.NUVEM !== '0';              // padrão ligado · NUVEM=0 volta a partida no dono
-const MAX_NUVEM = +(process.env.MAX_NUVEM || 3);      // instâncias simultâneas (cada uma ~200 MB)
-let abreNuvem = null;
-if (NUVEM){
-  try { abreNuvem = require('./racha-bot.js'); console.log('[nuvem] partida na nuvem: LIGADA (máx. ' + MAX_NUVEM + ')'); }
-  catch (e) { console.log('[nuvem] desligada (jsdom não instalou):', e.message); }
-}
-const ehLocal = c => /^(:?127\.0\.0\.1|:{1,2}1)$/.test(c.ip) || c.ip.includes('127.0.0.1');
+const VERSAO = '1.2.0';
+/* v1.2: a conexão direta (WebRTC) entre o dono da sala e cada jogador: o servidor só apresenta um ao outro */
+const P2P_LIGADO = !/^(0|false|nao|não|off)$/i.test(String(process.env.P2P || '').trim());
+const ICE = (() => {
+  try { const v = JSON.parse(process.env.ICE_SERVERS || 'null'); if (Array.isArray(v) && v.length) return v.slice(0, 8); } catch (_) { console.warn('[p2p] ICE_SERVERS inválido (precisa ser JSON): usando o padrão'); }
+  return [{urls:['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478']}];
+})();
 
 /* ---- regras das salas (mexa à vontade) ---- */
 const NUM_MAPAS = 4;                       // Arena, Favela, Escadão e Viaduto (o índice vai de 0 a NUM_MAPAS - 1)
@@ -202,7 +200,7 @@ function permite(c, chave, porSeg, rajada){            // limite de mensagens po
 
 function onConexao(ws){
   const c = {ws, ip:ws.ip, id:null, user:null, name:'Jogador', skin:'', avatar:null, flag:'',
-    room:null, slot:-1, ready:false, rematch:false, brasil:false, bfrom:'', lastSay:0, lastText:'', sayAt:0, baldes:{}};
+    room:null, slot:-1, ready:false, rematch:false, p2p:false, brasil:false, bfrom:'', lastSay:0, lastText:'', sayAt:0, baldes:{}};
   conns.add(c);
   ws.onmessage = txt => {
     if (!permite(c, 'tudo', 260, 400)) return;           // ninguém precisa de mais que isso (a partida manda ~90 por segundo)
@@ -271,25 +269,10 @@ function poeNaVaga(r, m, slot){
   m.slot = slot; m.ready = false;
   if (slot >= 0) r.roster[slot] = m.id;
 }
-function ehDono(c){ return c.room && (c.room.host === c.id || (c.room.admin && c.room.admin === c.id)); }   // v65: a anfitriã (nuvem) ou o dono-admin
-function nuvemFecha(r, motivo){
-  if (!r.bot || r.bot.fechando) return;
-  r.bot.fechando = true;
-  try { r.bot.dom.window.close(); } catch (_) {}
-  console.log('[nuvem] instância da sala %s fechada (%s)', r.code, motivo || '');
-  r.bot = null;
-}
-function nuvemProgramaFechamento(r){                     // só sobrou a nuvem: 60 s de tolerância para o dono voltar
-  if (!r.bot || r.bot.morreT) return;
-  r.bot.morreT = setTimeout(() => {
-    r.bot.morreT = null;
-    if (r.bot && !r.members.some(m => m !== r.bot.conn)) nuvemFecha(r, 'sala vazia (60 s)');
-  }, 60000);
-  console.log('[nuvem] sala %s esvaziou: 60 s para alguém voltar', r.code);
-}
-
+function ehDono(c){ return c.room && c.room.host === c.id; }
 function trocaDono(r, novo){                           // a sala com o nome automático ("Sala de Fulano") acompanha o dono
   r.host = novo.id;
+  for (const m of r.members) m.p2p = false;            // (a conexão direta era com o dono antigo)
   if (r.autoNome) r.name = 'Sala de ' + novo.name;
 }
 
@@ -317,18 +300,10 @@ function listaMudou(){                                 // avisa (de leve) quem e
 function contaOnline(){ let n = 0; for (const c of conns) if (c.id) n++; return n; }
 
 function entraNaSala(c, r, assistir, slotPedido){
-  if (r.bot && !r.bot.conn && ehLocal(c)){              // a instância da nuvem chegou: ela simula, o dono vira admin
-    r.bot.conn = c; r.bot.renascendo = false;
-    if (r.host !== c.id){ if (r.host) r.admin = r.host; r.host = c.id; }
-    poeNaVaga(r, c, -1);                                   // a nuvem assiste: não ocupa vaga em campo
-    console.log('[nuvem] a sala %s agora roda no servidor', r.code);
-  }
   if (c.room) saiDaSala(c, 'trocou');
-  c.room = r; c.slot = -1; c.ready = false; c.rematch = false;
+  c.room = r; c.slot = -1; c.ready = false; c.rematch = false; c.p2p = false;
   r.members.push(c);
-  if (r.bot && r.bot.conn === c){                         // a nuvem é sempre espectadora
-    poeNaVaga(r, c, -1);
-  } else if (!assistir && r.state !== 'playing' && !r.tournament){
+  if (!assistir && r.state !== 'playing' && !r.tournament){
     const v = Number.isInteger(slotPedido) && slotPedido >= 0 && slotPedido < r.roster.length && !r.roster[slotPedido] ? slotPedido : vagaEquilibrada(r);
     if (v >= 0) poeNaVaga(r, c, v);
   }
@@ -345,11 +320,9 @@ function saiDaSala(c, motivo){
   r.members = r.members.filter(m => m !== c);
   if (slot >= 0 && r.roster[slot] === c.id) r.roster[slot] = null;
   { const s = JSON.stringify({type:'typing', id:c.id, on:false}); for (const m of r.members) sendRaw(m, s); }   // (saiu: some o "digitando" dele)
-  c.room = null; c.slot = -1; c.ready = false; c.rematch = false;
+  c.room = null; c.slot = -1; c.ready = false; c.rematch = false; c.p2p = false;
   if (!r.members.length){ rooms.delete(r.code); listaMudou(); return; }
   if (eraDono) trocaDono(r, r.members.find(m => m.slot >= 0) || r.members[0]);
-  if (r.admin === c.id) r.admin = null;                 // v65: o admin saiu, a nuvem segue no comando
-  if (r.bot && !r.members.some(m => m !== r.bot.conn)) nuvemProgramaFechamento(r);   // só sobrou a nuvem: 60 s de tolerância
   if (r.tournament) copaWO(r, c.id);
   aviso(r, c.name + (motivo === 'removido' ? ' foi removido da sala' : ' saiu da sala') + (eraDono ? ' · ' + nomeDe(r, r.host) + ' agora é o dono' : ''));
   if (r.state === 'playing'){
@@ -515,29 +488,6 @@ function brOnline(){
 /* =====================================================================================
    As mensagens
    ===================================================================================== */
-/* ---- v66: SALAS OFICIAIS — criadas pelo servidor, sempre abertas, começam sozinhas ---- */
-const OFICIAIS = process.env.OFICIAIS !== '0';           // padrão ligado · OFICIAIS=0 desliga
-function criaOficiais(){
-  if (!OFICIAIS) return;
-  for (const [code, nome, n, map] of [['RACHA1', 'RACHA OFICIAL · 2v2 · ARENA', 2, 0], ['RACHA2', 'RACHA OFICIAL · 1v1 · ARENA', 1, 0]]){
-    if (rooms.has(code)) continue;
-    const r = {code, name:nome, autoNome:false, pub:true, host:null, n, map, jogo:'futebol', bots:true, tempo:3,
-      roster:new Array(n*2).fill(null), members:[], state:'waiting', round:0, tournament:null,
-      chat:[], ban:new Map(), lastSnap:0, created:Date.now(), tipo:'oficial', admin:null};
-    rooms.set(code, r);
-    console.log('[oficial] sala %s criada', code);
-  }
-}
-function nuvemEntra(r){                                  // a nuvem passa a simular a sala (se ainda não simula)
-  if (!abreNuvem || r.bot) return;
-  const inst = [...rooms.values()].filter(x => x.bot).length;
-  if (inst >= MAX_NUVEM){ console.log('[nuvem] cheia (%d): a sala %s fica sem simulador', MAX_NUVEM, r.code); return; }
-  try {
-    r.bot = abreNuvem(r.code); r.bot.desde = Date.now();
-    console.log('[nuvem] instância entrando na sala %s (%d/%d)', r.code, inst + 1, MAX_NUVEM);
-  } catch (e) { console.log('[nuvem] falhou na sala %s: %s', r.code, e.message); r.bot = null; }
-}
-
 const HANDLERS = {
   hello(c, m){
     let u = usuarioDoToken(m.token);
@@ -550,7 +500,7 @@ const HANDLERS = {
     c.name = nomeOk(m.name) || u.name || 'Jogador'; c.skin = limpaSkin(m.skin) || u.skin;
     c.avatar = limpaAvatar(m.avatar); c.flag = limpaBandeira(m.flag);
     u.name = c.name; u.skin = c.skin; u.seen = Date.now(); dbSave();
-    send(c, {type:'hello', id:c.id, token:u.token, server:{name:SERVER_NAME, version:VERSAO, online:contaOnline()}});
+    send(c, {type:'hello', id:c.id, token:u.token, server:{name:SERVER_NAME, version:VERSAO, online:contaOnline()}, p2p:P2P_LIGADO, ice:ICE});
     mandaSocial(c);
     send(c, {type:'rooms', list:listaSalas(), online:contaOnline()});
     listaMudou();
@@ -645,8 +595,6 @@ const HANDLERS = {
     } else {
       const motivo = podeComecar(r); if (motivo) return erro(c, motivo);
     }
-    // v65: a partida passa a rodar na nuvem (se der); falhando, fica no dono como antes
-    nuvemEntra(r);
     comecaPartida(r);
   },
   kick(c, m){
@@ -677,13 +625,13 @@ const HANDLERS = {
     const s = JSON.stringify(msg); for (const x of r.members) sendRaw(x, s);
   },
 
-/* ---- a partida (quem simula é o celular do dono da sala; o servidor só repassa) ---- */
+  /* ---- a partida (quem simula é o celular do dono da sala; o servidor só repassa) ---- */
   snapshot(c, m, txt){
     const r = c.room; if (!r || r.host !== c.id || r.state !== 'playing' || m.round !== r.round) return;
     if (!permite(c, 'snap', 70, 90)) return;
     r.lastSnap = Date.now();
     const d = m.data; if (d && Array.isArray(d.score)) r.score = d.score.slice(0, 2);
-    for (const x of r.members) if (x !== c && x.ws.buffered < 384*1024) sendRaw(x, txt);   // (quem está com a internet lenta pula um quadro)
+    for (const x of r.members) if (x !== c && !x.p2p && x.ws.buffered < 384*1024) sendRaw(x, txt);   // (quem está com a internet lenta pula um quadro; quem tem a conexão direta já recebe do dono)
   },
   input(c, m){
     const r = c.room; if (!r || r.state !== 'playing' || c.slot < 0 || r.host === c.id) return;
@@ -691,6 +639,16 @@ const HANDLERS = {
     const dono = r.members.find(x => x.id === r.host); if (!dono) return;
     sendRaw(dono, JSON.stringify({type:'input', id:c.id, seq:int(m.seq, 0, 1e9, 0), x:num(m.x, -1, 1), y:num(m.y, -1, 1), button:int(m.button, 1, 3, 1)}));
   },
+  /* ---- v1.2: a conexão direta (P2P): o servidor só repassa o "aperto de mão" entre o dono e cada jogador ---- */
+  rtc(c, m){
+    const r = c.room; if (!P2P_LIGADO || !r || !permite(c, 'rtc', 60, 200)) return;
+    const alvo = r.members.find(x => x.id === m.to); if (!alvo || alvo === c) return;
+    if (r.host !== c.id && r.host !== alvo.id) return;   // (só entre o dono e os outros)
+    if (!m.d || typeof m.d !== 'object') return;
+    const s = JSON.stringify({type:'rtc', from:c.id, d:m.d}); if (s.length > 12000) return;
+    sendRaw(alvo, s);
+  },
+  p2p(c, m){ if (c.room) c.p2p = P2P_LIGADO && m.on === true; },   // o jogador recebe a partida direto do dono: o servidor não precisa mandar
   pause(c, m){
     const r = c.room; if (!r || r.host !== c.id || r.state !== 'playing') return;
     r.lastSnap = Date.now();
@@ -702,7 +660,6 @@ const HANDLERS = {
     const sc = Array.isArray(m.score) ? [int(m.score[0], 0, 999, 0), int(m.score[1], 0, 999, 0)] : [0, 0];
     const winner = sc[0] > sc[1] ? 0 : sc[1] > sc[0] ? 1 : -1;
     r.state = 'ended';
-    if (r.tipo === 'oficial') r.reinicia = Date.now() + 12000;   // oficial: a próxima começa sozinha em 12 s
     const s = JSON.stringify({type:'result', round:r.round, score:sc, winner});
     for (const x of r.members) sendRaw(x, s);
     registraResultado(r, sc, winner);
@@ -881,42 +838,6 @@ server.on('upgrade', (req, socket, head) => {
   if (head && head.length) ws.feed(head);
 });
 
-/* ---- v65: a vigilância da nuvem — a instância travou? renasce e a partida continua ---- */
-setInterval(() => {
-  if (!abreNuvem) return;
-  const agora = Date.now();
-  for (const r of rooms.values()){
-    if (!r.bot || r.bot.fechando) continue;
-    if (r.bot.morreT && r.members.some(m => m !== r.bot.conn)){ clearTimeout(r.bot.morreT); r.bot.morreT = null; console.log('[nuvem] alguém voltou para a sala %s: fechamento cancelado', r.code); }
-    if (r.state === 'playing' && agora - r.lastSnap > 8000 && !r.bot.renascendo){
-      console.log('[nuvem] a instância da sala %s parou de responder: renascendo', r.code);
-      r.bot.renascendo = true;
-      try { r.bot.dom.window.close(); } catch (_) {}
-      try { r.bot = abreNuvem(r.code); r.bot.desde = agora; } catch (e) { console.log('[nuvem] falha ao renascer na sala %s: %s', r.code, e.message); r.bot = null; }
-    }
-  }
-}, 5000);
-
-/* ---- v66: a máquina das salas oficiais — começa sozinha, recomeça sozinha, rodízio ---- */
-setInterval(() => {
-  if (!OFICIAIS) return;
-  const agora = Date.now();
-  for (const r of rooms.values()){
-    if (r.tipo !== 'oficial') continue;
-    const botConn = r.bot && r.bot.conn;
-    const temA = r.members.some(m => m.slot >= 0 && Math.floor(m.slot / r.n) === 0 && m !== botConn);
-    const temB = r.members.some(m => m.slot >= 0 && Math.floor(m.slot / r.n) === 1 && m !== botConn);
-    if (r.state === 'waiting' || r.state === 'ended'){
-      if (temA && temB && (!r.reinicia || agora >= r.reinicia)){
-        nuvemEntra(r);                                   // a nuvem entra e vira anfitriã (host = a nuvem quando ela chega)
-        r.reinicia = null;
-        if (r.host) comecaPartida(r);                    // só começa com a anfitriã no lugar
-        else r.reinicia = agora + 3000;                  // espera a nuvem chegar e tenta de novo
-      } else if ((temA || temB) && !r.reinicia) r.reinicia = agora + 4000;
-    }
-  }
-}, 3000);
-
 /* ---- de tempos em tempos: conexões mortas, partidas paradas ---- */
 setInterval(() => {
   const agora = Date.now();
@@ -956,7 +877,6 @@ server.on('error', e => {
   process.exit(1);
 });
 dbLoad();
-criaOficiais();
 server.listen(PORT, () => {
   const ips = [];
   for (const lista of Object.values(require('os').networkInterfaces())) for (const i of lista || []) if (i.family === 'IPv4' && !i.internal) ips.push(i.address);
