@@ -25,6 +25,16 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const VERSAO = '1.1.0';
 
+/* ---- a partida na nuvem (v65): o servidor simula a partida de cada sala ---- */
+const NUVEM = process.env.NUVEM !== '0';              // padrão ligado · NUVEM=0 volta a partida no dono
+const MAX_NUVEM = +(process.env.MAX_NUVEM || 3);      // instâncias simultâneas (cada uma ~200 MB)
+let abreNuvem = null;
+if (NUVEM){
+  try { abreNuvem = require('./racha-bot.js'); console.log('[nuvem] partida na nuvem: LIGADA (máx. ' + MAX_NUVEM + ')'); }
+  catch (e) { console.log('[nuvem] desligada (jsdom não instalou):', e.message); }
+}
+const ehLocal = c => /^(:?127\.0\.0\.1|:{1,2}1)$/.test(c.ip) || c.ip.includes('127.0.0.1');
+
 /* ---- regras das salas (mexa à vontade) ---- */
 const NUM_MAPAS = 4;                       // Arena, Favela, Escadão e Viaduto (o índice vai de 0 a NUM_MAPAS - 1)
 const MODOS = ['futebol', 'curva', 'volei', 'americano', 'basquete'];   // os modos de jogo da sala (a GINGA fica de fora no online)
@@ -261,7 +271,14 @@ function poeNaVaga(r, m, slot){
   m.slot = slot; m.ready = false;
   if (slot >= 0) r.roster[slot] = m.id;
 }
-function ehDono(c){ return c.room && c.room.host === c.id; }
+function ehDono(c){ return c.room && (c.room.host === c.id || (c.room.admin && c.room.admin === c.id)); }   // v65: a anfitriã (nuvem) ou o dono-admin
+function nuvemFecha(r, motivo){
+  if (!r.bot) return;
+  try { r.bot.dom.window.close(); } catch (_) {}
+  console.log('[nuvem] instância da sala %s fechada (%s)', r.code, motivo || '');
+  r.bot = null;
+}
+
 function trocaDono(r, novo){                           // a sala com o nome automático ("Sala de Fulano") acompanha o dono
   r.host = novo.id;
   if (r.autoNome) r.name = 'Sala de ' + novo.name;
@@ -291,6 +308,11 @@ function listaMudou(){                                 // avisa (de leve) quem e
 function contaOnline(){ let n = 0; for (const c of conns) if (c.id) n++; return n; }
 
 function entraNaSala(c, r, assistir, slotPedido){
+  if (r.bot && !r.bot.conn && ehLocal(c)){              // a instância da nuvem chegou: ela simula, o dono vira admin
+    r.bot.conn = c;
+    if (r.host !== c.id){ r.admin = r.host; r.host = c.id; }
+    console.log('[nuvem] a sala %s agora roda no servidor', r.code);
+  }
   if (c.room) saiDaSala(c, 'trocou');
   c.room = r; c.slot = -1; c.ready = false; c.rematch = false;
   r.members.push(c);
@@ -314,6 +336,8 @@ function saiDaSala(c, motivo){
   c.room = null; c.slot = -1; c.ready = false; c.rematch = false;
   if (!r.members.length){ rooms.delete(r.code); listaMudou(); return; }
   if (eraDono) trocaDono(r, r.members.find(m => m.slot >= 0) || r.members[0]);
+  if (r.admin === c.id) r.admin = null;                 // v65: o admin saiu, a nuvem segue no comando
+  if (r.bot && !r.members.some(m => m !== r.bot.conn)) nuvemFecha(r, 'sala vazia');   // só sobrou a nuvem: fecha
   if (r.tournament) copaWO(r, c.id);
   aviso(r, c.name + (motivo === 'removido' ? ' foi removido da sala' : ' saiu da sala') + (eraDono ? ' · ' + nomeDe(r, r.host) + ' agora é o dono' : ''));
   if (r.state === 'playing'){
@@ -585,6 +609,16 @@ const HANDLERS = {
       if (!r.roster[0] || !r.roster[1]) return erro(c, 'Esse duelo está sem jogador. Toque em PRÓXIMO DUELO.');
     } else {
       const motivo = podeComecar(r); if (motivo) return erro(c, motivo);
+    }
+    // v65: a partida passa a rodar na nuvem (se der); falhando, fica no dono como antes
+    if (abreNuvem && !r.bot){
+      const inst = [...rooms.values()].filter(x => x.bot).length;
+      if (inst < MAX_NUVEM){
+        try {
+          r.bot = abreNuvem(r.code); r.bot.desde = Date.now();
+          console.log('[nuvem] instância entrando na sala %s (%d/%d)', r.code, inst + 1, MAX_NUVEM);
+        } catch (e) { console.log('[nuvem] falhou na sala %s: %s — a partida fica no dono', r.code, e.message); r.bot = null; }
+      } else console.log('[nuvem] cheia (%d): a sala %s fica no dono', MAX_NUVEM, r.code);
     }
     comecaPartida(r);
   },
