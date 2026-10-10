@@ -11268,7 +11268,7 @@ const BASE = {                                         // raio base de cada cont
 };
 const HUD_PADRAO = {                                   // x,y = centro; s = tamanho (1 = 100%); a = opacidade (1 = 100%)
   // v27: oc = Ocultar ao Soltar · adere = Adere ao Dedo · segue = Seguir Dedo · km = tamanho do manipulador · al = alcance do manipulador (1 = 100%)
-  joy:   {x:215,  y:706, s:1, a:1, oc:false, adere:false, segue:false, km:1, al:1},
+  joy:   {x:215,  y:706, s:1, a:1, oc:false, adere:true, segue:true, km:1, al:1},   // v65: flutuante por padrão
   kick:  {x:1735, y:200, s:1, a:1, oc:false},
   power: {x:1735, y:690, s:1, a:1, oc:false},
   curva: {x:1560, y:455, s:1, a:1, oc:false},          // v61: entre o PASSE e o CHUTE, sem encostar neles nem nos da ginga
@@ -12924,7 +12924,7 @@ cv.addEventListener('pointerdown', e => {
     else if (role === 'power'){ BOTAO.powerL = true; hapticoChute(); }   // o chute sai na próxima amostra da física (v48: no iPhone, a vibração)
     else { BOTAO.kickL = true; hapticoChute(); }
   }
-  else if (joy.id === null && Math.hypot(x - hud.joy.x, y - hud.joy.y) < JOY.zone*hud.joy.s*(hud.joy.adere ? 1.6 : 1)){ role = 'joy'; joyComeca(e.pointerId, x, y); }   // v27: com Adere ao Dedo a área de toque é maior
+  else if (joy.id === null && joyZona(x, y)){ role = 'joy'; joyComeca(e.pointerId, x, y); }   // v65: o lado todo do analógico (joyZona)   // v27: com Adere ao Dedo a área de toque é maior
   if (role){
     ptrs.set(e.pointerId, role);
     try { cv.setPointerCapture(e.pointerId); } catch (_) {}
@@ -16801,6 +16801,51 @@ x49GameUI = function(){
   p2BaseUI();
   if (NET49.playing && !NET49.host && NET49.localSlot >= 0 && !NET49.paused && p2Saudavel() && P2.eu.rtt) X49UI.netText.textContent = 'SALA ' + NET49.room.code + ' · ' + Math.round(P2.eu.rtt) + ' ms · direto';
 };
+
+/* =====================================================================================================
+   v65: O ANALÓGICO SEM BUG
+   1. Flutuante: tocou em qualquer lugar do lado do analógico (abaixo do placar e fora dos botões), ele aparece
+      debaixo do dedo. Antes só valia um círculo em volta do lugar dele: o toque um pouco fora não fazia nada, e o
+      toque fora do centro já saía correndo para aquele lado (o "pulo").
+   2. Zona morta: o dedo parado no meio não anda. Antes qualquer tremidinha do dedo virava corrida para um lado
+      qualquer (o boneco anda sempre na velocidade máxima, então o menor movimento contava).
+   3. Direção firme: o boneco anda em 32 direções; com o dedo perto da divisa entre duas, ele ficava trocando
+      (zigue-zague). Agora a direção só muda quando o dedo passa um pouco da divisa.
+   4. A base acompanha o dedo quando ele passa do alcance (Seguir Dedo): virar para o outro lado é na hora.
+   Vale para quem já tinha o jogo salvo; dá para voltar ao antigo em EDITAR HUD › Adere ao Dedo e Seguir Dedo.
+   ===================================================================================================== */
+const AN = {ativo:false, setor:null};
+const AN_LIGA = .2, AN_DESLIGA = .12;                   // zona morta: anda com o dedo a 20% do alcance, para abaixo de 12%
+const AN_FOLGA = .05;                                   // rad (~3°): quanto o dedo passa da divisa antes de trocar de direção
+function joyZona(x, y){                                 // o toque começa o analógico?
+  const e = hud.joy;
+  if (Math.hypot(x - e.x, y - e.y) < JOY.zone*e.s*(e.adere ? 1.6 : 1)) return true;   // (o círculo de sempre)
+  if (!e.adere) return false;
+  return (e.x < W/2 ? x < W*.5 : x > W*.5) && y > 120;   // flutuante: o lado todo do analógico, abaixo do placar e da pausa
+}
+const anBase = getInput;
+getInput = function(){
+  if (joy.id === null){ AN.ativo = false; AN.setor = null; return anBase(); }   // (o teclado segue igual)
+  const R = JOY.max*hud.joy.al, l = Math.hypot(joy.dx, joy.dy)/R;
+  if (!AN.ativo){ if (l > AN_LIGA) AN.ativo = true; }
+  else if (l < AN_DESLIGA){ AN.ativo = false; AN.setor = null; }
+  joy.ativo = AN.ativo;
+  if (!AN.ativo) return {mx:0, my:0};
+  const S = TAU/32, ang = Math.atan2(joy.dy, joy.dx);
+  let k = Math.round(ang/S);
+  if (AN.setor !== null){                               // continua na direção de antes até passar da divisa com folga
+    let d = ang - AN.setor*S; d = Math.atan2(Math.sin(d), Math.cos(d));
+    if (Math.abs(d) < S/2 + AN_FOLGA) k = AN.setor;
+  }
+  k = ((k % 32) + 32) % 32; AN.setor = k;
+  return {mx:Math.cos(k*S), my:Math.sin(k*S)};
+};
+try {                                                   // quem já tinha o jogo salvo ganha o analógico novo uma vez
+  if (!localStorage.getItem('racha-analogico-v65')){
+    hud.joy.adere = true; hud.joy.segue = true;
+    localStorage.setItem('racha-analogico-v65', '1'); salvar();
+  }
+} catch (_) {}
 
 montaAbas();
 if (onbPrecisa()) onbAbre();   // v57: a primeira vez (antes do presente)

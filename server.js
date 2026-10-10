@@ -27,7 +27,7 @@ const PORT = Number(process.env.PORT) || 8080;
 const SERVER_NAME = String(process.env.SERVER_NAME || 'South America').slice(0, 32);
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const VERSAO = '1.3.0';
+const VERSAO = '1.4.0';
 /* v1.2: a conexão direta (WebRTC) entre o dono da sala e cada jogador: o servidor só apresenta um ao outro */
 const P2P_LIGADO = !/^(0|false|nao|não|off)$/i.test(String(process.env.P2P || '').trim());
 const ICE = (() => {

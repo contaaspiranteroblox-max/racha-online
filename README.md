@@ -40,6 +40,10 @@ e **salas personalizadas** (você é o dono e escolhe times, campo, modo, tempo 
   partida mostra **"· direto"** do lado do ping.
 - **Sem lag para quem entra na sala:** a bola e os outros jogadores andam lisos entre um quadro e outro, e o
   seu boneco não "volta para trás".
+- **Analógico flutuante:** encostou o dedo em qualquer lugar da metade esquerda da tela (fora dos botões), o
+  analógico aparece ali. Dedo parado não anda (a tremidinha do dedo não faz o boneco sair correndo), a direção não
+  fica trocando sozinha e a base acompanha o dedo quando ele vai longe. Quem preferir o fixo: **EDITAR HUD ›
+  Analógico › Adere ao Dedo**.
 - **Chat em todo lugar:** no lobby é o **Chat do Brasil**; na sala e na partida, o **chat da sala**. Toque na
   barra para escrever (no computador: **Enter** abre, **Esc** fecha).
 - Com tempo: quem tiver mais gols quando o relógio zera vence. Empatou → **gol de ouro**.
