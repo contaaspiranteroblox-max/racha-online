@@ -319,13 +319,16 @@ function contaOnline(){ let n = 0; for (const c of conns) if (c.id) n++; return 
 function entraNaSala(c, r, assistir, slotPedido){
   if (r.bot && !r.bot.conn && ehLocal(c)){              // a instância da nuvem chegou: ela simula, o dono vira admin
     r.bot.conn = c; r.bot.renascendo = false;
-    if (r.host !== c.id){ r.admin = r.host; r.host = c.id; }
+    if (r.host !== c.id){ if (r.host) r.admin = r.host; r.host = c.id; }
+    poeNaVaga(r, c, -1);                                   // a nuvem assiste: não ocupa vaga em campo
     console.log('[nuvem] a sala %s agora roda no servidor', r.code);
   }
   if (c.room) saiDaSala(c, 'trocou');
   c.room = r; c.slot = -1; c.ready = false; c.rematch = false;
   r.members.push(c);
-  if (!assistir && r.state !== 'playing' && !r.tournament){
+  if (r.bot && r.bot.conn === c){                         // a nuvem é sempre espectadora
+    poeNaVaga(r, c, -1);
+  } else if (!assistir && r.state !== 'playing' && !r.tournament){
     const v = Number.isInteger(slotPedido) && slotPedido >= 0 && slotPedido < r.roster.length && !r.roster[slotPedido] ? slotPedido : vagaEquilibrada(r);
     if (v >= 0) poeNaVaga(r, c, v);
   }
@@ -512,6 +515,29 @@ function brOnline(){
 /* =====================================================================================
    As mensagens
    ===================================================================================== */
+/* ---- v66: SALAS OFICIAIS — criadas pelo servidor, sempre abertas, começam sozinhas ---- */
+const OFICIAIS = process.env.OFICIAIS !== '0';           // padrão ligado · OFICIAIS=0 desliga
+function criaOficiais(){
+  if (!OFICIAIS) return;
+  for (const [code, nome, n, map] of [['RACHA1', 'RACHA OFICIAL · 2v2 · ARENA', 2, 0], ['RACHA2', 'RACHA OFICIAL · 1v1 · ARENA', 1, 0]]){
+    if (rooms.has(code)) continue;
+    const r = {code, name:nome, autoNome:false, pub:true, host:null, n, map, jogo:'futebol', bots:true, tempo:3,
+      roster:new Array(n*2).fill(null), members:[], state:'waiting', round:0, tournament:null,
+      chat:[], ban:new Map(), lastSnap:0, created:Date.now(), tipo:'oficial', admin:null};
+    rooms.set(code, r);
+    console.log('[oficial] sala %s criada', code);
+  }
+}
+function nuvemEntra(r){                                  // a nuvem passa a simular a sala (se ainda não simula)
+  if (!abreNuvem || r.bot) return;
+  const inst = [...rooms.values()].filter(x => x.bot).length;
+  if (inst >= MAX_NUVEM){ console.log('[nuvem] cheia (%d): a sala %s fica sem simulador', MAX_NUVEM, r.code); return; }
+  try {
+    r.bot = abreNuvem(r.code); r.bot.desde = Date.now();
+    console.log('[nuvem] instância entrando na sala %s (%d/%d)', r.code, inst + 1, MAX_NUVEM);
+  } catch (e) { console.log('[nuvem] falhou na sala %s: %s', r.code, e.message); r.bot = null; }
+}
+
 const HANDLERS = {
   hello(c, m){
     let u = usuarioDoToken(m.token);
@@ -620,15 +646,7 @@ const HANDLERS = {
       const motivo = podeComecar(r); if (motivo) return erro(c, motivo);
     }
     // v65: a partida passa a rodar na nuvem (se der); falhando, fica no dono como antes
-    if (abreNuvem && !r.bot){
-      const inst = [...rooms.values()].filter(x => x.bot).length;
-      if (inst < MAX_NUVEM){
-        try {
-          r.bot = abreNuvem(r.code); r.bot.desde = Date.now();
-          console.log('[nuvem] instância entrando na sala %s (%d/%d)', r.code, inst + 1, MAX_NUVEM);
-        } catch (e) { console.log('[nuvem] falhou na sala %s: %s — a partida fica no dono', r.code, e.message); r.bot = null; }
-      } else console.log('[nuvem] cheia (%d): a sala %s fica no dono', MAX_NUVEM, r.code);
-    }
+    nuvemEntra(r);
     comecaPartida(r);
   },
   kick(c, m){
@@ -659,7 +677,7 @@ const HANDLERS = {
     const s = JSON.stringify(msg); for (const x of r.members) sendRaw(x, s);
   },
 
-  /* ---- a partida (quem simula é o celular do dono da sala; o servidor só repassa) ---- */
+/* ---- a partida (quem simula é o celular do dono da sala; o servidor só repassa) ---- */
   snapshot(c, m, txt){
     const r = c.room; if (!r || r.host !== c.id || r.state !== 'playing' || m.round !== r.round) return;
     if (!permite(c, 'snap', 70, 90)) return;
@@ -684,6 +702,7 @@ const HANDLERS = {
     const sc = Array.isArray(m.score) ? [int(m.score[0], 0, 999, 0), int(m.score[1], 0, 999, 0)] : [0, 0];
     const winner = sc[0] > sc[1] ? 0 : sc[1] > sc[0] ? 1 : -1;
     r.state = 'ended';
+    if (r.tipo === 'oficial') r.reinicia = Date.now() + 12000;   // oficial: a próxima começa sozinha em 12 s
     const s = JSON.stringify({type:'result', round:r.round, score:sc, winner});
     for (const x of r.members) sendRaw(x, s);
     registraResultado(r, sc, winner);
@@ -878,6 +897,26 @@ setInterval(() => {
   }
 }, 5000);
 
+/* ---- v66: a máquina das salas oficiais — começa sozinha, recomeça sozinha, rodízio ---- */
+setInterval(() => {
+  if (!OFICIAIS) return;
+  const agora = Date.now();
+  for (const r of rooms.values()){
+    if (r.tipo !== 'oficial') continue;
+    const botConn = r.bot && r.bot.conn;
+    const temA = r.members.some(m => m.slot >= 0 && Math.floor(m.slot / r.n) === 0 && m !== botConn);
+    const temB = r.members.some(m => m.slot >= 0 && Math.floor(m.slot / r.n) === 1 && m !== botConn);
+    if (r.state === 'waiting' || r.state === 'ended'){
+      if (temA && temB && (!r.reinicia || agora >= r.reinicia)){
+        nuvemEntra(r);                                   // a nuvem entra e vira anfitriã (host = a nuvem quando ela chega)
+        r.reinicia = null;
+        if (r.host) comecaPartida(r);                    // só começa com a anfitriã no lugar
+        else r.reinicia = agora + 3000;                  // espera a nuvem chegar e tenta de novo
+      } else if ((temA || temB) && !r.reinicia) r.reinicia = agora + 4000;
+    }
+  }
+}, 3000);
+
 /* ---- de tempos em tempos: conexões mortas, partidas paradas ---- */
 setInterval(() => {
   const agora = Date.now();
@@ -917,6 +956,7 @@ server.on('error', e => {
   process.exit(1);
 });
 dbLoad();
+criaOficiais();
 server.listen(PORT, () => {
   const ips = [];
   for (const lista of Object.values(require('os').networkInterfaces())) for (const i of lista || []) if (i.family === 'IPv4' && !i.internal) ips.push(i.address);
