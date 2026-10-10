@@ -12,6 +12,10 @@
      PORT          porta (a hospedagem costuma definir sozinha). Padrão: 8080
      SERVER_NAME   o nome que aparece em "Servidor: ..." na sala.  Padrão: South America
      DATA_DIR      pasta onde ficam clubes, duelos e campeões.      Padrão: ./data
+     P2P           0 = desliga a conexão direta entre os jogadores (tudo passa pelo servidor). Padrão: ligada
+     ICE_SERVERS   (avançado) os servidores STUN/TURN da conexão direta, em JSON. Padrão: STUN do Google e da Cloudflare
+     OFICIAIS      0 = sem as salas oficiais RACHA1 e RACHA2. Padrão: ligadas
+     NUVEM         1 = a partida roda no servidor (precisa do jsdom e de um servidor forte). Padrão: desligada
    ===================================================================================== */
 const http = require('http');
 const fs = require('fs');
@@ -23,17 +27,23 @@ const PORT = Number(process.env.PORT) || 8080;
 const SERVER_NAME = String(process.env.SERVER_NAME || 'South America').slice(0, 32);
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const VERSAO = '1.1.0';
+const VERSAO = '1.3.0';
+/* v1.2: a conexão direta (WebRTC) entre o dono da sala e cada jogador: o servidor só apresenta um ao outro */
+const P2P_LIGADO = !/^(0|false|nao|não|off)$/i.test(String(process.env.P2P || '').trim());
+const ICE = (() => {
+  try { const v = JSON.parse(process.env.ICE_SERVERS || 'null'); if (Array.isArray(v) && v.length) return v.slice(0, 8); } catch (_) { console.warn('[p2p] ICE_SERVERS inválido (precisa ser JSON): usando o padrão'); }
+  return [{urls:['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478']}];
+})();
 
 /* ---- a partida na nuvem (v65): o servidor simula a partida de cada sala ---- */
-const NUVEM = process.env.NUVEM !== '0';              // padrão ligado · NUVEM=0 volta a partida no dono
+const NUVEM = process.env.NUVEM === '1';              // v1.3: padrão DESLIGADO (NUVEM=1 liga). Num servidor fraco (plano grátis) ela deixa a partida lenta
 const MAX_NUVEM = +(process.env.MAX_NUVEM || 3);      // instâncias simultâneas (cada uma ~200 MB)
 let abreNuvem = null;
 if (NUVEM){
   try { abreNuvem = require('./racha-bot.js'); console.log('[nuvem] partida na nuvem: LIGADA (máx. ' + MAX_NUVEM + ')'); }
   catch (e) { console.log('[nuvem] desligada (jsdom não instalou):', e.message); }
 }
-const ehLocal = c => /^(:?127\.0\.0\.1|:{1,2}1)$/.test(c.ip) || c.ip.includes('127.0.0.1');
+const ehLocal = c => !!c.local;                       // v1.3: só a conexão de dentro da própria máquina (o endereço do cabeçalho podia ser falsificado)
 
 /* ---- regras das salas (mexa à vontade) ---- */
 const NUM_MAPAS = 4;                       // Arena, Favela, Escadão e Viaduto (o índice vai de 0 a NUM_MAPAS - 1)
@@ -201,8 +211,8 @@ function permite(c, chave, porSeg, rajada){            // limite de mensagens po
 }
 
 function onConexao(ws){
-  const c = {ws, ip:ws.ip, id:null, user:null, name:'Jogador', skin:'', avatar:null, flag:'',
-    room:null, slot:-1, ready:false, rematch:false, brasil:false, bfrom:'', lastSay:0, lastText:'', sayAt:0, baldes:{}};
+  const c = {ws, ip:ws.ip, local:!!ws.local, id:null, user:null, name:'Jogador', skin:'', avatar:null, flag:'',
+    room:null, slot:-1, ready:false, rematch:false, p2p:false, brasil:false, bfrom:'', lastSay:0, lastText:'', sayAt:0, baldes:{}};
   conns.add(c);
   ws.onmessage = txt => {
     if (!permite(c, 'tudo', 260, 400)) return;           // ninguém precisa de mais que isso (a partida manda ~90 por segundo)
@@ -244,7 +254,7 @@ function clubeDe(c){
 }
 function salaView(r){
   const t = r.tournament;
-  return {code:r.code, name:r.name, pub:r.pub, host:r.host, n:r.n, map:r.map, jogo:r.jogo, bots:r.bots, tempo:r.tempo,
+  return {code:r.code, name:r.name, pub:r.pub, oficial:r.tipo === 'oficial', host:r.host, admin:r.admin || null, n:r.n, map:r.map, jogo:r.jogo, bots:r.bots, tempo:r.tempo,
     state:r.state, round:r.round, roster:r.roster.slice(),
     members:r.members.map(m => ({id:m.id, name:m.name, skin:m.skin, avatar:m.avatar, flag:m.flag, club:clubeDe(m),
       slot:m.slot, ready:!!m.ready, rematch:!!m.rematch})),
@@ -290,6 +300,7 @@ function nuvemProgramaFechamento(r){                     // só sobrou a nuvem: 
 
 function trocaDono(r, novo){                           // a sala com o nome automático ("Sala de Fulano") acompanha o dono
   r.host = novo.id;
+  for (const m of r.members) m.p2p = false;            // (a conexão direta era com o dono antigo)
   if (r.autoNome) r.name = 'Sala de ' + novo.name;
 }
 
@@ -299,7 +310,7 @@ function listaSalas(){
   for (const r of rooms.values()){
     if (!r.pub) continue;
     const dono = r.members.find(m => m.id === r.host);
-    L.push({code:r.code, name:r.name, host:dono ? dono.name : '', flag:dono ? dono.flag : '', n:r.n, map:r.map, jogo:r.jogo, tempo:r.tempo, bots:r.bots,
+    L.push({code:r.code, name:r.name, oficial:r.tipo === 'oficial', host:dono ? dono.name : '', flag:dono ? dono.flag : '', n:r.n, map:r.map, jogo:r.jogo, tempo:r.tempo, bots:r.bots,
       players:r.roster.filter(Boolean).length, people:r.members.length, max:r.n*2, state:r.state, cup:!!r.tournament});
   }
   L.sort((a, b) => (a.state === 'playing') - (b.state === 'playing') || (b.max - b.players > 0) - (a.max - a.players > 0) || b.people - a.people);
@@ -317,14 +328,15 @@ function listaMudou(){                                 // avisa (de leve) quem e
 function contaOnline(){ let n = 0; for (const c of conns) if (c.id) n++; return n; }
 
 function entraNaSala(c, r, assistir, slotPedido){
-  if (r.bot && !r.bot.conn && ehLocal(c)){              // a instância da nuvem chegou: ela simula, o dono vira admin
-    r.bot.conn = c; r.bot.renascendo = false;
+  let nuvemChegou = false;
+  if (r.bot && !r.bot.conn && ehLocal(c) && r.state !== 'playing'){   // a instância da nuvem chegou: ela simula, o dono vira admin (nunca no meio de uma partida)
+    r.bot.conn = c; r.bot.renascendo = false; nuvemChegou = true;
     if (r.host !== c.id){ if (r.host) r.admin = r.host; r.host = c.id; }
     poeNaVaga(r, c, -1);                                   // a nuvem assiste: não ocupa vaga em campo
     console.log('[nuvem] a sala %s agora roda no servidor', r.code);
   }
   if (c.room) saiDaSala(c, 'trocou');
-  c.room = r; c.slot = -1; c.ready = false; c.rematch = false;
+  c.room = r; c.slot = -1; c.ready = false; c.rematch = false; c.p2p = false;
   r.members.push(c);
   if (r.bot && r.bot.conn === c){                         // a nuvem é sempre espectadora
     poeNaVaga(r, c, -1);
@@ -336,6 +348,7 @@ function entraNaSala(c, r, assistir, slotPedido){
   aviso(r, c.name + ' entrou na sala', c.id);
   mandaSala(r);
   if (r.state === 'playing') send(c, {type:'start', room:salaView(r)});   // a partida já está rolando: assiste
+  else if (nuvemChegou && r.esperaNuvem){ r.esperaNuvem = 0; comecaPartida(r); }   // a partida esperava a nuvem
   listaMudou();
 }
 
@@ -345,7 +358,7 @@ function saiDaSala(c, motivo){
   r.members = r.members.filter(m => m !== c);
   if (slot >= 0 && r.roster[slot] === c.id) r.roster[slot] = null;
   { const s = JSON.stringify({type:'typing', id:c.id, on:false}); for (const m of r.members) sendRaw(m, s); }   // (saiu: some o "digitando" dele)
-  c.room = null; c.slot = -1; c.ready = false; c.rematch = false;
+  c.room = null; c.slot = -1; c.ready = false; c.rematch = false; c.p2p = false;
   if (!r.members.length){                         // a oficial nunca morre: só espera a próxima leva
     if (r.tipo === 'oficial'){ r.state = 'waiting'; r.round = 0; r.host = null; r.admin = null; r.reinicia = null; listaMudou(); return; }
     rooms.delete(r.code); listaMudou(); return;
@@ -357,10 +370,11 @@ function saiDaSala(c, motivo){
   aviso(r, c.name + (motivo === 'removido' ? ' foi removido da sala' : ' saiu da sala') + (eraDono ? ' · ' + nomeDe(r, r.host) + ' agora é o dono' : ''));
   if (r.state === 'playing'){
     let fim = '';
-    if (eraDono) fim = 'O dono da sala saiu. A partida foi encerrada.';
+    if (eraDono) fim = r.tipo === 'oficial' ? 'O anfitrião saiu. A próxima partida começa em instantes.' : 'O dono da sala saiu. A partida foi encerrada.';
     else if (time >= 0 && humanosNoTime(r, time) === 0 && !r.bots) fim = c.name + ' saiu e o time ficou vazio. Partida encerrada.';
     if (fim){
       r.state = 'waiting';
+      if (r.tipo === 'oficial') r.reinicia = Date.now() + 5000;
       if (r.tournament){ if (r.tournament.champion) r.state = 'ended'; else copaSenta(r); }   // na copa: o próximo duelo já fica na quadra
       const s = JSON.stringify({type:'interrupted', message:fim});
       for (const m of r.members) sendRaw(m, s);
@@ -553,7 +567,7 @@ const HANDLERS = {
     c.name = nomeOk(m.name) || u.name || 'Jogador'; c.skin = limpaSkin(m.skin) || u.skin;
     c.avatar = limpaAvatar(m.avatar); c.flag = limpaBandeira(m.flag);
     u.name = c.name; u.skin = c.skin; u.seen = Date.now(); dbSave();
-    send(c, {type:'hello', id:c.id, token:u.token, server:{name:SERVER_NAME, version:VERSAO, online:contaOnline()}});
+    send(c, {type:'hello', id:c.id, token:u.token, server:{name:SERVER_NAME, version:VERSAO, online:contaOnline()}, p2p:P2P_LIGADO, ice:ICE});
     mandaSocial(c);
     send(c, {type:'rooms', list:listaSalas(), online:contaOnline()});
     listaMudou();
@@ -622,6 +636,7 @@ const HANDLERS = {
   config(c, m){
     const r = c.room; if (!r) return;
     if (!ehDono(c)) return erro(c, 'Só o dono da sala muda as regras.');
+    if (r.tipo === 'oficial') return erro(c, 'As regras da sala oficial são fixas.');
     if (r.state === 'playing') return erro(c, 'Espere a partida acabar.');
     const copa = !!r.tournament;
     if (m.n != null && !copa){ const n = int(m.n, 1, 4, r.n); if (n !== r.n) reorganiza(r, n); }
@@ -649,11 +664,13 @@ const HANDLERS = {
       const motivo = podeComecar(r); if (motivo) return erro(c, motivo);
     }
     // v65: a partida passa a rodar na nuvem (se der); falhando, fica no dono como antes
-    nuvemEntra(r);
+    // v1.3: e só começa quando a nuvem já é a anfitriã (trocar o anfitrião no meio da partida deixava o dono parado)
+    if (abreNuvem && !(r.bot && r.bot.conn)){ nuvemEntra(r); if (r.bot){ r.esperaNuvem = Date.now(); aviso(r, 'Preparando a partida…'); return; } }
     comecaPartida(r);
   },
   kick(c, m){
     const r = c.room; if (!r || !ehDono(c) || m.id === c.id) return;
+    if (r.tipo === 'oficial') return erro(c, 'Na sala oficial ninguém remove ninguém.');
     const alvo = r.members.find(x => x.id === m.id); if (!alvo) return;
     if (alvo.user) r.ban.set(alvo.user.id, Date.now() + BAN_MS);
     saiDaSala(alvo, 'removido');
@@ -661,6 +678,8 @@ const HANDLERS = {
   },
   promote(c, m){
     const r = c.room; if (!r || !ehDono(c)) return;
+    if (r.state === 'playing') return erro(c, 'Espere a partida acabar para passar a sala.');   // v1.3: no meio da partida o jogo do novo dono não sabe que é ele quem roda
+    if (r.tipo === 'oficial') return erro(c, 'Na sala oficial o anfitrião é escolhido sozinho.');
     const alvo = r.members.find(x => x.id === m.id); if (!alvo || alvo === c) return;
     trocaDono(r, alvo); aviso(r, alvo.name + ' agora é o dono da sala'); mandaSala(r); listaMudou();
   },
@@ -686,7 +705,7 @@ const HANDLERS = {
     if (!permite(c, 'snap', 70, 90)) return;
     r.lastSnap = Date.now();
     const d = m.data; if (d && Array.isArray(d.score)) r.score = d.score.slice(0, 2);
-    for (const x of r.members) if (x !== c && x.ws.buffered < 384*1024) sendRaw(x, txt);   // (quem está com a internet lenta pula um quadro)
+    for (const x of r.members) if (x !== c && !x.p2p && x.ws.buffered < 384*1024) sendRaw(x, txt);   // (quem está com a internet lenta pula um quadro; quem tem a conexão direta já recebe do dono)
   },
   input(c, m){
     const r = c.room; if (!r || r.state !== 'playing' || c.slot < 0 || r.host === c.id) return;
@@ -694,6 +713,16 @@ const HANDLERS = {
     const dono = r.members.find(x => x.id === r.host); if (!dono) return;
     sendRaw(dono, JSON.stringify({type:'input', id:c.id, seq:int(m.seq, 0, 1e9, 0), x:num(m.x, -1, 1), y:num(m.y, -1, 1), button:int(m.button, 1, 3, 1)}));
   },
+  /* ---- v1.2: a conexão direta (P2P): o servidor só repassa o "aperto de mão" entre o dono e cada jogador ---- */
+  rtc(c, m){
+    const r = c.room; if (!P2P_LIGADO || !r || !permite(c, 'rtc', 60, 200)) return;
+    const alvo = r.members.find(x => x.id === m.to); if (!alvo || alvo === c) return;
+    if (r.host !== c.id && r.host !== alvo.id) return;   // (só entre o dono e os outros)
+    if (!m.d || typeof m.d !== 'object') return;
+    const s = JSON.stringify({type:'rtc', from:c.id, d:m.d}); if (s.length > 12000) return;
+    sendRaw(alvo, s);
+  },
+  p2p(c, m){ if (c.room) c.p2p = P2P_LIGADO && m.on === true; },   // o jogador recebe a partida direto do dono: o servidor não precisa mandar
   pause(c, m){
     const r = c.room; if (!r || r.host !== c.id || r.state !== 'playing') return;
     r.lastSnap = Date.now();
@@ -880,9 +909,18 @@ server.on('upgrade', (req, socket, head) => {
   socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + accept + '\r\n\r\n');
   porIp.set(ip, (porIp.get(ip) || 0) + 1);
   const ws = new Sock(socket, ip);
+  ws.local = !req.headers['x-forwarded-for'] && /^(::ffff:)?127\.|^::1$/.test(String(req.socket.remoteAddress || ''));
   onConexao(ws);
   if (head && head.length) ws.feed(head);
 });
+
+function escolheAnfitriao(r){                            // v1.3: quem roda a partida da sala oficial: o primeiro jogador em campo (senão, o primeiro da sala)
+  const m = r.members.find(x => x.slot >= 0 && !(r.bot && x === r.bot.conn)) || r.members.find(x => !(r.bot && x === r.bot.conn));
+  if (!m) return;
+  r.host = m.id; for (const x of r.members) x.p2p = false;
+  aviso(r, m.name + ' é o anfitrião desta partida');
+  mandaSala(r);
+}
 
 /* ---- v65: a vigilância da nuvem — a instância travou? renasce e a partida continua ---- */
 setInterval(() => {
@@ -891,6 +929,13 @@ setInterval(() => {
   for (const r of rooms.values()){
     if (!r.bot || r.bot.fechando) continue;
     if (r.bot.morreT && r.members.some(m => m !== r.bot.conn)){ clearTimeout(r.bot.morreT); r.bot.morreT = null; console.log('[nuvem] alguém voltou para a sala %s: fechamento cancelado', r.code); }
+    if (r.esperaNuvem && r.state !== 'playing' && agora - r.esperaNuvem > 10000){   // v1.3: a nuvem não chegou: começa com um jogador de anfitrião
+      console.log('[nuvem] a sala %s esperou a nuvem 10 s: começa sem ela', r.code);
+      r.esperaNuvem = 0; nuvemFecha(r, 'não chegou');
+      if (!r.members.some(m => m.id === r.host)) escolheAnfitriao(r);
+      if (r.host) comecaPartida(r);
+      continue;
+    }
     if (r.state === 'playing' && agora - r.lastSnap > 8000 && !r.bot.renascendo){
       console.log('[nuvem] a instância da sala %s parou de responder: renascendo', r.code);
       r.bot.renascendo = true;
@@ -911,10 +956,13 @@ setInterval(() => {
     const temB = r.members.some(m => m.slot >= 0 && Math.floor(m.slot / r.n) === 1 && m !== botConn);
     if (r.state === 'waiting' || r.state === 'ended'){
       if (temA && temB && (!r.reinicia || agora >= r.reinicia)){
-        nuvemEntra(r);                                   // a nuvem entra e vira anfitriã (host = a nuvem quando ela chega)
         r.reinicia = null;
-        if (r.host) comecaPartida(r);                    // só começa com a anfitriã no lugar
-        else r.reinicia = agora + 3000;                  // espera a nuvem chegar e tenta de novo
+        if (abreNuvem && !(r.bot && r.bot.conn)){        // com a nuvem: ela entra e começa a partida quando chegar
+          nuvemEntra(r);
+          if (r.bot){ if (!r.esperaNuvem) r.esperaNuvem = agora; continue; }
+        }
+        if (!r.members.some(m => m.id === r.host)) escolheAnfitriao(r);   // v1.3: sem a nuvem, um dos jogadores roda a partida
+        if (r.host) comecaPartida(r);
       } else if ((temA || temB) && !r.reinicia) r.reinicia = agora + 4000;
     }
   }

@@ -1912,6 +1912,7 @@
   /* com a sala aberta, o aviso (toast) sobe para não cobrir o chat */
   body:has(#lb:not([hidden]) #tela-sala:not([hidden])) #x49-toast{ bottom:auto; top:52vh; }
   #lb .sb-atualiza{ justify-content:flex-end; }
+  #lb .sb-tx b .sb-ofi{ flex:none; font-style:normal; font-size:15px; letter-spacing:1px; line-height:1; padding:5px 8px 4px; border-radius:7px; color:#3a2600; background:#ffd21f; }   /* v1.3 */
   #lb .sb-ja{ margin:2px 0 14px; }                                    /* v64: JOGAR AGORA (salas abertas) */
   #lb .on-card .sb-ja .lb-btn{ flex:1 1 auto; height:70px; font-size:30px; letter-spacing:1px; }
   #lb .on-card .sb-atualiza .lb-btn{ height:52px; font-size:21px; padding:0 20px; }
@@ -15765,6 +15766,7 @@ function slTampa(m){                                   // a tampinha de cada um,
   const c = document.createElement('canvas'); c.width = c.height = px; c.getContext('2d').drawImage(base, 0, 0); c.setAttribute('aria-hidden', 'true');
   return c;
 }
+const slDono = r => !!r && (r.host === NET49.id || (!!r.admin && r.admin === NET49.id));   // v1.3: quem manda na sala (com a partida na nuvem, o admin)
 function slCartao(m, r){
   const d = nodo('div', 'sl-card' + (m.id === NET49.id ? ' eu' : '') + (SL.vistos.has(m.id) ? '' : ' novo')); d.dataset.id = m.id;
   const av = nodo('span', 'sl-av'); av.appendChild(slTampa(m));
@@ -15774,7 +15776,7 @@ function slCartao(m, r){
   tx.append(nm, nodo('small', null, m.club ? m.club.name : 'Sem clube'));
   const esc = nodo('span', 'sl-esc'); esc.innerHTML = m.club ? escudoSvg(m.club.color, m.club.badge, m.club.tag) : SLI.semClube;
   d.append(av, tx, esc);
-  if (m.id === r.host){ const c = nodo('span', 'sl-coroa'); c.innerHTML = SLI.coroa; d.appendChild(c); }
+  if (m.id === (r.admin || r.host)){ const c = nodo('span', 'sl-coroa'); c.innerHTML = SLI.coroa; d.appendChild(c); }
   if (r.state === 'ended' && m.rematch && m.slot >= 0) d.appendChild(nodo('span', 'sl-selo rev', 'REVANCHE'));
   else if (m.ready && m.id !== r.host && m.slot >= 0 && r.state !== 'playing') d.appendChild(nodo('span', 'sl-selo', 'PRONTO'));
   d.setAttribute('aria-label', (m.name || 'Jogador') + (m.id === r.host ? ', dono da sala' : '') + (m.id === NET49.id ? ', você' : ''));
@@ -15793,12 +15795,12 @@ function slRender(){
     if (!SL.quer) setTimeout(() => { if (!NET49.room && lobby.aberto && lobby.tela === 'sala') abreTela('amigos'); }, 0);
     return;
   }
-  const dono = r.host === NET49.id, eu = r.members.find(m => m.id === NET49.id) || null, dm = r.members.find(m => m.id === r.host);
+  const dono = slDono(r), eu = r.members.find(m => m.id === NET49.id) || null, dm = r.members.find(m => m.id === (r.admin || r.host));
   $('sl-band').innerHTML = slBandeira(dm && dm.flag);
   $('sl-nome').textContent = r.name || ('Sala de ' + (dm ? dm.name : 'Jogador'));
   const sub = [slModo(r.jogo), slCampo(r.map), slTempo(r.tempo, r.jogo)];
   if (r.tournament) sub.unshift(r.tournament.name);
-  $('sl-sub').textContent = (r.pub ? 'Código ' : 'Fechada · código ') + r.code + ' · ' + sub.join(' · ');   // (o código primeiro: se faltar espaço, some o fim)
+  $('sl-sub').textContent = (r.oficial ? 'Oficial · começa sozinha · ' : r.pub ? 'Código ' : 'Fechada · código ') + r.code + ' · ' + sub.join(' · ');   // (o código primeiro: se faltar espaço, some o fim)
   $('sl-serv').textContent = 'Servidor: ' + (SL.server && SL.server.name || 'Online');
   for (let t = 0; t < 2; t++){                         // os dois times
     const box = $('sl-c' + t); box.textContent = ''; let livres = 0;
@@ -15814,7 +15816,7 @@ function slRender(){
   SL.vistos = new Set(r.members.map(m => m.id));
   const ops = $('sl-ops'); ops.textContent = '';        // as regras
   for (const o of SL_OPS){
-    const trava = !dono || r.state === 'playing' || !!(o.trava && o.trava(r));
+    const trava = !dono || r.oficial || r.state === 'playing' || !!(o.trava && o.trava(r));   // (a sala oficial tem regras fixas)
     const d = nodo('div', 'sl-op' + (trava ? ' travado' : '')); d.dataset.k = o.k;
     const ic = nodo('span', 'sl-op-ic'); ic.innerHTML = SLI[o.ic];
     d.append(ic, nodo('small', null, o.cap), nodo('b', 'sl-ol', o.txt(r[o.k], r)));
@@ -15847,7 +15849,7 @@ function slRender(){
   slChatBar(); slDigCartoes();
 }
 function slOp(k, d){                                   // seta de uma regra: o próximo (ou o anterior) valor
-  const r = NET49.room; if (!r || r.host !== NET49.id || r.state === 'playing') return;
+  const r = NET49.room; if (!r || !slDono(r) || r.oficial || r.state === 'playing') return;
   const o = SL_OPS.find(x => x.k === k); if (!o || (o.trava && o.trava(r))) return;
   const vals = o.vals(); let i = vals.indexOf(r[k]); if (i < 0) i = 0;
   const v = vals[(i + d + vals.length) % vals.length];
@@ -15856,7 +15858,7 @@ function slOp(k, d){                                   // seta de uma regra: o p
 }
 function slIniciar(){
   const r = NET49.room; if (!r) return; som.clique();
-  const dono = r.host === NET49.id, eu = r.members.find(m => m.id === NET49.id);
+  const dono = slDono(r), eu = r.members.find(m => m.id === NET49.id);
   if (r.state === 'playing'){ if (NET49.playing) abrirJogoOnline(); return; }
   if (dono){
     if (r.tournament){
@@ -15879,7 +15881,7 @@ function slClique(e){                                   // tocar num time, numa 
   const card = e.target.closest('.sl-card');
   if (card){
     const m = r.members.find(x => x.id === card.dataset.id); if (!m) return;
-    if (m.id !== NET49.id && r.host === NET49.id){ som.clique(); slMenu(m); return; }
+    if (m.id !== NET49.id && slDono(r) && !r.oficial){ som.clique(); slMenu(m); return; }
     if (m.id === NET49.id) return;
   }
   if (r.state === 'playing') return x49Toast('A partida está rolando. Espere acabar para trocar de lugar.');
@@ -15903,7 +15905,7 @@ function slMenu(m){                                    // o dono tocou no cartã
     if (pode && time !== 0 && temVaga(0)) vai('TIME VERMELHO', 'vermelho', {type:'seat', id:m.id, team:0});
     if (pode && time !== 1 && temVaga(1)) vai('EQUIPE AZUL', 'azul', {type:'seat', id:m.id, team:1});
     if (pode && time >= 0) vai('ESPECTADOR', '', {type:'seat', id:m.id, slot:-1});
-    vai('PASSAR O DONO', 'amarelo', {type:'promote', id:m.id});
+    if (r.state !== 'playing') vai('PASSAR O DONO', 'amarelo', {type:'promote', id:m.id});   // (no meio da partida, não: quem roda o jogo é o dono)
     vai('REMOVER DA SALA', 'vermelho', {type:'kick', id:m.id});
     a.appendChild(botaoPop('CANCELAR', '', () => { som.clique(); fechaPop(); }));
     c.appendChild(a);
@@ -15936,7 +15938,7 @@ function slConvidar(){
 }
 function slAjustes(){                                  // a engrenagem: o nome e quem vê a sala (dono) e os ajustes do jogo
   const r = NET49.room; if (!r) return; som.clique();
-  const dono = r.host === NET49.id;
+  const dono = slDono(r) && !r.oficial;
   abrePop(c => {
     c.classList.add('sl-pop');
     c.append(nodo('span', 'pop-tag', 'AJUSTES DA SALA'), nodo('h2', null, r.code));
@@ -15953,7 +15955,7 @@ function slAjustes(){                                  // a engrenagem: o nome e
         botaoPop('FECHAR', '', () => { som.clique(); fechaPop(); }));
       c.appendChild(a);
     } else {
-      c.appendChild(nodo('p', 'pop-txt', 'Só o dono da sala muda as regras, o nome e quem vê a sala. Servidor: ' + (SL.server && SL.server.name || 'online') + ' · ' + Math.round(NET49.ping) + ' ms.'));
+      c.appendChild(nodo('p', 'pop-txt', (r.oficial ? 'Sala oficial: as regras são fixas e a partida começa sozinha quando os dois times têm gente.' : 'Só o dono da sala muda as regras, o nome e quem vê a sala.') + ' Servidor: ' + (SL.server && SL.server.name || 'online') + ' · ' + Math.round(NET49.ping) + ' ms.'));
       const a = nodo('div', 'pop-acoes');
       a.append(botaoPop('AJUSTES DO JOGO', 'azul', () => { som.clique(); fechaPop(); syncAjustes(); LB.aj.hidden = false; }), botaoPop('FECHAR', '', () => { som.clique(); fechaPop(); }));
       c.appendChild(a);
@@ -15962,7 +15964,7 @@ function slAjustes(){                                  // a engrenagem: o nome e
 }
 function slSair(){
   const r = NET49.room; if (!r){ abreTela('amigos'); return; } som.clique();
-  const dono = r.host === NET49.id, outros = r.members.length > 1;
+  const dono = slDono(r) && !r.oficial, outros = r.members.length > 1;
   abrePop(c => {
     c.classList.add('sl-pop');
     c.append(nodo('span', 'pop-tag', 'SALA ' + r.code), nodo('h2', null, 'SAIR DA SALA?'),
@@ -15999,6 +16001,7 @@ function sbLinha(s){
   h.appendChild(nodo('span', null, s.name || 'Sala'));
   tx.append(h, nodo('small', null, [s.n + 'v' + s.n, slModo(s.jogo), slCampo(s.map), slTempo(s.tempo, s.jogo)].join(' · ') + (s.bots ? ' · com bots' : '')));
   const st = nodo('span', 'sb-st' + (s.state === 'playing' ? ' on' : ''), s.cup ? 'COPA' : s.state === 'playing' ? 'JOGANDO' : 'ESPERANDO');
+  if (s.oficial) h.appendChild(nodo('i', 'sb-ofi', 'OFICIAL'));   // v1.3: as salas do servidor (começam sozinhas)
   const n = nodo('span', 'sb-n', s.players + '/' + s.max);
   const ac = nodo('div', 'sb-acoes');
   const cabe = s.state !== 'playing' && !s.cup && s.players < s.max;
@@ -16459,7 +16462,7 @@ rqInfoPilula = function(){ if (NET49.playing) return; return base63Pilula(); }; 
    5. Quem assiste (espectador) vê o jogador da primeira vaga onde ele está (antes ele aparecia em cima da bola).
    Nada aqui muda a física da partida: o dono continua simulando tudo como antes.
    ===================================================================================================== */
-const NS = {t:0, tp:0, tDraw:0, base:null, tick:0, ofb:[0, 0], ofp:[0, 0], pDraw:null, bola:null, iniciado:false};
+const NS = {t:0, tp:0, tDraw:0, base:null, tick:0, ofb:[0, 0], ofp:[0, 0], pDraw:null, bola:null, iniciado:false, p2Tick:-1};
 const NS_TAU = .07, NS_TAU_P = .09;                    // s: em quanto tempo some a diferença de um quadro novo (outros / o seu boneco)
 const NS_EXT_BOLA = .15, NS_EXT_JOG = .15;             // s: até onde segue andando sozinho se o próximo quadro atrasar
 const NS_PULO = 90;                                    // px: diferença maior que isso é teleporte (saída, gol): vai direto
@@ -16486,8 +16489,26 @@ net49Message = function(m){
     if (f.fila.length > 120) f.fila.splice(0, f.fila.length - 120);
     return;
   }
-  return nsBaseMsg(m);
+  if (m && m.type === 'snapshot' && NET49.playing && NET49.host) return;   // v1.3: quem roda a partida não aceita a de outro (ela apagava os seus movimentos)
+  const volta = nsBaseMsg(m);
+  if (m && m.type === 'room') nsDonoMudou();
+  return volta;
 };
+/* v1.3: o dono da sala mudou no meio da partida (a partida passou para a nuvem, por exemplo): quem rodava a partida
+   vira jogador na hora e passa a mandar os comandos para o novo anfitrião. Antes ele continuava achando que era o
+   anfitrião, não mandava nada e o quadro do outro apagava os movimentos dele: o dono da sala ficava parado. */
+function nsDonoMudou(){
+  const r = NET49.room;
+  if (!NET49.playing || !NET49.host || !r || !r.host || r.host === NET49.id) return;
+  NET49.host = false;
+  NET49.localSlot = r.roster.indexOf(NET49.id);
+  NET49.pending = []; NET49.lastTick = -1; NET49.snapshotAt = performance.now(); NET49.inputs.clear();
+  Object.assign(NS, {t:0, tp:0, tDraw:0, base:null, tick:0, ofb:[0, 0], ofp:[0, 0], pDraw:null, bola:null, iniciado:false});
+  for (const q of RQ.jog){ q.remote = !!q.netId && q.netId !== NET49.id; q.nsA = null; }
+  P.humano = NET49.localSlot >= 0;
+  acc = 0; last = performance.now();
+  console.log('[sala] o anfitrião agora é outro: você manda os comandos para ele');
+}
 function nsDescarta(f){                                // pula o comando mais velho da fila (sem perder o chute que estava nele)
   const v = f.fila.shift(), p = f.fila[0]; if (!v) return;
   if (p && v.button > p.button) p.button = v.button;
@@ -16527,12 +16548,17 @@ net49Control = function(q){                            // (uma vez por passo da 
 /* ---- 4. o dono: o quadro da partida com os números arredondados ---- */
 const ns1 = v => Math.round(v*10)/10, ns3 = v => Math.round(v*1000)/1000;
 net49Publish = function(now, force){
-  if (!NET49.playing || !NET49.host || (!force && now - NET49.sentAt < 1000/30)) return; NET49.sentAt = now;
+  if (!NET49.playing || !NET49.host) return;
+  const pelaRede = force || now - NET49.sentAt >= 1000/30;                 // pelo servidor: 30 quadros por segundo
+  const direto = RQ.tick !== NS.p2Tick && p2Diretos() > 0 && p2Diretos() <= 3;   // v1.3: pela conexão direta, um quadro a cada passo (60 por segundo) até 3 jogadores
+  if (!pelaRede && !direto) return;
+  if (pelaRede) NET49.sentAt = now;
+  NS.p2Tick = RQ.tick;
   const data = {tick:RQ.tick, elapsed:ns3(RQ.t), state:RQ.estado, kickoff:RQ.saidaTime, score:RQ.placar.slice(),
     ball:[ns1(B.x), ns1(B.y), ns1(B.vx), ns1(B.vy), ns3(B.w)],
     players:RQ.jog.map(q => [ns1(q.x), ns1(q.y), ns1(q.vx), ns1(q.vy), q.ack49 || 0, q.chuteT || -99, ns3(q.fxT || -9)]), goal:NET49.goal || null};
   const str = JSON.stringify({type:'snapshot', round:NET49.room.round, data});
-  if (NET49.ws && NET49.ws.readyState === 1 && NET49.ws.bufferedAmount < 300000) NET49.ws.send(str);   // pelo servidor (quem não tem a conexão direta)
+  if (pelaRede && NET49.ws && NET49.ws.readyState === 1 && NET49.ws.bufferedAmount < 300000) NET49.ws.send(str);   // pelo servidor (quem não tem a conexão direta)
   p2Manda(str);                                        // v64: e direto para quem tem (P2P)
   if (RQ.estado === 'fim' && !NET49.finishSent){ NET49.finishSent = true; net49Send({type:'finish', round:NET49.room.round, score:RQ.placar.slice()}); }
 };
@@ -16626,7 +16652,7 @@ const nsBaseCtl = drawControls;
 drawControls = function(dt){ if (NET49.playing && NET49.localSlot < 0) return; return nsBaseCtl(dt); };   // (quem assiste não joga: sem analógico, PASSE e CHUTE na tela)
 const nsBaseBegin = net49Begin;
 net49Begin = function(room){
-  Object.assign(NS, {t:0, tp:0, tDraw:0, base:null, tick:0, ofb:[0, 0], ofp:[0, 0], pDraw:null, bola:null, iniciado:false});
+  Object.assign(NS, {t:0, tp:0, tDraw:0, base:null, tick:0, ofb:[0, 0], ofp:[0, 0], pDraw:null, bola:null, iniciado:false, p2Tick:-1});
   return nsBaseBegin(room);
 };
 
@@ -16710,6 +16736,7 @@ function p2DoJogador(de, x, txt){                      // (dono) chegou do jogad
   if (m.type !== 'in' || !Array.isArray(m.v) || !NET49.playing || !NET49.host || !NET49.room || NET49.room.roster.indexOf(de) < 0) return;
   for (const v of m.v.slice(-4)) if (Array.isArray(v)) net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], button:v[3]});   // (cada comando vem 3 vezes: se um pacote se perde, o próximo cobre)
 }
+function p2Diretos(){ let n = 0; for (const x of P2.pcs.values()) if (x.dc && x.dc.readyState === 'open') n++; return n; }   // (dono) quantos recebem direto
 function p2Manda(str){                                 // (dono) o quadro da partida direto para cada jogador
   for (const x of P2.pcs.values()) if (x.dc && x.dc.readyState === 'open' && x.dc.bufferedAmount < 65536) try { x.dc.send(str); } catch (_) {}
 }

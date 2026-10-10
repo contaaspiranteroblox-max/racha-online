@@ -23,6 +23,9 @@ e **salas personalizadas** (você é o dono e escolhe times, campo, modo, tempo 
 - **Salas abertas:** a lista mostra as salas esperando gente. Toque em **ENTRAR** (ou **ASSISTIR**).
   **JOGAR AGORA** cai direto na sala que está mais perto de começar; se não tiver nenhuma, abre uma sala aberta
   com as suas regras para os outros entrarem.
+- **Salas oficiais (RACHA1 · 2v2 e RACHA2 · 1v1):** o servidor cria e elas ficam sempre abertas, com regras fixas.
+  A partida começa sozinha quando os dois times têm gente; um dos jogadores roda a partida (o anfitrião) e,
+  se ele sair, a próxima recomeça em instantes com outro.
 - **Sala personalizada:** você vira o dono (a coroa) e escolhe embaixo **TIMES** (1v1 a 4v4), **CAMPO**,
   **MODO** (Futebol, Com curva, Vôlei, Americano, Basquete), **TEMPO** (primeiro a 3, 2, 3 ou 5 minutos) e **BOTS**.
   Na hora de criar você escolhe se ela é **ABERTA** (aparece na lista) ou **FECHADA** (só entra com o código ou o
@@ -83,6 +86,9 @@ O que saber do plano grátis do Render:
   mas **clubes, duelos e a galeria de campeões zeram**. Para guardar de vez, use um plano pago com disco ou um VPS.
 - O Render não tem servidor na América do Sul; **Virginia** é o mais perto. Com a **conexão direta** isso pesa
   pouco na partida (ela vai de celular para celular); o servidor fica só com a sala, o chat e o placar.
+- **Confira a região** em **Settings › Region** do serviço. Se aparecer **Oregon** (o padrão quando o serviço é
+  criado sem região), quem não pega a conexão direta joga com bem mais atraso. A região não muda depois de criada:
+  crie um serviço novo deste mesmo repositório escolhendo **Virginia (US East)** e use o endereço novo.
 
 ### Já tenho o jogo no GitHub Pages
 
@@ -147,6 +153,8 @@ No Render: **Environment › Add Environment Variable**.
 | `P2P`         | `0` desliga a conexão direta (tudo passa pelo servidor)                   | ligada          |
 | `ICE_SERVERS` | (avançado) servidores STUN/TURN da conexão direta, em JSON                | STUN do Google e da Cloudflare |
 | `MAX_POR_IP`  | conexões abertas do mesmo endereço (no 4G muita gente sai pelo mesmo IP)   | `150`           |
+| `OFICIAIS`    | `0` tira as salas oficiais RACHA1 e RACHA2                                 | ligadas         |
+| `NUVEM`       | `1` roda a partida no próprio servidor (precisa do pacote `jsdom` e de um servidor forte; no plano grátis deixa a partida lenta) | desligada |
 
 Outras regras (máximo de pessoas por sala, frases rápidas, tempos…) estão no começo do `server.js`, comentadas.
 
@@ -155,6 +163,8 @@ de internet um do outro. Se preferir que tudo passe pelo servidor, use `P2P=0`.
 
 ## Se algo não funcionar
 
+- **Atualize sempre o `server.js` e o `public/index.html` juntos.** Um servidor de uma versão com o jogo de outra
+  deixa a sala estranha (por exemplo, sem a conexão direta ou com o dono parado).
 - **"Não conectou"**: o servidor está ligado? Abra `SEU-ENDERECO/health` — tem que aparecer `"ok":true`.
 - **No Render, demorou para abrir**: ele estava dormindo; espere ~1 minuto e recarregue.
 - **Abri pelo GitHub Pages e as salas não aparecem**: falta dizer onde está o servidor (veja *Já tenho o jogo no GitHub Pages*).
