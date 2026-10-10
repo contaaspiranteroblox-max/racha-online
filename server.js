@@ -59,7 +59,7 @@ const FRASES_RAPIDAS = ['Bora jogar!', 'Tô pronto!', 'Boa sorte!', 'Começa aí
 /* =====================================================================================
    Banco de dados simples (um arquivo JSON): jogadores, clubes, duelos e campeões
    ===================================================================================== */
-const db = {users:{}, clubs:{}, duels:{}, champions:[]};
+const db = {users:{}, clubs:{}, duels:{}, champions:[], rk:{}};
 const usersById = new Map();
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 function dbLoad(){
@@ -385,7 +385,7 @@ function saiDaSala(c, motivo){
 }
 
 function comecaPartida(r){
-  r.state = 'playing'; r.round++; r.lastSnap = Date.now();
+  r.state = 'playing'; r.round++; r.lastSnap = Date.now(); r.placaK = ''; r.rkMatch = null;
   for (const m of r.members){ m.ready = false; m.rematch = false; }
   const s = JSON.stringify({type:'start', room:salaView(r)});
   for (const m of r.members) sendRaw(m, s);
@@ -456,6 +456,38 @@ function copaWO(r, id){                                // alguém saiu no meio d
 }
 
 /* ---- o fim da partida: placar, duelos 1v1 e pontos dos clubes ---- */
+/* ---- v67: ARTILHEIROS ONLINE — gols, assistências e craque do jogo só contra jogadores reais ---- */
+function rkNovoGol(r, goal){                             // um gol novo na sala (o servidor viu no estado do anfitrião)
+  if (!goal || goal.k === r.golK) return;
+  r.golK = goal.k;
+  const realPvp = [0, 1].every(t => r.members.some(m => m.user && m.slot >= 0 && Math.floor(m.slot / r.n) === t));
+  if (!realPvp) return;                                  // (só conta se os DOIS times têm gente de verdade)
+  r.rkMatch = r.rkMatch || {};
+  const marca = (id, pts) => {
+    if (id == null) return;
+    const m = r.members.find(x => x.id === id && x.user); if (!m) return;
+    const u = m.user, e = db.rk[u.id] || (db.rk[u.id] = {nome:u.name, g:0, a:0, c:0, ts:0});
+    e.nome = m.name || u.name;
+    if (pts === 1) e.g++; else e.a++;
+    e.ts = Date.now();
+    const mm = r.rkMatch[u.id] || (r.rkMatch[u.id] = {nome:e.nome, g:0, a:0});
+    mm.nome = e.nome; if (pts === 1) mm.g++; else mm.a++;
+    dbSave();
+  };
+  marca(goal.author, 1);
+  if (goal.assist != null) marca(goal.assist, 2);
+}
+function rkCraque(r){                                    // o craque da partida: mais gols + assistências (só gente de verdade)
+  if (!r.rkMatch) return;
+  const realPvp = [0, 1].every(t => r.members.some(m => m.user && m.slot >= 0 && Math.floor(m.slot / r.n) === t));
+  let melhor = null, pts = 0;
+  if (realPvp){ for (const [uid, m] of Object.entries(r.rkMatch)){ const p = m.g + m.a; if (p > pts){ pts = p; melhor = [uid, m]; } } }
+  if (melhor){
+    const e = db.rk[melhor[0]]; if (e){ e.c++; e.ts = Date.now(); dbSave(); aviso(r, '⭐ CRAQUE DO JOGO: ' + melhor[1].nome + '!'); }
+  }
+  r.rkMatch = null;
+}
+
 function registraResultado(r, score, winner){
   const ids = r.roster, humanos = id => r.members.find(m => m.id === id && m.user);
   // duelo 1v1 entre duas pessoas
@@ -496,6 +528,7 @@ function registraResultado(r, score, winner){
       copaAvanca(r);
     }
   }
+  rkCraque(r);
   for (const m of r.members) if (m.slot >= 0) mandaSocial(m);
 }
 
@@ -704,7 +737,14 @@ const HANDLERS = {
     const r = c.room; if (!r || r.host !== c.id || r.state !== 'playing' || m.round !== r.round) return;
     if (!permite(c, 'snap', 70, 90)) return;
     r.lastSnap = Date.now();
-    const d = m.data; if (d && Array.isArray(d.score)) r.score = d.score.slice(0, 2);
+    const d = m.data;
+    if (d){
+      if (Array.isArray(d.score)){
+        const placa = d.score.join('-');
+        if (d.goal && placa !== (r.placaK || '')){ r.placaK = placa; rkNovoGol(r, Object.assign({k: placa}, d.goal)); }   // um gol novo = um registro
+        r.score = d.score.slice(0, 2);
+      }
+    }
     for (const x of r.members) if (x !== c && !x.p2p && x.ws.buffered < 384*1024) sendRaw(x, txt);   // (quem está com a internet lenta pula um quadro; quem tem a conexão direta já recebe do dono)
   },
   input(c, m){
@@ -876,6 +916,11 @@ function carrega(file){
 }
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
+  if (url.pathname === '/api/ranking'){
+    const top = k => Object.entries(db.rk).map(([uid, e]) => ({uid, ...e})).filter(e => e[k] > 0).sort((a, b) => b[k] - a[k] || a.nome.localeCompare(b.nome)).slice(0, 20);
+    res.writeHead(200, {'Content-Type':'application/json', 'Cache-Control':'no-store', 'Access-Control-Allow-Origin':'*'});
+    return res.end(JSON.stringify({gols: top('g'), assists: top('a'), craques: top('c')}));
+  }
   if (url.pathname === '/health'){
     res.writeHead(200, {'Content-Type':'application/json', 'Cache-Control':'no-store'});
     return res.end(JSON.stringify({ok:true, server:SERVER_NAME, version:VERSAO, online:contaOnline(), rooms:rooms.size}));
