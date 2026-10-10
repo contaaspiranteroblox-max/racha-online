@@ -273,10 +273,19 @@ function poeNaVaga(r, m, slot){
 }
 function ehDono(c){ return c.room && (c.room.host === c.id || (c.room.admin && c.room.admin === c.id)); }   // v65: a anfitriã (nuvem) ou o dono-admin
 function nuvemFecha(r, motivo){
-  if (!r.bot) return;
+  if (!r.bot || r.bot.fechando) return;
+  r.bot.fechando = true;
   try { r.bot.dom.window.close(); } catch (_) {}
   console.log('[nuvem] instância da sala %s fechada (%s)', r.code, motivo || '');
   r.bot = null;
+}
+function nuvemProgramaFechamento(r){                     // só sobrou a nuvem: 60 s de tolerância para o dono voltar
+  if (!r.bot || r.bot.morreT) return;
+  r.bot.morreT = setTimeout(() => {
+    r.bot.morreT = null;
+    if (r.bot && !r.members.some(m => m !== r.bot.conn)) nuvemFecha(r, 'sala vazia (60 s)');
+  }, 60000);
+  console.log('[nuvem] sala %s esvaziou: 60 s para alguém voltar', r.code);
 }
 
 function trocaDono(r, novo){                           // a sala com o nome automático ("Sala de Fulano") acompanha o dono
@@ -309,7 +318,7 @@ function contaOnline(){ let n = 0; for (const c of conns) if (c.id) n++; return 
 
 function entraNaSala(c, r, assistir, slotPedido){
   if (r.bot && !r.bot.conn && ehLocal(c)){              // a instância da nuvem chegou: ela simula, o dono vira admin
-    r.bot.conn = c;
+    r.bot.conn = c; r.bot.renascendo = false;
     if (r.host !== c.id){ r.admin = r.host; r.host = c.id; }
     console.log('[nuvem] a sala %s agora roda no servidor', r.code);
   }
@@ -337,7 +346,7 @@ function saiDaSala(c, motivo){
   if (!r.members.length){ rooms.delete(r.code); listaMudou(); return; }
   if (eraDono) trocaDono(r, r.members.find(m => m.slot >= 0) || r.members[0]);
   if (r.admin === c.id) r.admin = null;                 // v65: o admin saiu, a nuvem segue no comando
-  if (r.bot && !r.members.some(m => m !== r.bot.conn)) nuvemFecha(r, 'sala vazia');   // só sobrou a nuvem: fecha
+  if (r.bot && !r.members.some(m => m !== r.bot.conn)) nuvemProgramaFechamento(r);   // só sobrou a nuvem: 60 s de tolerância
   if (r.tournament) copaWO(r, c.id);
   aviso(r, c.name + (motivo === 'removido' ? ' foi removido da sala' : ' saiu da sala') + (eraDono ? ' · ' + nomeDe(r, r.host) + ' agora é o dono' : ''));
   if (r.state === 'playing'){
@@ -852,6 +861,22 @@ server.on('upgrade', (req, socket, head) => {
   onConexao(ws);
   if (head && head.length) ws.feed(head);
 });
+
+/* ---- v65: a vigilância da nuvem — a instância travou? renasce e a partida continua ---- */
+setInterval(() => {
+  if (!abreNuvem) return;
+  const agora = Date.now();
+  for (const r of rooms.values()){
+    if (!r.bot || r.bot.fechando) continue;
+    if (r.bot.morreT && r.members.some(m => m !== r.bot.conn)){ clearTimeout(r.bot.morreT); r.bot.morreT = null; console.log('[nuvem] alguém voltou para a sala %s: fechamento cancelado', r.code); }
+    if (r.state === 'playing' && agora - r.lastSnap > 8000 && !r.bot.renascendo){
+      console.log('[nuvem] a instância da sala %s parou de responder: renascendo', r.code);
+      r.bot.renascendo = true;
+      try { r.bot.dom.window.close(); } catch (_) {}
+      try { r.bot = abreNuvem(r.code); r.bot.desde = agora; } catch (e) { console.log('[nuvem] falha ao renascer na sala %s: %s', r.code, e.message); r.bot = null; }
+    }
+  }
+}, 5000);
 
 /* ---- de tempos em tempos: conexões mortas, partidas paradas ---- */
 setInterval(() => {
