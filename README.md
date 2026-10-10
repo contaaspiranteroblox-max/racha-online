@@ -14,6 +14,7 @@ e **salas personalizadas** (você é o dono e escolhe times, campo, modo, tempo 
 ├── package.json           para a hospedagem saber rodar (npm start)
 ├── render.yaml            a receita do Render (é só escolher o repositório)
 ├── Dockerfile             para hospedagens com Docker ou um VPS
+├── instalar.sh            põe o jogo num VPS Ubuntu com um comando só (passo 4)
 └── INICIAR-NO-WINDOWS.bat dois cliques para testar no seu PC
 ```
 
@@ -119,31 +120,29 @@ ou cada jogador pôr o endereço em **Ajustes › Avançado › Servidor do jogo
 
 ## 4. Melhor ping: um VPS no Brasil (opcional)
 
-Qualquer VPS com data center em **São Paulo** serve (Ubuntu, por exemplo):
+Qualquer VPS com **Ubuntu 22.04 ou 24.04** e data center em **São Paulo** serve (1 GB de memória basta).
+Entre nele como `root` (no computador: `ssh root@IP-DO-VPS`; **no celular: app Termius**, com o IP, o usuário
+`root` e a chave do servidor) e cole:
 
 ```bash
-# instalar o Node.js 22
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# copiar esta pasta para o servidor (ex.: /opt/racha) e deixar rodando sempre
-sudo npm install -g pm2
-cd /opt/racha
-SERVER_NAME="South America" pm2 start server.js --name racha
-pm2 save && pm2 startup
+curl -fsSL https://raw.githubusercontent.com/contaaspiranteroblox-max/racha-online/main/instalar.sh | bash
 ```
 
-O jogo fica em `http://IP-DO-VPS:8080` (libere a porta 8080 no firewall do provedor).
-Para ter **domínio com https** (recomendado), instale o **Caddy** (<https://caddyserver.com/docs/install>)
-na frente — ele cuida do certificado e já repassa as salas (WebSocket). No `/etc/caddy/Caddyfile`:
+Em uns 3 minutos ele instala tudo e mostra o **link do jogo**, tipo `https://94-141-97-155.sslip.io`
+(com cadeado e sem precisar comprar domínio: o [sslip.io](https://sslip.io) aponta esse nome para o IP do VPS).
+O que o `instalar.sh` faz:
 
-```
-meuracha.com.br {
-    reverse_proxy localhost:8080
-}
-```
+- instala o **Node.js**, o **git** e o **Caddy** (o Caddy pega o cadeado https sozinho e repassa as salas);
+- baixa o jogo em `/opt/racha` e deixa o servidor **sempre ligado** (volta sozinho se cair ou se o VPS reiniciar);
+- guarda clubes, duelos e campeões em `/var/lib/racha` (não somem ao atualizar);
+- libera as portas 80 e 443 no firewall do Ubuntu, se ele estiver ligado.
 
-Depois: `sudo systemctl reload caddy`. O jogo fica em `https://meuracha.com.br`.
+Para **atualizar** o jogo depois: entre no VPS e rode `atualizar-racha`.
+
+Tem domínio próprio? Aponte o domínio para o IP do VPS e rode
+`curl -fsSL …/instalar.sh | DOMINIO=meuracha.com.br bash` (fica guardado para as próximas atualizações).
+Se o link não abrir, veja se o painel do provedor tem um firewall bloqueando as portas **80** e **443**.
+O que o servidor do jogo está dizendo: `journalctl -u racha -n 50 --no-pager`.
 
 ## Ajustes do servidor (opcionais)
 
