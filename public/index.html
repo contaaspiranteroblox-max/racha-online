@@ -1988,6 +1988,18 @@
   @keyframes slDig{ 0%, 20%{ opacity:.15; } 50%{ opacity:1; } 100%{ opacity:.15; } }
   #lb .sl-card{ overflow:visible; }
 
+#lb .rko-corpo{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; }
+#lb .rko-col h3{ margin:0 0 8px; font-size:19px; color:var(--amarelo, #ffd23f); letter-spacing:.6px; }
+#lb .rko-lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+#lb .rko-lista li{ display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:12px; background:rgba(255,255,255,.06); }
+#lb .rko-lista li.um{ background:rgba(255,210,63,.22); box-shadow:inset 0 0 0 2px #ffd23f; }
+#lb .rko-lista li.dois{ background:rgba(255,255,255,.1); }
+#lb .rko-pos{ flex:none; width:22px; text-align:center; font-size:15px; color:var(--sub, #9fb0da); }
+#lb .rko-nome{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
+#lb .rko-num{ flex:none; font-size:17px; color:var(--amarelo, #ffd23f); }
+#lb .rko-vazio{ padding:14px; text-align:center; color:var(--sub, #9fb0da); font-family:system-ui,"Segoe UI",Roboto,sans-serif; font-size:14px; }
+@media (max-width:760px){ #lb .rko-corpo{ grid-template-columns:1fr; } }
+#lb .rko-nota{ margin-top:12px; }
 </style>
 </head>
 <body>
@@ -2159,7 +2171,8 @@
       <button type="button" class="nv-item" data-tela="treino"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="8.6" width="3.2" height="6.8" rx="1" fill="currentColor"/><rect x="4.4" y="6.2" width="3.4" height="11.6" rx="1.2" fill="currentColor"/><rect x="16.2" y="6.2" width="3.4" height="11.6" rx="1.2" fill="currentColor"/><rect x="19.2" y="8.6" width="3.2" height="6.8" rx="1" fill="currentColor"/><rect x="7.6" y="10.8" width="8.8" height="2.4" rx="1" fill="currentColor"/></svg></i><span>TREINO</span></button>
       <button type="button" class="nv-item" data-tela="vestiario"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 3.2L3 6.2l2.1 4.6 2.2-1V21h9.4V9.8l2.2 1L21 6.2l-5.6-3a3.6 3.6 0 0 1-6.8 0z" fill="currentColor"/><path d="M8.6 3.2a3.6 3.6 0 0 0 6.8 0" fill="none" stroke="#1d1f24" stroke-width="1.4"/></svg></i><span>VESTIÁRIO</span><b class="hm-ponto" id="lb-ponto-skins" hidden></b></button>
       <button type="button" class="nv-item" data-tela="galera"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.6" fill="currentColor"/><path d="M1.8 20c0-4.4 3-6.9 6.7-6.9s6.7 2.5 6.7 6.9z" fill="currentColor"/><circle cx="16.6" cy="8.6" r="3" fill="currentColor" opacity=".75"/><path d="M15.6 13.4c3.8 0 6.6 2.2 6.6 6.6h-5.4c0-2.7-.4-4.9-1.9-6.4z" fill="currentColor" opacity=".75"/></svg></i><span>GALERA</span><b class="hm-ponto" id="lb-ponto-amigos" hidden></b></button>
-      <button type="button" class="nv-item" data-tela="perfil"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2" fill="currentColor"/><path d="M3.4 20.6c0-4.9 3.9-7.6 8.6-7.6s8.6 2.7 8.6 7.6z" fill="currentColor"/></svg></i><span>PERFIL</span></button>
+            <button type="button" class="nv-item" data-tela="rkonline"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11v4.5a5.5 5.5 0 0 1-11 0z" fill="currentColor"/><path d="M6.5 4H4a1 1 0 0 0-1 1c0 2.8 2 5 4.5 5M17.5 4H20a1 1 0 0 1 1 1c0 2.8-2 5-4.5 5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 12.5h2V16h3l-4 4.5-4-4.5h3z" fill="currentColor"/></svg></i><span>RANKING</span></button>
+<button type="button" class="nv-item" data-tela="perfil"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2" fill="currentColor"/><path d="M3.4 20.6c0-4.9 3.9-7.6 8.6-7.6s8.6 2.7 8.6 7.6z" fill="currentColor"/></svg></i><span>PERFIL</span></button>
     </nav>
 
     <p class="lb-rot">Gire o celular para jogar na horizontal</p>
@@ -2323,6 +2336,15 @@
       </div>
     </section>
 
+    <section class="lb-tela" id="tela-rkonline" hidden aria-label="Artilheiros online">
+      <header class="tl-cab"><button type="button" class="tl-voltar" aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2>ARTILHEIROS ONLINE</h2><span class="tl-info" id="rko-sub">só conta contra jogadores reais</span></header>
+      <div class="tl-corpo rko-corpo">
+        <div class="rko-col"><h3>⚽ GOLS</h3><ol id="rko-gols" class="rko-lista"></ol></div>
+        <div class="rko-col"><h3>🎯 ASSISTÊNCIAS</h3><ol id="rko-assists" class="rko-lista"></ol></div>
+        <div class="rko-col"><h3>⭐ CRAQUE DO JOGO</h3><ol id="rko-craques" class="rko-lista"></ol></div>
+      </div>
+      <p class="tl-nota rko-nota">Só valem gols e assistências em partidas online contra outros jogadores (contra bots não conta). O CRAQUE DO JOGO é para quem soma mais gols + assistências numa partida.</p>
+    </section>
     <section class="lb-tela" id="tela-replays" hidden aria-label="Replays">
       <header class="tl-cab"><button type="button" class="tl-voltar" aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2>REPLAYS</h2>
         <div class="tl-seg rp-abas" id="rp-abas"><button type="button" data-aba="salvos">SALVOS<b id="rp-n-salvos"></b></button><button type="button" data-aba="recentes">ÚLTIMOS GOLS<b id="rp-n-recentes"></b></button></div></header>
@@ -13364,6 +13386,7 @@ const TELAS = {                                        // v56: o lobby em 5 luga
   chat:{el:$('tela-chat'), render:() => brasilRender(), fecha:() => brasilFecha()},
   perfil:{el:$('tela-perfil'), render:() => renderPerfil()},
   ranking:{el:$('tela-ranking'), render:() => renderRanking()},
+  rkonline:{el:$('tela-rkonline'), render:() => renderRkOnline()},
   replays:{el:$('tela-replays'), render:() => renderReplays(), abre:() => { if (!RPL.aba) RPL.aba = rpLe().salvos.length ? 'salvos' : 'recentes'; }}
 };
 const GRUPOS = {                                     // as abas de cada lugar (v56)
@@ -13397,7 +13420,7 @@ function marcaAbas(){
 }
 function lbMarcaTela(){ LB.raiz.classList.toggle('pf-aberto', lobby.tela === 'perfil'); LB.raiz.classList.toggle('sk-aberto', lobby.tela === 'skins'); marcaAbas(); }   // v34: com o perfil aberto, o lobby atrás some
 function lbCalmo(){ LB.raiz.classList.toggle('calmo', !!G().plano || !opc.efx || !!CONTA.menosAnim); }   // v57: e Reduzir animações           // v34: Ultra leve ou sem efeitos = sem animação no perfil
-function abreTela(id, volta){                          // volta: a tela que o VOLTAR reabre (v34: Trocar botão, no perfil)
+function abreTela(id, volta){                         // volta: a tela que o VOLTAR reabre (v34: Trocar botão, no perfil)
   if (id === 'botoes' || id === 'vestiario') id = 'skins';   // v50: a tela do botão agora é a SKINS · v56: VESTIÁRIO abre em SKINS
   if (id === 'galera') id = 'amigos';
   if (id === 'clubes') id = 'clube'; if (id === 'eventos') id = 'copa';
@@ -13559,6 +13582,26 @@ function popModosNovos(){
     c.appendChild(a);
   });
   som.nivel();
+}
+
+/* v67: ARTILHEIROS ONLINE — o ranking do servidor: só gols/assistências contra jogadores reais + craque do jogo */
+function renderRkOnline(){
+  const preenche = (id, lista, un) => {
+    const box = document.getElementById(id); if (!box) return;
+    box.textContent = '';
+    if (!lista.length){ const d = nodo('li', 'rko-vazio', 'Ainda ninguém pontuou. Entre numa sala online e mostre seu futebol!'); box.appendChild(d); return; }
+    lista.forEach((e, i) => {
+      const li = nodo('li', i === 0 ? 'um' : i < 3 ? 'dois' : '');
+      li.append(nodo('span', 'rko-pos', ['🥇','🥈','🥉'][i] || String(i + 1)), nodo('span', 'rko-nome', e.nome || 'Jogador'), nodo('b', 'rko-num', String(e.n) + un));
+      box.appendChild(li);
+    });
+  };
+  preenche('rko-gols', [], ''); preenche('rko-assists', [], ''); preenche('rko-craques', [], '×');
+  fetch('/api/ranking').then(r => r.json()).then(j => {
+    preenche(g, (j.gols || []).map(e => ({nome: e.nome, n: e.g})), '');
+    preenche(a, (j.assists || []).map(e => ({nome: e.nome, n: e.a})), '');
+    preenche(c, (j.craques || []).map(e => ({nome: e.nome, n: e.c})), '×');
+  }).catch(() => {});
 }
 
 function renderRanking(){
