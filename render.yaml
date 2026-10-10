@@ -1,7 +1,14 @@
+# Render (render.com) — New › Blueprint › escolha o repositório com estes arquivos.
+# Virginia (Leste dos EUA) é a região do Render mais perto do Brasil.
 services:
   - type: web
     name: racha-online
     runtime: node
+    plan: free
+    region: virginia
     buildCommand: npm install
     startCommand: node server.js
-    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SERVER_NAME
+        value: South America
