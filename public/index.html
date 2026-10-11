@@ -2000,6 +2000,153 @@
 #lb .rko-vazio{ padding:14px; text-align:center; color:var(--sub, #9fb0da); font-family:system-ui,"Segoe UI",Roboto,sans-serif; font-size:14px; }
 @media (max-width:760px){ #lb .rko-corpo{ grid-template-columns:1fr; } }
 #lb .rko-nota{ margin-top:12px; }
+
+  /* ============================ v68: LOBBY NOVO (estilo do print do TG) ============================
+     Laranja de quadrinhos, menu à esquerda, cartões à direita, barra embaixo. Tudo em cima do palco. */
+  #lb-palco{ background:#ff7a1a url(lobby-fundo.jpg) center/cover no-repeat; }
+  #lb-fundo{ display:none; }                                  /* o cenário de canvas sai: o fundo agora é a imagem laranja */
+  #lb .lb-lugar{ display:none; }
+  #lb .lob-podio{ display:none; }                             /* a luz no chão já vem pintada no brilho da tampinha */
+
+  /* ---- topo: você, moedas, gemas e os ícones ---- */
+  #lb .lb-topo{ height:96px; gap:14px; }
+  #lb .tp-eu{ position:relative; display:flex; align-items:center; gap:14px; height:88px; padding:0 22px 0 12px; background:rgba(20,26,54,.94);
+    border:0; border-radius:18px; box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; }
+  #lb .hm-av{ width:66px; height:66px; border-radius:50%; overflow:hidden; border:4px solid #ffd23f; box-sizing:border-box; flex:none; background:#2a3160; }
+  #lb .hm-av canvas{ width:100%; height:100%; display:block; }
+  #lb .tp-eu-tx{ display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
+  #lb .tp-eu-tx b{ font:900 30px/1 "Lilita One",sans-serif; color:#fff; letter-spacing:.5px; }
+  #lb .tp-nv{ display:flex; align-items:center; gap:8px; }
+  #lb .tp-nv em{ font:900 19px/1 "Lilita One",sans-serif; color:#ffd23f; font-style:normal; }
+  #lb .hm-xp{ width:130px; height:14px; border-radius:7px; background:rgba(0,0,0,.5); overflow:hidden; }
+  #lb .hm-xp i{ display:block; height:100%; background:linear-gradient(#ffe066,#ffb21f); border-radius:7px; }
+  #lb .tp-dir{ margin-left:auto; display:flex; align-items:center; gap:12px; }
+  #lb .hm-grana{ display:flex; align-items:center; gap:10px; height:64px; padding:0 8px 0 14px; background:rgba(20,26,54,.94); border:0; border-radius:16px;
+    box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; }
+  #lb .hm-grana b{ font:900 26px/1 "Lilita One",sans-serif; color:#fff; }
+  #lb .hm-grana .ic-moeda, #lb .hm-grana .ic-gema{ width:34px; height:34px; }
+  #lb .gr-mais{ width:40px; height:40px; border-radius:10px; background:linear-gradient(#7ee787,#22c55e); color:#fff; font:900 30px/38px "Lilita One",sans-serif;
+    font-style:normal; text-align:center; box-shadow:0 3px 0 rgba(0,0,0,.35); text-shadow:0 2px 0 rgba(0,0,0,.25); }
+  #lb .tp-ic{ position:relative; width:64px; height:64px; border:0; border-radius:14px; background:rgba(20,26,54,.94); color:#fff;
+    box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; display:grid; place-items:center; }
+  #lb .tp-ic svg{ width:34px; height:34px; }
+  #lb .tp-ic .hm-ponto{ position:absolute; right:-4px; top:-4px; width:22px; height:22px; border-radius:50%; background:#22c55e; border:3px solid rgba(20,26,54,.94); }
+
+  /* ---- menu da esquerda ---- */
+  #lb .lob-esq{ position:absolute; left:18px; top:128px; width:330px; display:flex; flex-direction:column; gap:14px; z-index:3; }
+  #lb .lob-esq-bt{ position:relative; display:flex; align-items:center; gap:14px; height:84px; padding:0 16px 0 12px; background:rgba(20,26,54,.94);
+    border:0; border-radius:16px; box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; text-align:left; }
+  #lb .lob-esq-bt:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  #lb .esq-ic{ width:58px; height:58px; border-radius:13px; display:grid; place-items:center; flex:none; box-shadow:inset 0 -4px 0 rgba(0,0,0,.25); }
+  #lb .esq-ic svg{ width:38px; height:38px; }
+  #lb .i-clube{ background:linear-gradient(#4a7dff,#2b50c8); }
+  #lb .i-skins{ background:linear-gradient(#e879f9,#c026d3); }
+  #lb .i-treino{ background:linear-gradient(#fbbf24,#f59e0b); }
+  #lb .i-loja{ background:linear-gradient(#facc15,#eab308); }
+  #lb .i-comu{ background:linear-gradient(#2dd4bf,#0d9488); }
+  #lb .lob-esq-bt > span{ font:900 27px/1 "Lilita One",sans-serif; color:#fff; letter-spacing:.5px; }
+  #lb .esq-seta{ margin-left:auto; font:900 38px/1 "Lilita One",sans-serif; color:#8b93b8; font-style:normal; }
+  #lb .esq-badge{ position:absolute; left:58px; top:-7px; min-width:34px; height:34px; padding:0 9px; box-sizing:border-box; border-radius:17px; background:#ef4444;
+    color:#fff; font:900 21px/30px "Lilita One",sans-serif; text-align:center; border:3px solid rgba(20,26,54,.94); z-index:2; }
+  #lb .esq-ponto{ position:absolute; left:60px; top:-5px; width:24px; height:24px; border-radius:50%; background:#ef4444; border:3px solid rgba(20,26,54,.94); z-index:2; }
+  #lb .esq-ponto::after{ content:'!'; position:absolute; inset:0; font:900 16px/20px "Lilita One",sans-serif; color:#fff; text-align:center; }
+
+  /* ---- o meio: esconde o nome e a skin (o nome está no topo); a tampinha fica limpa ---- */
+  #lb:not(.retrato) .hm-placa, #lb:not(.retrato) .hm-skin{ display:none; }
+
+  /* ---- cartões da direita ---- */
+  #lb .lob-dir{ position:absolute; right:18px; top:128px; width:440px; display:flex; flex-direction:column; gap:14px; z-index:3; }
+  #lb .lob-card{ position:relative; display:flex; align-items:center; gap:16px; min-height:112px; padding:12px 16px; background:rgba(20,26,54,.94);
+    border:0; border-radius:18px; box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; text-align:left; }
+  #lb .lob-card:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  #lb .lc-ic{ width:74px; height:74px; border-radius:15px; display:grid; place-items:center; flex:none; box-shadow:inset 0 -4px 0 rgba(0,0,0,.25); }
+  #lb .lc-ic svg{ width:46px; height:46px; }
+  #lb .i-passe{ background:linear-gradient(#6366f1,#4338ca); }
+  #lb .i-salas{ background:linear-gradient(#4a7dff,#2b50c8); }
+  #lb .lc-ins{ width:80px; height:80px; flex:none; display:grid; place-items:center; }
+  #lb .lc-ins svg{ width:80px; height:80px; }
+  #lb .lc-tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+  #lb .lc-tx > b{ font:900 28px/1 "Lilita One",sans-serif; color:#fff; letter-spacing:.5px; }
+  #lb .lc-tx > small{ font:900 19px/1.1 "Lilita One",sans-serif; color:#ffd23f; }
+  #lb .lob-salas .lc-tx > small{ color:#8b93b8; }
+  #lb .lc-breve{ align-self:flex-start; margin-top:3px; }
+  #lb .lc-bar{ position:relative; display:block; height:26px; border-radius:13px; background:rgba(0,0,0,.5); overflow:hidden; margin-top:4px; }
+  #lb .lc-bar i{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(#ffe066,#ffb21f); border-radius:13px; }
+  #lb .lc-bar b{ position:absolute; right:10px; top:0; bottom:0; font:900 17px/26px "Lilita One",sans-serif; color:#fff; text-shadow:0 1px 0 rgba(0,0,0,.5); }
+
+  /* ---- o JOGAR amarelo ---- */
+  #lb .lob-jogarbox{ display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+  #lb .lb-jogar{ width:100%; height:168px; border:0; border-radius:22px; background:linear-gradient(#ffe066,#ffb21f); color:#4a2e00;
+    box-shadow:0 8px 0 #b87400, 0 12px 22px rgba(0,0,0,.35); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; }
+  #lb .lb-jogar:active{ transform:translateY(5px); box-shadow:0 3px 0 #b87400; }
+  #lb .lb-jogar-tit{ font:900 76px/1 "Lilita One",sans-serif; letter-spacing:2px; color:#3a2600; text-shadow:0 3px 0 rgba(255,255,255,.35); }
+  #lb .lb-jogar-sub{ font:900 21px/1.15 "Lilita One",sans-serif; color:#7a4d00; white-space:pre-line; text-align:center; }
+  #lb .lb-trocar{ align-self:center; background:none; border:0; color:rgba(255,255,255,.85); font:900 20px/1.4 "Lilita One",sans-serif;
+    text-decoration:underline; cursor:pointer; text-shadow:0 2px 0 rgba(0,0,0,.3); }
+
+  /* ---- a barra de baixo: DESAFIOS · chat · GALERA ---- */
+  #lb .lb-nav.lob-base{ position:absolute; left:18px; right:18px; bottom:14px; height:104px; display:flex; align-items:stretch; gap:16px; z-index:3; padding:0; }
+  #lb .lob-desafios{ flex:0 0 400px; display:flex; align-items:center; gap:14px; padding:0 18px 0 12px; background:rgba(20,26,54,.94); border:0; border-radius:18px;
+    box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; text-align:left; }
+  #lb .dz-ic{ width:64px; height:64px; border-radius:14px; background:linear-gradient(#818cf8,#4f46e5); display:grid; place-items:center; flex:none; box-shadow:inset 0 -4px 0 rgba(0,0,0,.25); }
+  #lb .dz-ic svg{ width:42px; height:42px; }
+  #lb .dz-tx{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+  #lb .dz-tx > b{ font:900 24px/1 "Lilita One",sans-serif; color:#fff; }
+  #lb .dz-tx .mi-tx{ font:700 17px/1.1 "Lilita One",sans-serif; color:#8b93b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #lb .lob-desafios .mi-barra{ width:110px; height:20px; border-radius:10px; background:rgba(0,0,0,.5); overflow:hidden; flex:none; margin-left:auto; }
+  #lb .lob-desafios .mi-barra i{ display:block; height:100%; background:linear-gradient(#ffe066,#ffb21f); border-radius:10px; }
+  #lb .lob-desafios .mi-n{ font:900 22px/1 "Lilita One",sans-serif; color:#fff; flex:none; }
+  #lb .lob-desafios .mi-premio{ display:flex; align-items:center; gap:6px; flex:none; }
+  #lb .lob-desafios .mi-premio .ic-moeda{ width:26px; height:26px; }
+  #lb .lob-desafios .mi-premio b{ font:900 20px/1 "Lilita One",sans-serif; color:#ffd23f; }
+  #lb .lob-desafios.pronta{ outline:4px solid #ffd23f; }
+  #lb .lob-galera{ flex:0 0 470px; margin-left:auto; display:flex; align-items:center; gap:12px; padding:0 16px; background:rgba(20,26,54,.94); border:0;
+    border-radius:18px; box-shadow:0 5px 0 rgba(0,0,0,.4); cursor:pointer; }
+  #lb .ga-on{ width:20px; height:20px; border-radius:50%; background:#22c55e; flex:none; box-shadow:0 0 0 4px rgba(34,197,94,.25); }
+  #lb .ga-tx{ font:900 23px/1 "Lilita One",sans-serif; color:#fff; white-space:nowrap; }
+  #lb .ga-tx b{ color:#fff; }
+  #lb .ga-avs{ display:flex; align-items:center; margin-left:auto; padding-left:8px; }
+  #lb .ga-avs span{ width:52px; height:52px; border-radius:50%; background:#2a3160; border:3px solid rgba(20,26,54,.94); margin-left:-12px; display:grid; place-items:center;
+    font:900 22px/1 "Lilita One",sans-serif; color:#ffd23f; }
+  #lb .ga-avs span:first-child{ margin-left:0; }
+
+  /* a barra do chat no lugar do meio da barra de baixo */
+  .cb.cb-lobby{ bottom:22px; width:600px; height:88px; border-radius:18px; background:rgba(20,26,54,.94); border-bottom:5px solid rgba(0,0,0,.4); z-index:2; }
+  .cb.cb-lobby .cb-msg{ font-size:25px; }
+  .cb.cb-lobby .cb-balao{ right:-12px; top:-22px; }
+
+  /* telas mais estreitas: encolhe os lados para o meio caber */
+  #lb.estreito .lob-esq{ width:280px; } #lb.estreito .lob-esq-bt{ height:72px; } #lb.estreito .lob-esq-bt > span{ font-size:23px; }
+  #lb.estreito .esq-ic{ width:48px; height:48px; } #lb.estreito .esq-ic svg{ width:31px; height:31px; }
+  #lb.estreito .lob-dir{ width:380px; } #lb.estreito .lob-card{ min-height:96px; } #lb.estreito .lb-jogar{ height:140px; } #lb.estreito .lb-jogar-tit{ font-size:62px; }
+  #lb.estreito .lob-desafios{ flex-basis:340px; } #lb.estreito .lob-galera{ flex-basis:400px; }
+  #lb.estreito .cb.cb-lobby{ width:500px; }
+
+  /* ---- em pé (retrato): empilha tudo ---- */
+  #lb.retrato #lb-palco{ background-position:center top; background-size:auto 100%; }
+  #lb.retrato .lb-topo{ position:static; height:auto; min-height:96px; flex:none; flex-wrap:wrap; row-gap:10px; padding:6px 2px 0; }
+  #lb.retrato .lob-esq{ position:static; width:100%; margin-top:18px; }
+  #lb.retrato .lob-esq-bt{ height:76px; }
+  #lb.retrato .lb-lugar{ display:block; height:520px; }
+  #lb.retrato .hm-placa, #lb.retrato .hm-skin{ display:none; }
+  #lb.retrato .lob-dir{ position:static; width:100%; margin-top:18px; }
+  #lb.retrato .lb-jogar{ height:150px; }
+  #lb.retrato .lb-nav.lob-base{ position:static; height:auto; flex-wrap:wrap; margin-top:18px; }
+  #lb.retrato .lob-desafios{ flex:1 1 100%; height:96px; }
+  #lb.retrato .lob-galera{ flex:1 1 100%; height:96px; margin-left:0; }
+  #lb.retrato .cb.cb-lobby{ position:relative; left:auto; bottom:auto; transform:none; margin:14px auto 0; width:100%; }
+
+  /* v68: o .nv-item antigo (coluna, girado, flex:1) não vale para os botões do lobby novo */
+  #lb .lob-esq .lob-esq-bt, #lb .lob-dir .lob-card, #lb .lob-esq .lob-esq-bt:nth-child(odd), #lb .lob-esq .lob-esq-bt:nth-child(even){
+    flex:none; flex-direction:row; transform:none; }
+  #lb .lob-esq .lob-esq-bt:active{ transform:translateY(3px); }
+  #lb .lob-dir .lob-card:active{ transform:translateY(3px); }
+  #lb .lob-esq .lob-esq-bt i.esq-ic, #lb .lob-dir .lob-card i.lc-ic{ width:58px; height:58px; }
+  #lb .lob-esq .lob-esq-bt > span, #lb .lob-dir .lob-card .lc-tx > b{ font:900 27px/1 "Lilita One",sans-serif; color:#fff; letter-spacing:.5px; }
+  #lb.estreito .lob-esq .lob-esq-bt > span{ font-size:23px; }
+  #lb .lob-esq .lob-esq-bt i.esq-ic svg, #lb .lob-dir .lob-card i.lc-ic svg{ width:38px; height:38px; }
+  #lb.estreito .lob-esq .lob-esq-bt i.esq-ic{ width:48px; height:48px; }
+  #lb.estreito .lob-esq .lob-esq-bt i.esq-ic svg{ width:31px; height:31px; }
 </style>
 </head>
 <body>
@@ -2130,49 +2277,76 @@
   <div id="lb-palco">
     <canvas id="lb-brilho" aria-hidden="true"></canvas>
 
-    <!-- v56: o lobby em 5 lugares. Em cima: você, moedas e gemas, correio (só com carta), chat e ajustes.
-         No meio: a sua tampinha na quadra e o JOGAR grande com a última escolha. Embaixo: TREINO, VESTIÁRIO,
-         GALERA e PERFIL. A missão é a faixa fina perto do JOGAR. O que depende de online tem o selo EM BREVE. -->
+    <!-- v68: o lobby novo, no estilo do print do TG: em cima você, moedas, gemas e os ícones; à esquerda o menu
+         (CLUBE · SKINS · TREINAMENTO · LOJA · COMUNIDADE); no meio a sua tampinha com os raios; à direita o PASSE,
+         a RANQUEADA com o seu elo, as SALAS e o JOGAR amarelo; embaixo DESAFIOS, o chat e a GALERA online. -->
     <header class="lb-topo">
       <button type="button" class="tp-eu" id="lb-eu" aria-label="Abrir o seu perfil">
         <span class="hm-av" id="lb-eu-av"><canvas id="lb-eu-cv" aria-hidden="true"></canvas></span>
         <span class="tp-eu-tx"><b id="lb-eu-nome">JOGADOR</b><span class="tp-nv"><em id="lb-eu-nv">Nv. 1</em><span class="hm-xp"><i id="lb-eu-xp"></i></span></span></span>
       </button>
       <div class="tp-dir">
-        <button type="button" class="hm-grana" data-loja="1" aria-label="Moedas: abrir a loja"><i class="ic-moeda"></i><b class="n-moedas">0</b></button>
-        <button type="button" class="hm-grana" data-loja="1" aria-label="Gemas: abrir a loja"><i class="ic-gema"></i><b class="n-gemas">0</b></button>
-        <button type="button" class="tp-ic" id="lb-correio" aria-label="Correio" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M3.4 6.4l8.6 6.6 8.6-6.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg></button>
-        <button type="button" class="tp-ic" id="lb-chat" aria-label="Chat do Brasil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4.6h18v11.4H9.4L5 19.6v-3.6H3z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M7 9h10M7 12.4h6.4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><b class="tp-badge" id="lb-chat-n" hidden>0</b></button>
-        <button type="button" class="tp-ic" id="lb-ajustes" aria-label="Configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M13.3 2.5l.5 2.5c.6.15 1.2.4 1.7.7l2.1-1.4 1.6 1.6-1.4 2.1c.3.5.55 1.1.7 1.7l2.5.5v2.2l-2.5.5a7 7 0 0 1-.7 1.7l1.4 2.1-1.6 1.6-2.1-1.4a7 7 0 0 1-1.7.7l-.5 2.5h-2.2l-.5-2.5a7 7 0 0 1-1.7-.7l-2.1 1.4-1.6-1.6 1.4-2.1a7 7 0 0 1-.7-1.7l-2.5-.5v-2.2l2.5-.5c.15-.6.4-1.2.7-1.7L5.2 6l1.6-1.6 2.1 1.4c.5-.3 1.1-.55 1.7-.7l.5-2.5zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg></button>
+        <button type="button" class="hm-grana" data-loja="1" aria-label="Moedas: abrir a loja"><i class="ic-moeda"></i><b class="n-moedas">0</b><em class="gr-mais" aria-hidden="true">+</em></button>
+        <button type="button" class="hm-grana" data-loja="1" aria-label="Gemas: abrir a loja"><i class="ic-gema"></i><b class="n-gemas">0</b><em class="gr-mais" aria-hidden="true">+</em></button>
+        <button type="button" class="tp-ic" id="lob-amigos" aria-label="Galera: salas, clube e copa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.6" fill="currentColor"/><path d="M1.8 20c0-4.4 3-6.9 6.7-6.9s6.7 2.5 6.7 6.9z" fill="currentColor"/><circle cx="16.6" cy="8.6" r="3" fill="currentColor" opacity=".75"/><path d="M15.6 13.4c3.8 0 6.6 2.2 6.6 6.6h-5.4c0-2.7-.4-4.9-1.9-6.4z" fill="currentColor" opacity=".75"/></svg><b class="hm-ponto" id="lb-ponto-amigos" hidden></b></button>
+        <button type="button" class="tp-ic" id="lb-correio" aria-label="Correio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M3.4 6.4l8.6 6.6 8.6-6.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg></button>
+        <button type="button" class="tp-ic" id="lb-ajustes" aria-label="Configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M13.3 2.5l.5 2.5c.6.15 1.2.4 1.7.7l2.1-1.4 1.6 1.6-1.4 2.1c.3.5.55 1.1.7 1.7l2.5.5v2.2l-2.5.5a7 7 0 0 1-.7 1.7l1.4 2.1-1.6 1.6-2.1-1.4a7 7 0 0 1-1.7.7l-.5 2.5h-2.2l-.5-2.5a7 7 0 0 1-1.7-.7l-2.1 1.4-1.6-1.6 1.4-2.1a7 7 0 0 1-.7-1.7l-2.5-.5c.15-.6.4-1.2.7-1.7L5.2 6l1.6-1.6 2.1 1.4c.5-.3 1.1-.55 1.7-.7l.5-2.5zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg></button>
       </div>
     </header>
 
+    <nav class="lob-esq" aria-label="Menu">
+      <button type="button" class="nv-item lob-esq-bt" data-tela="clube"><i class="esq-ic i-clube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4l8 3v6.2c0 4.9-3.3 8.6-8 10.2-4.7-1.6-8-5.3-8-10.2V5.4z" fill="#fff"/><path d="M12 6.4l1.7 3.4 3.8.6-2.7 2.7.6 3.8L12 15.1l-3.4 1.8.6-3.8-2.7-2.7 3.8-.6z" fill="#2b50c8"/></svg></i><span>CLUBE</span><em class="esq-seta" aria-hidden="true">›</em></button>
+      <button type="button" class="nv-item lob-esq-bt" data-tela="skins"><i class="esq-ic i-skins"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 3.2L3 6.2l2.1 4.6 2.2-1V21h9.4V9.8l2.2 1L21 6.2l-5.6-3a3.6 3.6 0 0 1-6.8 0z" fill="#fff"/><path d="M8.6 3.2a3.6 3.6 0 0 0 6.8 0" fill="none" stroke="#c026d3" stroke-width="1.4"/></svg></i><span>SKINS</span><b class="hm-ponto esq-ponto" id="lb-ponto-skins" hidden></b><em class="esq-seta" aria-hidden="true">›</em></button>
+      <button type="button" class="nv-item lob-esq-bt" data-tela="treino"><i class="esq-ic i-treino"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l9 5.2v10.4l-9 5.2-9-5.2V7.8z" fill="#fff"/><path d="M8 13.6l2.8 2.8L16.4 10" fill="none" stroke="#f59e0b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span>TREINAMENTO</span><em class="esq-seta" aria-hidden="true">›</em></button>
+      <button type="button" class="nv-item lob-esq-bt" data-tela="loja"><i class="esq-ic i-loja"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16l-1.3 12.2a2 2 0 0 1-2 1.8H7.3a2 2 0 0 1-2-1.8z" fill="#fff"/><path d="M8.4 9.6V6.8a3.6 3.6 0 0 1 7.2 0v2.8" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="8.4" cy="9.8" r="1.3" fill="#eab308"/><circle cx="15.6" cy="9.8" r="1.3" fill="#eab308"/></svg></i><span>LOJA</span><em class="esq-seta" aria-hidden="true">›</em></button>
+      <button type="button" class="lob-esq-bt" id="lb-chat"><i class="esq-ic i-comu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3.4" fill="#fff"/><path d="M2.4 19.4c0-4.2 2.9-6.5 6.6-6.5s6.6 2.3 6.6 6.5z" fill="#fff"/><path d="M16.4 4.6h5.2v7.4h-2.2l-1.8 2.2v-2.2h-1.2z" fill="#fff" opacity=".85"/></svg></i><span>COMUNIDADE</span><b class="tp-badge esq-badge" id="lb-chat-n" hidden>0</b><em class="esq-seta" aria-hidden="true">›</em></button>
+    </nav>
+
     <div class="lb-lugar" id="lb-lugar" aria-hidden="true"></div>
+    <span class="lob-podio" aria-hidden="true"></span>
     <button type="button" class="lb-emblema" id="lb-emblema" aria-label="Sua tampinha: abrir as skins"></button>
     <button type="button" class="hm-placa" id="lb-placa" aria-label="Seu nome: abrir o perfil"><span id="lb-placa-nome">JOGADOR</span></button>
     <p class="hm-skin" id="lb-skin"><span id="lb-skin-nome"></span> · <b id="lb-skin-r"></b></p>
 
-    <div class="lb-joga">
-      <button type="button" class="bt bt-pri lb-jogar" id="lb-jogar" aria-label="Jogar">
-        <span class="lb-jogar-tit">JOGAR</span>
-        <small class="lb-jogar-sub" id="lb-rapido-sub">CASUAL · 2v2 · ARENA · NORMAL</small>
+    <aside class="lob-dir" aria-label="Jogar">
+      <button type="button" class="lob-card lob-passe" id="lob-passe">
+        <i class="lc-ic i-passe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.4A1.4 1.4 0 0 1 4.4 6h15.2A1.4 1.4 0 0 1 21 7.4v3a2.2 2.2 0 0 0 0 3.2v3a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 16.6v-3a2.2 2.2 0 0 0 0-3.2z" fill="#ffd23f"/><path d="M13 6v12" stroke="#b87400" stroke-width="1.6" stroke-dasharray="2.4 2.2"/><path d="M6.6 10.4l1 2 2.2.3-1.6 1.6.4 2.2-2-1-2 1 .4-2.2-1.6-1.6 2.2-.3z" fill="#b87400"/></svg></i>
+        <span class="lc-tx"><b>PASSE</b><small>TEMPORADA 1</small><span class="pop-tag lc-breve">EM BREVE</span></span>
+        <em class="esq-seta" aria-hidden="true">›</em>
       </button>
-      <button type="button" class="bt bt-txt lb-trocar" id="lb-modo">trocar</button>
-      <button type="button" class="mi-faixa" id="lb-missoes" aria-label="Missão: jogue 5 partidas">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.4l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6-5.1-2.8-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z" fill="currentColor"/></svg>
-        <span class="mi-tx">Jogue 5 partidas</span>
+      <button type="button" class="lob-card lob-rank" id="lob-rank">
+        <i class="lc-ins" id="lob-rq-ins" aria-hidden="true"></i>
+        <span class="lc-tx"><b>RANQUEADA</b><small id="lob-rq-nome">BRONZE I</small><span class="lc-bar" aria-hidden="true"><i id="lob-rq-barra"></i><b id="lob-rq-tx">0/100</b></span></span>
+        <em class="esq-seta" aria-hidden="true">›</em>
+      </button>
+      <button type="button" class="lob-card lob-salas nv-item" data-tela="amigos">
+        <i class="lc-ic i-salas"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.6" fill="#fff"/><path d="M1.8 20c0-4.4 3-6.9 6.7-6.9s6.7 2.5 6.7 6.9z" fill="#fff"/><circle cx="16.6" cy="8.6" r="3" fill="#fff" opacity=".75"/><path d="M15.6 13.4c3.8 0 6.6 2.2 6.6 6.6h-5.4c0-2.7-.4-4.9-1.9-6.4z" fill="#fff" opacity=".75"/></svg></i>
+        <span class="lc-tx"><b>SALAS</b><small>Públicas e privadas</small></span>
+        <em class="esq-seta" aria-hidden="true">›</em>
+      </button>
+      <div class="lob-jogarbox">
+        <button type="button" class="bt bt-pri lb-jogar" id="lb-jogar" aria-label="Jogar">
+          <span class="lb-jogar-tit">JOGAR</span>
+          <small class="lb-jogar-sub" id="lb-rapido-sub">CASUAL · 2v2 · ARENA</small>
+        </button>
+        <button type="button" class="bt bt-txt lb-trocar" id="lb-modo">trocar</button>
+      </div>
+    </aside>
+
+    <nav class="lb-nav lob-base" aria-label="Desafios, chat e galera">
+      <button type="button" class="mi-faixa lob-desafios" id="lb-missoes" aria-label="Desafios: jogue 5 partidas">
+        <i class="dz-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.4h8.4l3.2 3.2v14H7z" fill="#fff"/><path d="M15.4 3.4v3.2h3.2" fill="#c7d2fe"/><rect x="9.4" y="9" width="6.4" height="1.8" rx=".9" fill="#4f46e5"/><rect x="9.4" y="12.4" width="6.4" height="1.8" rx=".9" fill="#4f46e5"/><rect x="9.4" y="15.8" width="4.2" height="1.8" rx=".9" fill="#4f46e5"/><path d="M5.4 5.6v15h11" fill="none" stroke="#fff" stroke-width="1.6"/></svg></i>
+        <span class="dz-tx"><b>DESAFIOS</b><span class="mi-tx">Jogue 5 partidas</span></span>
         <span class="mi-barra" aria-hidden="true"><i id="lb-mi-barra"></i></span>
         <b class="mi-n" id="lb-mi-n">0/5</b>
         <span class="mi-premio"><i class="ic-moeda" aria-hidden="true"></i><b>500</b></span>
       </button>
-    </div>
-
-    <nav class="lb-nav" aria-label="Menu">
-      <button type="button" class="nv-item" data-tela="treino"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="8.6" width="3.2" height="6.8" rx="1" fill="currentColor"/><rect x="4.4" y="6.2" width="3.4" height="11.6" rx="1.2" fill="currentColor"/><rect x="16.2" y="6.2" width="3.4" height="11.6" rx="1.2" fill="currentColor"/><rect x="19.2" y="8.6" width="3.2" height="6.8" rx="1" fill="currentColor"/><rect x="7.6" y="10.8" width="8.8" height="2.4" rx="1" fill="currentColor"/></svg></i><span>TREINO</span></button>
-      <button type="button" class="nv-item" data-tela="vestiario"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 3.2L3 6.2l2.1 4.6 2.2-1V21h9.4V9.8l2.2 1L21 6.2l-5.6-3a3.6 3.6 0 0 1-6.8 0z" fill="currentColor"/><path d="M8.6 3.2a3.6 3.6 0 0 0 6.8 0" fill="none" stroke="#1d1f24" stroke-width="1.4"/></svg></i><span>VESTIÁRIO</span><b class="hm-ponto" id="lb-ponto-skins" hidden></b></button>
-      <button type="button" class="nv-item" data-tela="galera"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.6" fill="currentColor"/><path d="M1.8 20c0-4.4 3-6.9 6.7-6.9s6.7 2.5 6.7 6.9z" fill="currentColor"/><circle cx="16.6" cy="8.6" r="3" fill="currentColor" opacity=".75"/><path d="M15.6 13.4c3.8 0 6.6 2.2 6.6 6.6h-5.4c0-2.7-.4-4.9-1.9-6.4z" fill="currentColor" opacity=".75"/></svg></i><span>GALERA</span><b class="hm-ponto" id="lb-ponto-amigos" hidden></b></button>
-            <button type="button" class="nv-item" data-tela="rkonline"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11v4.5a5.5 5.5 0 0 1-11 0z" fill="currentColor"/><path d="M6.5 4H4a1 1 0 0 0-1 1c0 2.8 2 5 4.5 5M17.5 4H20a1 1 0 0 1 1 1c0 2.8-2 5-4.5 5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 12.5h2V16h3l-4 4.5-4-4.5h3z" fill="currentColor"/></svg></i><span>RANKING</span></button>
-<button type="button" class="nv-item" data-tela="perfil"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2" fill="currentColor"/><path d="M3.4 20.6c0-4.9 3.9-7.6 8.6-7.6s8.6 2.7 8.6 7.6z" fill="currentColor"/></svg></i><span>PERFIL</span></button>
+      <button type="button" class="lob-galera" id="lob-galera">
+        <span class="ga-on" aria-hidden="true"></span>
+        <span class="ga-tx"><b>GALERA</b>&nbsp;·&nbsp;<b id="lob-on-n">0</b>&nbsp;ONLINE</span>
+        <span class="ga-avs" id="lob-avs" aria-hidden="true"></span>
+        <em class="esq-seta" aria-hidden="true">›</em>
+      </button>
     </nav>
 
     <p class="lb-rot">Gire o celular para jogar na horizontal</p>
@@ -13321,7 +13495,7 @@ function lbLayout(){
     p.style.width = PALCO.w + 'px'; p.style.height = PALCO.h + 'px';
     const estreito = PALCO.w < 1640;
     LB.raiz.classList.toggle('estreito', estreito);
-    PALCO.cx = Math.round(Math.max(280, Math.min(430, PALCO.w*.27))); PALCO.cy = Math.round((112 + PALCO.h - 176)/2 - 8);   // v56: a tampinha à esquerda, o JOGAR no centro-direita
+    PALCO.cx = Math.round(PALCO.w/2); PALCO.cy = Math.round((112 + PALCO.h - 176)/2 - 8);   // v68: a tampinha no meio, os menus dos dois lados
     p.style.setProperty('--hm-cx', PALCO.cx + 'px');
     p.style.setProperty('--placa-y', (PALCO.cy + 190) + 'px'); p.style.setProperty('--skin-y', (PALCO.cy + 258) + 'px');
   } else {
@@ -16895,7 +17069,45 @@ if (onbPrecisa()) onbAbre();   // v57: a primeira vez (antes do presente)
 lbIniciar();
 setTimeout(slEntrarConvite, 400);   // v62: chegou por um link de convite
 requestAnimationFrame(frame);
+
+/* ============================ v68: LOBBY NOVO — os botões e os cartões vivos ============================ */
+(function(){
+  const $id = x => document.getElementById(x);
+  const liga = (el, fn) => { if (el) el.addEventListener('click', () => { som.clique(); fn(); }); };
+  liga($id('lob-amigos'), () => abreTela('amigos'));
+  liga($id('lob-galera'), () => abreTela('amigos'));
+  liga($id('lob-rank'), () => abreJogar('ranked'));
+  liga($id('lob-passe'), () => popEmBreve('PASSE · TEMPORADA 1', 'O passe de temporada está a caminho: jogue, suba de nível e ganhe moedas, gemas e discos exclusivos a cada faixa.'));
+
+  /* o cartão da RANQUEADA com o seu elo de verdade + a GALERA online + as carinhas de quem falou no chat */
+  function lobExtras(){
+    const e = rqElo(CONTA.rq.pts), ins = $id('lob-rq-ins');
+    if (ins){ if (ins.dataset.k !== e.nome){ ins.dataset.k = e.nome; ins.innerHTML = rqInsignia(e); } }
+    const nm = $id('lob-rq-nome'); if (nm && nm.textContent !== e.nome) nm.textContent = e.nome;
+    const bar = $id('lob-rq-barra'); if (bar) bar.style.width = (100*CLAMP01(e.pct)).toFixed(1) + '%';
+    const tx = $id('lob-rq-tx'); if (tx) tx.textContent = e.prox != null ? fmtNum(CONTA.rq.pts) + '/' + fmtNum(e.prox) : 'NO TOPO';
+    const on = $id('lob-on-n'); if (on) on.textContent = fmtNum(BRASIL.online || 0);
+    const avs = $id('lob-avs');
+    if (avs){
+      const nomes = [], vistos = new Set();
+      for (let k = BRASIL.msgs.length - 1; k >= 0 && nomes.length < 5; k--){
+        const m = BRASIL.msgs[k], n = (m && (m.nome || m.name) || '').trim();
+        if (!n || m.sys || vistos.has(n)) continue; vistos.add(n); nomes.push(n);
+      }
+      const chave = nomes.join('|');
+      if (avs.dataset.k !== chave){
+        avs.dataset.k = chave; avs.textContent = '';
+        for (const n of nomes) avs.appendChild(nodo('span', null, iniciais(n)));
+      }
+    }
+  }
+  const lobBaseRender = lbRender;
+  lbRender = function(){ lobBaseRender(); try { lobExtras(); } catch (err) { console.warn('lobExtras', err); } };
+  setInterval(() => { if (lobby.aberto && !lobby.tela) try { lobExtras(); } catch (_) {} }, 4000);   // online e as carinhas se atualizam sozinhos
 })();
+})();
+
+
 </script>
 </body>
 </html>
