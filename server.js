@@ -66,7 +66,7 @@ function dbLoad(){
   try {
     const o = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     if (o && typeof o === 'object'){
-      for (const k of ['users', 'clubs', 'duels']) if (o[k] && typeof o[k] === 'object') db[k] = o[k];
+      for (const k of ['users', 'clubs', 'duels', 'rk']) if (o[k] && typeof o[k] === 'object') db[k] = o[k];
       if (Array.isArray(o.champions)) db.champions = o.champions.slice(0, 40);
     }
   } catch (e) { if (e.code !== 'ENOENT') console.warn('[db] não deu para ler', DB_FILE, '-', e.message); }

@@ -13598,9 +13598,9 @@ function renderRkOnline(){
   };
   preenche('rko-gols', [], ''); preenche('rko-assists', [], ''); preenche('rko-craques', [], '×');
   fetch('/api/ranking').then(r => r.json()).then(j => {
-    preenche(g, (j.gols || []).map(e => ({nome: e.nome, n: e.g})), '');
-    preenche(a, (j.assists || []).map(e => ({nome: e.nome, n: e.a})), '');
-    preenche(c, (j.craques || []).map(e => ({nome: e.nome, n: e.c})), '×');
+    preenche('rko-gols', (j.gols || []).map(e => ({nome: e.nome, n: e.g})), '');
+    preenche('rko-assists', (j.assists || []).map(e => ({nome: e.nome, n: e.a})), '');
+    preenche('rko-craques', (j.craques || []).map(e => ({nome: e.nome, n: e.c})), '×');
   }).catch(() => {});
 }
 
