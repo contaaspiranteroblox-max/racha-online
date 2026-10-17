@@ -1,0 +1,86 @@
+
+1) cores por papel e contraste
+  OK      CRIAR SALA (abre o formulário) = amarelo, texto escuro
+  OK      CRIAR SALA do formulário = confirmar (verde escuro, texto branco ≥ 4:1)
+  OK      CANCELAR = neutro, legível
+  OK      CRIAR GRÁTIS do clube = confirmar (verde escuro)
+  OK      ESCUDO = azul mais escuro (branco ≥ 4,5:1)
+  OK      AMIGOS (era a COMUNIDADE): ABRIR O CHAT = ação principal (amarelo)
+  OK      editor sem mudança: VOLTAR = neutro (grafite), não verde
+  OK      SAIR da sala = vermelho de verdade (era laranja)
+  OK      LOJA e DESAFIOS: o desenho da imagem no botão escuro, a palavra branca (v77)
+  OK      foco visível: o mesmo anel em todo o jogo
+
+2) nomes iguais entre o botão e o destino
+  OK      TAMPINHA → SUA TAMPINHA (era SKINS)
+  OK      TREINO → TREINO (v77: o mesmo nome do botão; era EXERCÍCIOS, depois TREINAMENTO)
+  OK      RANKING → RANKING (era TOP SEMANAL)
+  OK      CLUBE → a tela CLUBE (v77: só ela, sem abas de outras telas)
+  OK      SALAS → a tela SALAS (v77: só ela)
+  OK      AMIGOS → a tela AMIGOS (era a COMUNIDADE), no cartão AMIGOS (foco nele)
+  OK      nenhuma tela mostra SKINS, VESTIÁRIO ou Pré-projetado
+  OK      o editor diz MODELOS PRONTOS
+  OK      Ajustes com palavras simples (quadros por segundo, qualidade dos gráficos)
+  OK      Câmera: Suavizar movimento e "olha à frente" sem termo técnico
+  OK      uma só gema (sem o cristal rosa) e um documento com um head e um body
+  OK      a plataforma em pt-BR (era en)
+
+3) em campo: o contorno dos times, o VOCÊ e o símbolo no placar
+  OK      cada jogador ganha o contorno: cheio no time da casa, tracejado no visitante
+  OK      VOCÊ: a setinha sempre na partida e a palavra na saída de bola
+  OK      quem assiste não ganha o VOCÊ
+  OK      o placar mostra o mesmo símbolo (cheio e tracejado) — v80: no placar novo, do lado do TIME A e do TIME B
+  OK      o COM CURVA mostra a etiqueta dele na cor do modo (o futebol não precisa)
+
+4) a sala: o seu cartão diz VOCÊ e os cartões respondem ao teclado
+  OK      o seu cartão: VOCÊ escrito, papel de botão e Tab
+  OK      Enter no cartão abre o menu do árbitro (com o foco nele)
+  OK      Esc fecha o menu e o foco volta para o cartão
+  OK      Espaço numa vaga do time: o árbitro escolhe quem vai (sem precisar tocar)
+
+5) as janelas: foco, Tab, fundo inerte, Esc por camada e o foco de volta
+  OK      a janela abre com o foco dentro
+  OK      o fundo fica inerte (o lobby e o jogo); o aviso continua sendo lido
+  OK      Tab e Shift+Tab ficam dentro da janela
+  OK      Esc fecha; o foco volta ao botão que abriu e nada fica inerte
+  OK      a janela do clube (dentro da tela) é um diálogo com o foco dentro
+  OK      Esc fecha só a janela do clube (a tela fica) e o foco volta ao CRIAR CLUBE
+  OK      o segundo Esc fecha a tela e o foco volta ao CLUBE do lobby
+  OK      Ajustes: Esc fecha e o foco volta para a engrenagem
+  OK      editor: o primeiro Esc fecha o menu (a tela fica)
+  OK      as PATENTES aparecem por cima do JOGAR, com o foco dentro e o JOGAR inerte atrás (v79)
+  OK      Esc fecha só as PATENTES (o JOGAR continua) e o foco volta para o VER PATENTES
+  OK      o segundo Esc fecha o JOGAR
+  OK      na partida: Esc abre a pausa com o foco dentro
+  OK      Esc fecha a pausa e o jogo volta a responder
+
+6) abas e escolhas com estado
+  OK      as abas do perfil (v77) dizem qual está escolhida (aria-selected) e só ela entra no Tab
+  OK      End (e as setas) trocam de aba pelo teclado
+  OK      as abas dos replays dizem qual está ligada (aria-pressed)
+  OK      o treino escolhido tem aria-current
+  OK      a chave da música tem nome (era muda para o leitor de tela)
+  OK      nenhum erro de JavaScript
+
+7) Reduzir animações: o sistema manda até a pessoa escolher; vale na partida
+  OK      sistema com "reduzir movimento": o jogo já começa com Reduzir animações
+  OK      as transições dos menus assentam na hora
+  OK      na partida: sem confete e o cenário parado
+  OK      a pessoa desligou: vale a escolha dela (e fica salva)
+  OK      abrindo de novo: a escolha continua valendo mesmo com o sistema pedindo menos movimento
+  OK      com as animações ligadas o confete volta
+  OK      nenhum erro de JavaScript
+
+7b) a primeira vez (apresentação): o foco no PRÓXIMO, o Tab fica dentro, o Esc não pula
+  OK      a apresentação abre com o foco no PRÓXIMO (o Enter segue sem pular)
+  OK      o Tab fica na apresentação e o Esc não fecha (falta o nome e a tampinha)
+
+8) navegador que não deixa guardar nada: o aviso de progresso temporário
+  OK      sem armazenamento: o jogo avisa que o progresso vale só até fechar (e oferece exportar)
+  OK      e o jogo abre sem erro
+
+9) sem internet: o que o jogo pede de fora e se ele roda sem
+  OK      de fora, o jogo só pede as fontes (Google Fonts)
+  OK      sem internet o jogo abre e a partida roda (as letras caem nas fontes do sistema)
+
+Etapa 6 · polimento e acessibilidade: 64/64 verificações ok em 37.1 s

@@ -1,0 +1,211 @@
+
+· em pé (390x844, toque)
+  OK      em pé: GIRE O CELULAR cobre a tela inteira
+  OK      em pé: o foco fica nela e o jogo por baixo fica inerte
+  OK      em pé no lobby: sem a etiqueta antiga e sem pausar nada
+  OK      o Esc não fecha a tela de girar
+  OK      deitou: a tela some e o lobby volta (no modo em que tudo cabe)
+  OK      em pé no meio do treino: o jogo pausa e a tela avisa
+  OK      deitou de novo: a pausa continua aberta, com o foco no CONTINUAR
+  OK      nenhum erro de JavaScript
+  OK      no computador com a janela em pé: sem a tela de girar (o lobby em pé continua)
+
+· 800x336 (deitado)
+  OK      o lobby entra no modo em que tudo cabe (escala do palco 0.378, como na v69)
+  OK      o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v77; os dois com mais de 44 px de altura)
+  OK      lobby               cabe sem rolar
+  OK      perfil              cabe sem rolar
+  OK      perfil (v77): VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS, uma parte por vez, com a tampinha ao lado
+  OK      perfil-est          cabe sem rolar
+  OK      perfil-rec          cabe sem rolar
+  OK      perfil-partidas     cabe sem rolar
+  OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
+  OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.83)
+  OK      replays             cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
+  OK      treino              cabe sem rolar
+  OK      tampinha            cabe sem rolar
+  OK      tampinha-modelos    cabe sem rolar
+  OK      tampinha-inventario cabe sem rolar
+  OK      comunidade          cabe sem rolar
+  OK      salas               cabe sem rolar
+  OK      criar-sala          cabe sem rolar (encolheu: div.sx-form 0.97)
+  OK      clube               cabe sem rolar
+  OK      clube-criar         cabe sem rolar
+  OK      clube-pagina        cabe sem rolar
+  OK      copa                cabe sem rolar
+  OK      chat                cabe sem rolar
+  OK      sala                cabe sem rolar
+  OK      sala-ajustes        cabe sem rolar
+  OK      sala-bots           cabe sem rolar
+  OK      jogar-casual        cabe sem rolar
+  OK      jogar-liga          cabe sem rolar
+  OK      missoes             cabe sem rolar
+  OK      ajustes-audio       cabe sem rolar
+  OK      ajustes-visual      cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar
+  OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
+  OK      ajustes-camera      cabe sem rolar (encolheu: div.ajx-corpo 0.93)
+  OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
+  OK      ajustes-acess       cabe sem rolar
+  OK      ajustes-conta       cabe sem rolar (encolheu: div.ajx-corpo 0.82)
+  OK      primeira-vez        cabe sem rolar
+  OK      chat-painel         cabe sem rolar
+  OK      na partida: pausa          cabe sem rolar
+  OK      na partida: pausa-ajustes  cabe sem rolar (encolheu: div.ajx-corpo 0.93)
+  OK      na partida: editor         cabe sem rolar (encolheu: #hp 0.71)
+  OK      na partida: como-joga      cabe sem rolar (encolheu: div.tu-intro-cx 0.87)
+  OK      nenhum erro de JavaScript
+
+· 844x390 (deitado)
+  OK      o lobby entra no modo em que tudo cabe (escala do palco 0.439, como na v69)
+  OK      o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v77; os dois com mais de 44 px de altura)
+  OK      lobby               cabe sem rolar
+  OK      perfil              cabe sem rolar
+  OK      perfil (v77): VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS, uma parte por vez, com a tampinha ao lado
+  OK      perfil-est          cabe sem rolar
+  OK      perfil-rec          cabe sem rolar
+  OK      perfil-partidas     cabe sem rolar
+  OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
+  OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.81)
+  OK      replays             cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
+  OK      treino              cabe sem rolar
+  OK      tampinha            cabe sem rolar
+  OK      tampinha-modelos    cabe sem rolar
+  OK      tampinha-inventario cabe sem rolar
+  OK      comunidade          cabe sem rolar
+  OK      salas               cabe sem rolar
+  OK      criar-sala          cabe sem rolar (encolheu: div.sx-form 0.95)
+  OK      clube               cabe sem rolar
+  OK      clube-criar         cabe sem rolar
+  OK      clube-pagina        cabe sem rolar
+  OK      copa                cabe sem rolar
+  OK      chat                cabe sem rolar
+  OK      sala                cabe sem rolar
+  OK      sala-ajustes        cabe sem rolar
+  OK      sala-bots           cabe sem rolar
+  OK      jogar-casual        cabe sem rolar
+  OK      jogar-liga          cabe sem rolar
+  OK      missoes             cabe sem rolar
+  OK      ajustes-audio       cabe sem rolar
+  OK      ajustes-visual      cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar
+  OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
+  OK      ajustes-camera      cabe sem rolar
+  OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
+  OK      ajustes-acess       cabe sem rolar
+  OK      ajustes-conta       cabe sem rolar (encolheu: div.ajx-corpo 0.99)
+  OK      primeira-vez        cabe sem rolar
+  OK      chat-painel         cabe sem rolar
+  OK      na partida: pausa          cabe sem rolar
+  OK      na partida: pausa-ajustes  cabe sem rolar
+  OK      na partida: editor         cabe sem rolar (encolheu: #hp 0.83)
+  OK      na partida: como-joga      cabe sem rolar (encolheu: div.tu-intro-cx 0.97)
+  OK      nenhum erro de JavaScript
+
+· 740x360 (deitado)
+  OK      o lobby entra no modo em que tudo cabe (escala do palco 0.405, como na v69)
+  OK      o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v77; os dois com mais de 44 px de altura)
+  OK      lobby               cabe sem rolar
+  OK      perfil              cabe sem rolar
+  OK      perfil (v77): VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS, uma parte por vez, com a tampinha ao lado
+  OK      perfil-est          cabe sem rolar
+  OK      perfil-rec          cabe sem rolar
+  OK      perfil-partidas     cabe sem rolar
+  OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
+  OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.81)
+  OK      replays             cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
+  OK      treino              cabe sem rolar
+  OK      tampinha            cabe sem rolar
+  OK      tampinha-modelos    cabe sem rolar
+  OK      tampinha-inventario cabe sem rolar
+  OK      comunidade          cabe sem rolar
+  OK      salas               cabe sem rolar
+  OK      criar-sala          cabe sem rolar (encolheu: div.sx-form 0.90)
+  OK      clube               cabe sem rolar
+  OK      clube-criar         cabe sem rolar
+  OK      clube-pagina        cabe sem rolar
+  OK      copa                cabe sem rolar
+  OK      chat                cabe sem rolar
+  OK      sala                cabe sem rolar
+  OK      sala-ajustes        cabe sem rolar
+  OK      sala-bots           cabe sem rolar
+  OK      jogar-casual        cabe sem rolar
+  OK      jogar-liga          cabe sem rolar
+  OK      missoes             cabe sem rolar
+  OK      ajustes-audio       cabe sem rolar
+  OK      ajustes-visual      cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar
+  OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
+  OK      ajustes-camera      cabe sem rolar (encolheu: div.ajx-corpo 0.94)
+  OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
+  OK      ajustes-acess       cabe sem rolar
+  OK      ajustes-conta       cabe sem rolar (encolheu: div.ajx-corpo 0.90)
+  OK      primeira-vez        cabe sem rolar
+  OK      chat-painel         cabe sem rolar
+  OK      na partida: pausa          cabe sem rolar
+  OK      na partida: pausa-ajustes  cabe sem rolar (encolheu: div.ajx-corpo 0.94)
+  OK      na partida: editor         cabe sem rolar (encolheu: #hp 0.76)
+  OK      na partida: como-joga      cabe sem rolar (encolheu: div.tu-intro-cx 0.90)
+  OK      nenhum erro de JavaScript
+
+· 667x375 (deitado)
+  OK      o lobby entra no modo em que tudo cabe (escala do palco 0.422, como na v69)
+  OK      o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v77; os dois com mais de 44 px de altura)
+  OK      lobby               cabe sem rolar
+  OK      perfil              cabe sem rolar
+  OK      perfil (v77): VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS, uma parte por vez, com a tampinha ao lado
+  OK      perfil-est          cabe sem rolar
+  OK      perfil-rec          cabe sem rolar
+  OK      perfil-partidas     cabe sem rolar
+  OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
+  OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.81)
+  OK      replays             cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
+  OK      treino              cabe sem rolar
+  OK      tampinha            cabe sem rolar
+  OK      tampinha-modelos    cabe sem rolar
+  OK      tampinha-inventario cabe sem rolar
+  OK      comunidade          cabe sem rolar
+  OK      salas               cabe sem rolar
+  OK      criar-sala          cabe sem rolar (encolheu: div.sx-form 0.90)
+  OK      clube               cabe sem rolar
+  OK      clube-criar         cabe sem rolar
+  OK      clube-pagina        cabe sem rolar
+  OK      copa                cabe sem rolar
+  OK      chat                cabe sem rolar
+  OK      sala                cabe sem rolar
+  OK      sala-ajustes        cabe sem rolar
+  OK      sala-bots           cabe sem rolar
+  OK      jogar-casual        cabe sem rolar
+  OK      jogar-liga          cabe sem rolar
+  OK      missoes             cabe sem rolar
+  OK      ajustes-audio       cabe sem rolar
+  OK      ajustes-visual      cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar (encolheu: div.ajx-corpo 1.00)
+  OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
+  OK      ajustes-camera      cabe sem rolar (encolheu: div.ajx-corpo 0.92)
+  OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
+  OK      ajustes-acess       cabe sem rolar
+  OK      ajustes-conta       cabe sem rolar (encolheu: div.ajx-corpo 0.89)
+  OK      primeira-vez        cabe sem rolar
+  OK      chat-painel         cabe sem rolar
+  OK      na partida: pausa          cabe sem rolar
+  OK      na partida: pausa-ajustes  cabe sem rolar (encolheu: div.ajx-corpo 0.92)
+  OK      na partida: editor         cabe sem rolar (encolheu: #hp 0.80)
+  OK      na partida: como-joga      cabe sem rolar (encolheu: div.tu-intro-cx 0.93)
+  OK      nenhum erro de JavaScript
+
+· 800x336 com o Tamanho da interface em 130%
+  OK      em 130% as telas crescem e rolam (nada encolhe de volta)
+  OK      de volta em 100%: a loja cabe de novo
+
+· 1280x720 (computador)
+  OK      no computador também: o JOGAR e o MODO colado nele (v77)
+  OK      no computador o perfil também em partes (v77: VISÃO GERAL, ESTATÍSTICAS, CONQUISTAS e PARTIDAS) e nada encolhe
+  OK      no computador os Ajustes ficam como estavam (e o teclado aparece)
+  OK      nenhum erro de JavaScript
+
+v70.1 · celular: só na horizontal e tudo cabe na tela: 195/195 verificações ok em 108.3 s

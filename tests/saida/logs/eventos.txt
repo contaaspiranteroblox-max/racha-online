@@ -1,0 +1,21 @@
+
+1) contra os bots
+  OK      a apresentação dos times (VS) ainda não manda o começo
+  OK      saiu na apresentação: nem começo nem fim
+  OK      a bola rolou: um começo com o modo e o mapa (rqVsComeca duas vezes não repete)
+  OK      acabou: um fim com o placar (fechar a conta de novo não repete)
+  OK      JOGAR DE NOVO e desistir no meio: começo e fim (abandonada)
+  OK      saiu da partida por outro caminho (sem desistir): o fim vai como abandono
+
+2) a sala neste aparelho
+  OK      a partida da sala neste aparelho manda o começo (não é online)
+  OK      e o fim, uma vez
+
+3) a curva: o chute de quem joga de fora = o botão do anfitrião
+  OK      mesma carga e mesmo analógico: o mesmo efeito (B.cv) e a mesma duração (B.cvT)
+  OK      e a mesma força do chute
+  OK      o CHUTE comum de quem joga de fora sai reto (sem curva automática invisível)
+  OK      segurar a CURVA no comando carrega igual ao botão do anfitrião (30 passos)
+  OK      nenhum erro de JavaScript
+
+Etapa 5 · eventos uma vez por partida e a paridade da curva: 13/13 verificações ok em 5.5 s

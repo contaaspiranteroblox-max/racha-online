@@ -1,0 +1,37 @@
+regras                     rc=0       4s  FALHOU=0   Etapa 1 · regras e resultados: 56/56 verificações ok em 3.6 s
+controles                  rc=0       4s  FALHOU=0   Etapa 3 · controles da tela: 29/29 verificações ok em 3.2 s
+camera                     rc=0       5s  FALHOU=0   Etapa 2 · câmeras: 47/47 verificações ok em 5.1 s
+interface                  rc=0      73s  FALHOU=0   Etapa 3 · interface em tamanho real: 133/133 verificações ok em 72.5 s
+interface4                 rc=0      59s  FALHOU=0   Etapa 4 · as telas novas em tamanho real: 105/105 verificações ok em 59.3 s
+interface5                 rc=0      42s  FALHOU=0   Etapa 5 · as telas do clube e do online em tamanho real: 68/68 verificações ok em 42.1 s
+celular                    rc=0     109s  FALHOU=0   v70.1 · celular: só na horizontal e tudo cabe na tela: 195/195 verificações ok em 108.3 s
+enxuto                     rc=0      11s  FALHOU=0   v70.2 · enxuto: 2 modos, a Arena e o Estádio, a bola sem efeitos, o indicador desligado: 37/37 verificações ok em 11.5 s
+v71                        rc=0      84s  FALHOU=0   v71 · preto × branco e o lobby novo: 77/77 verificações ok em 83.8 s
+v73                        rc=0      10s  FALHOU=0   v73 · o TESTE saiu e o sensor ficou mais transparente: 16/16 verificações ok em 9.8 s
+v74                        rc=0      14s  FALHOU=0   v74 · o Estádio virou o society da imagem (no tamanho e com os gols do jogo): 33/33 verificações ok em 13.1 s
+v75                        rc=0      16s  FALHOU=0   v75 · o fundo do lobby é a imagem enviada: 29/29 verificações ok em 16.6 s
+v76                        rc=0      18s  FALHOU=0   v76 · a grama de fora escura, a calçada de Copacabana e as tampinhas animadas: 28/28 verificações ok em 17.7 s
+v77                        rc=0      39s  FALHOU=0   v77 · o lobby, o perfil, as telas e o mapa principal das imagens enviadas: 34/34 verificações ok em 38.5 s
+v78                        rc=0      40s  FALHOU=0   v78 · nada em cima da cabeça, os bots novos, o perfil mais claro e a tampinha maior no lobby: 38/38 verificações ok em 40.3 s
+v79                        rc=1      54s  FALHOU=1   playwright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading 'delta')
+v80                        rc=1      86s  FALHOU=4   v80 · laranja × roxo, a tampinha Listras, o placar com 3:00, a prorrogação, o GOOOL! e o treino: 75/79 verificações ok em 86.1 s
+v81                        rc=0      47s  FALHOU=0   v81 · o chat: a barra, o painel, os três pontinhos e a moderação: 64/64 verificações ok em 46.8 s
+v82                        rc=0      60s  FALHOU=0   v82 · as contas: 63/63 verificações ok em 59.8 s
+tutorial                   rc=0      28s  FALHOU=0   Etapa 4 · tutorial, Domínio, modos e indicadores: 26/26 verificações ok em 28.4 s
+perfil                     rc=0      17s  FALHOU=0   Etapa 4 · perfil, estatísticas, inventário e economia: 53/53 verificações ok em 17.0 s
+eventos                    rc=0       6s  FALHOU=0   Etapa 5 · eventos uma vez por partida e a paridade da curva: 13/13 verificações ok em 5.5 s
+polimento                  rc=0      37s  FALHOU=0   Etapa 6 · polimento e acessibilidade: 64/64 verificações ok em 37.1 s
+matriz                     rc=0      73s  FALHOU=0   Etapa 6 · matriz: 2 modos × 2 mapas × 1v1–4v4 e os 7 treinos: 12/12 verificações ok em 73.0 s
+online                     rc=1      47s  FALHOU=8   playwright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading '1')
+online--p2p                rc=1      47s  FALHOU=8   playwright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading '1')
+servidor_test              rc=1       0s  FALHOU=31  servidor da turma: 83 ok, 31 falharam
+plataforma_salas_test      rc=1      17s  FALHOU=2   TypeError: Cannot read properties of null (reading 'selo')
+contas_test                rc=0       0s  FALHOU=0   contas (regras): 33 ok, 0 falharam
+v83_partida_test           rc=0       0s  FALHOU=0   partida autoritativa (v83): 38 ok, 0 falharam
+v83_ws                     rc=0      20s  FALHOU=0   ws autoritativo (v83): 11 ok, 0 falharam
+v83_sala_test              rc=0       0s  FALHOU=0   motor das salas (v83): 60 ok, 0 falharam
+v83_salas_ws               rc=0     189s  FALHOU=0   salas 100% hospedadas (v83): 35 ok, 0 falharam
+guard                      rc=0       0s  FALHOU=0   guard (correção v83): 9 ok, 0 falharam
+v85_online                 rc=0      15s  FALHOU=0   v85 · o online de ponta a ponta com o jogo de verdade (v86: a mecânica clássica): 14/14 verificações ok em 14.9 s
+v85_chaves                 rc=0       7s  FALHOU=0   v85 · as chaves antigas do treino vão para as novas: 8/8 verificações ok em 6.6 s
+v86_chute                  rc=0       3s  FALHOU=0   v86 · a mecânica clássica e o chute mais forte: 18/18 verificações ok em 2.5 s

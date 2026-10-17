@@ -1,0 +1,144 @@
+
+0) v84: o login obrigatório (o padrão do servidor: exigeConta ligado)
+  ok   sem conta: o hello é recusado (erro sem_conta) e a conexão fecha
+  ok   com o bilhete assinado pela plataforma: entra com a conta (id c123, ID 000123)
+  ok   bilhete assinado com outro segredo não vale: recusado
+
+1) A SALA: criar, entrar, times, árbitro
+  ok   hello devolve id, token e o ID da turma (v82: 7 números para quem não tem conta; as contas têm 6)
+  ok   depois do hello vem a lista de salas
+  FALHOU criar: código de 6, dono no Time A, as regras pedidas (COM CURVA no ESTÁDIO)  → {"code":"Q37RWD","name":"Racha da Laje","host":"srv","admin":"uqv4pur47r","servidor":true,"n":1,"map":4,"jogo":"curva","tempo":0,"bots":false,"pub":true,"state":"waiting","ranked":false,"round":0,"roster":["uqv4pur47r",null],"members":[{"id":"uqv4pur47r","name":"Ana","selo":"","flag":"BR","skin":"T.
+  ok   v70.2: sala pedida no Escadão e no vôlei abre no futebol e no mapa padrão (v79: o Estádio)
+  ok   criar: histórico do chat e a mensagem de entrada
+  ok   o árbitro vai para os espectadores (seat slot -1)
+  ok   entrar com código (minúsculo vale) assistindo
+  ok   só o árbitro mexe nos outros
+  ok   o árbitro monta os times (ele e o Beto)
+  ok   pôr no time em que já está não muda nada
+  ok   config: 2v2 (quem cabe fica no lugar), bots, tempo, nome limpo
+  ok   config: a GINGA e o VIADUTO não entram (a sala segue COM CURVA no ESTÁDIO)
+  ok   config: trocar para a ARENA vale
+  ok   só o dono muda as regras
+  ok   de volta ao 1v1: Ana × Beto
+
+2) A PARTIDA: começar, comandos, quadros, o resultado conferido
+  ok   começar: os dois recebem start (rodada 1)
+  FALHOU o comando do convidado chega ao anfitrião, com a curva/finta/drible (k) e o analógico limitado  → null
+  ok   o anfitrião não manda comando (ele simula)
+  FALHOU o quadro do anfitrião chega ao convidado
+  ok   quadro de quem não é o anfitrião é ignorado
+  ok   quem entra no meio assiste: recebe start com o placar atual (resume)
+  FALHOU fim depressa demais: o resultado não vale (motivo curta)  → null
+  ok   resultado que não vale não conta partida
+  FALHOU a sala fica em ended (revanche)
+  ok   convidado pede revanche (sem "on" = sim)
+  FALHOU o dono pedindo revanche começa a rodada 2  → ["playing",1]
+  ok   fim de rodada velha é ignorado
+  FALHOU partida inteira: o resultado vale (vitória do Time A)  → null
+  FALHOU vale: vitória (troféu), derrota e os gols de cada um pelos quadros  → [{"jogos":0,"vit":0,"der":0,"emp":0,"gols":0},{"jogos":0,"vit":0,"der":0,"emp":0,"gols":0}]
+  FALHOU o duelo 1v1 Ana × Beto fica guardado
+  FALHOU placar do fim diferente do que os quadros mostraram: não vale  → null
+  FALHOU futebol vai a 3: 4 × 1 não vale  → null
+  ok   a sala não vira basquete
+  FALHOU placar de basquete (13 × 10) numa sala de futebol não vale  → null
+  FALHOU COM CURVA: 3 × 1 vale  → null
+  FALHOU a sala não vira ginga
+  FALHOU placar de ginga (6 × 4) numa sala com curva não vale (vai a 3)  → null
+  FALHOU com 2 minutos: acabar com 1 minuto não vale  → null
+  FALHOU com tempo, empate não termina (gol de ouro): não vale
+  FALHOU com tempo: 4 × 2 depois dos 2 minutos vale
+  ok   a pausa do anfitrião chega a todos
+  FALHOU o tempo pausado não conta: 8 s de jogo é curto demais  → null
+  FALHOU encerrada pelo árbitro (mensagem escondida e|rodada): não vale  → null
+  ok   a mensagem escondida do árbitro passa pelo chat da sala (o jogo esconde)
+
+3) QUEM CAI E VOLTA, QUEM SAI, REMOVER, PASSAR O DONO, JOGAR AGORA
+  ok   o convidado caiu no meio: a vaga fica livre (o anfitrião põe um bot) e a sala avisa
+  ok   voltou com o token: o mesmo id
+  FALHOU voltou para o mesmo lugar no meio da partida, com o placar (resume)  → {"type":"start","room":{"code":"Q37RWD","name":"Racha novo","host":"srv","admin":"uqv4pur47r","servidor":true,"n":1,"map":0,"jogo":"futebol","tempo":0,"bots":false,"pub":true,"state":"playing","ranked":false,"round":1,"roster":["uqv4pur47r","uxrwuarhta"],"members":[{"id":"uqv4pur47r","name":"Ana","s
+  FALHOU o anfitrião caiu: a partida para (interrupted) e a sala passa para quem está há mais tempo  → [null,"srv","playing"]
+  FALHOU a Ana voltou como convidada (o dono continua o novo)
+  ok   remover da sala: quem sai recebe left e o aviso
+  ok   removido não volta na hora (30 s)
+  FALHOU passar o dono
+  FALHOU JOGAR AGORA (rapido): entra com lugar num time  → [null,"uxrwuarhta"]
+  ok   o dono saiu: left para ele e a sala passa para outro
+  ok   trocou o nome e a tampinha: o cartão da sala atualiza para todos
+
+4) A COPA DOS AMIGOS (1v1 com 4)
+  ok   a copa precisa de 4 ou 8 pessoas
+  ok   só o dono sorteia
+  ok   sorteio: 2 duelos, 1v1 sem bots, o primeiro duelo nos times
+  FALHOU o primeiro duelo tem vencedor  → {"a":"uyshr7efql","b":"umtmb3fwah"}
+  FALHOU a final: os dois vencedores  → {"name":"Copa da Laje","rounds":[],"matches":[{"a":"uyshr7efql","b":"umtmb3fwah"},{"a":"ulpjwacbw9","b":"ua7pra5kaf"}],"champion":null}
+  FALHOU campeão e a galeria de campeões  → [null,[]]
+  FALHOU encerrar a copa volta às regras da sala
+  FALHOU social: a galeria de campeões
+
+5) OS CLUBES (as mesmas regras da plataforma)
+  ok   nome curto não vale
+  ok   criar o clube (grátis)
+  ok   nome repetido (sem acento e maiúscula) não vale
+  ok   buscar pelo nome
+  ok   buscar pela sigla do país
+  ok   entrar num clube público
+  ok   a página do clube: dois membros, a dona primeiro
+  ok   só o dono edita
+  ok   o dono edita (tipo, pontos mínimos, país, descrição)
+  ok   clube só convite: não entra sem convite
+  ok   convidar pelo ID da turma
+  ok   o convite aparece para o Caio
+  ok   aceitou: entrou (o convite passa por cima dos pontos mínimos)
+  ok   o dono tira um membro
+  ok   pontos mínimos: precisa de 5 (tem 0)
+  ok   com 7 troféus (vitórias conferidas) entra
+  ok   os troféus do clube são a soma dos membros
+  ok   passar o clube para outro membro
+  ok   o dono saiu: quem tem mais troféus vira o dono
+  ok   o último que sai fecha o clube
+  ok   o escudo do clube aparece no cartão da sala na hora
+
+6) O CHAT DO BRASIL
+  ok   entrar: hello e o histórico
+  ok   a mensagem chega para todos (limpa)
+  ok   1 mensagem a cada 3 s
+  ok   link é bloqueado pelo filtro
+  ok   mensagem repetida não vai
+  ok   mais de 120 letras não vai
+  ok   3 denúncias de pessoas diferentes escondem a mensagem
+  ok   quem foi denunciado fica um tempo sem falar
+  ok   v81: telefone é barrado pelo filtro
+  ok   v81: CPF é barrado pelo filtro
+  ok   v81: e-mail é barrado pelo filtro
+  ok   v81: link curto é barrado pelo filtro
+  ok   v81: wa.me é barrado pelo filtro
+  ok   v81: números comuns (placar, hora) passam
+
+6b) v81 · O CHAT DA SALA: o número da mensagem, a denúncia, a repetida e o filtro
+  ok   a mensagem da sala chega com o número dela (mid)
+  ok   a mesma mensagem de novo (em 30 s) não vai
+  ok   telefone no chat da sala é barrado
+  ok   o autor não denuncia a própria mensagem
+  ok   uma denúncia só ainda não esconde (fica anotada)
+  ok   2 denúncias de pessoas diferentes: a mensagem some para todos (say_hide)
+  ok   no histórico a mensagem fica marcada como escondida (quem entra depois já vê assim)
+  ok   quem foi denunciado fica 5 min sem falar na sala
+  ok   os outros continuam falando
+
+7) A CONTA DO RACHA: o bilhete e o selo do resultado
+  ok   com o bilhete da plataforma: o id e o ID público da conta
+  ok   bilhete adulterado não vale (entra como visitante)
+  ok   bilhete vencido não vale
+  FALHOU (erro) TypeError: Cannot read properties of null (reading 'selo')
+    at regras (/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/servidor_test.js:364:54)
+    at /tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/servidor_test.js:669:18
+    at Object.<anonymous> (/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/servidor_test.js:673:3)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+
+servidor da turma: 83 ok, 31 falharam

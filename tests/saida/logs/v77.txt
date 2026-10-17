@@ -1,0 +1,37 @@
+  OK      as peças das imagens (o fundo, o letreiro, os ícones, o banner e o kit da quadra) e o v77.css vão no jogo pelo build
+  OK      1280x720: o fundo do lobby é a imagem limpa (6 amostras, cor a cor) e cobre a tela
+  OK      o letreiro da imagem (RACHA, a coroa e FUTEBOL DE RUA) em cima da tampinha; o nome RACHA continua para o leitor de tela
+  OK      os 8 botões dos lados com os desenhos da imagem (o EVENTOS entrou na coluna da direita)
+  OK      em cima: moedas e gemas com o +, o chat, os AMIGOS e os ajustes (como na imagem)
+  OK      você com o XP em números; o MODO com o tamanho grande (2 VS 2) e embaixo o que vai ser jogado (v79: RANQUEADA · ESTÁDIO); os DESAFIOS com a estrela e o prêmio na pilha de moedas
+  OK      sem a fileira de tampinhas embaixo: no lobby só a sua tampinha (trocar é na TAMPINHA)
+  OK      a tampinha do meio é desenhada reta (sem girar) e sem a bola do lado
+  OK      o EVENTOS abre a Copa dos Amigos (a tela EVENTOS) e os AMIGOS do topo, a tela AMIGOS
+  OK      1280x720: nenhum erro de JavaScript no lobby
+  OK      1440x900: o fundo do lobby é a imagem limpa (6 amostras, cor a cor) e cobre a tela
+  OK      1440x900: nenhum erro de JavaScript no lobby
+  OK      844x390: o fundo do lobby é a imagem limpa (6 amostras, cor a cor) e cobre a tela
+  OK      844x390: nenhum erro de JavaScript no lobby
+  OK      667x375: o fundo do lobby é a imagem limpa (6 amostras, cor a cor) e cobre a tela
+  OK      667x375: nenhum erro de JavaScript no lobby
+  OK      11 telas: cada uma só com o que é dela (sem abas de outras telas), o título do botão, o VOLTAR, moedas e gemas e os 3 ícones; a quadra atrás
+  OK      os ícones da barra funcionam (o chat abre o Chat do Brasil; a engrenagem, os Ajustes)
+  OK      PERFIL: as abas VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS (abre na VISÃO GERAL, com a tampinha ao lado)
+  OK      VISÃO GERAL com os números de verdade: gols, assistências, vitórias, partidas, aproveitamento, tempo em campo e a melhor sequência
+  OK      o cartão da imagem: o banner com o letreiro, o nível no hexágono, o nome com a bandeira, o ID com o copiar, o XP e os 7 títulos
+  OK      a tampinha do perfil é reta como a do lobby (sem os raios girando) e fica na quadra
+  OK      cada aba mostra só a parte dela e nada rola
+  OK      as sub-abas antigas (PARTIDAS, CARTÃO) levam às novas
+  OK      tocar na tampinha do perfil abre o editor (TAMPINHA) e o VOLTAR traz de volta ao perfil
+  OK      nenhum erro de JavaScript (telas e perfil)
+  OK      1v1 a 4v4: o verde da quadra, o amarelo das áreas, o azul do meio, o piso em volta, o muro de cima e as escadas dos lados, nos lugares de cada tamanho
+  OK      Ultra leve: as mesmas cores, lisas (sem textura nem cenário)
+  OK      na Tela parada, onde a tela passa do mapa, entram as casas de fora (a imagem de fora do mundo)
+  OK      a prévia da ARENA no JOGAR é a quadra nova (na linha do meio: o amarelo das áreas, o verde e o azul do círculo)
+  OK      com erro no desenho novo, o erro fica guardado e entra a Arena de antes (o jogo não quebra)
+  (sem RACHA_REF: a comparação com a v71.1 fica de fora)
+  OK      nenhum erro de JavaScript (a quadra)
+  OK      844x390: o lobby, o perfil (VISÃO GERAL, CONQUISTAS, PARTIDAS) e as telas cabem sem rolar
+  OK      844x390: nenhum erro de JavaScript
+
+v77 · o lobby, o perfil, as telas e o mapa principal das imagens enviadas: 34/34 verificações ok em 38.5 s

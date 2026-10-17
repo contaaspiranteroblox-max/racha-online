@@ -1,0 +1,40 @@
+    moldes: {"destro@1": {"base": 0, "ginga": 0}, "canhoto@1": {"base": 0, "ginga": 0}, "polegar@1": {"base": 0, "ginga": 0}, "compacto@1": {"base": 0, "ginga": 0}, "grande@1": {"base": 0, "ginga": 0}, "destro@1.8": {"base": 0, "ginga": 0}, "canhoto@1.8": {"base": 0, "ginga": 0}, "polegar@1.8": {"base": 0, "ginga": 0}, "compacto@1.8": {"base": 0, "ginga": 0}, "grande@1.8": {"base": 0, "ginga": 0}}
+  OK      molde destro@1: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde canhoto@1: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde polegar@1: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde compacto@1: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde grande@1: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde destro@1.8: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde canhoto@1.8: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde polegar@1.8: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde compacto@1.8: nenhum botão encostado nem em cima da pausa/placar
+  OK      molde grande@1.8: nenhum botão encostado nem em cima da pausa/placar
+    GINGA, parte da tela coberta pelos 4 botões: {"antes": 0.106, "agora": 0.077, "meioAntes": 0.071, "meioAgora": 0.04}
+  OK      na GINGA os quatro botões cobrem bem menos do meio da tela
+    editor: {"conjNaGinga": "ginga", "visiveis": ["finta", "drible", "power", "kick", "joy"], "cancelVolume": true, "cancelBotao": true, "conjNoFutebol": "base", "visFut": ["power", "kick", "joy"], "visTodos": ["curva", "power", "kick", "joy", "reset"], "joyCanhoto": true, "salvoMolde": "canhoto", "salvoJoyX": 1705, "salvoGinga": true, "restDestro": true, "cancelDepoisRest": true, "soltouLivre": true, "pausaLivre": true}
+  OK      (guardado) na GINGA o editor abre com os controles dela
+  OK      Cancelar volta o volume e os botões (70% → 15% → Cancelar = 70%)
+  OK      no futebol o editor mostra só os do futebol
+  OK      Mostrar todos mostra também a CURVA
+  OK      molde Canhoto: analógico à direita, botões à esquerda
+  OK      Salvar guarda o molde, os lugares e o layout da GINGA
+  OK      Restaurar mostra o padrão, mas só vale ao Salvar (Cancelar desfaz)
+  OK      soltar em cima de outro botão (ou da pausa) escorrega para um lugar livre
+
+· teclado: trocar teclas (Ajustes › Controles)
+     {"passe": ["KeyE", "KeyK"], "chute": ["KeyL"], "e": "Space", "k": "Space", "espaco": "_livre_Space", "l": "KeyK", "msg": "K agora é PASSE (batida fraca) (saiu de CHUTE (batida forte)).", "salvo": "{\"cima\":[\"KeyW\",\"ArrowUp\"],\"baixo\":[\"KeyS\",\"ArrowDown\"],\"esq\":[\"KeyA\",\"ArrowLeft\"],\"dir\":[\"KeyD\",\"ArrowRight\"],\"passe\":[\"KeyE\",\"KeyK\"],\"chute\":[\"KeyL\"],\"curva\":[\"KeyU\",\"KeyI\"],\"finta\":[\"KeyF\"],\"drible\":[\"KeyG\",\"ShiftLeft\"],\"hud\":[\"KeyH\"],\"mudo\":[\"KeyM\"]}"}
+  OK      E e K viram PASSE
+  OK      K saiu do CHUTE (que fica com o L)
+  OK      o Espaço, que saiu do PASSE, fica sem efeito
+  OK      avisa de onde a tecla saiu e fica guardado
+  OK      Esc cancela a troca (e não fecha os ajustes)
+  OK      voltar as teclas ao padrão
+  OK      na partida, a tecla nova faz o PASSE
+
+· chute armado: o botão avisa e pisca quando a bola sai
+     {"armado": true, "saiu": true}
+  OK      segurando CHUTE com a bola longe aparece ARMADO · ENCOSTE NA BOLA
+  OK      ao encostar na bola o chute sai e o botão pisca
+  OK      nenhum erro de JavaScript
+
+Etapa 3 · controles da tela: 29/29 verificações ok em 3.2 s

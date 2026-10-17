@@ -1,0 +1,10 @@
+  OK      o perfil antigo (nome e estatísticas) continua no jogo
+  OK      o campo escolhido foi para a chave nova
+  OK      as chaves antigas saíram do aparelho (2 levadas)
+  OK      a gaveta de outra conta neste aparelho também passou para os nomes novos
+  OK      a cópia da conta com os nomes antigos vira a de nomes novos (as outras chaves ficam como estão)
+  OK      nenhum erro de JavaScript
+  OK      com a chave nova já gravada, ela fica e a antiga sai
+  OK      sem chave antiga, nada é levado
+
+v85 · as chaves antigas do treino vão para as novas: 8/8 verificações ok em 6.6 s

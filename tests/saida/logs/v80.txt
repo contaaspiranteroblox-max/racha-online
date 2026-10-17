@@ -1,0 +1,99 @@
+
+1) os times laranja × roxo e a tampinha Listras
+  OK      as cores oficiais: Time A #FF6A00 e Time B #7A3FC4 (halo, placar, sala)
+  OK      a padrão é o modelo Listras (grátis): fundo laranja e a listra roxa, uma só, do meio para a direita
+  OK      a borda e os detalhes são os de sempre (a mesma saia da padrão de antes, sem ícone)
+  OK      no time ela fica de uma cor só: toda laranja (A) e toda roxa (B), com a mesma borda
+  OK      desenhada: a metade da esquerda laranja e a da direita roxa, em cima e embaixo (a divisão é vertical)
+  OK      a divisão fica no meio (logo à esquerda do centro é laranja, logo à direita é roxo) e não tem branco
+  OK      no Time A ela fica toda laranja; no Time B, toda roxa
+  OK      a padrão da v71 (de um jogo antigo de outra pessoa) aparece como a nova
+  OK      a troca: no Time A a do A, no Time B a do B, sem time a metade/metade (a da v71 também segue o time)
+  OK      uma tampinha personalizada (ou comprada, ou modelo pronto) não muda com o time
+  OK      quem não escolheu nenhuma joga com a padrão nova (lobby, perfil e o que vai para a sala)
+  OK      no treino você não está num time: a tampinha fica metade/metade
+  OK      na partida: a sua e a dos bots na cor do time; com outra tampinha equipada, ela continua a sua
+  OK      os nomes novos nas telas e nas mensagens (nenhum "Time Preto/Branco" na página)
+  OK      nenhum erro de JavaScript (times)
+  OK      quem estava com a padrão da v71 equipada passa para a nova (uma vez, e fica salvo)
+
+2) o placar, o relógio de 3:00, a prorrogação, o empate e o limite de 3 gols (contra os bots)
+  OK      a partida normal contra os bots: 03:00 no relógio, até 3 gols
+  OK      a apresentação diz 3 MINUTOS · PRIMEIRO A 3 GOLS
+  OK      o placar cabe no espaço de antes (o HUD não precisa mudar de lugar)
+  OK      o relógio corre na saída de bola e no jogo, segundo a segundo (02:59 com 1 s, 02:58 com 2 s)
+  OK      o placar desenhado: o Time A em laranja à esquerda, o Time B em roxo à direita, o relógio no meio (02:19)
+  OK      os 10 últimos segundos em amarelo
+  OK      00:00 com 2 × 1: acaba e vence quem tem mais gols
+  OK      00:00 com 0 × 1: acaba (derrota)
+  OK      1 × 1 e 2 × 2 no fim: EMPATE, sem prorrogação
+  OK      o empate na ranqueada: ±0 pontos e a sequência de vitórias zera
+  OK      a tela do fim diz EMPATE (sem a cara de derrota) e o histórico guarda o empate
+  OK      00:00 com 0 × 0: PRORROGAÇÃO (o relógio fica vermelho e o aviso diz GOL DE OURO)
+  OK      na prorrogação o relógio continua negativo: -00:21 … -02:00
+  OK      0 × 0 até -02:00: empate
+  OK      o gol na prorrogação é GOL DE OURO: vence na hora (depois da festa do gol)
+  OK      o limite de 3 gols continua: o 3º gol acaba a partida na hora
+  OK      a bola que entra depois de 00:00 (1 × 1) não vale: a partida acaba empatada
+  OK      depois do fim nada muda o resultado
+  OK      o tempo que acaba na festa do gol (2 × 0 aos 2:59): acaba depois da festa, sem nova saída
+  OK      COM CURVA também é a partida normal; os modos guardados (vôlei) ficam sem o relógio novo
+  OK      nenhum erro de JavaScript (regras)
+
+3) a sala personalizada (neste aparelho): as regras dela, o placar novo e as cores na sala
+  OK      a sala: a coluna do Time A laranja e a do Time B roxa
+  OK      o TEMPO da sala cabe no quadro (3 min) e quem assiste fica com a metade/metade
+  OK      a sala com 3 minutos fica com as regras dela (sem a regra nova: sem limite de 3 gols)
+  OK      o empate da sala vai para o GOL DE OURO dela (sem limite), no relógio vermelho do placar novo
+  OK      nenhum erro de JavaScript (sala)
+
+4) os adversários sem os indicadores a mais
+  OK      o halo dos adversários sem a ponta (a setinha); os companheiros continuam com ela; a sua usa a setinha branca
+  OK      fora da tela: as gotas dos companheiros e da bola continuam; a dos adversários sai
+  OK      ficam o nome de todo mundo e a sua setinha (VOCÊ)
+  OK      no replay a setinha de todos continua (para entender o lance)
+  OK      nenhum erro de JavaScript (indicadores)
+
+5) a animação GOOOL!
+  OK      o gol do Time A: GOOOL! (6 letras), o nome de quem marcou e o passe na placa
+  OK      as cores do time que marcou: laranja no gol do Time A, roxo no do Time B (pixels)
+  OK      o papel picado é da animação (poucas tiras); a chuva de confete da tela inteira saiu do gol e continua na vitória
+  OK      o texto do lance (o replay, a sala, a plataforma) continua o mesmo
+  OK      no treino: GOOOL! do Time A e o recado do exercício na placa
+  OK      nenhum erro de JavaScript (gol)
+  OK      com Reduzir animações: GOOOL! aparece e some, sem papel picado (com Reduzir animações)
+  OK      nenhum erro de JavaScript (gol (com Reduzir animações))
+  OK      a animação dura o mesmo 1,7 s da faixa de antes (curta: não atrapalha a partida)
+
+6) os controles do treino
+  OK      sem as setas verdes (computador)
+  OK      os cartões novos: maiores (272 × 80), com o ícone e o nome em amarelo (computador)
+  OK      TAMANHO: a direita avança e a esquerda volta, na hora em que o dedo sobe (computador)
+  OK      CAMPO e TREINO trocam como antes (computador)
+  OK      ao apertar, a metade tocada acende de leve e a tampinha dela ganha a borda amarela (computador)
+  OK      nenhum erro de JavaScript (treino, computador)
+  OK      sem as setas verdes (celular)
+  OK      os cartões novos: maiores (272 × 80), com o ícone e o nome em amarelo (celular)
+  OK      TAMANHO: a direita avança e a esquerda volta, na hora em que o dedo sobe (celular)
+  OK      CAMPO e TREINO trocam como antes (celular)
+  OK      ao apertar, a metade tocada acende de leve e a tampinha dela ganha a borda amarela (celular)
+  OK      nenhum erro de JavaScript (treino, celular)
+  OK      o editor da tampinha com as 5 abas de sempre (Padrão, Borda, Ícone, Modelos Prontos, Inventário)
+
+7) online de verdade: o relógio do servidor (a partida normal encurtada para 14 s + 8 s), o gol de ouro, o empate e a troca de time na sala
+  OK      a ranqueada online é a partida normal: a regra e o tempo vêm do servidor
+  FALHOU  os dois veem o mesmo relógio (o do servidor; quem roda a partida também usa ele)  ·  [3.593249999999767, 3.593950000000186, 0]
+  OK      o placar de quem joga de fora mostra o relógio do servidor descendo (00:11 com 3.6 s de jogo)
+  OK      0 × 0 no fim dos 14 s: a prorrogação nos dois (o relógio negativo, em vermelho)
+  FALHOU  o gol de ouro de quem roda a partida acaba o jogo e o servidor confere (vitória de um, derrota do outro)  ·  [None, {'tit': 'EMPATE', 'd': 0, 'gol': {'time': 0, 'palavra': 'GOOOL!', 'nome': 'ANA', 'sub': '', 'nosso': True, 'at': 0}}]
+  FALHOU  quem joga de fora viu o GOOOL! na cor do time de quem marcou, com o nome dele  ·  [{'time': 0, 'palavra': 'GOOOL!', 'nome': 'ANA', 'sub': '', 'nosso': True, 'at': 0}, {'t': 1, 'nome': 'BETO'}]
+  FALHOU  1 × 1 no fim dos 14 s: EMPATE conferido pelo servidor nos dois (±0 pontos, sem prorrogação)  ·  [None, {'tit': 'EMPATE', 'd': 0, 'cls': 'rq empate'}, {'tit': 'EMPATE', 'd': 0, 'cls': 'rq empate'}]
+  OK      na sala: quem assiste aparece com a metade/metade; foi para o Time B, toda roxa; para o Time A, toda laranja (na tela do outro, na hora)
+  OK      nenhum erro de JavaScript na sessão de Ana
+  OK      nenhum erro de JavaScript na sessão de Beto
+
+v80 · laranja × roxo, a tampinha Listras, o placar com 3:00, a prorrogação, o GOOOL! e o treino: 75/79 verificações ok em 86.1 s
+  - falhou: os dois veem o mesmo relógio (o do servidor; quem roda a partida também usa ele)
+  - falhou: o gol de ouro de quem roda a partida acaba o jogo e o servidor confere (vitória de um, derrota do outro)
+  - falhou: quem joga de fora viu o GOOOL! na cor do time de quem marcou, com o nome dele
+  - falhou: 1 × 1 no fim dos 14 s: EMPATE conferido pelo servidor nos dois (±0 pontos, sem prorrogação)
