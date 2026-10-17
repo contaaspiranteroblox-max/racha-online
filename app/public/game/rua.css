@@ -1,0 +1,215 @@
+/* ============================================================================
+   RACHA · identidade de rua  (camada VISUAL — carregada depois do CSS do jogo)
+   Futebol de rua brasileiro: asfalto, concreto, cal, amarelo de quadra, tijolo.
+   Nada aqui toca física, rede, simulação, controles ou dimensões de mapa.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- 1. TOKENS */
+:root{
+  /* cores (paleta da direção de arte) */
+  --rua-asfalto:#171A1C;  --rua-concreto:#34393B;  --rua-quadra:#F5C542;
+  --rua-campo:#347C52;    --rua-tijolo:#D86A38;    --rua-cal:#F3EFE4;   --rua-poeira:#9A9D98;
+  --rua-perigo:#B8473B;   --rua-tinta:#0F1011;     --rua-concreto2:#26292B; --rua-quadra2:#C99A1E;
+  /* cor por modo */
+  --md-futebol:#347C52; --md-curva:#D86A38; --md-volei:#5A7C94; --md-americano:#B8473B; --md-basquete:#D9772E; --md-ginga:#F5C542;
+  /* tipografia */
+  --f-tit:"Anton","Impact","Arial Narrow Bold","Arial Black",sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --f-txt:"Barlow",system-ui,"Segoe UI",Roboto,sans-serif;
+  /* espaçamento e forma */
+  --e1:6px; --e2:12px; --e3:18px; --e4:26px;
+  --borda-rua:11px 15px 10px 14px / 14px 10px 15px 11px;       /* borda levemente irregular (tinta de quadra) */
+  --sombra-dura:0 5px 0 var(--rua-tinta);
+
+  /* os tokens antigos do jogo agora apontam para a paleta de rua */
+  --asfalto:var(--rua-asfalto); --asfalto2:var(--rua-concreto2); --asfalto3:var(--rua-concreto);
+  --giz:var(--rua-cal); --giz2:#d8d3c4; --amarelo:var(--rua-quadra); --amarelo2:var(--rua-quadra2);
+  --azul:#4a5256; --azul2:#34393B; --verde:var(--rua-campo); --vermelho:var(--rua-perigo);
+  --tinta:var(--rua-tinta); --tinta2:#5a5646;
+  --lima:var(--rua-quadra); --magenta:var(--rua-tijolo); --ciano:var(--rua-cal); --uva:#4a5256;
+}
+
+/* ------------------------------------------------------------ 2. TIPOGRAFIA */
+body{ font-family:var(--f-num); font-weight:700; }
+#lb h1, #lb h2, #lb h3, #lb .lb-jogar-tit, #lb .tl-cab h2, #lb .pop-tit, #lb .nv-item span, #lb .pf-marca,
+#lb .rk-liga b, #lb .on-card h3, #lb .hm-ev-tit, #lb .sl-titulo, #lb .lb-sub{ font-family:var(--f-tit); font-weight:400; letter-spacing:1.2px; }
+#lb .tl-corpo p, #lb .tl-nota, #lb .pop-txt, #lb .on-card p, #lb .rq-modo-desc, #lb .rq-mapa-desc, #lb .rk-liga{ font-family:var(--f-txt); font-weight:600; }
+/* números e estatísticas: tipografia esportiva condensada */
+#lb .n-moedas, #lb .n-gemas, #lb .tp-nv em, #lb .mi-n, #lb .pf-st b, #lb .pf-nv b, #lb .pf-uid, #lb .lb-pos, #lb .rk-lista li > :last-child,
+#lb .lb-gols, #lb .hm-grana b{ font-family:var(--f-num); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
+
+/* ------------------------------------------------------- 3. BOTÕES DE RUA */
+.bt, .lb-btn{ border-radius:var(--borda-rua); font-family:var(--f-tit); font-weight:400; letter-spacing:1px; text-shadow:none;
+  transition:transform .09s cubic-bezier(.3,1.6,.5,1), box-shadow .09s, filter .12s; }
+.bt:active, .lb-btn:active{ transform:translateY(3px) scale(.985); }
+@media (hover:hover){ .bt:hover, .lb-btn:hover{ filter:brightness(1.07); } }
+/* principal: amarelo de quadra, texto escuro, robusto */
+.bt-pri, .lb-btn.amarelo{ background:
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 38%),
+    var(--rua-quadra); color:var(--rua-asfalto); }
+/* secundário: concreto, contorno discreto, texto branco */
+.bt-sec, .lb-btn, .lb-btn.cinza, .lb-btn.roxo{ background:var(--rua-concreto); color:var(--rua-cal);
+  border-color:var(--rua-tinta); box-shadow:var(--sombra-dura), inset 0 0 0 2px rgba(243,239,228,.10); }
+.lb-btn.azul{ background:#4d6a7d; color:var(--rua-cal); }
+.lb-btn.verde, .bt-ok{ background:var(--rua-campo); color:var(--rua-cal); }
+/* perigoso: vermelho discreto */
+.bt-perigo, .lb-btn.vermelho{ background:var(--rua-perigo); color:var(--rua-cal); box-shadow:0 5px 0 #3a1511; }
+.bt-txt{ font-family:var(--f-txt); font-weight:700; color:var(--rua-poeira); }
+
+/* ------------------------------------------------------ 4. PAINÉIS/MENUS */
+#lb .pop-caixa, #lb .folha, #lb .lb-tela, #lb .aj-caixa{
+  background-color:var(--rua-concreto2);
+  background-image:repeating-linear-gradient(0deg, rgba(243,239,228,.02) 0 2px, transparent 2px 5px), radial-gradient(rgba(243,239,228,.05) 1px, transparent 1.6px);
+  background-size:auto, 24px 24px; border-color:var(--rua-tinta); }
+#lb .pop-caixa, #lb .on-card{ border-radius:18px 22px 16px 22px; }
+#lb .lb-pop{ background:rgba(15,16,17,.76); }
+#lb .tl-cab h2{ color:var(--rua-cal); font-size:36px; }
+#lb .pop-tag{ background:var(--rua-quadra); color:var(--rua-asfalto); font-family:var(--f-tit); letter-spacing:.8px; border-radius:6px; transform:rotate(-1.2deg); }
+#lb .tl-seg button, #lb .hp-abas button{ background:var(--rua-concreto); color:var(--rua-poeira); font-family:var(--f-tit); font-weight:400; letter-spacing:.8px; }
+#lb .tl-seg button.on{ background:var(--rua-quadra); color:var(--rua-asfalto); }
+#lb .on-card h3{ color:var(--rua-quadra); text-shadow:none; }
+#lb .on-card p{ color:#cfcabb; }
+#lb .on-chip{ font-family:var(--f-tit); font-weight:400; border-radius:var(--borda-rua); }
+#lb .on-chip.on, #lb .rq-abas button.on, #lb .rq-modo.on{ background:var(--rua-quadra); color:var(--rua-asfalto); box-shadow:inset 0 0 0 3px var(--rua-tinta), 0 4px 0 var(--rua-tinta); }
+#lb .rq-abas button, #lb .rq-modo{ font-family:var(--f-tit); font-weight:400; letter-spacing:.8px; }
+#lb .rq-mapa{ border-radius:var(--borda-rua); }
+#lb .rq-mapa.on{ background:rgba(245,197,66,.14); box-shadow:inset 0 0 0 4px var(--rua-quadra); }
+
+/* ---------------------------------------------------------------- 5. LOBBY */
+/* cabeçalho: logo RACHA no centro, avatar e nome à esquerda, grana e ajustes à direita */
+#lb .lb-topo::before{ content:"RACHA"; order:1; margin:0 auto; padding:2px 22px 0; font-family:var(--f-tit); font-size:46px; line-height:1.15; letter-spacing:3px;
+  color:var(--rua-quadra); background:linear-gradient(180deg, transparent 62%, rgba(23,26,28,.0) 62%); text-shadow:3px 3px 0 var(--rua-tinta), 5px 5px 0 var(--rua-tijolo);
+  transform:rotate(-2.5deg); pointer-events:none; white-space:nowrap; }
+#lb .tp-eu{ order:0; } #lb .tp-dir{ order:2; margin-left:0; }
+#lb .tp-eu, #lb .hm-grana, #lb .tp-ic, #lb .mi-faixa{ background:var(--rua-concreto2); border-radius:var(--borda-rua); box-shadow:var(--sombra-dura); }
+#lb .tp-eu .hm-xp, #lb .mi-faixa .mi-barra{ background:var(--rua-asfalto); }
+#lb .tp-eu .hm-xp i, #lb .mi-faixa .mi-barra i{ background:repeating-linear-gradient(135deg, var(--rua-quadra) 0 8px, var(--rua-quadra2) 8px 16px); }
+#lb .tp-nv em{ color:var(--rua-quadra); font-size:20px; }
+#lb .tp-badge, #lb .nv-item .hm-ponto{ background:var(--rua-tijolo); }
+
+/* o JOGAR: placa de quadra amarela, listras de faixa de pedestre embaixo */
+#lb .lb-jogar{ border-radius:20px 26px 18px 24px / 24px 18px 26px 20px; border-width:4px; transform:rotate(-.8deg);
+  background:
+    repeating-linear-gradient(90deg, rgba(23,26,28,.92) 0 18px, transparent 18px 36px) bottom/100% 11px no-repeat,
+    linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 40%),
+    var(--rua-quadra);
+  padding-bottom:16px; animation:rua-respira 3.2s ease-in-out infinite; }
+#lb .lb-jogar-tit{ font-size:72px; color:var(--rua-asfalto); letter-spacing:4px; text-shadow:2px 2px 0 rgba(255,255,255,.35); }
+#lb .lb-jogar-sub{ font-family:var(--f-num); font-weight:800; font-size:21px; color:#3b3419; letter-spacing:.8px; text-transform:uppercase; }
+#lb .lb-jogar:active{ animation:none; transform:translateY(5px) rotate(-.8deg) scale(.985); }
+@keyframes rua-respira{ 0%,100%{ transform:rotate(-.8deg) scale(1);} 50%{ transform:rotate(-.8deg) scale(1.012);} }
+#lb .lb-trocar{ background:var(--rua-concreto); font-family:var(--f-tit); font-weight:400; text-transform:uppercase; text-decoration:none; letter-spacing:1px; color:var(--rua-cal); }
+#lb .hm-placa{ background:var(--rua-cal); color:var(--rua-asfalto); font-family:var(--f-tit); font-weight:400; letter-spacing:2px; border-radius:6px 10px 6px 10px; }
+#lb .hm-skin{ font-family:var(--f-num); font-weight:800; color:var(--rua-poeira); text-shadow:0 2px 0 rgba(0,0,0,.6); }
+
+/* navegação inferior: plaquinhas de concreto com faixa pintada; ícones simples */
+#lb .lb-nav{ gap:12px; }
+#lb .nv-item{ background:var(--rua-concreto); color:var(--rua-cal); border-radius:var(--borda-rua); min-height:72px;
+  background-image:linear-gradient(180deg, var(--rua-quadra) 0 6px, transparent 6px); box-shadow:var(--sombra-dura), inset 0 0 0 2px rgba(243,239,228,.08);
+  transition:transform .09s cubic-bezier(.3,1.6,.5,1), background-color .12s, color .12s; }
+#lb .nv-item span{ font-size:24px; letter-spacing:1.5px; }
+#lb .nv-item:active{ background-color:var(--rua-quadra); color:var(--rua-asfalto); transform:translateY(3px) scale(.985); }
+@media (hover:hover){ #lb .nv-item:hover{ background-color:#41474a; } }
+
+/* cenário do lobby com um balanço bem leve (só transform: barato em celular fraco) */
+#lb-fundo{ animation:rua-vento 28s ease-in-out infinite alternate; transform-origin:50% 60%; will-change:transform; }
+@keyframes rua-vento{ from{ transform:translate3d(-6px,0,0) scale(1.012);} to{ transform:translate3d(6px,-2px,0) scale(1.012);} }
+
+/* transição entre telas: pincelada de tinta rápida */
+#lb .lb-tela:not([hidden]), #lb .lb-folha:not([hidden]){ animation:rua-tinta .28s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes rua-tinta{ from{ opacity:0; clip-path:inset(0 100% 0 0); transform:translateX(-14px);} to{ opacity:1; clip-path:inset(0 0 0 0); transform:none;} }
+#lb .on-card, #lb .sb-sala, #lb .rk-lista li, #lb .pf-st{ animation:rua-entra .32s ease-out both; }
+#lb .rk-lista li:nth-child(2), #lb .sb-sala:nth-child(2){ animation-delay:.04s } #lb .rk-lista li:nth-child(3), #lb .sb-sala:nth-child(3){ animation-delay:.08s }
+#lb .rk-lista li:nth-child(n+4), #lb .sb-sala:nth-child(n+4){ animation-delay:.12s }
+@keyframes rua-entra{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
+
+/* -------------------------------------------- 6. SALAS = PLACAS DE CAMPEONATO */
+#lb .sb-sala{ position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; align-items:center; gap:14px; padding:12px 16px 12px 22px;
+  background:var(--rua-cal); color:var(--rua-asfalto); border:3px solid var(--rua-tinta); border-radius:var(--borda-rua); box-shadow:var(--sombra-dura);
+  transform:rotate(-.35deg); overflow:hidden; }
+#lb .sb-sala:nth-child(even){ transform:rotate(.35deg); }
+#lb .sb-sala::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:9px; background:repeating-linear-gradient(180deg, var(--rua-quadra) 0 12px, var(--rua-asfalto) 12px 24px); }
+#lb .sb-sala.jogando::before{ background:repeating-linear-gradient(180deg, var(--rua-tijolo) 0 12px, var(--rua-asfalto) 12px 24px); }
+#lb .sb-sala b{ font-family:var(--f-tit); font-weight:400; font-size:28px; letter-spacing:1px; color:var(--rua-asfalto); }
+#lb .sb-sala small{ font-family:var(--f-num); font-weight:800; font-size:19px; color:#4a4a42; letter-spacing:.4px; text-transform:uppercase; }
+#lb .sb-st{ display:inline-block; padding:4px 12px 3px; border-radius:5px; border:2.5px solid var(--rua-tinta); background:var(--rua-campo); color:var(--rua-cal);
+  font-family:var(--f-tit); font-weight:400; font-size:19px; letter-spacing:1px; transform:rotate(-2deg); }
+#lb .sb-st.on{ background:var(--rua-tijolo); }
+#lb .sb-ofi{ margin-left:8px; padding:1px 8px; border-radius:4px; background:var(--rua-asfalto); color:var(--rua-quadra); font-style:normal; font-size:15px; letter-spacing:1px; }
+#lb .sb-n{ font-family:var(--f-num); font-weight:800; font-size:30px; color:var(--rua-asfalto); }
+#lb .sb-acoes{ display:flex; gap:8px; }
+
+/* -------------------------------------------------------------- 7. RANKING */
+#lb .rk-liga{ color:var(--rua-poeira); }
+#lb .rk-liga b{ color:var(--rua-quadra); font-size:38px; letter-spacing:2px; }
+#lb .rk-premio{ background:var(--rua-concreto); border-radius:var(--borda-rua); box-shadow:inset 0 0 0 2px rgba(243,239,228,.1), 0 3px 0 var(--rua-tinta); }
+#lb .rk-premio b{ color:var(--rua-quadra); font-family:var(--f-num); }
+/* mural de campeonato: linhas de tabela pintadas, ouro/prata/bronze no pódio */
+#lb .rk-lista li{ background:var(--rua-concreto); border-radius:6px 12px 6px 12px; box-shadow:inset 0 -3px 0 rgba(0,0,0,.35), inset 0 0 0 2px rgba(243,239,228,.06);
+  font-family:var(--f-tit); font-weight:400; letter-spacing:.8px; color:var(--rua-cal); }
+#lb .rk-lista li:nth-child(1){ background:linear-gradient(90deg, rgba(245,197,66,.28), var(--rua-concreto) 70%); box-shadow:inset 6px 0 0 var(--rua-quadra), inset 0 -3px 0 rgba(0,0,0,.35); }
+#lb .rk-lista li:nth-child(2){ background:linear-gradient(90deg, rgba(200,200,190,.20), var(--rua-concreto) 70%); box-shadow:inset 6px 0 0 #c9c8bd, inset 0 -3px 0 rgba(0,0,0,.35); }
+#lb .rk-lista li:nth-child(3){ background:linear-gradient(90deg, rgba(216,106,56,.24), var(--rua-concreto) 70%); box-shadow:inset 6px 0 0 var(--rua-tijolo), inset 0 -3px 0 rgba(0,0,0,.35); }
+#lb .rk-lista li.voce{ background:var(--rua-quadra); color:var(--rua-asfalto); box-shadow:inset 0 0 0 3px var(--rua-tinta), 0 4px 0 var(--rua-tinta); transform:rotate(-.4deg); }
+#lb .rk-lista .lb-pos{ font-family:var(--f-tit); }
+
+/* ---------------------------------------------------------------- 8. PERFIL */
+/* carteirinha de jogador da quebrada + figurinhas */
+#lb .pf-cartao{ border:4px solid var(--rua-quadra); border-radius:22px 30px 20px 28px; box-shadow:0 8px 0 var(--rua-tinta), 0 18px 28px rgba(0,0,0,.4); }
+#lb .pf-cartao::before{ background:none; box-shadow:none; }
+#lb .pf-topo{ background:var(--rua-asfalto); border-bottom:4px solid var(--rua-quadra); }
+#lb .pf-marca{ color:var(--rua-quadra); font-size:44px; letter-spacing:3px; }
+#lb .pf-marca span{ color:var(--rua-tijolo); }
+#lb .pf-uid, #lb .pf-uid b{ color:var(--rua-cal); }
+#lb .pf-st{ background:var(--rua-cal); border:3px solid var(--rua-tinta); border-radius:8px 14px 8px 14px; box-shadow:0 4px 0 var(--rua-tinta); color:var(--rua-asfalto); }
+#lb .pf-st:nth-child(odd){ transform:rotate(-1deg); } #lb .pf-st:nth-child(even){ transform:rotate(1deg); }
+#lb .pf-st b{ color:var(--rua-asfalto); font-size:34px; text-shadow:none; }
+#lb .pf-st.top{ background:var(--rua-quadra); } #lb .pf-st.top b{ color:var(--rua-asfalto); text-shadow:none; }
+#lb .pf-st small{ color:#4a4a42; font-family:var(--f-num); font-weight:800; text-transform:uppercase; letter-spacing:.8px; }
+#lb .pf-nv b{ color:var(--rua-quadra); text-shadow:none; }
+#lb .pf-barra{ background:var(--rua-asfalto); border:2px solid var(--rua-tinta); }
+#lb .pf-barra i{ background:repeating-linear-gradient(135deg, var(--rua-quadra) 0 10px, var(--rua-quadra2) 10px 20px); }
+#lb .pf-tag{ background:var(--rua-tijolo); box-shadow:0 3px 0 var(--rua-tinta); color:var(--rua-cal); font-family:var(--f-tit); letter-spacing:1px; }
+#lb .pf-titulo{ box-shadow:inset 0 0 0 3px var(--rua-quadra), 0 5px 0 var(--rua-tinta); }
+
+/* ----------------------------------------------- 9. IDENTIDADE DOS MODOS */
+#lb .rq-modo{ --c:var(--rua-concreto); border-left:10px solid var(--c); }
+#lb .rq-modo[data-j="futebol"]{ --c:var(--md-futebol); }  #lb .rq-modo[data-j="curva"]{ --c:var(--md-curva); }
+#lb .rq-modo[data-j="volei"]{ --c:var(--md-volei); }      #lb .rq-modo[data-j="americano"]{ --c:var(--md-americano); }
+#lb .rq-modo[data-j="basquete"]{ --c:var(--md-basquete); } #lb .rq-modo[data-j="ginga"]{ --c:var(--md-ginga); }
+#lb .rq-modo[data-j="curva"]:not(.on){ background-image:linear-gradient(110deg, transparent 62%, rgba(245,197,66,.25) 62% 66%, transparent 66%); }
+#lb .rq-modo[data-j="ginga"]:not(.on){ background-image:linear-gradient(135deg, rgba(52,124,82,.28) 0 30%, transparent 30%); }
+#lb .m-arc{ --c:var(--md-curva); } #lb .m-cla{ --c:var(--md-volei); }
+
+/* ---------------------------------------------------- 10. PARTIDA (HUD) */
+/* só cor e acabamento dos painéis de fim/pausa; os controles de toque não mudam */
+#fim .fim-caixa, #trfim .fim-caixa, #pausa .pausa-caixa{ border-radius:18px 24px 16px 22px; }
+
+/* ----------------------------------------------------- 11. ACESSIBILIDADE */
+@media (prefers-reduced-motion:reduce){
+  #lb-fundo, #lb .lb-jogar, #lb .lb-tela, #lb .lb-folha, #lb .on-card, #lb .sb-sala, #lb .rk-lista li, #lb .pf-st{ animation:none !important; }
+}
+/* celulares de entrada: sem animação contínua do cenário */
+@media (max-height:360px){ #lb-fundo{ animation:none; } }
+
+/* ------------------------------------------------ 12. AJUSTES DE CONTRASTE */
+#lb .lb-btn.verde, #lb .sb-acoes .lb-btn.verde{ background:var(--rua-campo); color:var(--rua-cal); border-color:var(--rua-tinta); }
+#lb .lb-btn.azul, #lb .sb-acoes .lb-btn.azul{ background:#4d6a7d; color:var(--rua-cal); }
+#lb .lb-btn.cinza{ background:var(--rua-concreto); color:var(--rua-cal); }
+#lb .lb-btn.verde:disabled, #lb .lb-btn.verde[disabled]{ opacity:.55; }
+#lb .rk-lista .lb-pos{ background:var(--rua-asfalto); color:var(--rua-cal); border:2px solid rgba(243,239,228,.18); }
+#lb .rk-lista li:nth-child(1) .lb-pos{ background:var(--rua-quadra); color:var(--rua-asfalto); border-color:var(--rua-tinta); }
+#lb .rk-lista li:nth-child(2) .lb-pos{ background:#c9c8bd; color:var(--rua-asfalto); border-color:var(--rua-tinta); }
+#lb .rk-lista li:nth-child(3) .lb-pos{ background:var(--rua-tijolo); color:var(--rua-asfalto); border-color:var(--rua-tinta); }
+#lb .rk-lista li.voce .lb-pos{ background:var(--rua-asfalto); color:var(--rua-quadra); }
+
+/* ------------------------------------------------ 13. FUNDO DA PÁGINA */
+/* onde a tela do jogo não cobre (faixas em cima/embaixo), asfalto em vez do azul antigo */
+:root, :root:not([data-theme="light"]), :root[data-theme="dark"]{ --bg:#171A1C; }
+
+/* ---------------------------------------------------------------- v67 · EDITAR HUD: as 5 câmeras (3 em cima, 2 embaixo) */
+#hp .seg.seg-cam{ grid-template-columns:repeat(6, minmax(0, 1fr)); height:auto; }
+#hp .seg.seg-cam button{ grid-column:span 2; height:30px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#hp .seg.seg-cam button:nth-child(n+4){ grid-column:span 3; border-top:1px solid #566ba3; }
+#hp .seg.seg-cam button + button{ border-left:1px solid #566ba3; }
+#hp .seg.seg-cam button:nth-child(4){ border-left:0; }

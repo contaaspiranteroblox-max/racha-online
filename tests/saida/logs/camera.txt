@@ -1,0 +1,77 @@
+
+· seu jogador num canto, a bola no canto oposto (3 s de quadros; o pior quadro)
+    4v4 jogador  pers         zoom 213%            corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      4v4 jogador  pers         zoom 213%: o corpo inteiro na tela
+  OK      4v4 jogador  pers         zoom 213%: com a folga, fora do placar e longe dos controles
+    4v4 jogador  pers         zoom 213% correndo   corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      4v4 jogador  pers         zoom 213% correndo: o corpo inteiro na tela
+  OK      4v4 jogador  pers         zoom 213% correndo: com a folga, fora do placar e longe dos controles
+    3v3 jogador  pers         zoom 213%            corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      3v3 jogador  pers         zoom 213%: o corpo inteiro na tela
+  OK      3v3 jogador  pers         zoom 213%: com a folga, fora do placar e longe dos controles
+    4v4 jogador  perto        zoom                 corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      4v4 jogador  perto        zoom : o corpo inteiro na tela
+  OK      4v4 jogador  perto        zoom : com a folga, fora do placar e longe dos controles
+    4v4 frente   pers         zoom 213% correndo   corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      4v4 frente   pers         zoom 213% correndo: o corpo inteiro na tela
+  OK      4v4 frente   pers         zoom 213% correndo: com a folga, fora do placar e longe dos controles
+    3v3 frente   perto        zoom                 corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      3v3 frente   perto        zoom : o corpo inteiro na tela
+  OK      3v3 frente   perto        zoom : com a folga, fora do placar e longe dos controles
+    2v2 jogador  equilibrado  zoom  correndo       corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      2v2 jogador  equilibrado  zoom  correndo: o corpo inteiro na tela
+  OK      2v2 jogador  equilibrado  zoom  correndo: com a folga, fora do placar e longe dos controles
+    1v1 jogador  pers         zoom 213%            corpo cortado     0% · centro fora     0% do raio · na área livre: True
+  OK      1v1 jogador  pers         zoom 213%: o corpo inteiro na tela
+  OK      1v1 jogador  pers         zoom 213%: com a folga, fora do placar e longe dos controles
+
+· enquadramentos por tamanho de time (o % é do enquadramento de sempre)
+    1v1  perto 126%  equilibrado 100%  campo inteiro  78%  (a quadra cabe: True)
+  OK      1v1: Perto > Equilibrado > Campo inteiro
+  OK      1v1: no Campo inteiro a quadra inteira aparece
+    2v2  perto 124%  equilibrado  95%  campo inteiro  67%  (a quadra cabe: True)
+  OK      2v2: Perto > Equilibrado > Campo inteiro
+  OK      2v2: no Campo inteiro a quadra inteira aparece
+    3v3  perto 120%  equilibrado  88%  campo inteiro  56%  (a quadra cabe: True)
+  OK      3v3: Perto > Equilibrado > Campo inteiro
+  OK      3v3: no Campo inteiro a quadra inteira aparece
+    4v4  perto 116%  equilibrado  80%  campo inteiro  48%  (a quadra cabe: True)
+  OK      4v4: Perto > Equilibrado > Campo inteiro
+  OK      4v4: no Campo inteiro a quadra inteira aparece
+  OK      o Equilibrado abre mais no 4v4 que no 1v1
+
+· suavidade e resposta (a bola vai longe de repente)
+     {"salto": 60, "maxPasso": 2.5, "maxAcel": 0.6, "t90": 0.5666666666666667}
+  OK      sem tranco: a velocidade da câmera muda pouco de um quadro para o outro (≤ 6 px/quadro)
+  OK      sem atraso grande: chega a 90% do caminho em até 0,9 s
+
+· zoom automático (opcional)
+     {"z0": 1.3647058823529412, "zMin": 1.0212222002465043, "zFim": 1.354170879411407, "abriu": 0.2516906291297166, "inversoes": 1, "maxDzPorS": 0.22127323573364754}
+  OK      abre quando a bola vai longe (no máximo 30%)
+  OK      sem vaivém: no máximo uma ida e uma volta
+  OK      transição suave: menos de 90% do zoom por segundo
+  OK      volta ao enquadramento escolhido quando a bola volta
+
+· setinhas fora da tela, a sua setinha e o espectador
+  OK      a setinha que cairia em kick fica num lugar livre [1880, 94]
+  OK      a setinha que cairia em power fica num lugar livre [1880, 786]
+  OK      a setinha que cairia em joy fica num lugar livre [40, 702]
+  OK      a setinha que cairia em placar fica num lugar livre [1200, 40]
+  OK      a setinha que cairia em pausa fica num lugar livre [89, 40]
+  OK      com Seguir bola e você fora da tela aparece VOCÊ; no Seguir jogador não precisa
+     {"nomes": ["JOGADOR", "Cris", "Léo", "Biel", "BOLA"], "visivel": true, "rotulos": ["CÂMERA: CRIS"], "nomeAlvo": "Cris"}
+  OK      o espectador troca: jogadores e de volta para a bola
+  OK      a câmera do espectador mantém o jogador escolhido inteiro na tela
+  OK      o rótulo diz quem a câmera acompanha
+
+· Ajustes › Câmera: tudo num lugar só (e fica guardado)
+     {"preset": "perto", "estilo": "frente", "mode": "seguir", "auto": true, "firme": "original", "suave": true, "salvo": {"mode": "seguir", "estilo": "frente", "preset": "perto", "auto": true, "zoom": 213, "desl": 10}}
+  OK      modo, enquadramento e zoom automático mudam na hora
+  OK      Câmera firme e Suavizar movimento mudam na hora
+  OK      fica guardado
+  OK      mexer no zoom passa para o Personalizado
+  OK      Voltar a câmera ao padrão
+  OK      o editor de HUD ficou só com os controles
+  OK      nenhum erro de JavaScript
+
+Etapa 2 · câmeras: 47/47 verificações ok em 5.5 s

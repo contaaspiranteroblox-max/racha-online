@@ -1,0 +1,52 @@
+1) a sala pública é hospedada no servidor
+  ok   a sala pública apareceu na lista de salas
+2) a sala privada (por código) também é hospedada
+  ok   a privada não aparece na lista e entra pelo código
+  ok   a privada já nasce hospedada (host srv)
+3) dois aparelhos na mesma partida · 4) o admin começa
+  ok   os dois receberam o start da MESMA partida, com host srv (ninguém é anfitrião)
+  ok   o criador é o admin (só a função de administrar)
+5/11/12) os quadros do servidor: mesma bola, gol e placar sincronizados
+  ok   quadros a ~30/s para os dois (218 e 218)
+  ok   a bola é IDÊNTICA nos dois aparelhos em todos os 218 ticks comuns
+  ok   os comandos dos dois lados valem no servidor (acks 184 e 183)
+  ok   o gol chegou no quadro com a autoria (o pacote clássico)
+7/15) a física do aparelho não vale nada (nem quadro, nem resultado)
+  ok   snapshot e finish falsos do criador foram ignorados (nenhum resultado 9×0)
+  ok   a partida seguiu com o placar REAL do servidor: [0, 0]
+9) perda de pacotes: a tampinha para, a partida segue
+  ok   sem comandos por 2,5 s, a tampinha da Bia parou (a regra do silêncio)
+  ok   a Ana continuou jogando normalmente
+5/6) o criador cai: só ele sai, a partida continua (a REGRA FUNDAMENTAL)
+  ok   os quadros continuaram para a Bia e a sala segue jogando
+  ok   só a função de admin passou para a Bia (a simulação nunca saiu do servidor)
+  ok   a sala foi avisada da queda
+10) a reconexão em até 90 s
+  ok   a Ana reconectou no MESMO lugar, com a partida rolando (resume)
+  ok   os comandos dela voltaram a valer
+  ok   o admin continuou com a Bia (não volta atrás sozinho)
+8) o fim pelo servidor, com resultado e selo
+  ok   a partida terminou pelo servidor e o resultado chegou
+  ok   o resultado valeu (conferido)
+  ok   o selo da Bia confere na plataforma
+  ok   nenhum erro de protocolo no caminho
+13/15) a RANQUEADA também é 100% hospedada (nenhuma partida competitiva usa a física do aparelho)
+  ok   a sala ranqueada nasceu no servidor (host srv, sem admin) e é ranqueada
+  ok   a regra v80 vale (o relógio do servidor)
+  ok   os quadros da ranqueada vêm do servidor
+  ok   o relógio oficial chega a cada segundo
+  ok   o fim da ranqueada chegou pelo servidor para os dois
+  ok   o mesmo placar para os dois: 0 × 0
+  ok   o resultado ranqueado valeu
+  ok   o selo da Duda é de RANQUEADA (k:1) na conta certa
+14) várias partidas ao mesmo tempo · e a medição (CPU, RAM, banda, quadros)
+  ok   três salas independentes ao mesmo tempo
+  ok   as três receberam quadros o tempo todo (~30/s por 20 s): [631, 625, 619]
+     · quadros por jogador: 30.9/s (o ritmo de 30/s da v82)
+     · banda por jogador: 10.6 KB/s de down (só os quadros + sala)
+     · CPU do servidor com 3 partidas + as anteriores: 3.9% de um núcleo
+     · RAM do servidor: 61.0 MB
+  ok   a taxa de quadros aguentou (acima de 20/s em todas)
+  ok   a CPU ficou folgada com as partidas simultâneas (3.9%)
+
+salas 100% hospedadas (v83): 35 ok, 0 falharam

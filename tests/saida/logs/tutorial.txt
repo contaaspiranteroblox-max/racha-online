@@ -1,0 +1,36 @@
+
+· primeiros toques
+  OK      abre no passo 1 (ANDAR) com o painel e o círculo
+  OK      a tecla de andar move a tampinha (567 → 685)
+  OK      chegou no círculo: passa para o passo 2 (FIQUE ATRÁS DA BOLA)
+  OK      atrás da bola: passa para o passo 3 (CHUTE)
+  OK      CHUTE (tecla K) de trás da bola: gol, passa para o passo 4 (PASSE)
+  OK      PASSE (Espaço) mirando no companheiro aceso: chega nele e passa para o passo 5 (ARMADO)
+  OK      segurou o CHUTE longe (ARMADO) e encostou: a batida saiu sozinha e o tutorial acaba
+  OK      o fim: 5/5, prêmio de primeira vez (+100), JOGAR UMA PARTIDA
+  OK      JOGAR UMA PARTIDA (v79): a busca da ranqueada e, sem servidor, a ranqueada contra bots no Estádio (e o treino escolhido antes volta a ser o Cruzamento)
+  OK      PULAR: volta para o lobby e o treino escolhido continua o de antes
+  OK      TREINAMENTO tem o cartão Primeiros toques (o primeiro da lista, com "feito")
+  OK      o cartão do Domínio explica que o PASSE domina enquanto a bola vem
+  OK      nenhum erro de JavaScript (tutorial)
+
+· a primeira vez
+  OK      primeira vez: nome, tampinha e BORA TREINAR abre o tutorial
+  OK      pulou na primeira vez: lobby com o convite AGORA É JOGAR
+
+· os modos: COMO JOGA e a apresentação
+  OK      primeira partida COM CURVA: o COMO JOGA aparece e a partida espera (a física não anda)
+  OK      BORA! fecha o cartão e a partida segue
+  OK      na apresentação dos times os bots aparecem como BOT (v79: sem o nível escrito)
+  OK      na segunda partida do modo o cartão não aparece de novo
+  OK      o cartão COMO JOGA do COM CURVA abre por cima do JOGAR (v79: o JOGAR da ranqueada não tem o botão COMO JOGA)
+  OK      um modo que saiu (ginga) não chega ao JOGAR: vira FUTEBOL
+  OK      Escape fecha o cartão
+
+· os indicadores dos controles especiais
+  OK      CURVA: a carga aparece em porcentagem e CHEIA · SOLTE!
+  OK      (guardado) DRIBLE: a espera aparece em segundos no botão
+  OK      (guardado) GINGA: embaixo do placar, a janela do gol de ginga com o tempo que falta
+  OK      nenhum erro de JavaScript (modos e indicadores)
+
+Etapa 4 · tutorial, Domínio, modos e indicadores: 26/26 verificações ok em 29.0 s

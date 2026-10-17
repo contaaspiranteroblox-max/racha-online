@@ -1,0 +1,132 @@
+/* =====================================================================================================================
+   RACHA rua v81 · O CHAT: a barra embaixo (o menu, as telas, a sala e a partida) e o painel que abre dela
+   O JS está em tools/v81/chat.js (nos mesmos nós da v63: #cb vira .c81 e #cp vira .c81-pn). O desenho é próprio do RACHA:
+   grafite meio transparente, as bordas finas claras, o amarelo da quadra nos detalhes, o texto branco, os nomes em amarelo.
+   ===================================================================================================================== */
+
+/* ---------------------------------------------------------------- 1) a barra (minimizada) */
+.c81{ position:absolute; z-index:4; left:50%; bottom:0; width:600px; height:62px; box-sizing:border-box; transform:translateX(-50%); transform-origin:50% 100%;
+  font-family:"Lilita One", "Arial Black", Impact, system-ui, sans-serif; color:#ffffff; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.c81[hidden]{ display:none !important; }
+.c81 *{ box-sizing:border-box; }
+.c81 .c81-abrir{ display:flex; align-items:center; gap:10px; width:100%; height:100%; margin:0; padding:0 12px 0 8px; border:2px solid rgba(255,255,255,.16); border-radius:16px;
+  background:rgba(22,24,29,.84); box-shadow:inset 0 2px 0 rgba(255,255,255,.08), 0 6px 16px rgba(0,0,0,.35); color:inherit; font:inherit; cursor:pointer; text-align:left; }
+.c81 .c81-abrir:active{ transform:translateY(1px); }
+.c81 .c81-tag{ flex:none; display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px 0 8px; border-radius:10px; background:#ffd23f; color:#17191c;
+  font-size:17px; letter-spacing:1.4px; line-height:1; }
+.c81 .c81-tag i{ display:block; width:20px; height:20px; } .c81 .c81-tag svg{ display:block; width:100%; height:100%; }
+.c81 .c81-msg{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 21px/1.2 "Barlow", system-ui, sans-serif; color:#ffffff; }
+.c81 .c81-msg b{ color:#ffd23f; font-weight:800; display:inline-flex; align-items:center; }
+.c81 .c81-msg i{ font-style:normal; color:#c3c8d0; }
+.c81 .c81-msg.troca{ animation:c81-troca .28s ease-out; }
+@keyframes c81-troca{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+.c81 .c81-n{ flex:none; min-width:26px; height:26px; padding:0 7px; border-radius:13px; display:grid; place-items:center; background:#ffd23f; color:#17191c; font-size:15px; font-style:normal; }
+.c81 .c81-n[hidden]{ display:none; }
+.c81 .c81-seta{ flex:none; width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.1); color:#ffd23f; }
+.c81 .c81-seta svg{ width:20px; height:20px; }
+.c81.aberto .c81-abrir{ border-color:#ffd23f; }
+/* o menu: um bloco no vão da fileira de baixo, entre o DESAFIOS e o MODO, da altura deles (o JS mede o vão: .c81-vao);
+   sem vão (ou em pé) fica entre a tampinha e a fileira, como a barra da v63 */
+.c81.c81-lobby{ bottom:150px; }
+.c81.c81-lobby.c81-vao .c81-abrir{ flex-wrap:wrap; align-content:center; row-gap:6px; padding:8px 12px 8px 10px; border-radius:18px; border-width:3px; border-color:rgba(255,255,255,.2);
+  background:rgba(22,24,29,.88); box-shadow:inset 0 2px 0 rgba(255,255,255,.08), 0 4px 0 rgba(0,0,0,.35); }
+.c81.c81-lobby.c81-vao .c81-tag{ order:1; height:34px; }
+.c81.c81-lobby.c81-vao .c81-n{ order:2; margin-left:auto; }
+.c81.c81-lobby.c81-vao .c81-seta{ order:3; }
+.c81.c81-lobby.c81-vao .c81-n[hidden] + .c81-seta{ margin-left:auto; }
+.c81.c81-lobby.c81-vao .c81-msg{ order:4; flex:1 0 100%; width:100%; font-size:24px; }
+#lb.retrato .c81.c81-lobby{ position:relative; left:auto; bottom:auto; transform:none; margin:10px auto 0; flex:none; }
+/* a sala: embaixo, no meio (abaixo das opções, entre o CONVIDAR e o INICIAR) */
+.c81.c81-sala{ width:720px; height:66px; bottom:8px; z-index:2; }
+/* as telas do menu: um chip no canto de baixo, à esquerda (não cobre o que a tela mostra) */
+.c81.c81-chip{ left:16px; bottom:14px; transform:none; width:auto; max-width:400px; height:52px; }
+.c81.c81-chip .c81-abrir{ padding:0 10px 0 6px; border-radius:14px; }
+.c81.c81-chip .c81-tag{ height:32px; font-size:15px; padding:0 9px 0 6px; }
+.c81.c81-chip .c81-msg{ max-width:230px; font-size:18px; }
+.c81.c81-chip .c81-seta{ width:26px; height:26px; }
+/* no celular (o menu encolhido para caber: v70-cabe) a barra é maior em px do palco, para ler e tocar no tamanho real */
+#lb.v70-cabe .c81.c81-sala{ width:1040px; height:84px; bottom:4px; }
+#lb.v70-cabe .c81.c81-chip{ left:12px; bottom:10px; max-width:760px; height:84px; }
+#lb.v70-cabe .c81.c81-chip .c81-msg{ max-width:460px; }
+#lb.v70-cabe .c81 .c81-abrir{ border-width:3px; border-radius:22px; gap:14px; padding:0 16px 0 12px; }
+#lb.v70-cabe .c81 .c81-tag{ height:50px; padding:0 16px 0 12px; font-size:24px; letter-spacing:1.6px; border-radius:14px; gap:8px; }
+#lb.v70-cabe .c81 .c81-tag i{ width:28px; height:28px; }
+#lb.v70-cabe .c81 .c81-msg{ font-size:34px; }
+#lb.v70-cabe .c81 .c81-n{ min-width:38px; height:38px; padding:0 10px; border-radius:19px; font-size:22px; }
+#lb.v70-cabe .c81 .c81-seta{ width:46px; height:46px; }
+#lb.v70-cabe .c81 .c81-seta svg{ width:30px; height:30px; }
+#lb.v70-cabe .c81.c81-lobby.c81-vao .c81-abrir{ padding:8px 16px 8px 12px; row-gap:4px; }
+#lb.v70-cabe .c81.c81-lobby.c81-vao .c81-tag{ height:44px; }
+#lb.v70-cabe .c81.c81-lobby.c81-vao .c81-msg{ font-size:36px; }
+/* o aviso de baixo (x49Toast) sobe para não cobrir o bloco do chat no menu; com o painel aberto ele vai para cima da tela */
+body:has(#lb:not([hidden]) #cb.c81-lobby.c81-vao) #x49-toast{ bottom:calc(18.5vh + 10px); }
+body:has(#cb.c81:not([hidden])):has(#cp.c81-pn:not([hidden])) #x49-toast{ bottom:auto; top:max(14px, env(safe-area-inset-top)); }
+/* a partida: menor, mais transparente, embaixo do campo (entre o analógico e os botões; o placar fica em cima) */
+.c81.c81-jogo{ width:520px; height:56px; bottom:6px; }
+.c81.c81-jogo .c81-abrir{ background:rgba(16,18,22,.62); border-color:rgba(255,255,255,.22); box-shadow:none; }
+.c81.c81-jogo .c81-tag{ height:34px; font-size:16px; }
+.c81.c81-jogo .c81-msg{ font-size:22px; }
+
+/* ---------------------------------------------------------------- 2) o painel (expandido): embaixo, sobe junto com o teclado do celular */
+/* (#cp: o mesmo nó da v63, que o CSS de lá põe em cima; aqui ele fica embaixo) */
+#cp.c81-pn, .c81-pn{ position:fixed; inset:0; z-index:220; display:flex; justify-content:center; align-items:flex-end; padding:8px; box-sizing:border-box; background:rgba(6,7,8,.5); }
+#cp.c81-pn[hidden], .c81-pn[hidden]{ display:none !important; }
+#cp.c81-pn.jogo, .c81-pn.jogo{ background:rgba(6,7,8,.16); }
+.c81-pn *{ box-sizing:border-box; }
+.c81-pn button{ font:inherit; color:inherit; border:0; margin:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.c81-caixa{ position:relative; width:min(720px, 100%); max-height:min(62vh, 520px); margin-bottom:var(--c81-kb, 0px); display:flex; flex-direction:column; gap:8px; padding:10px 12px 12px;
+  border:2px solid rgba(255,255,255,.14); border-top:3px solid #ffd23f; border-radius:20px; background:#16181d; box-shadow:0 14px 40px rgba(0,0,0,.5);
+  font-family:"Barlow", system-ui, sans-serif; color:#ffffff; animation:c81-sobe .18s ease-out; }
+.c81-pn.jogo .c81-caixa{ max-height:min(46vh, 380px); background:rgba(22,24,29,.97); }
+@keyframes c81-sobe{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+.c81-cab{ flex:none; display:flex; align-items:center; gap:8px; }
+.c81-abas{ flex:1 1 auto; display:flex; gap:6px; min-width:0; }
+.c81-aba{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px 0 8px; border-radius:11px; background:rgba(255,255,255,.08); color:#e6e8ec;
+  font:800 15px/1 "Barlow", system-ui, sans-serif; letter-spacing:1.4px; border:2px solid transparent; transition:background .15s, color .15s; }
+.c81-aba i{ display:block; width:20px; height:20px; } .c81-aba svg{ display:block; width:100%; height:100%; }
+.c81-aba.on{ background:#ffd23f; color:#17191c; }
+.c81-aba b{ min-width:20px; height:20px; padding:0 5px; border-radius:10px; display:grid; place-items:center; background:#ff5a4f; color:#fff; font-size:12px; }
+.c81-online{ flex:none; font:700 13px/1 "Barlow", system-ui, sans-serif; letter-spacing:.6px; color:#9aa0a8; white-space:nowrap; }
+.c81-ic{ flex:none; width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:rgba(255,255,255,.08); color:#ffd23f; }
+.c81-ic svg{ width:20px; height:20px; }
+.c81-ic[hidden]{ display:none; }
+.c81-lista{ flex:1 1 auto; min-height:72px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; padding:8px 10px; border-radius:12px; background:rgba(0,0,0,.3); scrollbar-width:thin; overscroll-behavior:contain; }
+.c81-lin{ display:flex; align-items:baseline; flex-wrap:wrap; gap:0 6px; font:600 16px/1.3 "Barlow", system-ui, sans-serif; color:#f1f1ee; overflow-wrap:anywhere; animation:c81-lin .16s ease-out; }
+@keyframes c81-lin{ from{ opacity:0; transform:translateX(-4px); } to{ opacity:1; transform:none; } }
+.c81-lin.sys{ color:#9aa0a8; font-style:italic; }
+.c81-lin.oculta .c81-tx{ color:#8a9099; font-style:italic; }
+.c81-lin .c81-tx{ flex:1 1 auto; min-width:0; }
+.c81-nome{ padding:0; display:inline-flex; align-items:center; color:#ffd23f; font:800 16px/1.3 "Barlow", system-ui, sans-serif; }
+.c81-nome b{ font-weight:800; display:inline-flex; align-items:center; } .c81-nome small{ margin-left:4px; font-size:12px; color:#c3c8d0; font-weight:700; }
+.c81-nome::after{ content:':'; color:#ffd23f; }
+.c81-lin.eu .c81-nome, .c81-lin.eu .c81-nome::after{ color:#8cf0a0; }
+.c81-h{ margin-left:auto; font-size:11px; color:#7f8690; font-weight:700; }
+.c81-rap{ flex:none; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+.c81-rap::-webkit-scrollbar{ display:none; } .c81-rap[hidden]{ display:none; }
+.c81-chip{ flex:none; height:32px; padding:0 12px; border-radius:16px; font:700 14px/1 "Barlow", system-ui, sans-serif; color:#fff; background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.14); }
+.c81-form{ flex:none; display:flex; gap:8px; }
+.c81-in{ flex:1 1 auto; min-width:0; height:46px; border:2px solid rgba(255,255,255,.14); outline:0; border-radius:12px; padding:0 14px; background:rgba(255,255,255,.08); color:#fff; font:600 16px "Barlow", system-ui, sans-serif; }
+.c81-in::placeholder{ color:#8a9099; } .c81-in:focus{ border-color:#ffd23f; } .c81-in:disabled{ opacity:.55; }
+.c81-ok{ flex:none; display:inline-flex; align-items:center; gap:7px; height:46px; padding:0 16px; border-radius:12px; background:#ffd23f; color:#17191c; font:800 15px/1 "Barlow", system-ui, sans-serif; letter-spacing:1.4px; }
+.c81-ok:active{ transform:translateY(1px); }
+.c81-ok i{ display:block; width:18px; height:18px; } .c81-ok svg{ display:block; width:100%; height:100%; }
+.c81-erro{ flex:none; padding:6px 10px; border-radius:10px; background:rgba(255,90,79,.18); color:#ffb4a8; font:700 14px/1.3 "Barlow", system-ui, sans-serif; }
+.c81-erro[hidden]{ display:none; }
+/* a ficha de quem escreveu */
+.c81-ficha{ position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:18px; background:#17191e; animation:c81-sobe .14s ease-out; }
+.c81-ficha[hidden]{ display:none; }
+.c81-f-cab{ display:flex; align-items:center; gap:12px; }
+.c81-f-tampa{ flex:none; width:64px; height:64px; } .c81-f-tampa canvas{ display:block; width:100%; height:100%; }
+.c81-f-tx{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.c81-f-tx b{ display:inline-flex; align-items:center; font:400 24px/1.1 "Lilita One", "Arial Black", Impact, system-ui, sans-serif; color:#fff; }
+.c81-f-tx small{ font:700 13px/1.3 "Barlow", system-ui, sans-serif; color:#9aa0a8; letter-spacing:.4px; }
+.c81-f-x{ flex:none; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.1); color:#fff; font-size:16px; }
+.c81-f-nota{ margin:0; font:600 15px/1.35 "Barlow", system-ui, sans-serif; color:#c3c8d0; overflow-wrap:anywhere; }
+.c81-f-acoes{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; }
+.c81-f-bt{ display:inline-flex; align-items:center; gap:7px; height:42px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.1); color:#fff; font:800 14px/1 "Barlow", system-ui, sans-serif; letter-spacing:1.2px; border:2px solid rgba(255,255,255,.14); }
+.c81-f-bt i{ display:block; width:18px; height:18px; } .c81-f-bt svg{ display:block; width:100%; height:100%; }
+.c81-f-bt.amarelo{ background:#ffd23f; color:#17191c; border-color:#ffd23f; }
+.c81-f-bt.vermelho{ background:rgba(255,90,79,.2); color:#ffb4a8; border-color:rgba(255,90,79,.4); }
+.c81-f-bt:disabled{ opacity:.45; cursor:default; }
+@media (max-height:430px){ .c81-caixa{ max-height:min(72vh, 520px); padding:8px 10px 10px; gap:6px; } .c81-in, .c81-ok{ height:40px; } .c81-lista{ min-height:52px; } .c81-aba{ height:32px; } }
+@media (prefers-reduced-motion: reduce){ .c81 .c81-msg.troca, .c81-caixa, .c81-lin, .c81-ficha{ animation:none; } }

@@ -1,0 +1,8 @@
+  OK      a quadra é a mesma (mundo, linhas e gols)
+  OK      o roteiro tem chutes de verdade (a bola no alcance)
+  OK      360 passos: tampinha e bola iguais nos dois lados (maior diferença 0.00e+00 px)
+  OK      a bola andou de verdade no lance (não é um teste vazio)
+  OK      sem gol no roteiro (o servidor para no gol; o treino livre não)
+  OK      nenhum erro de JavaScript
+
+v85 · o mesmo lance no aparelho e no servidor: 6/6 verificações ok em 2.7 s

@@ -1,0 +1,47 @@
+  OK      os bots novos (tools/v78/bots.js), o perfil (tools/v78/perfil.js) e o v78.css vão no jogo pelo build
+  OK      nenhum nome de jogada em cima da cabeça: com FINTA!, DOUBLE SHOT! e DRIBLE! na fila, o quadro não desenha nada (e a fila esvazia)
+  OK      o balão "digitando" da sala online continua (ele não é nome de jogada)
+  OK      30 s de 4v4 com os bots jogando: nenhuma etiqueta de jogada
+  OK      1v1 (dificil): a cabeça nova ligada, um jeito para cada bot sem repetir no time; os seus companheiros no nível bom e os de lá no escolhido
+  OK      2v2 (facil): a cabeça nova ligada, um jeito para cada bot sem repetir no time; os seus companheiros no nível bom e os de lá no escolhido
+  OK      3v3 (dificil): a cabeça nova ligada, um jeito para cada bot sem repetir no time, um goleiro-linha (o Paredão) em cada time; os seus companheiros no nível bom e os de lá no escolhido
+  OK      4v4 (facil): a cabeça nova ligada, um jeito para cada bot sem repetir no time, um goleiro-linha (o Paredão) em cada time; os seus companheiros no nível bom e os de lá no escolhido
+  OK      a escalação na faixa de cima, depois do sorteio: "COM VOCÊ: … · CONTRA: …" com o jeito de cada bot
+  OK      na apresentação dos times: o jeito de cada bot (v79: sem o nível escrito; o seu companheiro continua jogando no Difícil)
+  OK      o mesmo corpo de todo mundo: em 45 s de 4v4 nenhum bot passa da velocidade do jogador e todo chute é PASSE ou CHUTE com a bola no alcance
+  OK      com você levando a bola, o companheiro não toma ela de você (abre para receber)
+  OK      com você livre na frente, o companheiro toca para você (em 2 de 3 lances sorteados, ou mais)
+  OK      a saída: o bot dá a dele em menos de 2,5 s; na sua, ele espera você (5 s) e então um companheiro dá
+  OK      o gol do bot: quem fez corre para a bandeirinha e quem levou fica parado
+  OK      o placar mexe no jogo (só na casual, só nos bots contra você): quem abre vantagem relaxa (reage mais devagar), quem perde de 2 aperta; na liga não
+    1v1 facil   placar [3, 1] em  53 s · gols [[0, 'gol'], [0, 'gol'], [1, 'gol'], [0, 'gol']] · presa no máximo 0.1 s
+    2v2 dificil placar [2, 1] em 180 s · gols [[0, 'gol'], [1, 'gol'], [0, 'gol']] · presa no máximo 0.5 s
+    2v2 facil   placar [2, 3] em  64 s · gols [[0, 'gol'], [1, 'gol'], [1, 'gol'], [0, 'gol'], [1, 'gol']] · presa no máximo 0.1 s
+    3v3 dificil placar [1, 3] em 152 s · gols [[1, 'gol'], [1, 'gol'], [0, 'contra'], [1, 'gol']] · presa no máximo 0.5 s
+    3v3 facil   placar [1, 2] em 180 s · gols [[1, 'gol'], [1, 'gol'], [0, 'gol']] · presa no máximo 0.2 s
+    4v4 dificil placar [2, 1] em 180 s · gols [[0, 'contra'], [1, 'gol'], [0, 'gol']] · presa no máximo 0.8 s
+  OK      partidas inteiras com o sorteio fixo (1v1 a 4v4): todas acabam (alguém chega a 3) em até 8 min de jogo
+  OK      nenhuma bola presa por mais de 6 s; gol contra sem ninguém do outro time por perto: no máximo 2 em 6 partidas
+    custo por passo da física (4v4, com os bots pensando): novo 0.059 ms · antigo 0.173 ms
+  OK      o custo por quadro dos bots novos no 4v4 (menos de 1,5 ms por passo neste computador)
+  OK      nenhum erro de JavaScript nas partidas
+  OK      PERFIL › VISÃO GERAL: 4 números grandes com o nome inteiro (PARTIDAS, VITÓRIAS, GOLS, ASSISTÊNCIAS) e os números de verdade
+  OK      uma frase que explica: "Você ganhou 5 de 7 partidas (71%) e fez 11 gols…"
+  OK      o nível por extenso (NÍVEL 1 · FALTAM 100 XP PARA O 2), a SUA BIO inteira; o tempo, a sequência, o aproveitamento e os 5 números pequenos saíram da visão geral
+  OK      844x390: nenhum nome cortado (nem os 4 números nem as abas) e nada rola
+  OK      844x390: a tampinha do perfil maior (raio 220; era 150)
+  OK      1280x720: nenhum nome cortado (nem os 4 números nem as abas) e nada rola
+  OK      1280x720: a tampinha do perfil maior (raio 220; era 150)
+  OK      1024x768: nenhum nome cortado (nem os 4 números nem as abas) e nada rola
+  OK      1024x768: a tampinha do perfil maior (raio 220; era 150)
+  OK      1920x888: nenhum nome cortado (nem os 4 números nem as abas) e nada rola
+  OK      1920x888: a tampinha do perfil maior (raio 220; era 150)
+  OK      sem partidas, a frase convida: "Você ainda não jogou. Toque em JOGAR…"
+  OK      1280x720: a tampinha do lobby 1,4× maior (raio 123), sem encostar no letreiro nem nos botões
+  OK      1920x888: a tampinha do lobby 1,4× maior (raio 152), sem encostar no letreiro nem nos botões
+  OK      844x390: a tampinha do lobby 1,4× maior (raio 67), sem encostar no letreiro nem nos botões
+  OK      667x375: a tampinha do lobby 1,4× maior (raio 64), sem encostar no letreiro nem nos botões
+  OK      700x900: a tampinha do lobby 1,4× maior (raio 118), sem encostar no letreiro nem nos botões
+  OK      na partida a tampinha tem o tamanho da física (v85, FR-85: raio 1,8 u = 34,2 px; todo mundo igual)
+
+v78 · nada em cima da cabeça, os bots novos, o perfil mais claro e a tampinha maior no lobby: 38/38 verificações ok em 44.5 s

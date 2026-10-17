@@ -1,0 +1,17 @@
+1) a conexão e a partida
+  ok   a Ana entrou na partida autoritativa (o bem-vindo com o campo)
+  ok   a Bia entrou na mesma partida
+  ok   a partida começou quando lotou
+  ok   nenhum erro no caminho
+2) os quadros do servidor
+  ok   a Ana recebeu os quadros do servidor (20/s: 440)
+  ok   a Bia recebeu os mesmos quadros (440)
+3) o fim e o selo
+  ok   o fim chegou pelo servidor
+  ok   o resultado é do servidor: empate
+  ok   o selo da Ana confere na plataforma (k:1, a conta certa)
+  ok   o selo da Bia confere (a conta dela)
+  ok   os dois viram o mesmo placar: 0 × 0
+   (gols na partida: 0)
+
+ws autoritativo (v83): 11 ok, 0 falharam

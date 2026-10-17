@@ -1,0 +1,107 @@
+/* GERADO por tools/v71/tema.py a cada build — não editar à mão (ver o cabeçalho do script).
+   O azul-marinho das telas de dentro (salas, comunidade, clube, editor) vira o preto-carvão do lobby da v71. */
+#lb{ --sx-azul:#23272d; --sx-azul2:#2d3239; --sx-fundo:#121417; --sx-borda:#0b0c0e; --sx-linha:#353b43; --sx-txt:#f3f1ea; --sx-sub:#a9b0ba; --rx-azul:#23272d; --rx-azul2:#2d3239; --rx-borda:#0b0c0e; --rx-sub:#a9b0ba; }
+
+/* ---- de lobby.css */
+#lb .tp-eu .hm-xp{ background:#131416; }
+
+/* ---- de sala.css */
+#lb .sx{ background:linear-gradient(180deg, #383c41 0, #2d3034 28%, #1e2022 100%); }
+#lb .sx-cab{ background:linear-gradient(#43484d, #34373c); }
+#lb .sx-st{ background:#232528; }
+#lb .sx-in input::placeholder{ color:#90959c; }
+#lb .sx-fil{ background:#232528; }
+#lb .sx-bt{ background:linear-gradient(#7b828a, #52585f); }
+#lb .sx-bt.cinza{ background:linear-gradient(#828890, #555b62); }
+#lb .sx-nota{ color:#d7d9db; }
+#lb .sx-lista{ border:3px solid #3a3d42; }
+#lb .sx-sala{ background:linear-gradient(#33373b, #2a2c30); }
+#lb .sx-sala.jogando{ background:linear-gradient(#2b2e31, #242629); }
+#lb .sx-c{ color:#d7d9db; }
+#lb .sx-vazio > p{ color:#d7d9db; }
+#lb .sx-na > span{ color:#eeeff0; }
+#lb .sx-duelos{ color:#eeeff0; }
+#lb .sx-campo::placeholder{ color:#90959c; }
+#lb .sx-op{ background:linear-gradient(#383c40, #2d3034); }
+#lb .sx-seta{ background:#34373b; }
+#lb .pop-caixa.sx-pop .sx-como{ color:#dadcdf; }
+#lb .sl-arb{ border:3px solid #141517; }
+#lb .sl-legenda{ background:rgba(19,20,22,.78); border:3px solid rgba(19,20,22,.9); color:#f3f3f4; }
+#lb .sl-legenda i svg circle{ fill:#131416; }
+#lb .sl-legenda .sl-leg-dica{ color:#c2c5c8; }
+
+/* ---- de tampa.css */
+#lb .tpe-tela{ background:#1b1d1f; }
+#lb .tpe-corpo::before{ background:linear-gradient(rgba(20,21,23,.35), rgba(20,21,23,.6)); }
+#lb .tpe{ background:linear-gradient(180deg, #383c41 0, #2d3034 30%, #1e2022 100%); }
+#lb .tpe-aba{ background:linear-gradient(#383c40, #2d3034) !important; color:#dddfe1; }
+#lb .tpe-prev{ border:3px solid #3a3d42; background:radial-gradient(ellipse at 50% 42%, rgba(255,226,140,.22) 0, rgba(255,210,63,.06) 38%, rgba(0,0,0,0) 62%), linear-gradient(#25272a, #18191b); }
+#lb .tpe-nome small{ color:#e0e2e4; }
+#lb .tpe-menu-bt{ background:rgba(23,25,27,.85) !important; border:3px solid #3f4348 !important; }
+#lb .tpe-mini{ background:rgba(23,25,27,.85) !important; border:3px solid #3f4348 !important; }
+#lb .tpe-menu{ background:#232528; }
+#lb .tpe-menu-it{ color:#f3f3f4; }
+#lb .tpe-rot small{ color:#eeeff0; }
+#lb .tpe-nota{ color:#d7d9db; }
+#lb .tpe-slot{ background:#232528; border:3px solid #3a3d42; }
+#lb .tpe-slot-rot{ color:#b5b8bd; }
+#lb .tpe-cor{ box-shadow:0 0 0 3px #131416, inset 0 -6px 0 rgba(0,0,0,.18); }
+#lb .tpe-gota{ background:#383c40 !important; border:3px solid #3f4348 !important; color:#eeeff0; }
+#lb .tpe-ponto{ box-shadow:0 3px 0 rgba(0,0,0,.4), 0 0 0 3px #131416; }
+#lb .tpe-zera{ background:#383c40 !important; border:3px solid #3f4348 !important; color:#eeeff0; }
+#lb .tpe-pad-xy{ color:#e0e2e4; }
+#lb .tpe-rng::-webkit-slider-runnable-track{ background:linear-gradient(90deg, #535960, #9ba0a6); }
+#lb .tpe-rng::-moz-range-track{ background:linear-gradient(90deg, #535960, #9ba0a6); }
+#lb .tpe-op{ background:linear-gradient(#383c40, #2d3034) !important; color:#eeeff0; }
+#lb .tpe-txt-dica{ color:#b5b8bd; }
+#lb .tpe-pop{ background:#232528; }
+#lb .tpe-pop-x{ background:#383c40 !important; }
+#lb .tpe-pal-c{ border:3px solid #131416 !important; }
+#lb .tpe-pop-sub{ color:#b5b8bd; }
+#lb .tpe-mais{ background:#383c40; border:3px solid #3f4348; }
+#lb .tpe-faixa{ border:3px solid #3a3d42; }
+#lb .tpe-item{ background:linear-gradient(#33373b, #2a2c30) !important; }
+#lb .tpe-item::before{ background:#7a8089; }
+#lb .tpe-item-n{ color:#f3f3f4; }
+#lb .tpe-falta{ color:#d7d9db; }
+#lb .tpe-card{ background:linear-gradient(#33373b, #2a2c30) !important; }
+#lb .tpe-inv-n{ color:#b5b8bd; }
+#lb .tpe-cola-in{ border:3px solid #3f4348; background:#1b1d1f; }
+#lb .clb-criar-card{ background:linear-gradient(#40444a, #2e3134); border:3px solid #474b51; }
+#lb .clb-criar-preco{ color:#d7d9db; }
+#lb .clb-turma{ background:#232528; border:3px solid #3a3d42; }
+#lb .clb-turma span{ color:#eeeff0; }
+#lb .clb-turma small{ color:#b5b8bd; }
+#lb .clb-ou span{ background:#232528; border:3px solid #3f4348; }
+#lb .clb-aba{ background:linear-gradient(#383c40, #2d3034); color:#dddfe1; }
+#lb .clb-aba-n{ border:3px solid #131416; }
+#lb .clb-rows{ border:3px solid #3a3d42; }
+#lb .clb-row{ background:linear-gradient(#33373b, #2a2c30); }
+#lb .clb-cad svg{ color:#b5b8bd; }
+#lb .clb-row-id small{ color:#d7d9db; }
+#lb .clb-row-n svg{ color:#b5b8bd; }
+#lb .clb-vazio{ color:#d7d9db; }
+#lb .clb-topo{ background:linear-gradient(#40444a, #2e3134); border:3px solid #474b51; }
+#lb .clb-desc{ color:#eeeff0; }
+#lb .clb-dono{ color:#b5b8bd; }
+#lb .clb-stat{ background:#232528; border:3px solid #3a3d42; }
+#lb .clb-stat small{ color:#b5b8bd; }
+#lb .clb-nota{ color:#b5b8bd; }
+#lb .clb-mem{ border:3px solid #3a3d42; }
+#lb .clb-membro{ background:linear-gradient(#33373b, #2a2c30); }
+#lb .clb-mem-id small{ color:#d7d9db; }
+#lb .clb-modal{ background:rgba(12,12,13,.62); }
+#lb .clb-form-cab{ background:linear-gradient(#43484d, #34373c); }
+@media (hover:hover){
+  #lb .tpe-menu-it:hover:not(:disabled){ background:#383c40; }
+}
+
+/* ---- de v70.css */
+#lb .sl-botao.v70-sl-at.bots{ color:#1c1e21; border-color:#1c1e21; }
+#lb .cm-onde{ color:#d7d9db; }
+#lb .cm-ic{ background:#3a3d42; }
+#lb .cm-tx{ color:#eeeff0; }
+#lb .cm-duelos{ color:#eeeff0; }
+#lb .clb-onde-local{ color:#1c1d20; }
+#lb .clb-como{ background:#232528; border:3px solid #3a3d42; }
+#lb .clb-como-lk{ background:#232528; border:2px solid #3a3d42; }

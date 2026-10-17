@@ -1,0 +1,57 @@
+// ============================================================================
+// RACHA 2.0 — v70: o SERVIDOR DA TURMA montado na plataforma (o mesmo endereço do site).
+// As salas online, o Chat do Brasil, os clubes da turma e a copa (server/turma.js, sem dependências) passam a
+// responder no WebSocket do próprio site: o jogo aberto pela plataforma conecta sozinho (ws(s)://o-mesmo-endereço/).
+//   · quem está logado entra com a conta (a sessão do site é conferida aqui, antes do aperto de mão);
+//   · a origem é conferida: o próprio site, localhost e as de RACHA_ORIGENS (separadas por vírgula);
+//   · o resultado que o servidor conferiu sai com o selo (assinado com o segredo das salas), que o
+//     jogo.encerrarPartida confere antes de dar XP da partida online.
+// Desligar: RACHA_SALAS=0. Guardar os troféus/clubes da turma: RACHA_DADOS=/caminho/turma.json (padrão: memória).
+// ============================================================================
+import type { IncomingMessage, Server } from "http";
+import type { Duplex } from "stream";
+import { Turma, origemPermitida } from "../../../server/turma.js";
+import { aceita } from "../../../server/ws.js";
+import { sessaoDaRequisicao } from "../racha/guard";
+import { garanteSegredoSalas } from "./selo";
+
+function cabecalhos(req: IncomingMessage): Headers {
+  const h = new Headers();
+  for (const [k, v] of Object.entries(req.headers)) if (typeof v === "string") h.set(k, v);
+  return h;
+}
+
+// v79: selosDe (passado pelo boot, que tem o banco) devolve os selos da conta — o V na frente do nome nas salas e no Chat do
+// Brasil sai do banco, nunca do jogo. Sem ele (os testes), ninguém aparece com selo.
+export type OpcoesSalas = { selosDe?: (usuarioId: number) => Promise<string[]> };
+export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
+  const turma = new Turma({
+    arquivo: process.env.RACHA_DADOS || null,
+    nome: process.env.RACHA_SALAS_NOME || "RACHA",
+    segredo: garanteSegredoSalas(),
+    p2p: process.env.RACHA_P2P !== "0",
+  });
+  const origens = (process.env.RACHA_ORIGENS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  servidor.on("upgrade", (req: IncomingMessage, sock: Duplex, cabeca: Buffer) => {
+    if (!origemPermitida(req.headers.origin, req.headers.host, origens)) {
+      sock.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
+      return;
+    }
+    // a conta da sessão do site (o cookie vai junto no aperto de mão do mesmo endereço)
+    sessaoDaRequisicao(new Request("http://racha.local/", { headers: cabecalhos(req) }))
+      .catch(() => null)
+      .then(async (s) => {
+        const usuario = s?.usuario as { id?: number; idPublico: number; nomeExibicao: string } | undefined;
+        const lista = usuario && typeof usuario.id === "number" && opcoes.selosDe ? await opcoes.selosDe(usuario.id).catch(() => []) : [];
+        const ws = aceita(req, sock, cabeca);
+        if (!ws) return;
+        const r = req as IncomingMessage & { racha?: { idPublico: number; nome: string; selos: string[] } | null };
+        r.racha = usuario ? { idPublico: usuario.idPublico, nome: usuario.nomeExibicao, selos: lista } : null;
+        turma.conecta(ws, r);
+      });
+  });
+  const desliga = () => turma.fecha();
+  process.once("SIGTERM", desliga);
+  process.once("SIGINT", desliga);
+  return turma;
+}

@@ -1,0 +1,110 @@
+
+1) as patentes
+  OK      as 8 patentes da imagem, na ordem
+  OK      as faixas de pontos da imagem (Lendário: 4.300+)
+  OK      os pontos viram a patente e a divisão certas nas bordas (III → II → I)
+  OK      as 24 divisões em ordem (1 = Bronze III … 24 = Lendário I)
+  OK      as 24 insígnias são desenhos diferentes (o Lendário com a coroa grande, o Bronze sem coroa)
+  OK      a conta dos pontos é a de antes (vitória, diferença, Difícil, derrota, Bronze, abandono) e a derrota não tira da patente
+  OK      a sua patente (em cima, no lobby) abre a tela PATENTES RANQUEADAS: 8 colunas, 24 divisões (não abre o JOGAR)
+  OK      a sua marcada (1.450 pontos = Platina III) e as faixas escritas como na imagem
+  OK      o foco vai para o X e embaixo as regras dos pontos
+  OK      o Esc fecha as patentes
+  OK      no lobby: RANQUEADA e a sua patente (sem LIGA)
+  OK      o VER PATENTES do JOGAR abre as patentes e o X fecha
+  OK      nenhum erro de JavaScript (patentes)
+
+2) só ranqueada, no Estádio, com a busca e os bots de reserva (sem servidor)
+  OK      quem tinha a CASUAL salva: agora é a ranqueada, no Estádio (futebol)
+  OK      o Estádio é o campo padrão (o treino de quem nunca escolheu, as salas de quem nunca criou uma)
+  OK      o MODO do lobby: o tamanho do time e RANQUEADA · ESTÁDIO
+  OK      o MODO abre o JOGAR só com a ranqueada (sem a aba CASUAL)
+  OK      só o Estádio, o JOGAR RANQUEADA, o COMO É e sem a escolha dos bots
+  OK      a folha não fala em LIGA nem em FÁCIL/DIFÍCIL
+  OK      trocar o tamanho do time vale na hora (o lobby mostra 3 VS 3)
+  OK      mesmo pedindo a casual (caminho antigo), abre a ranqueada
+  OK      o JOGAR abre a BUSCA (3 VS 3, no Estádio, com a sua patente)
+  OK      sem servidor: a busca avisa que a partida é contra bots
+  OK      em ~1,5 s começa a ranqueada contra bots: 3v3, no Estádio, futebol
+  OK      a faixa do começo: RANQUEADA CONTRA BOTS (sem o nível)
+  OK      a pílula de baixo e a pausa: RANQUEADA … CONTRA BOTS
+  OK      a apresentação dos times, a pausa e a pílula sem LIGA e sem FÁCIL/DIFÍCIL
+  OK      o fim: RANQUEADA … contra bots (sem o nível)
+  OK      a vitória por 2 dá os pontos da ranqueada (com o bônus se os bots eram os mais fortes)
+  OK      JOGAR DE NOVO (sem servidor): outra ranqueada contra bots, no Estádio
+  OK      a apresentação do JOGAR DE NOVO sem o nível dos bots
+  OK      desistir no meio: −25 pontos
+  OK      as missões: "Conclua 1 partida ranqueada"; a do mapa vira o Estádio e a do modo vira a do treino
+  OK      as estatísticas do perfil chamam a liga de RANQUEADA
+  OK      o fim do tutorial (JOGAR A PRIMEIRA PARTIDA) abre a busca da ranqueada
+  OK      nenhum erro de JavaScript (só ranqueada)
+  OK      quem já tinha escolhido a Arena (no treino e nas salas) continua com ela
+
+3) o selo V (o seu e o dos outros)
+  OK      o seu V (VERIFICADO) na frente do nome no lobby e no perfil (o desenho do V)
+  OK      no PERFIL o nome aparece com o V
+  OK      selo que não existe (admin, __proto__…) não aparece
+  OK      na sala: o V do PARCEIRO no cartão; na lista das salas, o V da EQUIPE no dono (o selo errado não aparece)
+  OK      no CHAT DO BRASIL: o V de cada um (do servidor), na mensagem certa (o silenciado não conta)
+  OK      no chat de baixo (a sala): o V de quem tem, pelo membro da sala
+  OK      na partida: o seu V é desenhado antes do nome (e some sem selo)
+  OK      nenhum erro de JavaScript (selo)
+
+4) a ranqueada online (o servidor da turma e sessões no navegador)
+  OK      com o servidor: a BUSCA conecta e entra na fila do 1v1
+  OK      a busca diz o que está fazendo e quando vira contra bots (sem o aviso das salas embaixo)
+  OK      o hello do servidor traz o seu selo (sem conta: nenhum)
+  FALHOU  os dois da fila jogam juntos: a sala ranqueada 1v1 no Estádio (um roda a partida)  ·  [{'id': 'ursgi4lse2', 'sala': 'K7NMVH', 'ranked': True, 'map': 4, 'n': 1, 'jogando': True, 'host': False, 'slot': 0, 'rq': 'saida', 'mm': 'ranked', 'nome': 'RANQUEADA ONLINE', 'aviso': 'RANQUEADA ONLINE', 'busca': None, 'lobby': False, 'pts': 1000, 'selo': ''}, {'id': 'ugejdme6xp', 'sala': 'K7NMVH', 'ranked': True, 'map': 4, 'n': 1, 'jogando': True, 'host': False, 'slot': 1, 'rq': 'saida', 'mm': 'ranked', 'nome': 'RANQUEADA ONLINE', 'aviso': 'RANQUEADA ONLINE', 'busca': None, 'lobby': False, 'pts': 1000, 'selo': ''}]
+  OK      a busca fecha, o lobby sai e a faixa diz RANQUEADA ONLINE
+  OK      a sala da ranqueada não abre a tela da sala (a partida vem direto)
+  OK      a sala da ranqueada não aparece na lista das salas
+  OK      a pausa da ranqueada online (sem o código da sala)
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/aud/trabalho/RACHA_CORRIGIDO/tests/v79_test.py", line 346, in <module>
+    roda(principal())
+    ~~~~^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/aud/trabalho/RACHA_CORRIGIDO/tests/comum.py", line 80, in roda
+    sys.exit(asyncio.run(corrotina))
+             ~~~~~~~~~~~^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/aud/trabalho/RACHA_CORRIGIDO/tests/v79_test.py", line 342, in principal
+    await online(pw, P)
+  File "/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/aud/trabalho/RACHA_CORRIGIDO/tests/v79_test.py", line 258, in online
+    rh = await rt(host, "({pts:CONTA.rq.pts, d:RQ.resultado.pr.delta, nivel:RQ.resultado.nivel, tit:fimEl('fim-titulo').textContent, bt:fimEl('fim-denovo').textContent, liga:ecoMissoes().l[0].p})")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/aud/trabalho/RACHA_CORRIGIDO/tests/comum.py", line 76, in rt
+    return await pg.evaluate('s => window.__RT(s)', js)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/dist-packages/playwright/async_api/_generated.py", line 8514, in evaluate
+    await self._impl_obj.evaluate(
+        expression=expression, arg=mapping.to_impl(arg)
+    )
+  File "/usr/local/lib/python3.13/dist-packages/playwright/_impl/_page.py", line 467, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/dist-packages/playwright/_impl/_frame.py", line 320, in evaluate
+    await self._channel.send(
+    ...<6 lines>...
+    )
+  File "/usr/local/lib/python3.13/dist-packages/playwright/_impl/_connection.py", line 69, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/usr/local/lib/python3.13/dist-packages/playwright/_impl/_connection.py", line 559, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading 'delta')
+    at eval (eval at window.__RT (http://127.0.0.1:36221/tests/build/racha_teste.html:26728:35), <anonymous>:1:39)
+    at window.__RT (http://127.0.0.1:36221/tests/build/racha_teste.html:29849:35)
+    at eval (eval at evaluate (:290:30), <anonymous>:1:13)
+    at UtilityScript.evaluate (<anonymous>:297:18)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)

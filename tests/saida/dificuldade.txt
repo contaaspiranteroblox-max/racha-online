@@ -1,0 +1,8 @@
+1v1 · referência facil   × bots facil   · vitórias  6/12 · gols 1.8 × 2.3 ·   55 s · gols de saída 0.83/partida · bola parada 0.00/partida · posse 51%
+1v1 · referência facil   × bots dificil · vitórias  5/12 · gols 1.8 × 2.4 ·   88 s · gols de saída 0.08/partida · bola parada 0.00/partida · posse 44%
+1v1 · referência dificil × bots facil   · vitórias 12/12 · gols 3.0 × 0.4 ·   33 s · gols de saída 1.08/partida · bola parada 0.00/partida · posse 44%
+1v1 · referência dificil × bots dificil · vitórias  0/12 · gols 0.3 × 3.0 ·   16 s · gols de saída 3.00/partida · bola parada 0.00/partida · posse 81%
+2v2 · referência facil   × bots facil   · vitórias  6/12 · gols 2.1 × 2.3 ·  140 s · gols de saída 0.00/partida · bola parada 0.00/partida · posse 50%
+2v2 · referência facil   × bots dificil · vitórias  1/12 · gols 0.7 × 2.9 ·  112 s · gols de saída 0.25/partida · bola parada 0.00/partida · posse 44%
+2v2 · referência dificil × bots facil   · vitórias 10/12 · gols 2.7 × 1.0 ·  114 s · gols de saída 0.00/partida · bola parada 0.00/partida · posse 58%
+2v2 · referência dificil × bots dificil · vitórias  8/12 · gols 2.2 × 1.8 ·  111 s · gols de saída 0.25/partida · bola parada 0.00/partida · posse 51%

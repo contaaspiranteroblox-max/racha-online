@@ -1,0 +1,74 @@
+
+1) a barra e o painel no menu, nas telas e na sala
+  OK      no lobby a barra é um bloco no vão da fileira de baixo (a de antes, da v63, saiu)
+  OK      o bloco: a tag BRASIL, o contador de não lidas e NOME: a mensagem mais recente; entre o DESAFIOS e o MODO, da altura deles
+  OK      grafite meio transparente, as bordas arredondadas, a letra legível (19 px)
+  OK      o aviso de baixo (x49Toast) sobe para não cobrir o bloco do chat
+  OK      a mensagem nova aparece na hora, com o V na frente do nome
+  OK      tocar na barra abre o painel na aba BRASIL (sem sala, só ela)
+  OK      o painel fica embaixo da tela (a v63 abria em cima)
+  OK      as mensagens na ordem (a mais nova embaixo), o nome antes da mensagem (com o V), "Digite sua mensagem…", ENVIAR e quem está online
+  OK      o foco vai para o campo
+  OK      aberto: as não lidas zeram e a seta vira para baixo
+  OK      o nome abre a ficha: a tampinha, o nome com o V, SILENCIAR e DENUNCIAR (sem a plataforma, sem o VER PERFIL)
+  OK      SILENCIAR: as mensagens dele somem para você (no painel e na barra) e fica salvo
+  OK      a seta minimiza: o painel fecha e a barra continua
+  OK      nas telas do menu (salas, amigos, clube, eventos, replays, perfil) o chat fica como um chip no canto de baixo, à esquerda
+  OK      nas telas com o rodapé ocupado (ranking, loja, treino, tampinha) e no CHAT DO BRASIL a barra não entra
+  OK      de volta ao lobby, a barra volta para o lugar dela
+  OK      na sala: a barra embaixo com a tag SALA e a mensagem de entrada
+  OK      na sala o painel abre na aba SALA, com a BRASIL do lado, as frases rápidas e quantos estão na sala
+  OK      alterna para o Chat Brasil (sem as frases rápidas) e volta
+  OK      ENVIAR manda para a sala: a mensagem entra no painel (em verde, a sua) e na barra; o painel continua aberto
+  OK      os filtros no aparelho: telefone, CPF, e-mail, link, @ e palavrão não saem (com o motivo); placar e hora passam
+  OK      o telefone não vai (o aviso aparece no painel e o texto fica para corrigir)
+  OK      a mesma mensagem de novo não vai (spam)
+  OK      OCULTAR: o painel fecha, a barra some em todo lugar, fica salvo e a chave "Chat na tela" dos Ajustes desliga
+  OK      a chave dos Ajustes traz o chat de volta
+  OK      nenhum erro de JavaScript (barra e painel)
+
+1b) no celular (844×390, o menu encolhido): a barra maior, para ler e tocar
+  OK      no lobby o bloco entra no vão entre o DESAFIOS e o MODO, da altura deles
+  OK      legível e tocável no celular: 52 px de altura, letra de 15.8 px
+  OK      na tela SALAS o chip do canto também é maior (37 px, letra 14.9 px)
+  OK      na sala a barra fica abaixo das opções, entre o CONVIDAR e o INICIAR, sem sair da tela (37 px, letra 14.9 px)
+  OK      o painel abre embaixo e cabe na tela do celular
+  OK      nenhum erro de JavaScript (celular)
+
+2) na partida: a barra pequena embaixo, o painel e os três pontinhos
+  OK      na partida a barra fica embaixo do campo, longe do placar (computador)
+  OK      entre o analógico e os botões, sem cobrir nenhum (computador)
+  OK      menor que a do menu (56 × 520, era 62 × 600), meio transparente, no tamanho do HUD (computador)
+  OK      o painel abre embaixo (a aba PARTIDA), sem cobrir o placar em cima (computador)
+  OK      com o chat aberto a partida não pausa (computador)
+  OK      o "digitando": um balão escuro com três pontos brancos em cima da tampinha, sem a palavra (e some ao desligar) (computador)
+  OK      nenhum erro de JavaScript (partida, computador)
+  OK      na partida a barra fica embaixo do campo, longe do placar (celular)
+  OK      entre o analógico e os botões, sem cobrir nenhum (celular)
+  OK      menor que a do menu (56 × 520, era 62 × 600), meio transparente, no tamanho do HUD (celular)
+  OK      o painel abre embaixo (a aba PARTIDA), sem cobrir o placar em cima (celular)
+  OK      com o chat aberto a partida não pausa (celular)
+  OK      o "digitando": um balão escuro com três pontos brancos em cima da tampinha, sem a palavra (e some ao desligar) (celular)
+  OK      nenhum erro de JavaScript (partida, celular)
+
+3) online de verdade: o Chat do Brasil fora da sala, o chat da sala, o digitando, a denúncia e o silenciar
+  OK      com o servidor: a barra do lobby liga o Chat do Brasil sozinha (os três estão nele)
+  OK      a mensagem da Ana chega na barra do Beto (NOME: mensagem, 1 não lida) sem nenhum dos dois estar numa sala
+  OK      o chat da sala chega só para quem está nela (o Caio, fora, não vê nada; a barra dele continua no Brasil)
+  OK      dentro da sala o Chat do Brasil continua chegando (a aba BRASIL com o contador, do lado da SALA)
+  OK      o Beto digita: na tela da Ana o balão escuro com os pontinhos aparece em cima da tampinha dele (sem mostrar o texto)
+  OK      a mensagem sai: chega na Ana e os pontinhos somem na hora
+  OK      na partida, depois de ENVIAR o painel fecha (a barra fica)
+  OK      fechar o chat também tira os pontinhos
+  OK      parou de digitar (sem fechar): os pontinhos somem sozinhos depois de uns segundos (4.5 s)
+  OK      o telefone mandado direto (sem o filtro do aparelho) é barrado pelo servidor: não chega na Ana
+  OK      a mensagem da sala tem o número dela (mid)
+  OK      uma denúncia só ainda não esconde
+  OK      a segunda denúncia (de outra pessoa) esconde a mensagem para todos, inclusive para quem escreveu
+  OK      quem foi denunciado fica um tempo sem falar na sala (o aviso aparece no painel dele)
+  OK      silenciar alguém esconde as mensagens dele só para você (chegam, mas não aparecem)
+  OK      nenhum erro de JavaScript na sessão de Ana
+  OK      nenhum erro de JavaScript na sessão de Beto
+  OK      nenhum erro de JavaScript na sessão de Caio
+
+v81 · o chat: a barra, o painel, os três pontinhos e a moderação: 64/64 verificações ok em 53.3 s

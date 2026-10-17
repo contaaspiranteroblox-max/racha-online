@@ -1,0 +1,80 @@
+
+· 1440x900
+  OK      comunidade    toques ≥ 44 px (8 alvos)
+  OK      comunidade    texto ≥ 12 px
+  OK      clube-lista   toques ≥ 44 px (13 alvos)
+  OK      clube-lista   texto ≥ 12 px
+  OK      clube-criar   toques ≥ 44 px (13 alvos)
+  OK      clube-criar   texto ≥ 12 px
+  OK      clube-pagina  toques ≥ 44 px (11 alvos)
+  OK      clube-pagina  texto ≥ 12 px
+  OK      clube-como    toques ≥ 44 px (1 alvos)
+  OK      clube-como    texto ≥ 12 px
+  OK      sala-aqui     toques ≥ 44 px (21 alvos)
+  OK      sala-aqui     texto ≥ 12 px
+  OK      sala-montada  toques ≥ 44 px (18 alvos)
+  OK      sala-montada  texto ≥ 12 px
+  OK      sala montada com bots: os atalhos somem (não sobrou vaga)
+  OK      nenhum erro de JavaScript
+
+· 1280x720
+  OK      comunidade    toques ≥ 44 px (8 alvos)
+  OK      comunidade    texto ≥ 12 px
+  OK      clube-lista   toques ≥ 44 px (13 alvos)
+  OK      clube-lista   texto ≥ 12 px
+  OK      clube-criar   toques ≥ 44 px (13 alvos)
+  OK      clube-criar   texto ≥ 12 px
+  OK      clube-pagina  toques ≥ 44 px (11 alvos)
+  OK      clube-pagina  texto ≥ 12 px
+  OK      clube-como    toques ≥ 44 px (1 alvos)
+  OK      clube-como    texto ≥ 12 px
+  OK      sala-aqui     toques ≥ 44 px (21 alvos)
+  OK      sala-aqui     texto ≥ 12 px
+  OK      sala-montada  toques ≥ 44 px (18 alvos)
+  OK      sala-montada  texto ≥ 12 px
+  OK      sala montada com bots: os atalhos somem (não sobrou vaga)
+  OK      nenhum erro de JavaScript
+
+· 844x390
+  OK      comunidade   celular deitado: cabe sem rolar
+  OK      clube-lista  celular deitado: cabe sem rolar
+  OK      clube-criar  celular deitado: cabe sem rolar
+  OK      clube-pagina celular deitado: cabe sem rolar
+  OK      clube-como   celular deitado: cabe sem rolar
+  OK      sala-aqui    celular deitado: cabe sem rolar
+  OK      sala-montada celular deitado: cabe sem rolar
+  OK      sala montada com bots: os atalhos somem (não sobrou vaga)
+  OK      nenhum erro de JavaScript
+
+· 667x375
+  OK      comunidade   celular deitado: cabe sem rolar
+  OK      clube-lista  celular deitado: cabe sem rolar
+  OK      clube-criar  celular deitado: cabe sem rolar
+  OK      clube-pagina celular deitado: cabe sem rolar
+  OK      clube-como   celular deitado: cabe sem rolar
+  OK      sala-aqui    celular deitado: cabe sem rolar
+  OK      sala-montada celular deitado: cabe sem rolar
+  OK      sala montada com bots: os atalhos somem (não sobrou vaga)
+  OK      nenhum erro de JavaScript
+
+· 390x844
+  OK      comunidade    toques ≥ 44 px (4 alvos)
+  OK      comunidade    texto ≥ 12 px
+  OK      clube-lista   toques ≥ 44 px (7 alvos)
+  OK      clube-lista   texto ≥ 12 px
+  OK      clube-criar   toques ≥ 44 px (9 alvos)
+  OK      clube-criar   texto ≥ 12 px
+  OK      clube-pagina  toques ≥ 44 px (7 alvos)
+  OK      clube-pagina  texto ≥ 12 px
+  OK      clube-como    toques ≥ 44 px (1 alvos)
+  OK      clube-como    texto ≥ 12 px
+  OK      sala-aqui     toques ≥ 44 px (21 alvos)
+  OK      sala-aqui     texto ≥ 12 px
+  OK      sala-montada  toques ≥ 44 px (18 alvos)
+  OK      sala-montada  texto ≥ 12 px
+  OK      sala montada com bots: os atalhos somem (não sobrou vaga)
+  OK      nenhum erro de JavaScript
+  OK      demonstração sem servidor: SALAS ONLINE DESLIGADAS, sem tentar conectar
+  OK      o bloqueio de rede só existe na demonstração; presente:false tira o presente de teste
+
+Etapa 5 · as telas do clube e do online em tamanho real: 68/68 verificações ok em 42.8 s

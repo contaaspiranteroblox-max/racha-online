@@ -1,0 +1,60 @@
+/* =====================================================================================================================
+   RACHA rua v82 · AS CONTAS: o RANKING › PATENTES, o cartão da conta em Ajustes › Conta, as janelas da conta (qual progresso
+   fica, levar o progresso para a conta) e o "NESTE APARELHO" do perfil que abre o ENTRAR. O JS está em tools/v82/conta.js.
+   As cores e as letras são as do jogo (os tokens --k-* da v71: carvão, amarelo da quadra, Lilita One).
+   ===================================================================================================================== */
+
+/* ---------------------------------------------------------------- RANKING › PATENTES */
+#lb .rk-corpo > .c82-rk-abas{ display:flex; align-self:center; margin:0 auto 14px; flex:none; }
+#lb .rk-corpo > .c82-rk-abas button{ min-height:52px; padding:0 22px; font-size:22px; white-space:nowrap; }
+#lb .c82-rk[hidden]{ display:none !important; }
+#lb .c82-rk{ display:flex; flex-direction:column; gap:10px; }
+#lb .c82-rk-lista{ margin:0; }
+#lb .c82-rk-lin{ display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:12px; }
+#lb .c82-rk-lin .c82-ins{ width:46px; height:46px; display:block; flex:none; }
+#lb .c82-rk-lin .c82-ins svg{ display:block; width:100%; height:100%; }
+#lb .c82-rk-lin .nm{ display:flex; flex-direction:column; min-width:0; }
+#lb .c82-rk-lin .nm-t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#lb .c82-rk-lin .nm small{ font:800 15px/1.15 var(--k-num, "Barlow Condensed", system-ui, sans-serif); letter-spacing:1.2px; color:#c9ced6; }
+#lb .c82-rk-lin.voce .nm small{ color:#3a2a00; }
+#lb .c82-rk-lin.voce .c82-pts, #lb .c82-rk-lin.voce .c82-pts b, #lb .c82-rk-lin.voce .c82-pts i{ color:#17191c; }
+#lb .c82-pts{ display:flex; align-items:baseline; gap:4px; }
+#lb .c82-pts i{ font-style:normal; font-size:14px; opacity:.8; }
+#lb .c82-rk-txt{ margin:0; font:600 19px/1.35 "Barlow", system-ui, sans-serif; color:#e6e8ec; }
+#lb .c82-rk-btn{ align-self:flex-start; }
+#lb .c82-rk-nota{ margin-top:4px; }
+
+/* ---------------------------------------------------------------- Ajustes › Conta: o cartão da conta */
+#pop-ajustes .c82-card{ display:flex; flex-direction:column; gap:10px; padding:12px 14px; border:3px solid #0b0c0e; border-radius:16px;
+  background:linear-gradient(180deg, #2a2f36, #1b1e23); box-shadow:inset 0 2px 0 rgba(255,255,255,.06), 0 4px 0 #0b0c0e; break-inside:avoid; }
+#pop-ajustes .c82-card-top{ display:flex; align-items:center; gap:12px; }
+#pop-ajustes .c82-card .c82-ins{ width:64px; height:64px; flex:none; display:block; }
+#pop-ajustes .c82-card .c82-ins svg{ display:block; width:100%; height:100%; }
+#pop-ajustes .c82-card-tx{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+#pop-ajustes .c82-card-tx small{ font:800 14px/1.1 "Barlow Condensed", system-ui, sans-serif; letter-spacing:1.6px; color:#ffd23f; }
+#pop-ajustes .c82-card-tx b{ font:400 26px/1.05 "Lilita One", "Arial Black", Impact, sans-serif; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#pop-ajustes .c82-card-tx span{ font:600 16px/1.25 "Barlow", system-ui, sans-serif; color:#d7dbe1; }
+#pop-ajustes .c82-lin{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+#pop-ajustes .c82-est{ flex:1 1 220px; margin:0; font:600 15px/1.3 "Barlow", system-ui, sans-serif; color:#c9ced6; }
+#pop-ajustes .c82-acoes{ display:flex; gap:10px; flex-wrap:wrap; }
+#pop-ajustes .c82-card .ajx-nota{ margin:0; }
+
+/* ---------------------------------------------------------------- as janelas da conta (qual fica · levar para a conta) */
+.c82-pop .c82-dois{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0 4px; text-align:left; }
+.c82-pop .c82-dois.um{ grid-template-columns:1fr; }
+.c82-pop .c82-lado{ display:flex; flex-direction:column; gap:4px; padding:10px 12px; border:3px solid #0b0c0e; border-radius:14px; background:#22262c; }
+.c82-pop .c82-lado > b{ font:400 18px/1 "Lilita One", "Arial Black", Impact, sans-serif; letter-spacing:.6px; color:#ffd23f; }
+.c82-pop .c82-lado ul{ margin:0; padding-left:18px; font:600 15px/1.35 "Barlow", system-ui, sans-serif; color:#e6e8ec; }
+.c82-pop .c82-lado small{ font:600 13px/1.2 "Barlow", system-ui, sans-serif; color:#a9b0ba; }
+.c82-pop .c82-obs{ font-size:15px; color:#ffd23f; }
+@media (max-width:620px){ .c82-pop .c82-dois{ grid-template-columns:1fr; } }
+
+/* ---------------------------------------------------------------- o fim da partida: o que a conta fez */
+.c82-nota{ margin:6px 0 0; font:700 15px/1.25 "Barlow", system-ui, sans-serif; color:#ffe39a; text-align:center; }
+.c82-nota[hidden]{ display:none; }
+
+/* ---------------------------------------------------------------- o perfil: sem conta, o "NESTE APARELHO" abre o ENTRAR */
+#tela-perfil .pf-ident.c82-entrar{ position:relative; cursor:pointer; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px; }
+/* (o chip é baixo: a área do toque passa dele em cima e embaixo — 44 px para o dedo — sem mudar o desenho) */
+#tela-perfil .pf-ident.c82-entrar::after{ content:''; position:absolute; left:-6px; right:-6px; top:-20px; bottom:-20px; }
+#tela-perfil .pf-ident.c82-entrar:focus-visible{ outline:3px solid #ffd23f; outline-offset:3px; border-radius:6px; }

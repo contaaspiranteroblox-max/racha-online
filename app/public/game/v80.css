@@ -1,0 +1,30 @@
+/* =====================================================================================================================
+   RACHA rua v80 · TIME A (LARANJA #FF6A00) × TIME B (ROXO #7A3FC4) nas telas, e o EMPATE na tela do fim
+   O JS está em tools/v80 (times.js, partida.js, gol.js, treino.js). Vem depois do v79.css: troca o preto × branco da v71.
+   ===================================================================================================================== */
+:root{ --v80-a:#ff6a00; --v80-a-claro:#ffb46e; --v80-a-esc:#7a2e00; --v80-b:#7a3fc4; --v80-b-claro:#d0b0ff; --v80-b-esc:#341063; }
+
+/* ---------------------------------------------------------------- 1) a sala: o Time A à esquerda (laranja), o Time B à direita (roxo) */
+#lb .sl-verm .sl-caixa{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M14 0h28l14 24-14 24H14L0 24z' fill='none' stroke='%23fff' stroke-opacity='.07' stroke-width='2'/%3E%3C/svg%3E"),
+  linear-gradient(170deg, #ff8a33, #e95f00 55%, #b84a00) !important; }
+#lb .sl-azul .sl-caixa{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M14 0h28l14 24-14 24H14L0 24z' fill='none' stroke='%23fff' stroke-opacity='.07' stroke-width='2'/%3E%3C/svg%3E"),
+  linear-gradient(170deg, #9560da, #7a3fc4 55%, #5a2b98) !important; }
+#lb .sl-verm .sl-fita::after{ background:linear-gradient(#ff9a4d, #ff6a00 70%) !important; }
+#lb .sl-azul .sl-fita::after{ background:linear-gradient(#a274e3, #7a3fc4 70%) !important; }
+#lb .sl-verm .sl-fita, #lb .sl-azul .sl-fita{ color:#ffffff; --o:#120a24; }
+#lb .sl-verm .sl-vaga, #lb .sl-azul .sl-vaga{ color:rgba(255,255,255,.9); border-color:rgba(255,255,255,.45); }
+#lb .sl-verm .sl-vaga.bot, #lb .sl-azul .sl-vaga.bot{ color:rgba(255,255,255,.78); border-color:rgba(255,255,255,.3); background:rgba(0,0,0,.08); }
+#lb .sl-verm .sl-vaga:hover, #lb .sl-azul .sl-vaga:hover{ background:rgba(255,255,255,.1); }
+
+/* os botões que mandam alguém para um time (o menu do cartão na sala e o do árbitro) */
+/* (as classes são time-a e time-b: "roxo" já é o nome do botão neutro do jogo) */
+#lb .lb-btn.time-a, #lb.v71 .lb-btn.time-a{ background:linear-gradient(#ff9a4d, #ff6a00 55%, #d95600); color:#ffffff; box-shadow:0 5px 0 #7a2e00; text-shadow:0 2px 0 rgba(90,30,0,.55); }
+#lb .lb-btn.time-b, #lb.v71 .lb-btn.time-b{ background:linear-gradient(#a274e3, #7a3fc4 55%, #62309f); color:#ffffff; box-shadow:0 5px 0 #341063; text-shadow:0 2px 0 rgba(30,8,60,.6); }
+#lb .lb-btn.time-a:active{ box-shadow:0 2px 0 #7a2e00; } #lb .lb-btn.time-b:active{ box-shadow:0 2px 0 #341063; }
+
+/* JOGAR › TIME: as bolinhas dos dois times (as duas com o contorno escuro) */
+#lb .rq-time i s, #lb .rq-time i s.a{ box-shadow:0 0 0 2px #120a24; }
+
+/* ---------------------------------------------------------------- 2) a tela do fim: o EMPATE (sem a cara de derrota) */
+#fim.empate .fim-caixa h2{ color:#f3f1ea; }
+#fim.empate .fim-placar b{ filter:saturate(.92); }

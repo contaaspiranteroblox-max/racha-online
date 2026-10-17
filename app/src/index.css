@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 255 35% 7%;
+    --foreground: 45 100% 96%;
+    --card: 255 30% 11%;
+    --card-foreground: 45 100% 96%;
+    --popover: 255 32% 10%;
+    --popover-foreground: 45 100% 96%;
+    --primary: 45 100% 57%;
+    --primary-foreground: 255 40% 8%;
+    --secondary: 258 55% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 255 22% 18%;
+    --muted-foreground: 255 15% 65%;
+    --accent: 258 55% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 255 25% 22%;
+    --input: 255 25% 25%;
+    --ring: 45 100% 57%;
+    --radius: 0.875rem;
+  }
+}
+
+/* ============ IDENTIDADE RACHA ============ */
+:root {
+  --racha-amarelo: #ffd23f;
+  --racha-roxo: #7048e8;
+  --racha-roxo-escuro: #3b2a8f;
+  --racha-fundo: #0d0b1e;
+  --racha-fundo2: #161230;
+  --racha-verde: #7be04a;
+  --racha-azul: #3bc9db;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  background: var(--racha-fundo);
+  color: #f5f2ff;
+  font-family: "Lilita One", "Arial Black", Impact, system-ui, sans-serif;
+  letter-spacing: 0.2px;
+}
+
+/* textura de quadra: linhas + vinheta */
+.fundo-quadra {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -10%, rgba(112, 72, 232, 0.28), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 110%, rgba(255, 210, 63, 0.10), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.016) 0 2px, transparent 2px 90px),
+    var(--racha-fundo);
+}
+
+.fonte-racha { font-family: "Lilita One", "Arial Black", Impact, sans-serif; }
+
+.texto-pixo {
+  color: var(--racha-amarelo);
+  text-shadow:
+    3px 3px 0 rgba(59, 42, 143, 0.9),
+    -1px -1px 0 rgba(59, 42, 143, 0.9),
+    0 0 22px rgba(255, 210, 63, 0.35);
+}
+
+.titulo-pixo-roxo {
+  color: #b197fc;
+  text-shadow: 3px 3px 0 rgba(20, 12, 60, 0.95), 0 0 20px rgba(112, 72, 232, 0.5);
+}
+
+.cartao-rua {
+  background: linear-gradient(160deg, #1b1540 0%, #120e2c 100%);
+  border: 2px solid #33286b;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.botao-racha {
+  font-family: inherit;
+  border-radius: 14px;
+  border: 2px solid #14161a;
+  box-shadow: 0 4px 0 #14161a;
+  transition: transform 0.06s ease, filter 0.12s ease;
+  cursor: pointer;
+}
+.botao-racha:hover { filter: brightness(1.12); }
+.botao-racha:active { transform: translateY(3px); box-shadow: 0 1px 0 #14161a; }
+
+.botao-amarelo { background: linear-gradient(#ffe066, #f5b301); color: #3a2000; }
+.botao-roxo { background: linear-gradient(#8b5cf6, #5f3dc4); color: #fff; }
+.botao-verde { background: linear-gradient(#7be04a, #3c9d1f); color: #10300a; }
+.botao-fantasma { background: rgba(255, 255, 255, 0.07); color: #e9e4ff; border-color: #33286b; box-shadow: 0 4px 0 #191233; }
+
+/* barra de XP */
+.barra-xp {
+  position: relative;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #33286b;
+  overflow: hidden;
+}
+.barra-xp > div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7048e8, #b197fc 55%, #ffd23f);
+  box-shadow: 0 0 14px rgba(177, 151, 252, 0.7);
+  transition: width 0.8s cubic-bezier(0.2, 0.9, 0.25, 1.2);
+}
+
+/* molduras */
+.moldura { border-radius: 999px; padding: 4px; display: inline-block; }
+.moldura-bronze { background: conic-gradient(#ad5611, #e8965a, #ad5611); }
+.moldura-prata { background: conic-gradient(#868e96, #e9ecef, #868e96); }
+.moldura-ouro { background: conic-gradient(#f59a0c, #ffe066, #f59a0c); }
+.moldura_neon, .moldura-neon { background: conic-gradient(#3bc9db, #b197fc, #66fcf1, #3bc9db); animation: gira-luz 4s linear infinite; }
+.moldura-grafite { background: conic-gradient(#495057, #f783ac, #495057); }
+.moldura-lendaria { background: conic-gradient(#e03131, #ffd23f, #ff6b00, #e03131); animation: gira-luz 3s linear infinite; }
+.moldura-fundador { background: conic-gradient(#7048e8, #ffd23f, #7048e8); animation: gira-luz 5s linear infinite; }
+.moldura-dono_quadra, .moldura-dono-quadra { background: conic-gradient(#3b5bdb, #ffd23f, #3b5bdb); }
+
+@keyframes gira-luz {
+  0% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(20deg) brightness(1.25); }
+  100% { filter: hue-rotate(0deg) brightness(1); }
+}
+
+/* efeito brilho do ídolo */
+.brilho-idolo { position: relative; }
+.brilho-idolo::after {
+  content: "";
+  position: absolute; inset: -6px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 210, 63, 0.35), transparent 55%);
+  animation: pulsa-ouro 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes pulsa-ouro { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* animações de celebração */
+@keyframes sobe-some {
+  0% { transform: translateY(30px) scale(0.85); opacity: 0; }
+  12% { transform: translateY(0) scale(1.04); opacity: 1; }
+  18% { transform: scale(1); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { transform: translateY(-22px); opacity: 0; }
+}
+.toast-festa { animation: sobe-some 4.2s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+
+@keyframes confete-cai {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0.6; }
+}
+.confete {
+  position: absolute; top: 0; width: 10px; height: 16px;
+  animation: confete-cai linear forwards;
+  border-radius: 2px;
+}
+
+@keyframes brilha-conquista {
+  0% { box-shadow: 0 0 0 0 rgba(255, 210, 63, 0.85); }
+  70% { box-shadow: 0 0 0 26px rgba(255, 210, 63, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 210, 63, 0); }
+}
+.pulsa-conquista { animation: brilha-conquista 1.6s ease-out 3; }
+
+/* selo verificado */
+.selo {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.15em; height: 1.15em; border-radius: 999px;
+  font-size: 0.62em; color: #fff; vertical-align: middle; flex: none;
+  border: 2px solid rgba(255,255,255,0.25);
+}
+
+/* scrollbar da quebrada */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #14102a; }
+::-webkit-scrollbar-thumb { background: #33286b; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #4c3a99; }
+
+/* inputs */
+.input-racha {
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #33286b;
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #fff;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input-racha:focus { border-color: var(--racha-amarelo); box-shadow: 0 0 0 3px rgba(255,210,63,0.15); }
+.input-racha::placeholder { color: #6f6699; }
+
+.tag-raridade { font-size: 10px; letter-spacing: 1px; padding: 2px 8px; border-radius: 999px; }
+.raridade-comum { background: #343a40; color: #ced4da; }
+.raridade-raro { background: #1c4b8f; color: #a5d8ff; }
+.raridade-epico { background: #5f3dc4; color: #d0bfff; }
+.raridade-lendario { background: #b8810a; color: #ffec99; }
+.raridade-exclusivo { background: linear-gradient(90deg,#7048e8,#ffd23f); color: #fff; }

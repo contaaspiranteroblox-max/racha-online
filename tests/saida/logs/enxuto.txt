@@ -1,0 +1,58 @@
+
+· o que aparece
+    {"md": ["futebol", "curva"], "sala": ["futebol", "curva"], "est": ["futebol", "curva"], "sl": ["futebol", "curva"], "valida": ["futebol", "futebol", "futebol", "futebol", "curva", "futebol"], "mapas": [4, 0], "campos": ["estadio:Arena", "favela:Favela", "escadao:Escadão", "viaduto:Viaduto", "gramado:Estádio"], "opsMapa": [4, 0], "opsJogo": ["futebol", "curva"], "guardados": ["futebol", "curva", "volei", "americano", "basquete", "ginga"]}
+  OK      só FUTEBOL e COM CURVA nas listas de modo (casual, sala, perfil)
+  OK      vôlei, americano, basquete e ginga viram futebol se chegarem de algum lugar
+  OK      os modos que saíram continuam guardados no código (para voltar um dia)
+  OK      os mapas: o Estádio de grama (4, o padrão desde a v79) e a Arena (0)
+  OK      a sala: as setas do CAMPO e do MODO só passam pelos que aparecem
+  OK      JOGAR (v79: só a ranqueada, mesmo pedindo a casual): sem os chips de modo, só o ESTÁDIO
+  OK      tocar no ESTÁDIO escolhe ele (e a descrição fala do gramado)
+  OK      a prévia do ESTÁDIO no JOGAR é verde (o gramado desenhado)
+
+· o Estádio tem a física da Arena
+  OK      as partidas abriram na Arena e no Estádio
+  OK      1v1 a 4v4: as mesmas medidas, paredes, traves, redes, marcas e o mesmo fator da bola
+  OK      o mesmo chute dá exatamente o mesmo caminho da bola (240 passos) nos dois mapas
+
+· o desenho do Estádio
+    normal          {'meio': [35, 91, 23], 'fora': [25, 69, 16], 'topo': [67, 43, 105], 'lado': [8, 10, 11], 'err': None}
+  OK      Estádio (normal): desenha sem erro e o meio é grama
+  OK      em volta do gramado: o alambrado, o calçamento e o estacionamento (não é grama · v74)
+    sem torcedores  {'meio': [35, 91, 23], 'fora': [25, 69, 16], 'topo': [67, 43, 105], 'lado': [8, 10, 11], 'err': None}
+  OK      Estádio (sem torcedores): desenha sem erro e o meio é grama
+    Ultra leve      {'meio': [33, 89, 21], 'fora': [30, 81, 19], 'topo': [109, 107, 102], 'lado': [40, 48, 58], 'err': None}
+  OK      Estádio (Ultra leve): desenha sem erro e o meio é grama
+  OK      COM CURVA no Estádio: abre com o botão CURVA
+
+· a bola sem efeitos
+    {'respAntes': 8, 'respDepois': 0, 'desenhos': 0, 'bola': 'classic', 'efeitos': ['border', 'celebration', 'uniform'], 'vel': 715}
+  OK      chute de verdade com os Efeitos ligados: o rastro e o respingo não desenham nada
+  OK      a bola é sempre a clássica; a cor da bola saiu de EFEITOS (borda, comemoração e uniforme ficam)
+  OK      a tela EFEITOS não oferece mais a cor da bola
+  OK      os textos dos Efeitos na Quadra não prometem mais rastro nem respingo (EDITAR HUD e Ajustes)
+
+· o resto da tela
+  OK      perfil: os filtros TODOS, FUTEBOL e COM CURVA (um filtro salvo de modo que saiu volta para TODOS)
+  OK      perfil: os cartões de cesta e pontos dos modos que saíram não aparecem (os totais seguem)
+  OK      missões: o mapa que saiu vira o Estádio e o modo vira o treino (v79: as da ranqueada); "marque gols"
+  OK      editor de controles, teclas e ajuda do toque: sem GINGA, FINTA e DRIBLE (a CURVA fica)
+    {'campo': ['Estádio', 'Arena', 'Estádio'], 'modo': ['Futebol', 'Com curva', 'Futebol']}
+  OK      CRIAR SALA: o CAMPO vai e volta entre Arena e Estádio
+  OK      CRIAR SALA: o MODO vai e volta entre Futebol e Com curva
+  OK      treino: as setas do CAMPO passam só pela Arena e pelo Estádio (um mapa que saiu vira o Estádio · v79: o treino começa no Estádio)
+  OK      uma partida pedida com modo e mapa que saíram abre no futebol, no Estádio (v79)
+  OK      a novidade antiga dos seis modos não aparece mais (a fila das janelas segue)
+  OK      aparelho novo: a Seta da direção começa desligada
+  OK      nenhum erro de JavaScript (aparelho novo)
+
+· quem já jogava (o salvo de antes da v70.2)
+    {'jogo': 'futebol', 'map': 4, 'n': 2, 'ball': 'classic', 'campo': 'estadio', 'sala': [0, 'futebol'], 'form': [0, 'futebol'], 'rq': [4, 'gramado'], 'moedas': 900, 'dir': False, 'chave': '1', 'salvo': False}
+  OK      casual salvo no vôlei, no Escadão: volta no futebol (v79: a casual saiu; vale a ranqueada, no Estádio, com o tamanho da ranqueada salvo)
+  OK      treino no Viaduto e sala no Viaduto/basquete viram Arena e futebol; a liga na Favela vira a ranqueada no Estádio (v79); o resto do salvo fica
+  OK      a bola Ouro salva vira a clássica
+  OK      quem jogava com o Indicador ligado: desligado uma vez (e salvo assim)
+  OK      depois disso vale o que a pessoa escolher: ligou de novo, continua ligado ao reabrir
+  OK      nenhum erro de JavaScript (salvo antigo)
+
+v70.2 · enxuto: 2 modos, a Arena e o Estádio, a bola sem efeitos, o indicador desligado: 37/37 verificações ok em 12.2 s

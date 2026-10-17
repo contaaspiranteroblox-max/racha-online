@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plataforma de mentira (v82)</title>
+<style>html, body{ margin:0; height:100%; background:#111; } #palco, iframe{ width:100%; height:100%; border:0; display:block; }</style>
+</head>
+<body>
+<div id="palco"></div>
+<script>
+/* RACHA v82 · a página-mãe de mentira: faz o papel do app/src/lib/ponteJogo.ts (a mesma ponte: RACHA_JOGO v82, RACHA_ABRIR,
+   os eventos do jogo → iniciar/encerrar a partida na API → o aviso do resultado para o jogo) contra tests/plataforma82_falsa.mjs.
+   monta(conta) abre o jogo como o LobbyPage.tsx: depois de saber a conta e a cópia do progresso (ou sem esperar a cópia), e de
+   novo a cada troca de conta (o iframe é outro). */
+const P = window.P = {conta:null, contaCache:null, nuvemInicial:undefined, ouvintes:new Set(), aberta:null, rotas:[], eventos:[], resultados:[], iniciadas:[], erros:[]};
+async function api(cam, o){
+  const r = await fetch('/api82/' + cam, {method:'POST', body:JSON.stringify(Object.assign({conta:P.conta}, o || {}))});
+  const j = await r.json(); if (!r.ok) throw new Error(j && j.erro || 'erro'); return j;
+}
+function avisa(ev){ for (const fn of [...P.ouvintes]){ try { fn(ev); } catch (e) { P.ouvintes.delete(fn); } } }
+async function recarrega(){ P.contaCache = P.conta ? (await api('eu')).conta : null; avisa({tipo:'conta', conta:P.contaCache ? JSON.parse(JSON.stringify(P.contaCache)) : null}); }
+window.RACHA_JOGO = {
+  versao:82,
+  conta:() => P.contaCache ? JSON.parse(JSON.stringify(P.contaCache)) : null,
+  inventario:async () => [], tampa:async () => ({ok:true}), bilheteSala:async () => null,
+  clubes:{listar:async () => [], meu:async () => null, ver:async () => null, criar:async () => null, editar:async () => null, entrar:async () => null, sair:async () => null,
+    convidar:async () => null, convites:async () => [], responder:async () => null, expulsar:async () => null, passarDono:async () => null},
+  progresso:{
+    inicial:() => P.nuvemInicial,
+    carregar:() => api('progresso/carregar'),
+    salvar:(versaoBase, dados, aparelho) => api('progresso/salvar', {versaoBase, dados, aparelho}).then(r => {
+      if (r.ok) P.nuvemInicial = {versao:r.versao, dados, bytes:0, aparelho:aparelho || null, salvoEm:Date.now()};
+      else if (r.conflito) P.nuvemInicial = r;
+      return r;
+    }),
+  },
+  patente:{minha:() => api('minha'), ranking:(limite) => api('ranking', {limite:limite || 100}), importar:(pts) => api('importar', {pts}).then(r => recarrega().then(() => r))},
+  ouvir:(fn) => { P.ouvintes.add(fn); return () => { P.ouvintes.delete(fn); }; },
+};
+window.RACHA_ABRIR = (rota) => { P.rotas.push(rota); return /^\/(entrar(\?aba=(entrar|criar))?|amigos|perfil|jogador\/\d+)$/.test(rota); };
+window.addEventListener('message', async (ev) => {
+  const d = ev.data; if (!d || typeof d.racha !== 'string') return;
+  P.eventos.push(JSON.parse(JSON.stringify(d)));
+  if (!P.conta) return;                                       // (sem login, o jogo roda solto)
+  try {
+    if (d.racha === 'partida_inicio'){                          // (o token chega depois: o fim que vier antes espera por ele)
+      const matchId = crypto.randomUUID();
+      const token = api('iniciar', {matchId, modo:String(d.modo || 'futebol'), mapa:d.mapa || '', nivelBots:['facil', 'medio', 'dificil', 'lenda'].includes(String(d.nivelBots)) ? String(d.nivelBots) : null,
+        ranqueada:!!d.ranqueada, online:!!d.online, tamanho:[1, 2, 3, 4].includes(Number(d.tamanho)) ? Number(d.tamanho) : undefined}).then(r => {
+        P.iniciadas.push(r);
+        if (r.desistencias){ avisa({tipo:'desistencia', n:r.desistencias, rq:r.rq}); recarrega(); }
+        return r.matchToken;
+      }).catch(e => { P.erros.push(String(e.message || e)); return null; });
+      P.aberta = {matchId, token};
+    }
+    if (d.racha === 'partida_fim'){
+      const ab = P.aberta; if (!ab) return; P.aberta = null;
+      const tok = await ab.token;
+      if (!tok){ avisa({tipo:'resultado', resultado:null, erro:'A partida não foi aberta na conta (sem conexão no começo).'}); return; }
+      try {
+        const r = await api('encerrar', {matchId:ab.matchId, matchToken:tok, placarNosso:Number(d.placarNosso) || 0, placarDeles:Number(d.placarDeles) || 0, gols:Number(d.gols) || 0,
+          assistencias:Number(d.assistencias) || 0, golsGinga:Number(d.golsGinga) || 0, duracaoSeg:Number(d.duracaoSeg) || 0, abandonada:!!d.abandonada, modo:d.modo,
+          pontos:Number(d.pontos) || 0, golsContra:Number(d.golsContra) || 0, online:!!d.online, valida:d.valida !== false, selo:typeof d.selo === 'string' && d.selo ? d.selo : undefined});
+        P.resultados.push(r);
+        avisa({tipo:'resultado', resultado:r});
+        await recarrega();
+      } catch (e) { P.erros.push(String(e.message || e)); avisa({tipo:'resultado', resultado:null, erro:String(e.message || e)}); await recarrega(); }
+    }
+  } catch (e) { P.erros.push(String(e.message || e)); }
+});
+window.monta = async function(conta, opc){
+  opc = opc || {};
+  P.conta = conta || null; P.aberta = null;
+  await recarrega();
+  P.nuvemInicial = P.conta ? (opc.semNuvem ? undefined : await api('progresso/carregar')) : null;
+  const palco = document.getElementById('palco'); palco.textContent = '';
+  const f = document.createElement('iframe'); f.id = 'jogo'; f.title = 'RACHA — jogo'; f.src = '/tests/build/racha_teste.html';
+  palco.appendChild(f);
+  return true;
+};
+window.sair = function(){ P.conta = null; P.contaCache = null; return monta(null); };
+</script>
+</body>
+</html>

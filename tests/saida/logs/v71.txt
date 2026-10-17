@@ -1,0 +1,93 @@
+
+1) os dois times: o TIME PRETO e o TIME BRANCO
+  OK      (v80) as cores dos times: laranja (#FF6A00) e roxo (#7A3FC4), no halo, no placar e na torcida
+  OK      (v80) a letra em cima de cada cor dá para ler (branca no laranja e no roxo, com sombra)
+  OK      (v80) a sala: Time A e Time B
+  OK      nenhum "Time Vermelho" ou "Equipe Azul" na página
+
+2) a tampinha padrão: metade/metade (v80: laranja e roxo, na Listras); na partida, a do time
+  OK      (v80) a padrão (a de quem não escolheu outra) é a Listras: laranja e roxo
+  OK      (v80) as duas do time: toda laranja e toda roxa, sem ícone
+  OK      1v1 contra os bots: você e o seu time na do time da esquerda, o adversário na do outro (o que o quadro desenha)
+  OK      1v1: o replay guarda a tampinha já na cor do time (a sua e a do bot)
+  OK      3v3 contra os bots: você e o seu time na do time da esquerda, o adversário na do outro (o que o quadro desenha)
+  OK      3v3: o replay guarda a tampinha já na cor do time (a sua e a do bot)
+  OK      com outra tampinha (um modelo pronto) nada muda: a mesma nos dois times
+  OK      na sala online: quem usa a padrão fica na cor do time; outra tampinha fica como é; o bot da vaga na cor do time
+  OK      a Clássica amarela (a padrão até a v70.2) agora é um modelo como os outros: escolhida, fica amarela
+  OK      a sala neste aparelho: os cartões de quem está num time mostram a tampinha do time (v80: laranja e roxa), nunca a metade
+  OK      (v80) o árbitro: "QUEM VAI PARA O TIME B?" (ou a coluna do Time B)
+
+3) o placar, a tela do fim e a saída de bola
+  OK      (v80) a tela do fim: o número branco em cima do laranja (Time A) e em cima do roxo (Time B)
+  OK      (v80) a saída de bola na cor de quem bate (roxo e laranja), com o contorno
+
+4) quem estava com a amarela (a padrão até a v70.2) passa para a nova uma vez
+  OK      a amarela salva como "equipada" vira a padrão nova (e fica marcado)
+  OK      depois disso vale a escolha: quem equipar a Clássica amarela de novo continua com ela (a troca não roda de novo)
+  OK      nenhum erro de JavaScript (times)
+
+5) o lobby novo: os lugares e os destinos
+  OK      os botões quadrados: LOJA, TAMPINHA, CLUBE, TREINO à esquerda; SALAS, AMIGOS, RANKING e (v77) EVENTOS à direita
+  OK      saíram da tela e do Tab: PASSE, COMUNIDADE, o CHAT grande e o ícone repetido das SALAS (e o "Pronto, fulano!")
+  OK      a LIGA no topo, do lado do seu cartão (o elo certo); o nível no selo da tampinha
+  OK      o nome lido de cada botão contém a palavra escrita nele (TREINO, não "Treinamento")
+  OK      o MODO mostra o que vai ser jogado (v79: o tamanho da ranqueada e RANQUEADA · ESTÁDIO) e o JOGAR diz o mesmo para o leitor de tela
+  OK      loja             → abre loja
+  OK      tampinha         → abre skins
+  OK      clube            → abre clube
+  OK      treino           → abre treino
+  OK      salas            → abre amigos
+  OK      amigos           → abre comunidade
+  OK      ranking          → abre ranking
+  OK      liga             → abre pat
+  OK      modo             → abre ranked
+  OK      desafios         → abre pop
+  OK      chat             → abre chat
+  OK      perfil           → abre perfil
+  OK      moedas           → abre loja
+  OK      ajustes          → abre aj
+  OK      tampinha do meio → abre skins
+  OK      jogar            → abre busca
+  OK      nenhum erro de JavaScript (lobby)
+
+6) o lobby em cada tamanho e o JOGAR (a folha)
+  OK      1280x720: 17 botões do lobby dentro da tela, nenhum por cima do outro, todos ≥ 44 px
+  OK      1280x720: JOGAR › RANQUEADA cabe sem rolar, o JOGAR à vista
+  OK      1280x720: nenhum erro de JavaScript
+  OK      1920x1080: 17 botões do lobby dentro da tela, nenhum por cima do outro, todos ≥ 44 px
+  OK      1920x1080: JOGAR › RANQUEADA cabe sem rolar, o JOGAR à vista
+  OK      1920x1080: nenhum erro de JavaScript
+  OK      1024x768: 17 botões do lobby dentro da tela, nenhum por cima do outro, todos ≥ 44 px
+  OK      1024x768: JOGAR › RANQUEADA cabe sem rolar, o JOGAR à vista
+  OK      1024x768: nenhum erro de JavaScript
+  OK      844x390: 17 botões do lobby dentro da tela, nenhum por cima do outro, quadrados e JOGAR ≥ 44 px (celular deitado)
+  OK      844x390: JOGAR › RANQUEADA cabe sem rolar, o JOGAR à vista
+  OK      844x390: nenhum erro de JavaScript
+  OK      667x375: 17 botões do lobby dentro da tela, nenhum por cima do outro, quadrados e JOGAR ≥ 44 px (celular deitado)
+  OK      667x375: JOGAR › RANQUEADA cabe sem rolar, o JOGAR à vista
+  OK      667x375: nenhum erro de JavaScript
+  OK      800x336: 17 botões do lobby dentro da tela, nenhum por cima do outro, quadrados e JOGAR ≥ 44 px (celular deitado)
+  OK      800x336: JOGAR › RANQUEADA cabe sem rolar, o JOGAR à vista
+  OK      800x336: nenhum erro de JavaScript
+
+7) v71.1 · as telas de dentro no estilo do lobby
+  OK      o v71-tema.css (gerado no build) está na página e o tema das telas é o carvão (--sx-azul #23272d)
+  OK      16 telas e janelas sem azul-marinho (fundo, borda e letra)
+  OK      cabeçalhos (v77): o VOLTAR quadrado de contorno grosso (≥ 44 px), o título com contorno, sem abas de outras telas, as moedas e os 3 ícones
+  OK      PERFIL no computador em partes (v77: VISÃO GERAL com a tampinha ao lado · ESTATÍSTICAS · CONQUISTAS · PARTIDAS): cada parte cabe sem rolar
+  OK      a tampinha padrão se chama PADRÃO no perfil e no editor (era "Personalizada"); os modelos prontos ficam com o nome deles
+  OK      LOJA: as 4 peças do dia com a faixa da cor da raridade certa
+  OK      AJUSTES: as 6 abas com o desenho delas (no computador)
+  OK      PAUSA: CONTINUAR, EDITAR CONTROLES, AJUSTES e SAIR com desenho e ≥ 44 px
+  OK      FIM: a moldura grossa, o JOGAR DE NOVO amarelo e o LOBBY escuro
+  OK      nenhum erro de JavaScript (telas de dentro, computador)
+  OK      1280x720: a sala mostra TIMES, CAMPO, MODO, TEMPO e BOTS sem cortar o nome
+  OK      1280x720: nenhum erro de JavaScript (telas de dentro)
+  OK      844x390: a sala mostra TIMES, CAMPO, MODO, TEMPO e BOTS sem cortar o nome
+  OK      844x390: nenhuma tela encolhe abaixo de 0,72 para caber (v71: a loja 0,75)
+  OK      844x390: nos Ajustes compactos as abas ficam só com o nome (cabem as seis numa linha)
+  OK      844x390: a PAUSA cabe na tela com os 4 botões ≥ 44 px
+  OK      844x390: nenhum erro de JavaScript (telas de dentro)
+
+v71 · preto × branco e o lobby novo: 77/77 verificações ok em 88.2 s
