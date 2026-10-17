@@ -17,7 +17,8 @@ configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com 
 A v86 voltou, a pedido, à mecânica da v84 — e o servidor junto: a partida autoritativa (`partida/fisica.js`) e o motor das
 salas (`partida/sala.js`) usam de novo a física da v84 (o porte da física do jogo, com as mesmas constantes), o analógico
 de 32 direções e o comando `input {seq, x, y, button, k}` (`button`: 1 = nada, 2 = PASSE, 3 = CHUTE, com 0,02 s entre
-trocas de botão). Só o chute mudou: **PASSE 275 e CHUTE 440** (eram 250 e 400) e o **teto da bola 60 u/s** (era 55), os
+trocas de botão). Só o chute mudou: **PASSE 212,5 e CHUTE 340** (v87.1: 15% abaixo dos 250 e 400 da versão antiga; na v86,
+275 e 440) e o **teto da bola 46,75 u/s** (era 55; na v86, 60), os
 mesmos números no jogo (`backup/racha.html`, bloco AJUSTES) e aqui (`server/partida/fisica.js`); o
 `tests/v86_chute_test.py` confere os dois lados. Um jogo da v85 (que manda `acao`) anda, mas não chuta num servidor da
 v86, e vice-versa: o jogo e o servidor vão juntos na mesma versão. (A FR-85 da v85 ficou na branch `v85-auditada`.)

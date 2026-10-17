@@ -23,7 +23,7 @@
    Fidelidade ao jogo (conferida função a função contra o racha.html):
      · velocidade da tampinha ADITIVA com teto (rqPre), direção quantizada em 32 setores;
      · subdivisão dinâmica do passo (2 a 12 subpassos) com colisão dupla por subpasso;
-     · bola: desaceleração do campo, o teto de velocidade (60 u/s desde a v86), giro com amortecimento angular, atrito que gira;
+     · bola: desaceleração do campo, o teto de velocidade (46,75 u/s desde a v87.1), giro com amortecimento angular, atrito que gira;
      · gol: a bola INTEIRA cruzando a linha na altura da boca, avaliado a cada subpasso (golCruzou);
      · saída: formações RQ_FORMA, barreira do meio/círculo (REGRA55), relógio livre após 8 s;
      · autoria: o último toque decide; desvio em chute que ia no gol não é gol contra (RQ_DESVIO_*);
@@ -265,7 +265,7 @@ class PartidaSala {
         if (v > F.VEL_JOG) { q.vx *= F.VEL_JOG / v; q.vy *= F.VEL_JOG / v; }
       } else { q.vx = 0; q.vy = 0; }
     }
-    // 3) a bola: desacelera no fator do campo, o giro diminui sozinho, o teto é F.LIMITE_VEL_BOLA (60 u/s desde a v86)
+    // 3) a bola: desacelera no fator do campo, o giro diminui sozinho, o teto é F.LIMITE_VEL_BOLA (46,75 u/s desde a v87.1)
     B.vx *= F.FATOR_BOLA; B.vy *= F.FATOR_BOLA;
     B.w *= 1 / (1 + F.AMORT_ANGULAR / TPS);
     const speed = Math.hypot(B.vx, B.vy);

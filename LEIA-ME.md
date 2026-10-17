@@ -57,7 +57,7 @@ sempre limitada ao teto dele) — detalhes no `server/LEIAME.md` e nos testes `v
 proveniência**: a física, as quadras, os controles e os textos que vinham de outro jogo foram trocados por uma
 implementação própria (a física FR-85, num núcleo só para o jogo e o servidor), e as fontes passaram a vir no pacote.
 A **v86** voltou, a pedido, à **mecânica da v84** (a física, as quadras, o analógico de 32 direções e os botões) com o
-**chute mais forte** — PASSE e CHUTE 10% mais fortes e o teto da bola de 55 para 60 u/s —, e o resto da v85 continua
+**chute mais forte** (v87.1: o PASSE, o CHUTE e o teto da bola ficaram 15% abaixo da versão antiga), e o resto da v85 continua
 (textos, chaves, fontes, login). A **v87** leva tudo para **dentro do jogo**: a plataforma abre o jogo direto, em tela
 cheia, com o login do jogo e as coisas da conta nos botões dele — logo abaixo.
 
@@ -173,8 +173,12 @@ A física nova da v85 não agradou no teste; a v86 volta, a pedido, à **mecâni
   do CHUTE na sala hospedada. Os testes que a v85 tinha ajustado à FR-85 (v78, v83_sala, v83_salas_ws, servidor) voltaram
   aos da v84.
 
+> **v87.1 (a pedido, depois de jogar):** o chute ficou **15% abaixo da versão antiga** — PASSE **212,5** e CHUTE **340**
+> (a bola parada sai a 21,25 e 34 u/s em vez de 25 e 40) e o teto da bola **46,75 u/s** (era 55) —, no jogo e no servidor.
+> Os números de 275, 440 e 60 acima são os da v86.
+
 **O que muda para quem joga:** a sensação da v84 (o arranque e a parada na hora, a bola e as quadras de antes), com a bola
-saindo 10% mais rápida no PASSE e no CHUTE. Isso foi medido nos testes; **se ficou bom, só jogando**. Para mudar de novo,
+saindo 10% mais rápida no PASSE e no CHUTE (v87.1: 15% mais devagar que na versão antiga). Isso foi medido nos testes; **se ficou bom, só jogando**. Para mudar de novo,
 é um número em cada um dos dois arquivos (ver "Editar o jogo", acima).
 
 ## v85 · a auditoria de proveniência: a física própria (FR-85), os controles, os textos e as fontes no pacote
@@ -982,7 +986,7 @@ no RELATORIO_DE_TESTES da auditoria.
 | `online_test.py` (e `--p2p`) | duas sessões de navegador contra o servidor de verdade: sala, árbitro, partida, COM CURVA no ESTÁDIO, a sala recusando o modo/mapa que saiu, reconexão, resultado conferido, o clube da turma e a tela AMIGOS (v77: era a COMUNIDADE; só os amigos e o chat) | 43/43 e 43/43 (as verificações de tempo da CURVA do convidado falham às vezes neste Chromium de teste, na v78 também: abaixo) |
 | `servidor_test.js` | regras do servidor (memória) e duas sessões pela rede (HTTP, origem, reconexão); só os 2 modos e os 2 mapas nas salas; v80: a partida normal (a regra e o relógio no start, a cada segundo e parado na pausa; 1 × 1 antes do tempo recusado e no fim empate guardado; gol depois do tempo, depois do gol de ouro, depois do 3º gol e depois da prorrogação recusados; 2 × 1 no fim; o gol de ouro; 0 × 0 até o fim; o relógio do anfitrião longe do servidor recusado; a hora do gol (goal.el); o servidor encerrando sozinho 10 s depois da hora, nos 3:00 e na prorrogação; o tempo encurtado por opção; a sala personalizada sem a regra nova); v79: a fila da ranqueada (juntar, misturar com bots depois de 8 s, os times pelos pontos, fila_nada depois de 20 s, sair, cair, recusar quem está numa sala), a sala ranqueada (no Estádio, fora da lista, sem entrar pelo código, sem trocar de time nem de regra, sem revanche, `ranked` no resultado), o Estádio como o mapa padrão e o selo da conta (só o assinado pela plataforma; no hello, nos cartões, na lista e no Chat do Brasil); v81: o filtro com telefone, CPF e e-mail nos dois chats, o `mid` de cada mensagem da sala, a repetida, 1 denúncia sem esconder, a do autor ignorada, 2 pessoas diferentes escondendo (`say_hide` para todos, `escondida` no histórico), o autor silenciado (`codigo:'silenciado'`) e os outros falando; v82: o selo diz se a partida era da ranqueada (`k`) e o tamanho (`n`) — a sala personalizada `k:0`, a fila da ranqueada com duas contas `k:1` e o placar de cada lado —, os IDs de visitante com 7 dígitos (9000000+, nunca o de uma conta) | 189/189 |
 | `plataforma_salas_test.mjs` | o servidor montado na plataforma (sessão do site, selo conferido, origem); v79: o selo V vindo do banco (`selosDe`) só para quem está logado, no hello e no cartão da sala | 10/10 |
-| `v86_chute_test.py` (v86) | a mecânica clássica e o chute mais forte: PASSE 275, CHUTE 440 e o teto de 60 u/s iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (27,5 e 44 u/s) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
+| `v86_chute_test.py` (v86, v87.1) | a mecânica clássica e a força do chute: PASSE 212,5, CHUTE 340 e o teto de 46,75 u/s (v87.1; na v86, 275, 440 e 60) iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (27,5 e 44 u/s) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
 | `v87_site_test.py` (v87) | tudo dentro do jogo, com a plataforma de mentira (`v87_plataforma_falsa.mjs`): a raiz leva ao jogo; o login é o do jogo, com a cara dele; entrar; o AMIGOS e o ABRIR O PERFIL DA CONTA abrem as páginas da conta por cima do jogo (VOLTAR AO JOGO, o "Jogar" da página e o Esc fecham, sem recarregar); o SAIR DA CONTA; quem entrou pelo site entra direto (pelo cookie, sem ficar recarregando); o RACHA CONTROL da equipe; o SÓ TREINAR OFFLINE enquanto confere; o jogo sem a plataforma | 22/22 |
 | `v85_online_test.py` (v85, v86) | duas sessões do jogo numa sala hospedada no servidor: a tampinha correndo e parando no servidor; na v86 (mecânica clássica) os comandos com `button` e o analógico em 1/32 de volta, o PASSE e o CHUTE saindo com a força do jogo (na v85: `acao` e 1/256, com a FR-85) | 14/14 |
 | (`v85_fisica_test.mjs` e `v85_sincronia_test.py`) | testavam o núcleo FR-85; saíram na v86 (estão na branch `v85-auditada`) | — |
@@ -1094,8 +1098,8 @@ no RELATORIO_DE_TESTES da auditoria.
 
 ## Limitações conhecidas (e o porquê)
 
-* **O chute mais forte da v86 foi medido, não jogado por pessoas**: a velocidade da bola depois do PASSE e do CHUTE, o
-  teto e os números iguais no jogo e no servidor foram testados no Chromium; se 10% a mais ficou bom, o equilíbrio e a
+* **A força do chute (v86, v87.1) foi medida, não jogada por pessoas**: a velocidade da bola depois do PASSE e do CHUTE, o
+  teto e os números iguais no jogo e no servidor foram testados no Chromium; se 15% abaixo da antiga ficou bom, o equilíbrio e a
   sensação no celular dependem de jogar. Os bots usam as mesmas constantes (a previsão do chute deles acompanha); o jeito
   deles jogarem foi conferido pelos testes dos bots (v78), não por partidas contra pessoas.
 * **A plataforma da v87 não foi construída aqui**: o `npm install` e o `npm run build` do `app/` não rodam neste ambiente (o

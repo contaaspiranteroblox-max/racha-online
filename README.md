@@ -3,7 +3,7 @@
 O jogo de futebol de rua com tampinhas, na versão **v87**: **tudo dentro do jogo** — a plataforma abre o jogo direto, em
 tela cheia, sem a barra de cima e sem as abas; o login é o do jogo (com a cara dele) e as coisas da conta ficam nos botões
 do jogo (o que só existe no site abre por cima do jogo, com o VOLTAR AO JOGO). A **mecânica clássica** da v86 continua (a
-da v84, com o PASSE e o CHUTE 10% mais fortes e o teto da bola de 55 para 60 u/s), e o resto da v85 também: os textos
+da v84; desde a v87.1, com o PASSE, o CHUTE e o teto da bola 15% abaixo da versão antiga), e o resto da v85 também: os textos
 próprios, as fontes no pacote, as chaves salvas sem a marca e o site de teste. O que mudou está no [`CHANGELOG.md`](CHANGELOG.md); de onde vem cada parte
 (inclusive a mecânica), no [`PROVENIENCIA.md`](PROVENIENCIA.md).
 
@@ -56,8 +56,8 @@ Instale o Node.js 18+ (<https://nodejs.org>) e rode `node server.js` (no Windows
 
 Os números ficam em dois lugares, que precisam ser iguais:
 
-- o bloco **AJUSTES** do `backup/racha.html` — `FORCA_KICK` (o PASSE, hoje 275), `FORCA_POWER` (o CHUTE, hoje 440) e
-  `LIMITE_VEL_BOLA` (o teto da bola, hoje `U(60)`);
+- o bloco **AJUSTES** do `backup/racha.html` — `FORCA_KICK` (o PASSE, hoje 212,5), `FORCA_POWER` (o CHUTE, hoje 340) e
+  `LIMITE_VEL_BOLA` (o teto da bola, hoje `U(46.75)`) — na versão antiga eram 250, 400 e `U(55)`;
 - o começo do `server/partida/fisica.js` (os mesmos três), que o servidor usa nas salas.
 
 Depois: `python3 tools/aplicar_rua.py` (gera o jogo) e `python3 tests/v86_chute_test.py` (confere que o jogo e o servidor

@@ -248,7 +248,7 @@ async def principal():
                   'na apresentação dos times: o jeito de cada bot (v79: sem o nível escrito; o seu companheiro continua jogando no Difícil)', r)
         # ---------------------------------------------------------------- o mesmo corpo
         r = await rt(pg, CORPO)
-        P.confere(r['vmax'] <= r['vjog']*1.001 and r['vel'] == [1, 1] and r['longe'] == 0 and set(int(k) for k in r['forcas']) <= {r['kick'], r['power']} and r['chutes'] > 10,
+        P.confere(r['vmax'] <= r['vjog']*1.001 and r['vel'] == [1, 1] and r['longe'] == 0 and set(float(k) for k in r['forcas']) <= {float(r['kick']), float(r['power'])} and r['chutes'] > 10,
                   'o mesmo corpo de todo mundo: em 45 s de 4v4 nenhum bot passa da velocidade do jogador e todo chute é PASSE ou CHUTE com a bola no alcance', r)
         # ---------------------------------------------------------------- jogar com você
         r = await rt(pg, NAO_ROUBA)

@@ -2,6 +2,16 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v87.1 — 17/10/2026 · o chute 15% abaixo da versão antiga
+
+A pedido, depois de jogar: o PASSE, o CHUTE e o teto da bola ficaram **15% abaixo dos da versão antiga** (a v84).
+
+- `FORCA_KICK` 250 → **212,5** (PASSE), `FORCA_POWER` 400 → **340** (CHUTE) e `LIMITE_VEL_BOLA` 55 → **46,75 u/s**, iguais no
+  `backup/racha.html` (AJUSTES) e no `server/partida/fisica.js` (na v86 eram 275, 440 e 60). A bola parada sai a 21,25 e
+  34 u/s (eram 25 e 40); os bots, o treino, a CURVA e as previsões usam essas constantes e acompanham sozinhos.
+- Testes: o `tests/v86_chute_test.py` confere os números novos (18/18); o `tests/v78_test.py` lê as forças com meio
+  (212,5); os textos do `server/partida/sala.js` e do `tests/v83_partida_test.mjs` com o teto novo.
+
 ## v87 — 17/10/2026 · tudo dentro do jogo: o site abre o jogo direto, em tela cheia
 
 A pedido, depois de jogar no site com a plataforma: a barra de cima (a conta, o SAIR) e as abas (Perfil, Carreira,

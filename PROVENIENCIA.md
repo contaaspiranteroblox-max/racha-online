@@ -2,7 +2,8 @@
 
 > **v86 (17/10/2026), a pedido: a mecânica da v84 voltou.** A física, as quadras, o analógico de 32 direções e os botões
 > da v86 são os da v84 — os que a auditoria achou montados a partir da análise do jogo de referência (a coluna "até a v84"
-> da tabela abaixo) —, com só três números mudados: o PASSE (250 → 275), o CHUTE (400 → 440) e o teto da bola (55 → 60 u/s).
+> da tabela abaixo) —, com só três números mudados: o PASSE (250 → 212,5), o CHUTE (400 → 340) e o teto da bola (55 → 46,75
+> u/s) — 15% abaixo desde a v87.1 (na v86 eram 275, 440 e 60).
 > Mudar esses números muda o jogo, mas **não muda a origem** do resto da mecânica. Os comentários do código não têm o nome
 > do outro jogo nem as descrições da análise; o registro da origem é este arquivo. O resto da correção da v85 continua
 > (textos, marca, chaves, imagem, fontes). A v85 (com a física própria FR-85) está na branch `v85-auditada`.
@@ -16,7 +17,7 @@ hashes nos relatórios). Nenhum arquivo desse jogo faz parte do RACHA.
 
 | componente | até a v84 | v85 (a correção da auditoria) | v86 (agora) |
 |---|---|---|---|
-| física (números) | velocidade, chutes, massas, raios, desaceleração, teto, materiais: valores do jogo de referência | FR-85: núcleo próprio `server/partida/nucleo_fisica.js` (`tools/v85/FISICA_RACHA.md`) | **os da v84**, com PASSE 275 / CHUTE 440 (eram 250 / 400) e teto 60 u/s (era 55) |
+| física (números) | velocidade, chutes, massas, raios, desaceleração, teto, materiais: valores do jogo de referência | FR-85: núcleo próprio `server/partida/nucleo_fisica.js` (`tools/v85/FISICA_RACHA.md`) | **os da v84**, com PASSE 212,5 / CHUTE 340 (eram 250 / 400) e teto 46,75 u/s (era 55) — v87.1; na v86, 275 / 440 / 60 |
 | física (modelo) | movimento "impulso + teto + zera ao soltar"; chute "força ÷ massa"; combinação de materiais da Unity; giro | aceleração limitada; chute com velocidade de saída; tabela de batidas por par; sem giro físico | **o da v84** |
 | quadras | medidas dos mapas do jogo de referência (linhas, gols, marcas, barreira da saída, posição de saída) | regra própria de quadras (FR-85, seção 5) | **as da v84** |
 | analógico | 32 direções (o mesmo número do jogo de referência) | 256 direções | **32 direções** (o da v84) |

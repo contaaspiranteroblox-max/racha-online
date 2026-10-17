@@ -3,7 +3,7 @@
    RACHA v83 · A FÍSICA NO SERVIDOR — a simulação autoritativa da partida (sem dependências, Node 18+).
 
    O porte para o servidor da física do jogo (app/public/game/racha.html, blocos AJUSTES e PHYS do backup/racha.html —
-   v86: a mecânica clássica, a da v84, com o chute mais forte; de onde vêm os números: PROVENIENCIA.md): o servidor
+   v86: a mecânica clássica, a da v84; v87.1: o chute 15% abaixo da antiga; de onde vêm os números: PROVENIENCIA.md): o servidor
    calcula a mesma partida que o aparelho calculava — mesmo tamanho de campo, mesmos raios, mesma bola — para que o
    cliente possa só mandar os comandos e desenhar o que o servidor manda (predição + interpolação).
 
@@ -27,11 +27,11 @@ const R_JOG = U(2.0);             // raio do corpo da tampinha
 const RAIO_CHUTE = U(2.5);        // o anel de chute
 const MASSA_JOG = 1.25;
 const VEL_JOG = U(14.1);          // velocidade máxima da tampinha (14,1 u/s)
-const FORCA_KICK = 275, FORCA_POWER = 440;   // PASSE / CHUTE (v86: 10% mais fortes; eram 250 / 400) — os mesmos do jogo
+const FORCA_KICK = 212.5, FORCA_POWER = 340;   // PASSE / CHUTE (v87.1: 15% abaixo da versão antiga, 250 / 400; na v86, 275 / 440) — os mesmos do jogo
 
 const R_BOLA = U(1.0);
 const MASSA_BOLA = 10;
-const LIMITE_VEL_BOLA = U(60);    // 60 u/s (v86: era 55)
+const LIMITE_VEL_BOLA = U(46.75); // 46,75 u/s (v87.1: 15% abaixo dos 55 da versão antiga; na v86, 60)
 const FATOR_BOLA = 0.99;          // a bola guarda 99% da velocidade a cada tick
 const AMORT_ANGULAR = 0.5;        // o giro da bola diminui sozinho
 const ATRITO_BOLA = 0.5;
