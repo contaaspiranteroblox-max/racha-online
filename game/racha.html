@@ -13752,6 +13752,19 @@ const PREMIO = {
   nivel:{m:100, g:5}, nivel5:{g:25}                    // a cada nível · e mais a cada 5 níveis
 };
 const PRESENTE = {id:'v32', m:50000, g:5000};        // v32: presente que cada aparelho recebe uma vez (moedas e gemas): mude o id para dar outro
+// v87.2: o presente de teste também na PRODUÇÃO quando o config.js pede: presente: true (50.000 moedas e 5.000 gemas, uma vez
+// por aparelho e por conta) ou presente: {id, moedas, gemas} (outro valor; um id novo dá de novo). Na demonstração ele já vinha
+// (presente: false tira). Sem o pedido no config.js, nada muda.
+function presenteTeste(){
+  const c = window.RACHA_CONFIG || {}, p = c.presente;
+  if (window.RACHA_MODO === 'demo') return p !== false;
+  if (p === true){ PRESENTE.id = 'teste-v87'; return true; }   // (um id novo: quem ganhou o v32 lá atrás também recebe)
+  if (!p || typeof p !== 'object') return false;
+  PRESENTE.id = 'teste-' + (typeof p.id === 'string' && /^[a-z0-9_-]{1,24}$/i.test(p.id) ? p.id : 'v87');
+  if (Number.isFinite(+p.moedas)) PRESENTE.m = Math.max(0, Math.min(1e7, Math.floor(+p.moedas)));
+  if (Number.isFinite(+p.gemas)) PRESENTE.g = Math.max(0, Math.min(1e6, Math.floor(+p.gemas)));
+  return PRESENTE.m > 0 || PRESENTE.g > 0;
+}
 const LIVRE_DIA_TOP = 10;                              // gols do treino livre que contam no Top semanal, por dia (exercícios e partidas contam todos)
 const TROCAS = [{g:30, m:600}, {g:80, m:1800}, {g:200, m:5000}];   // trocar gemas por moedas, na loja
 const xpPara = n => 80 + 20*n;                         // XP para passar do nível n ao n + 1
@@ -13804,7 +13817,7 @@ function contaCarregar(){
   volta61([...(o && Array.isArray(o.skins) ? o.skins : []), PERFIL_SKIN_CRU61]);   // v61: os discos da coleção antiga viram moedas e gemas de volta
                                                        // (quem abriu o v60 perdeu a lista: só o disco equipado, se o perfil ainda guardava, volta)
   if (!skinTem(perfil.skin)) perfil.skin = SKIN_INICIAL;
-  if (window.RACHA_MODO === 'demo' && !(window.RACHA_CONFIG && window.RACHA_CONFIG.presente === false) && CONTA.presentes.indexOf(PRESENTE.id) < 0){      // v32: o presente (uma vez por aparelho) · v70: só na DEMONSTRAÇÃO (presente:false tira)
+  if (presenteTeste() && CONTA.presentes.indexOf(PRESENTE.id) < 0){      // v32: o presente (uma vez por aparelho) · v70: na DEMONSTRAÇÃO (presente:false tira) · v87.2: e na produção com presente no config.js
     CONTA.moedas = Math.min(1e9, CONTA.moedas + PRESENTE.m); CONTA.gemas = Math.min(1e9, CONTA.gemas + PRESENTE.g);
     CONTA.presentes.push(PRESENTE.id); CONTA.presPend = {m:PRESENTE.m, g:PRESENTE.g}; contaSalvar();
   }
@@ -29851,6 +29864,12 @@ v84Entrou = function(res){
     R.api('auth.eu', undefined, true).then(x => { if (x && x.logado && x.conta && R.logado()) R.entrou({ conta: x.conta }); }).catch(() => {});
   } catch (_) {}
   return r;
+};
+// v87.2: o presente de teste na produção (o texto da demonstração diz que ele não existe no lançamento)
+const popPresenteAntes87 = popPresente;
+popPresente = function(p){
+  popPresenteAntes87(p);
+  if (window.RACHA_MODO !== 'demo'){ const t = LB.popCaixa && LB.popCaixa.querySelector('.pop-txt'); if (t) t.textContent = 'Presente de teste: moedas e gemas para experimentar a loja à vontade.'; }
 };
 
 montaAbas();
