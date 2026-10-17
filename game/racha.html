@@ -2711,260 +2711,6 @@
 })();
 </script>
 <script>
-'use strict';
-/* =====================================================================================================================
-   RACHA · NÚCLEO DA FÍSICA (FR-85) — um arquivo só, para o jogo e para o servidor.
-
-   O build (tools/aplicar_rua.py) cola este arquivo no racha.html antes do script do jogo (vira window.RACHA_FISICA) e o
-   servidor faz require dele (server/partida/fisica.js e sala.js): o aparelho e o servidor calculam a MESMA física, com o
-   mesmo texto de código. A especificação — as metas de jogo, de onde sai cada número e o que foi testado — está em
-   tools/v85/FISICA_RACHA.md. As fórmulas são de física de livro-texto (impulso com coeficiente de restituição e atrito de
-   Coulomb, amortecimento exponencial, aceleração limitada) e cada função diz o que faz.
-
-   Unidades: posições em px da tela virtual, 1 u (unidade de quadra) = 19 px; tempo em s; velocidades em px/s.
-   ===================================================================================================================== */
-(function (raiz, fabrica) {
-  const N = fabrica();
-  if (typeof module === 'object' && module && module.exports) module.exports = N;
-  else raiz.RACHA_FISICA = N;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  const PX_POR_U = 19;                                   // escala do desenho: a tampinha (raio 1,8 u) fica com ~34 px de raio
-  const U = v => v * PX_POR_U;
-  const TICKS_POR_S = 60, DT = 1 / TICKS_POR_S;           // passo fixo de 60 Hz (a taxa de tela mais comum)
-
-  // A tampinha (todo mundo igual: cosmético não muda nada aqui)
-  const TAMPINHA = Object.freeze({
-    raio: U(1.8),                                         // u: o corpo
-    massa: 1,                                             // a referência das massas
-    vmax: U(13),                                          // u/s: a velocidade de corrida (M1: atravessa a quadra do 1v1 em ~4 s)
-    arrancada: 0.06,                                      // s: de parada até a velocidade de corrida, com o analógico apontado
-    freio: 0.045,                                         // s: da corrida até parar, com o analógico solto
-  });
-  // A bola
-  const BOLA = Object.freeze({
-    raio: U(1.15),                                        // u: um pouco mais que a metade da tampinha (fácil de ver no celular)
-    massa: 1.6,                                           // mais pesada que a tampinha: encostar empurra, não arremessa (condução)
-    teto: U(48),                                          // u/s: limite de segurança (acima do chute mais forte com embalo)
-    parada: U(0.08),                                      // u/s: abaixo disso a bola para de vez
-  });
-  // O chute: define a velocidade de SAÍDA da bola (não soma com a que ela tinha)
-  const CHUTE = Object.freeze({
-    folga: U(0.75),                                       // u: o quanto a bola pode estar longe da borda da tampinha para o chute pegar
-    passe: U(26.5),                                       // u/s: o passe (botão PASSE) — ~2× a corrida
-    forte: U(40.5),                                       // u/s: o chute (botão CHUTE) — ~3,1× a corrida
-    embalo: 0.35,                                         // fração da velocidade da tampinha na direção do chute que vai para a bola
-    raspao: 0.2,                                          // fração da velocidade de lado que a bola tinha e que fica depois do chute
-  });
-  const ALCANCE = TAMPINHA.raio + BOLA.raio + CHUTE.folga;   // distância máxima entre os centros para o chute pegar
-
-  // O piso: em quanto tempo a bola perde metade da velocidade (meia-vida, s)
-  const MEIA_VIDA = Object.freeze({ quadra: 0.95, rua: 1.1 });   // quadra = Arena e Estádio; rua = cimento gasto (campos guardados)
-  const fatorPiso = t => Math.pow(0.5, 1 / (TICKS_POR_S * t));   // quanto da velocidade fica a cada passo de 1/60 s
-
-  // As batidas, par a par: e = restituição (quanto da velocidade de frente volta), mu = atrito de Coulomb (sem giro)
-  const PAR = Object.freeze({
-    bolaLinha: Object.freeze({ e: 0.55, mu: 0.2 }),       // a bola nas linhas da quadra (a parede invisível da bola)
-    bolaTrave: Object.freeze({ e: 0.5, mu: 0.1 }),        // a bola na trave de ferro
-    bolaRede: Object.freeze({ e: 0.1, mu: 0.4 }),         // a bola na rede de corda (segura)
-    bolaTampinha: Object.freeze({ e: 0.12, mu: 0.15 }),   // a bola na tampinha
-    tampinhaTampinha: Object.freeze({ e: 0.2, mu: 0 }),   // uma tampinha na outra
-    tampinhaParede: Object.freeze({ e: 0.15, mu: 0 }),    // a tampinha no alambrado, na rede e nas traves
-    bolaParedao: Object.freeze({ e: 0.8, mu: 0.2 }),      // o paredão do treino (rebatedor)
-    bolaChinelo: Object.freeze({ e: 0.3, mu: 0.3 }),      // o gol de chinelos (campo antigo, guardado)
-  });
-  const LIMIAR_QUIQUE = U(0.25);                          // batida mais lenta que isso não quica (a bola não fica tremendo encostada)
-
-  // O analógico: 256 direções (1 byte na rede); a força do dedo não muda a velocidade (é corrida ou parado)
-  const DIRECOES = 256, PASSO_ANG = (2 * Math.PI) / DIRECOES, EPS_DIR = 1e-5;
-  function direcao(mx, my) {
-    if (!Number.isFinite(mx) || !Number.isFinite(my) || Math.hypot(mx, my) <= EPS_DIR) return { mx: 0, my: 0, k: -1 };
-    const k = Math.round(Math.atan2(my, mx) / PASSO_ANG), a = k * PASSO_ANG;
-    return { mx: Math.cos(a), my: Math.sin(a), k: ((k % DIRECOES) + DIRECOES) % DIRECOES };
-  }
-
-  // Movimento com aceleração limitada: a velocidade vai até a do analógico (dx, dy unitário ou zero) sem passar de
-  // vmax/arrancada (apontando) ou vmax/freio (solto) de mudança por segundo. Depois, nunca acima de vmax: o empurrão de
-  // uma batida não vira corrida (ninguém passa da velocidade de corrida pelas próprias pernas — bots também).
-  function anda(q, dx, dy, vmax, dt) {
-    const ativo = dx !== 0 || dy !== 0;
-    const ax = dx * vmax - q.vx, ay = dy * vmax - q.vy, d = Math.hypot(ax, ay);
-    const lim = (vmax / (ativo ? TAMPINHA.arrancada : TAMPINHA.freio)) * dt;
-    if (d <= lim) { q.vx += ax; q.vy += ay; }
-    else { q.vx += (ax * lim) / d; q.vy += (ay * lim) / d; }
-    const v = Math.hypot(q.vx, q.vy);
-    if (v > vmax) { q.vx *= vmax / v; q.vy *= vmax / v; }
-  }
-
-  // Batida de um corpo numa superfície parada; (nx, ny) = normal unitária da superfície para o corpo.
-  // Impulso normal com restituição e impulso tangencial limitado pelo atrito de Coulomb (|jt| <= mu·jn). Sem giro.
-  function bate(o, nx, ny, e, mu) {
-    const vn = o.vx * nx + o.vy * ny;
-    if (vn >= 0) return false;
-    const ef = -vn < LIMIAR_QUIQUE ? 0 : e;
-    const jn = -(1 + ef) * vn;
-    o.vx += nx * jn; o.vy += ny * jn;
-    if (mu > 0) {
-      const tx = -ny, ty = nx, vt = o.vx * tx + o.vy * ty, lim = mu * jn;
-      const jt = vt > lim ? -lim : vt < -lim ? lim : -vt;
-      o.vx += tx * jt; o.vy += ty * jt;
-    }
-    return true;
-  }
-  // Círculo (o) contra um ponto/círculo parado de raio pr: separa e bate. Devolve se encostou.
-  function batePonto(o, px, py, pr, e, mu) {
-    let dx = o.x - px, dy = o.y - py;
-    const rs = o.r + pr, d2 = dx * dx + dy * dy;
-    if (d2 >= rs * rs) return false;
-    let d = Math.sqrt(d2);
-    if (d < 1e-9) { const v = Math.hypot(o.vx, o.vy); dx = v > 1e-9 ? -o.vx / v : 1; dy = v > 1e-9 ? -o.vy / v : 0; d = 1; }
-    const nx = dx / d, ny = dy / d;
-    o.x = px + nx * rs; o.y = py + ny * rs;
-    bate(o, nx, ny, e, mu);
-    return true;
-  }
-  // Círculo contra um segmento (parede fina): o ponto do segmento mais perto do centro.
-  function bateSegmento(o, ax, ay, bx, by, e, mu) {
-    const abx = bx - ax, aby = by - ay, l2 = abx * abx + aby * aby;
-    const t = l2 > 0 ? Math.max(0, Math.min(1, ((o.x - ax) * abx + (o.y - ay) * aby) / l2)) : 0;
-    return batePonto(o, ax + abx * t, ay + aby * t, 0, e, mu);
-  }
-  // Círculo preso DENTRO de uma caixa (a área onde a tampinha anda, a rede de segurança da bola).
-  function bateCaixa(o, x0, y0, x1, y1, e, mu) {
-    if (o.x < x0 + o.r) { o.x = x0 + o.r; bate(o, 1, 0, e, mu); }
-    else if (o.x > x1 - o.r) { o.x = x1 - o.r; bate(o, -1, 0, e, mu); }
-    if (o.y < y0 + o.r) { o.y = y0 + o.r; bate(o, 0, 1, e, mu); }
-    else if (o.y > y1 - o.r) { o.y = y1 - o.r; bate(o, 0, -1, e, mu); }
-  }
-  // Círculo FORA de um retângulo sólido (o gol fechado, quando a tampinha não entra nele).
-  function bateRetangulo(o, x0, y0, x1, y1, e, mu) {
-    const cx = Math.max(x0, Math.min(o.x, x1)), cy = Math.max(y0, Math.min(o.y, y1));
-    const dx = o.x - cx, dy = o.y - cy, d2 = dx * dx + dy * dy;
-    if (d2 >= o.r * o.r) return false;
-    if (d2 < 1e-9) {                                      // o centro entrou no retângulo: sai pelo lado mais perto
-      const l = o.x - x0, r = x1 - o.x, t = o.y - y0, b = y1 - o.y, m = Math.min(l, r, t, b);
-      if (m === l) { o.x = x0 - o.r; bate(o, -1, 0, e, mu); }
-      else if (m === r) { o.x = x1 + o.r; bate(o, 1, 0, e, mu); }
-      else if (m === t) { o.y = y0 - o.r; bate(o, 0, -1, e, mu); }
-      else { o.y = y1 + o.r; bate(o, 0, 1, e, mu); }
-      return true;
-    }
-    const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
-    o.x = cx + nx * o.r; o.y = cy + ny * o.r;
-    bate(o, nx, ny, e, mu);
-    return true;
-  }
-  // Dois círculos com massa (tampinha × bola, tampinha × tampinha): separa na proporção das massas (deixando uma folga
-  // pequena de 0,25 px e corrigindo 80% da sobra) e troca impulso normal com restituição e tangencial com atrito.
-  const FOLGA_CONTATO = 0.25, CORRECAO = 0.8;
-  function batemCorpos(a, b, e, mu) {
-    let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
-    const rs = a.r + b.r;
-    if (d >= rs) return false;
-    if (d < 1e-6) {
-      dx = a.vx - b.vx; dy = a.vy - b.vy; d = Math.hypot(dx, dy);
-      if (d < 1e-6) { dx = 1; dy = 0; d = 1; }
-      dx /= d; dy /= d; d = 1e-6; dx *= d; dy *= d;
-    }
-    const nx = dx / d, ny = dy / d;
-    const ia = 1 / a.m, ib = 1 / b.m, is = ia + ib;
-    const pen = Math.max(0, rs - d - FOLGA_CONTATO) * CORRECAO;
-    a.x -= (nx * pen * ia) / is; a.y -= (ny * pen * ia) / is;
-    b.x += (nx * pen * ib) / is; b.y += (ny * pen * ib) / is;
-    const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-    if (vn >= 0) return true;
-    const ef = -vn < LIMIAR_QUIQUE ? 0 : e;
-    const j = (-(1 + ef) * vn) / is;
-    a.vx -= j * ia * nx; a.vy -= j * ia * ny;
-    b.vx += j * ib * nx; b.vy += j * ib * ny;
-    if (mu > 0) {
-      const tx = -ny, ty = nx, vt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty, lim = mu * j;
-      let jt = -vt / is;
-      if (jt > lim) jt = lim; else if (jt < -lim) jt = -lim;
-      a.vx -= jt * ia * tx; a.vy -= jt * ia * ty;
-      b.vx += jt * ib * tx; b.vy += jt * ib * ty;
-    }
-    return true;
-  }
-
-  // O chute: só pega com a bola no alcance; a bola sai na direção centro da tampinha → centro da bola com a velocidade do
-  // botão + o embalo da tampinha nessa direção, e guarda só um pouco do que tinha de lado. Devolve se pegou.
-  function chuta(q, b, forca, alcance) {
-    let dx = b.x - q.x, dy = b.y - q.y, d = Math.hypot(dx, dy);
-    if (d === 0) { dx = 1; dy = 0; d = 1; }
-    if (d > (alcance === undefined ? ALCANCE : alcance)) return false;
-    const ux = dx / d, uy = dy / d;
-    const vq = Math.max(0, (q.vx || 0) * ux + (q.vy || 0) * uy);
-    const vbn = b.vx * ux + b.vy * uy, px = b.vx - vbn * ux, py = b.vy - vbn * uy;
-    const s = forca + CHUTE.embalo * vq;
-    b.vx = ux * s + CHUTE.raspao * px; b.vy = uy * s + CHUTE.raspao * py;
-    return true;
-  }
-  // O gatilho do chute: cada passo lê o que está apertado em bits (GATILHO.PASSE = 1, GATILHO.CHUTE = 2). Apertar arma o
-  // chute daquele botão — o último apertado vale; os dois no mesmo passo, o CHUTE —; segurando, ele fica armado até a bola
-  // entrar no alcance; depois que chutou, só um aperto novo arma de novo (um aperto = um chute).
-  const GATILHO = Object.freeze({ PASSE: 1, CHUTE: 2 });
-  const novoGatilho = () => ({ ant: 0, armado: 0, gasto: false });
-  function gatilho(g, bits) {                             // devolve o que está armado agora (0, PASSE ou CHUTE)
-    bits &= 3;
-    const desceu = bits & ~g.ant; g.ant = bits;
-    if (desceu & GATILHO.CHUTE) { g.armado = GATILHO.CHUTE; g.gasto = false; }
-    else if (desceu & GATILHO.PASSE) { g.armado = GATILHO.PASSE; g.gasto = false; }
-    if (!bits) { g.armado = 0; g.gasto = false; }        // tudo solto: zera
-    else if (!(bits & g.armado)) g.armado = 0;           // soltou o que estava armado: só um aperto novo arma
-    return g.gasto ? 0 : g.armado;
-  }
-  const gastaGatilho = g => { g.gasto = true; };          // o chute saiu: até um aperto novo, não arma mais
-
-  // A velocidade de saída de um chute parado (para quem precisa prever: bots, treino, prévia)
-  const saidaDoChute = forca => forca;
-
-  // A bola perde velocidade pelo piso (fator por passo f, tk passos), respeita o teto e, devagar demais, para.
-  function amortece(b, f, tk) {
-    const k = Math.pow(f, tk);
-    b.vx *= k; b.vy *= k;
-    const v = Math.hypot(b.vx, b.vy);
-    if (v > BOLA.teto) { b.vx *= BOLA.teto / v; b.vy *= BOLA.teto / v; }
-    else if (v > 0 && v < BOLA.parada) { b.vx = 0; b.vy = 0; }
-  }
-  // Quantos subpassos neste passo: nada anda mais que 30% do raio da bola por subpasso (de 2 a 12).
-  const subpassos = (vRef, dt) => Math.max(2, Math.min(12, Math.ceil((vRef * dt) / (BOLA.raio * 0.3))));
-
-  // As quadras do RACHA (u). Regra própria: comprimento × largura por tamanho de time; a boca do gol cresce com a largura;
-  // as marcas pintadas são frações da quadra (ver FISICA_RACHA.md, "Quadras").
-  const DIM = [[52, 36], [64, 44], [78, 56], [92, 68]];
-  const MARGEM_TAMPINHA = 6;                              // u: a tampinha pode sair da linha até aqui para buscar a bola
-  function quadra(n) {
-    const i = Math.min(4, Math.max(1, n | 0)) - 1, L = DIM[i][0], W = DIM[i][1];
-    const boca = Math.round((0.24 * W + 3.8) * 100) / 100;
-    const r2 = v => Math.round(v * 1000) / 1000;
-    return Object.freeze({
-      nome: (i + 1) + 'v' + (i + 1),
-      bola: [L, W],                                       // dentro das linhas (as paredes da bola, com a boca dos gols aberta)
-      jog: [L + 2 * MARGEM_TAMPINHA, W + 2 * MARGEM_TAMPINHA],   // onde a tampinha anda
-      gol: [4.2, boca],                                   // [profundidade, boca entre os centros das traves]
-      trave: 0.64,                                        // espessura (diâmetro) da trave
-      rede: 0.3,                                          // espessura da rede
-      marcas: Object.freeze({
-        area: [r2(0.17 * L), r2(boca + 0.4 * W)],         // [fundo, altura]
-        pequena: [r2(0.075 * L), r2(boca + 4)],
-        penalti: r2(0.12 * L),                            // da linha do gol até a marca
-        circulo: r2(0.14 * W),                            // o raio do círculo do meio
-        saida: r2(0.14 * W),                              // o raio da barreira da saída (o próprio círculo)
-        meiaLua: [r2(0.12 * L), r2(0.1 * W)],             // [centro (da linha do gol), raio]: só o pedaço de fora da área aparece
-      }),
-      saida: r2(0.21 * L),                                // u: do centro até onde a tampinha começa (treino livre e saída)
-    });
-  }
-
-  return Object.freeze({
-    VERSAO: 'FR-85', PX_POR_U, U, TICKS_POR_S, DT, TAMPINHA, BOLA, CHUTE, ALCANCE, MEIA_VIDA, fatorPiso, PAR, LIMIAR_QUIQUE,
-    DIRECOES, direcao, anda, GATILHO, novoGatilho, gatilho, gastaGatilho, bate, batePonto, bateSegmento, bateCaixa, bateRetangulo, batemCorpos, chuta, saidaDoChute,
-    amortece, subpassos, quadra, MARGEM_TAMPINHA,
-  });
-});
-
-</script>
-<script>
 /* RACHA rua v82: as contas (tools/v82/inicio.js) */
 (function(){   /* RACHA rua v82 · AS CONTAS — antes do jogo carregar (o build põe este script antes do script do jogo).
    1) Quem está jogando: a conta da plataforma (window.parent.RACHA_JOGO, só a v82 ou mais nova) ou ninguém (sem conta).
@@ -3127,57 +2873,83 @@
 const SERVIDOR_DO_JOGO = (window.RACHA_CONFIG && typeof window.RACHA_CONFIG.servidor === 'string') ? window.RACHA_CONFIG.servidor.trim() : '';   // v70: o config.js (vazio = o mesmo endereço do jogo)
 
 /* =====================================================================
-   AJUSTES — mexa aqui. v85: a física é a FR-85 do RACHA — o núcleo server/partida/nucleo_fisica.js, que o build cola
-   antes deste script (window.RACHA_FISICA) e que o servidor usa com o mesmo texto. As metas de jogo e a conta de cada
-   número estão em tools/v85/FISICA_RACHA.md. Unidade de quadra: 1 u = PX_POR_U px da tela virtual.
+   AJUSTES — mexa aqui. v86: a mecânica clássica (a da v84: jogador, botões PASSE/CHUTE e bola), com o chute mais forte.
+   Unidades u: 1 u = PX_POR_U px. [escolha] = valor escolhido no próprio RACHA; de onde vêm os outros: PROVENIENCIA.md.
    ===================================================================== */
-const NF = window.RACHA_FISICA;                       // o núcleo da física (o mesmo arquivo do servidor)
-if (!NF || NF.VERSAO !== 'FR-85') throw new Error('RACHA: o núcleo da física (RACHA_FISICA, FR-85) não carregou');
 const NOME = ''; // publicidade sem marca
 const W = 1920, H = 888;                              // tela virtual (HUD e controles). O campo é um "mundo" que muda de tamanho com o modo
 
 /* v20: modos de campo. Seletor embaixo no meio da tela: as setas trocam 1v1 → 2v2 → 3v3 → 4v4 (teclas 1 a 4 também).
-   v85: as quadras do RACHA (FR-85, NF.quadra): comprimento × largura por tamanho de time, a boca do gol pela largura e as
-   marcas pintadas como frações da quadra. Medidas em u:
-   jog = onde a tampinha anda · bola = dentro das linhas (as linhas são as paredes da bola, com a boca dos gols aberta)
-   gol = [profundidade, boca entre os centros das traves] · trave = espessura da trave · rede = espessura da rede
-   saida = do centro até onde a tampinha começa no treino livre */
-const MODOS = [1, 2, 3, 4].map(n => { const q = NF.quadra(n); return {nome:q.nome, jog:q.jog.slice(), bola:q.bola.slice(), gol:q.gol.slice(), trave:q.trave, rede:q.rede, saida:q.saida}; });
-// v85: as marcas de cada tamanho (u), da FR-85. area e pequena = [fundo, altura] · penalti = da linha do gol até a marca
-// circulo = o raio do círculo do meio · saida = o raio da barreira da saída (o próprio círculo)
-// meiaLua = [centro (da linha do gol), raio]: só o pedaço de fora da área aparece · todas as medidas pela beira de fora da linha
-const MARCAS_MODO = [1, 2, 3, 4].map(n => Object.assign({}, NF.quadra(n).marcas));
-// As regras do futebol que a quadra aplica (Regras do Jogo, públicas). Os testes antigos desligam para comparar.
-// golInteiro = o gol só vale com a bola INTEIRA além da linha, entre as traves
-// saidaCirculo = na saída, cada time no seu campo e o adversário fora do círculo do meio; quem bate pode usar o círculo inteiro
+   Medidas em u (as da v84):
+   jog = onde o jogador anda · bola = dentro das linhas brancas (as linhas são as paredes da bola)
+   gol = [profundidade, boca]: laterais 6,6×0,5 (trave) e 6,6×0,4 (rede), fundo 0,4×boca · trave = 0,5 · rede = 0,4
+   pressao = a área de pressão (guardada aqui; ainda sem uso no treino) · penalti = a área do pênalti (v55: as marcas vêm de MARCAS_MODO) */
+const MODOS = [
+  {nome:'1v1', jog:[71, 50],   bola:[56, 40],  gol:[6.6, 12.8], trave:.5, rede:.4, pressao:[16, 40],   penalti:[25, 25]},
+  {nome:'2v2', jog:[86, 60],   bola:[71, 50],  gol:[6.6, 16],   trave:.5, rede:.4, pressao:[21.3, 50], penalti:[31.7, 31.7]},
+  {nome:'3v3', jog:[101, 80],  bola:[86, 70],  gol:[7, 20.5],   trave:.5, rede:.4, pressao:[25, 70],   penalti:[38.4, 38.4]},
+  {nome:'4v4', jog:[124, 100], bola:[108, 90], gol:[7, 24.5],   trave:.5, rede:.4, pressao:[33, 90],   penalti:[48.4, 48.4]}
+];
+// v55: as marcas de cada tamanho (u) (antes: as do 1v1 crescendo com o pênalti do modo).
+// area e pequena = [fundo, altura] · penalti = da linha do gol até a marca · circulo = o raio do círculo do meio (é a barreira da saída)
+// meiaLua = [centro (da linha do gol), raio]: só o pedaço de fora da área aparece (90°) · todas as medidas pela beira de fora da linha
+// saida = o raio da barreira da saída (no 3v3 é 12, um tiquinho menor que o círculo pintado)
+const MARCAS_MODO = [
+  {area:[13.333, 26.667], pequena:[6.667, 16.667], penalti:9.667,  circulo:8,      saida:8,    meiaLua:[8.6, 6.667]},
+  {area:[16.667, 33.333], pequena:[10, 23.333],     penalti:13,     circulo:10,     saida:10,   meiaLua:[10.8, 8.333]},
+  {area:[20, 40],         pequena:[13.333, 26.667], penalti:16.333, circulo:12.167, saida:12,   meiaLua:[12.833, 10]},
+  {area:[25, 50],         pequena:[16.667, 33.333], penalti:21.333, circulo:13.5,   saida:13.5, meiaLua:[16.167, 12.5]}
+];
+// v55: as regras da quadra (os testes desligam para comparar com a v54)
+// golInteiro = o gol só vale com a bola inteira do lado de dentro da linha
+// saidaCirculo = na saída, quem bate pode usar o círculo inteiro (o arco do lado de lá segura por dentro); quem espera fica fora
 const REGRA55 = {golInteiro:true, saidaCirculo:true};
-const MARGEM_X = 206, MARGEM_Y = 59;                  // px do canto do mundo até a quadra (o cenário em volta)
-const CHAVE_MODO = 'racha-treino-modo-v1';            // o modo escolhido fica salvo no aparelho
+const MARGEM_X = 206, MARGEM_Y = 59;                  // px do canto do mundo até a grama (no estádio: arquibancada, placas e a grama de fora)
+const CHAVE_MODO = 'racha-treino-modo-v1';            // o modo escolhido fica salvo no aparelho (v85: a chave sem a marca; o tools/v82/inicio.js leva a antiga)
 
-/* ---- Física FR-85: os números moram no núcleo (NF); aqui ficam os nomes que o resto do jogo usa ---- */
-const PX_POR_U = NF.PX_POR_U;                         // px por u
-const U = NF.U;                                       // u -> px virtuais
-const R_JOG = NF.TAMPINHA.raio;                       // o corpo da tampinha (todo mundo igual)
-const MASSA_JOG = NF.TAMPINHA.massa;
-const VEL_JOG = NF.TAMPINHA.vmax;                     // a corrida (com arrancada e freio: NF.anda)
-const FORCA_KICK = NF.CHUTE.passe, FORCA_POWER = NF.CHUTE.forte;   // a velocidade de SAÍDA da bola (px/s): PASSE e CHUTE
-const R_BOLA = NF.BOLA.raio;
-const MASSA_BOLA = NF.BOLA.massa;
-const LIMITE_VEL_BOLA = NF.BOLA.teto;                 // o teto de segurança da bola
-const FATOR_BOLA = NF.fatorPiso(NF.MEIA_VIDA.quadra); // a quadra (Arena e Estádio): quanto da velocidade fica a cada passo
-const FATOR_RUA = NF.fatorPiso(NF.MEIA_VIDA.rua);     // a rua de cimento gasto (os campos guardados: Favela e Escadão)
-const PAR = NF.PAR;                                   // as batidas par a par: e = restituição, mu = atrito
-const MARGEM_CHUTE = NF.CHUTE.folga;                  // o quanto o anel do chute passa do corpo
-const ALCANCE_CHUTE = NF.ALCANCE;                     // distância máxima entre os centros para o chute pegar
-// Botões PASSE/CHUTE: o gatilho do núcleo (NF.gatilho: o último apertado vale; um aperto = um chute)
+/* ---- A física clássica (a da v84; v86: o chute mais forte) ---- */
+const PX_POR_U = 19;                                  // [escolha] px por u: o corpo do jogador (2,0 u) fica com 38 px
+const U = v => v*PX_POR_U;                            // u -> px virtuais
+// Jogador
+const ESCALA_JOG = 1.0;                               // scale do jogador (multiplica o corpo e o raio de chute)
+const R_JOG = U(2.0*ESCALA_JOG);                      // raio do corpo: 2,0 u
+const RAIO_CHUTE = U(2.5*ESCALA_JOG);                 // raio de chute (o anel): 2,5 u
+const MASSA_JOG = 1.25;                               // massa do jogador
+const VEL_JOG = U(14.1);                              // velocidade máxima: 14,1 u/s. Entrada neutra zera a velocidade
+const FORCA_KICK = 275, FORCA_POWER = 440;            // v86: PASSE e CHUTE 10% mais fortes (eram 250 e 400). Impulso: Δv = força ÷ massa da bola = +27,5 / +44 u/s
+// Bola
+const ESCALA_BOLA = 1.0;                              // scale da bola (multiplica o raio)
+const R_BOLA = U(1.0*ESCALA_BOLA);                    // raio: 1,0 u
+const MASSA_BOLA = 10;                                // massa da bola
+const LIMITE_VEL_BOLA = U(60);                        // velocidade máxima: 60 u/s (v86: era 55; subiu junto com o chute)
+const FATOR_BOLA = 0.99;                              // fator de desaceleração: a cada tick a bola fica com 99% da velocidade
+const GRAVIDADE_BOLA = 0;                             // gravidade (u/s², puxa para baixo na tela). 0 = nenhuma: o jogo é visto de cima
+const AMORT_LINEAR = 0;                               // linear damping (0 = nenhum)
+const AMORT_ANGULAR = 0.5;                            // angular damping: o giro da bola diminui sozinho
+const ATRITO_BOLA = 0.5;                              // friction: num contato o atrito freia o deslize e faz a bola girar (e o giro desvia a bola)
+const QUIQUE_BOLA = 0;                                // bounciness da bola
+// Materiais (bounciness)
+const QUIQUE_TRAVE = 0.6;                             // a trave
+const QUIQUE_REDE = 0.15;                             // a rede do gol
+const QUIQUE_PAREDE_BOLA = 0.65;                      // as linhas (as paredes da bola)
+// Alcance do chute: distância entre os centros <= 2,5 × scale do jogador + raio da bola = 3,5 u (encostam em 3,0 u; folga de 0,5 u)
+const MARGEM_CHUTE = RAIO_CHUTE - R_JOG;              // quanto o anel passa do corpo: 0,5 u
+const ALCANCE_CHUTE = RAIO_CHUTE + R_BOLA;
+// Botões PASSE/CHUTE
+const COOLDOWN_BOTAO = 0.02;                          // s: tempo mínimo entre trocas de estado dos botões
+// Outros ajustes
 const ASSIST_TICKS = 600;                             // v34: o passe vale assistência até 10 s antes do gol
-const TICKS_POR_S = NF.TICKS_POR_S;                   // o passo fixo da física (60 por segundo)
+const TICKS_POR_S = 60;                              // o passo fixo da física: 60 por segundo
+// [escolha] num contato vale o MAIOR quique dos dois materiais (bola 0 x parede 0,65 = 0,65)
+// O atrito de cada material: tampinha .3, bola .5, trave .1; num contato vale a média geométrica (sqrt(a*b)). O jogador não gira
+// [escolha] a bola é um disco sólido: inércia = ½ × massa × raio²
+const LIMIAR_QUIQUE = U(1);                             // [escolha] px/s: batida mais lenta que isso não quica (evita a bola tremer encostada)
 const DOMINIO_LIGADO = false;                          // domínio no PASSE (pedido seu): bola vindo na sua direção é dominada. false = o PASSE sempre chuta
 const ZONA_MORTA = 0.00001;                              // epsilon de normalização; entrada ativa mantém velocidade contínua
 const DOMINIO_VEL_MIN = 40;                           // domínio: a bola só é dominada se vier na sua direção a mais de 40 px/s
 const DOMINIO_SEGUE = 0.9;                            // domínio: a bola fica com 90% da sua velocidade (vem junto com você)
 const GIRO_BOLA = 0.5;                                // só visual: 1 = a bola gira como se rolasse de verdade (v/raio); 0.5 = metade; 0 = não gira
-const GIRO_MAX = 16;                                  // rad/s: teto do giro DESENHADO, para não "piscar" (16 = ~2,5 voltas por segundo)
+const GIRO_MAX = 16;                                  // rad/s: teto do giro DESENHADO, para não "piscar" (16 = ~2,5 voltas por segundo). O giro da física não tem teto
 const SOM_VOLUME = 70;                                // volume geral inicial (0-100). No jogo: EDITAR HUD > Som, ou tecla M (mudo)
 const SOM_AMBIENTE = 0.10;                            // volume da torcida ao fundo (0 = sem torcida)
 const SOM_FUNK = 0.32;                                // v22: volume do funk do paredão na favela (0 = sem música)
@@ -3185,7 +2957,7 @@ const ABRIR_NO_LOBBY = true;                          // true = o jogo abre no l
 
 /* v21: campos trocáveis (2º seletor, ao lado do 1v1). O tamanho continua vindo do modo (1v1 a 4v4).
    margem    = px do canto do mundo até a área do jogador (espaço para o cenário em volta)
-   fatorBola = quanto da velocidade a bola guarda a cada passo (v85: pela meia-vida do piso, FR-85): quadra (Arena e Estádio) ou rua
+   fatorBola = quanto da velocidade a bola guarda a cada tick: 0,99 no estádio; na areia ela para antes, no asfalto rola mais
    rede      = gol com rede. Sem rede = gol de chinelos: vale quando a bola passa entre eles (hoje sem uso)
    entraGol  = o jogador (e os bots) entram no gol pela boca; não passam pela rede e esbarram nas traves (v24 favela · v37 estádio)
    golRua    = v24: gol de rua desenhado em pé (trave de ferro e rede descendo até o chão), visto um pouco de frente
@@ -3203,19 +2975,20 @@ const QUADRA_FAVELA = {el:document.getElementById('img-favela-1v1'), w:1280, h:7
   marcas:{area:[144.5, 227], pequena:[45.5, 140], penalti:88.5, circulo:92.5, meiaLua:[132.65, 64]}, som:[640, -150]};
 const CAMPOS = [
   {id:'estadio', nome:'Arena', margem:[206, 59],  fatorBola:FATOR_BOLA, rede:true,  entraGol:true, fundo:'#3e3029'},   // v37: entra no gol pela boca · v44: desenho novo, mesmo tamanho · v61: a ARENA (o id fica: o salvo segue valendo)
-  {id:'favela',  nome:'Favela',  margem:[500, 575], fatorBola:FATOR_RUA,      rede:true, entraGol:true, golRua:true, quadroExtra:52, fundo:'#4a463f'},   // v24: gol com trave; +95 de margem em cima · v61: sem a foto no 1v1 (a favela é à noite em todo tamanho) e embaixo para o muro, que foi para trás · v42: o 1v1 é a imagem
+  {id:'favela',  nome:'Favela',  margem:[500, 575], fatorBola:0.992,      rede:true, entraGol:true, golRua:true, quadroExtra:52, fundo:'#4a463f'},   // v24: gol com trave; +95 de margem em cima · v61: sem a foto no 1v1 (a favela é à noite em todo tamanho) e embaixo para o muro, que foi para trás · v42: o 1v1 é a imagem
   // v43: mapas novos no estilo da quadra da imagem, desenhados (ver MORRO). morro = desenho, som e rojão de favela
-  {id:'escadao', nome:'Escadão', margem:[560, 460], fatorBola:FATOR_RUA, rede:true, entraGol:true, quadroExtra:40, fundo:'#4a463f', morro:true},
+  {id:'escadao', nome:'Escadão', margem:[560, 460], fatorBola:FATOR_BOLA, rede:true, entraGol:true, quadroExtra:40, fundo:'#4a463f', morro:true},
   {id:'viaduto', nome:'Viaduto', margem:[560, 460], fatorBola:FATOR_BOLA, rede:true, entraGol:true, quadroExtra:40, fundo:'#26283a', morro:true},   // v61: a quadra debaixo do elevado (concreto: a bola rola como no estádio)
   {id:'gramado', nome:'Estádio', margem:[206, 59], fatorBola:FATOR_BOLA, rede:true, entraGol:true, fundo:'#1d2326', grama:true}   // v70.2: o ESTÁDIO de grama (as medidas e a bola da Arena; o desenho é o gramado com a arquibancada)
 ];
 const CHINELO_R = 0.55, CHINELO_MEIO = 0.85;         // u: cada chinelo é uma "trave" deitada no chão (cápsula: meio-comprimento e raio)
+const QUIQUE_CHINELO = 0.3;                           // borracha: a bola quica pouco no chinelo
 const CHAVE_CAMPO = 'racha-treino-campo-v1';         // o campo escolhido fica salvo no aparelho
 
 /* Câmera (botão EDITAR HUD → Câmera). O jogador escolhe no jogo; aqui ficam os padrões. */
 const CAM_MODO_PADRAO = 'seguir';                       // 'fixa' = tela parada (o campo inteiro do modo cabe na tela) | 'seguir' = acompanha o jogador
 const DIST_MIN = 40, DIST_MAX = 100, CAM_DIST_PADRAO = 85;   // distância em %: 100 = zoom 1x (o 1v1 cabe quase todo), 40 = bem perto (zoom 2,5x). Igual em todos os modos
-const CAM_MEIA_VIDA = .18, CAM_ZOOM_SUAVE = 5;        // v85: a câmera da base anda metade do caminho até o alvo a cada 0,18 s (a da v70 substitui)
+const CAM_SUAVE = 3, CAM_ZOOM_SUAVE = 5;              // a câmera da base anda 3·dt do caminho até o alvo a cada quadro (a da v70 substitui)
 const CAM_ZOOM_VEL_MAX = 0.65;                        // limite de quanto o zoom muda por segundo (maior = troca de zoom mais rápida)
 /* v27: o que o EDITAR HUD ganhou (os mesmos botões nos dois modos) */
 const ZOOM_PADRAO = 100;                              // Aproximação da câmera, em % do enquadramento normal do modo (a distância de 85% de sempre)
@@ -3247,7 +3020,10 @@ const MARCAS = {};                                    // marcas do campo em px (
 const CHINELOS = [];                                  // v21: os 4 chinelos da favela (posição, ângulo, pé, cores) para o desenho
 const OBST = [];                                      // v21: [x, y, raio] obstáculos só do jogador (v23: vazio; os postes da favela ficaram atrás do muro)
 const JOG_SEGS = [];                                  // v24: [x0, y0, x1, y1] paredes só do jogador (favela: a linha de fundo fora do gol e a rede)
-let PAR_POSTE = PAR.bolaTrave;                         // v85: a batida na trave do campo atual (ferro; ou o chinelo do campo guardado)
+const ATRITO_JOG_BOLA = Math.sqrt(0.3*ATRITO_BOLA), ATRITO_TRAVE_BOLA = Math.sqrt(0.1*ATRITO_BOLA);
+const ATRITO_CHINELO_BOLA = Math.sqrt(0.8*ATRITO_BOLA);   // borracha agarra mais que metal
+const Q_PAREDE = Math.max(QUIQUE_BOLA, QUIQUE_PAREDE_BOLA), Q_TRAVE = Math.max(QUIQUE_BOLA, QUIQUE_TRAVE), Q_REDE = Math.max(QUIQUE_BOLA, QUIQUE_REDE);
+let Q_POSTE = Q_TRAVE, ATRITO_POSTE = ATRITO_TRAVE_BOLA;  // trave do campo atual (metal ou chinelo)
 let GEO_VER = 0;                                      // v44: muda sempre que a geometria muda (caixas de batida da previsão)
 function aplicaModo(i, c){
   if (c === undefined) c = campo;
@@ -3280,7 +3056,7 @@ function aplicaModo(i, c){
   POCKET_R.x0 = LX1; POCKET_R.x1 = LX1 + GOL_PROF;
   POSTS.length = 0; NET_SEGS.length = 0; WALL_SEGS.length = 0; CHINELOS.length = 0; OBST.length = 0; JOG_SEGS.length = 0;
   if (cp.rede){                                       // estádio e (v24) favela: gol com rede, traves de metal
-    POST_R = U(m.trave)/2; PAR_POSTE = PAR.bolaTrave;   // a trave (ferro): a espessura vem da quadra (FR-85)
+    POST_R = U(m.trave)/2; Q_POSTE = Q_TRAVE; ATRITO_POSTE = ATRITO_TRAVE_BOLA;   // trave = ponta da lateral do gol (0,5 u de espessura)
     POSTS.push([LX0,GOL_Y0], [LX0,GOL_Y1], [LX1,GOL_Y0], [LX1,GOL_Y1]);
     NET_SEGS.push(                                    // rede: laterais e fundo de cada gol
       [POCKET_L.x0,GOL_Y0,POCKET_L.x1,GOL_Y0], [POCKET_L.x0,GOL_Y1,POCKET_L.x1,GOL_Y1], [POCKET_L.x0,GOL_Y0,POCKET_L.x0,GOL_Y1],
@@ -3294,7 +3070,7 @@ function aplicaModo(i, c){
       for (const q of POSTS) OBST.push([q[0], q[1], POST_R]);
     }
   } else {                                            // gol de chinelos (v21-v23 na favela; hoje sem uso): rua entre muros, sem rede
-    POST_R = U(CHINELO_R); PAR_POSTE = PAR.bolaChinelo;
+    POST_R = U(CHINELO_R); Q_POSTE = QUIQUE_CHINELO; ATRITO_POSTE = ATRITO_CHINELO_BOLA;
     WALL_SEGS.push([GL, LY0, GR, LY0], [GL, LY1, GR, LY1],     // pé do muro de cima e do de baixo, de ponta a ponta da rua
       [LX0, LY0, LX0, GOL_Y0], [LX0, GOL_Y1, LX0, LY1],          // v22: linha do gol pintada dos dois lados dos chinelos (a bola não
       [LX1, LY0, LX1, GOL_Y0], [LX1, GOL_Y1, LX1, LY1]);         //      passa por trás do chinelo; só entra entre eles, como no estádio)
@@ -3308,7 +3084,7 @@ function aplicaModo(i, c){
   }
   JOG_X0 = cp.rede ? GL : LX0; JOG_X1 = cp.rede ? GR : LX1;   // v25: na favela também vai até o muro das pontas (a rede segura o gol: JOG_SEGS)
   JOG_Y0 = cp.rede ? GT : LY0; JOG_Y1 = cp.rede ? GB : LY1;   // v24: na favela, até o pé do muro (passa da lateral, como no estádio)
-  START_P.x = CX - U(m.saida); START_P.y = CY;        // v85: a tampinha começa à esquerda do centro (FR-85: 0,21 do comprimento); bola no centro
+  START_P.x = CX - U(11.6); START_P.y = CY;           // jogador começa 11,6 u à esquerda do centro (como antes); bola no centro
   if (im){                                            // v42: as marcas pintadas na imagem
     const s = im.s, M = im.marcas;
     MARCAS.areaW = M.area[0]*s; MARCAS.areaH = M.area[1]*s;
@@ -3317,7 +3093,7 @@ function aplicaModo(i, c){
     MARCAS.luaC = M.meiaLua[0]*s; MARCAS.luaR = M.meiaLua[1]*s; MARCAS.saida = MARCAS.circulo;
     return;
   }
-  const M = MARCAS_MODO[i] || MARCAS_MODO[0];          // as marcas do tamanho (FR-85)
+  const M = MARCAS_MODO[i] || MARCAS_MODO[0];          // v55: as marcas do tamanho
   MARCAS.areaW = U(M.area[0]); MARCAS.areaH = U(M.area[1]);
   MARCAS.pequenaW = U(M.pequena[0]); MARCAS.pequenaH = U(M.pequena[1]);
   MARCAS.penalti = U(M.penalti); MARCAS.circulo = U(M.circulo);
@@ -3327,46 +3103,130 @@ try { const s = localStorage.getItem(CHAVE_MODO), m = s === null ? NaN : +s; if 
 try { const s0 = localStorage.getItem(CHAVE_CAMPO), s = s0 === 'laje' || s0 === 'terrao' ? 'escadao' : s0, c = CAMPOS.findIndex(q => q.id === s); if (c >= 0) campo = c; } catch (_) {}   // v44: Laje e Terrão saíram (vira o Escadão)
 aplicaModo(modo, campo);
 const P = {x:START_P.x, y:START_P.y, vx:0, vy:0, r:R_JOG, m:MASSA_JOG};                        // o jogador não gira
-const B = {x:CX,        y:CY,        vx:0, vy:0, w:0, r:R_BOLA, m:MASSA_BOLA};   // w = giro do desenho e da curva (a física FR-85 não gira a bola)
+const B = {x:CX,        y:CY,        vx:0, vy:0, w:0, r:R_BOLA, m:MASSA_BOLA, I:0.5*MASSA_BOLA*R_BOLA*R_BOLA};   // w = giro (rad/s), I = inércia
 // Posições do passo anterior, preservadas para snapshots e compatibilidade; ver posVisual.
 const ANT = {px:P.x, py:P.y, bx:B.x, by:B.y};
 function guardaAnterior(){ ANT.px = P.x; ANT.py = P.y; ANT.bx = B.x; ANT.by = B.y; }
 
-// v85: as batidas são as do núcleo FR-85 (NF): impulso com restituição e atrito de Coulomb, sem giro. Os nomes de sempre
-// continuam porque o resto do jogo (bots, treino, modos, previsão) chama estes.
-function reflect(o, nx, ny, e, mu){ return NF.bate(o, nx, ny, e, mu); }
-function hitBox(o, x0, y0, x1, y1, e, mu){ NF.bateCaixa(o, x0, y0, x1, y1, e, mu); }
-function hitPoint(o, px, py, pr, e, mu){ return NF.batePonto(o, px, py, pr, e, mu); }
-function hitSeg(o, ax, ay, bx, by, e, mu){ return NF.bateSegmento(o, ax, ay, bx, by, e, mu); }
-function hitRect(o, x0, y0, x1, y1, e, mu){ return NF.bateRetangulo(o, x0, y0, x1, y1, e, mu); }
-function hitBodies(a, b, e, mu){ return NF.batemCorpos(a, b, e, mu); }
+// batida numa superfície parada. (nx,ny) = normal apontando da superfície para o corpo; e = quique; mu = atrito.
+// O atrito age no ponto de contato: freia o deslize (velocidade + giro) e, se o corpo tem inércia (a bola), muda o giro.
+function reflect(o, nx, ny, e, mu){
+  const vn = o.vx*nx + o.vy*ny;
+  if (vn >= 0) return;
+  const eff = (-vn < LIMIAR_QUIQUE) ? 0 : e;    // batida lenta não quica
+  const jn = -(1+eff)*vn;                       // impulso normal (por unidade de massa)
+  o.vx += nx*jn; o.vy += ny*jn;
+  if (mu > 0){
+    const tx = -ny, ty = nx, R = o.r, w = o.w || 0;
+    const vt = o.vx*tx + o.vy*ty - w*R;         // deslize no ponto de contato
+    const k = 1 + (o.I ? o.m*R*R/o.I : 0);      // resistência ao deslize: 1 sem giro, 3 num disco sólido
+    let jt = -vt/k;                             // impulso que zeraria o deslize...
+    const lim = mu*jn;                          // ...mas o atrito de Coulomb não passa de mu × impulso normal
+    if (jt > lim) jt = lim; else if (jt < -lim) jt = -lim;
+    o.vx += tx*jt; o.vy += ty*jt;
+    if (o.I) o.w = w - R*jt*o.m/o.I;
+  }
+}
+function hitBox(o, x0, y0, x1, y1, e, mu){
+  if (o.x < x0+o.r){ o.x = x0+o.r; reflect(o, 1, 0, e, mu); }
+  else if (o.x > x1-o.r){ o.x = x1-o.r; reflect(o,-1, 0, e, mu); }
+  if (o.y < y0+o.r){ o.y = y0+o.r; reflect(o, 0, 1, e, mu); }
+  else if (o.y > y1-o.r){ o.y = y1-o.r; reflect(o, 0,-1, e, mu); }
+}
+function hitPoint(o, px, py, pr, e, mu){
+  let dx = o.x-px, dy = o.y-py; const rs = o.r+pr, d2 = dx*dx+dy*dy;
+  if (d2 >= rs*rs) return false;
+  let d = Math.sqrt(d2);
+  if(d<1e-9){ const v=Math.hypot(o.vx,o.vy);dx=v>1e-9?-o.vx/v:1;dy=v>1e-9?-o.vy/v:0;d=1; }
+  const nx = dx/d, ny = dy/d;
+  o.x = px + nx*rs; o.y = py + ny*rs;
+  reflect(o, nx, ny, e, mu);
+  return true;
+}
+function hitSeg(o, ax, ay, bx, by, e, mu){
+  const abx = bx-ax, aby = by-ay;
+  const t = Math.max(0, Math.min(1, ((o.x-ax)*abx + (o.y-ay)*aby) / (abx*abx + aby*aby)));
+  return hitPoint(o, ax+abx*t, ay+aby*t, 0, e, mu);
+}
+function hitRect(o, x0, y0, x1, y1, e, mu){
+  const cx = Math.max(x0, Math.min(o.x, x1)), cy = Math.max(y0, Math.min(o.y, y1));
+  const dx = o.x-cx, dy = o.y-cy, d2 = dx*dx+dy*dy;
+  if (d2 >= o.r*o.r) return;
+  if (d2 < 1e-9){                              // centro dentro do retângulo
+    const l = o.x-x0, r = x1-o.x, t = o.y-y0, b = y1-o.y, m = Math.min(l,r,t,b);
+    if (m === l){ o.x = x0-o.r; reflect(o,-1,0,e,mu); }
+    else if (m === r){ o.x = x1+o.r; reflect(o,1,0,e,mu); }
+    else if (m === t){ o.y = y0-o.r; reflect(o,0,-1,e,mu); }
+    else { o.y = y1+o.r; reflect(o,0,1,e,mu); }
+    return;
+  }
+  const d = Math.sqrt(d2), nx = dx/d, ny = dy/d;
+  o.x = cx + nx*o.r; o.y = cy + ny*o.r;
+  reflect(o, nx, ny, e, mu);
+}
+// colisão círculo-círculo com massas (jogador x bola): quique e atrito; o atrito também faz a bola (b) girar
+function hitBodies(a, b, e, mu){
+  let dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx, dy);
+  const rs = a.r + b.r;
+  if (d >= rs) return;
+  if(d<1e-6){
+    dx=a.vx-b.vx;dy=a.vy-b.vy;d=Math.hypot(dx,dy);
+    if(d<1e-6){dx=1;dy=0;d=1;}
+    dx/=d;dy/=d;d=1e-6;dx*=d;dy*=d;
+  }
+  const nx = dx/d, ny = dy/d;
+  const ia = 1/a.m, ib = 1/b.m, is = ia+ib;
+  const pen = Math.max(0, rs-d-0.2)*0.9;
+  a.x -= nx*pen*ia/is; a.y -= ny*pen*ia/is;
+  b.x += nx*pen*ib/is; b.y += ny*pen*ib/is;
+  const vn = (b.vx-a.vx)*nx + (b.vy-a.vy)*ny;
+  if (vn < 0){
+    const j = -(1+e)*vn/is;
+    a.vx -= j*ia*nx; a.vy -= j*ia*ny;
+    b.vx += j*ib*nx; b.vy += j*ib*ny;
+    if (mu > 0){
+      const tx = -ny, ty = nx, R = b.r, w = b.w || 0;
+      const vt = (b.vx-a.vx)*tx + (b.vy-a.vy)*ty - w*R;   // deslize no ponto de contato (o jogador não gira)
+      let jt = -vt/(is + (b.I ? R*R/b.I : 0));
+      const lim = mu*j;
+      if (jt > lim) jt = lim; else if (jt < -lim) jt = -lim;
+      a.vx -= jt*ia*tx; a.vy -= jt*ia*ty;
+      b.vx += jt*ib*tx; b.vy += jt*ib*ty;
+      if (b.I) b.w = w - R*jt/b.I;
+    }
+  }
+}
 const EV = {trave:0};                                  // força da última batida na trave (o som lê e zera)
 function collide(){
-  hitBodies(P, B, PAR.bolaTampinha.e, PAR.bolaTampinha.mu);              // tampinha x bola
+  hitBodies(P, B, QUIQUE_BOLA, ATRITO_JOG_BOLA);                            // jogador x bola: quique da bola (0), atrito da bola
   if (RQ.on) rqColide();                                                   // v35: os bots (bola, paredes) e jogador x jogador
-  hitBox(P, JOG_X0, JOG_Y0, JOG_X1, JOG_Y1, PAR.tampinhaParede.e, 0);   // até onde a tampinha anda (na favela: os muros e o fundo do gol)
-  for (let i = 0; i < JOG_SEGS.length; i++){ const s = JOG_SEGS[i]; hitSeg(P, s[0], s[1], s[2], s[3], PAR.tampinhaParede.e, 0); }   // v24: a rede (e na favela a linha de fundo fora do gol)
+  hitBox(P, JOG_X0, JOG_Y0, JOG_X1, JOG_Y1, 0.65, 0);                   // até onde a tampinha anda (na favela: os muros e o fundo do gol)
+  for (let i = 0; i < JOG_SEGS.length; i++){ const s = JOG_SEGS[i]; hitSeg(P, s[0], s[1], s[2], s[3], 0.6, 0); }   // v24: favela: linha de fundo fora do gol e a rede
   if (CAMPO.rede && !CAMPO.entraGol){                                  // (campo sem entraGol: o jogador não entra no gol nem passa por cima da trave/rede)
-    hitRect(P, POCKET_L.x0 - REDE_E, GOL_Y0 - POST_R, POCKET_L.x1, GOL_Y1 + POST_R, PAR.tampinhaParede.e, 0);
-    hitRect(P, POCKET_R.x0, GOL_Y0 - POST_R, POCKET_R.x1 + REDE_E, GOL_Y1 + POST_R, PAR.tampinhaParede.e, 0);
+    hitRect(P, POCKET_L.x0 - REDE_E, GOL_Y0 - POST_R, POCKET_L.x1, GOL_Y1 + POST_R, 0.6, 0);
+    hitRect(P, POCKET_R.x0, GOL_Y0 - POST_R, POCKET_R.x1 + REDE_E, GOL_Y1 + POST_R, 0.6, 0);
   }
-  for (let i = 0; i < OBST.length; i++){ const o = OBST[i]; hitPoint(P, o[0], o[1], o[2], PAR.tampinhaParede.e, 0); }   // v21: obstáculos do jogador (v24: as traves do gol da favela)
-  for (let i = 0; i < WALL_SEGS.length; i++){ const w = WALL_SEGS[i]; hitSeg(B, w[0], w[1], w[2], w[3], PAR.bolaLinha.e, PAR.bolaLinha.mu); }  // as linhas (as paredes da bola)
-  hitBox(B, GL, GT, GR, GB, PAR.bolaLinha.e, PAR.bolaLinha.mu);         // rede de segurança
-  for (let i = 0; i < POSTS.length; i++){                                // as traves (no campo guardado: chinelos)
+  for (let i = 0; i < OBST.length; i++){ const o = OBST[i]; hitPoint(P, o[0], o[1], o[2], 0.3, 0); }   // v21: obstáculos do jogador (v24: as traves do gol da favela)
+  for (let i = 0; i < WALL_SEGS.length; i++){ const w = WALL_SEGS[i]; hitSeg(B, w[0], w[1], w[2], w[3], Q_PAREDE, ATRITO_BOLA); }  // as linhas (as paredes da bola)
+  hitBox(B, GL, GT, GR, GB, Q_PAREDE, ATRITO_BOLA);                     // rede de segurança
+  for (let i = 0; i < POSTS.length; i++){                                // as traves (na favela: chinelos)
     const q = POSTS[i]; let px = q[0], py = q[1];
     if (q.length === 4){                                                 // chinelo = cápsula: ponto do segmento mais perto da bola
       const ax = q[2]-q[0], ay = q[3]-q[1], t = Math.max(0, Math.min(1, ((B.x-q[0])*ax + (B.y-q[1])*ay)/(ax*ax + ay*ay)));
       px = q[0] + ax*t; py = q[1] + ay*t;
     }
     const d = Math.hypot(B.x-px, B.y-py) || 1, vn = -(B.vx*(B.x-px) + B.vy*(B.y-py))/d;
-    if (hitPoint(B, px, py, POST_R, PAR_POSTE.e, PAR_POSTE.mu) && vn > EV.trave) EV.trave = vn;
+    if (hitPoint(B, px, py, POST_R, Q_POSTE, ATRITO_POSTE) && vn > EV.trave) EV.trave = vn;
   }
-  for (let i = 0; i < NET_SEGS.length; i++){ const s = NET_SEGS[i]; hitSeg(B, s[0], s[1], s[2], s[3], PAR.bolaRede.e, PAR.bolaRede.mu); }  // a rede do gol
+  for (let i = 0; i < NET_SEGS.length; i++){ const s = NET_SEGS[i]; hitSeg(B, s[0], s[1], s[2], s[3], Q_REDE, ATRITO_BOLA); }  // a rede do gol
   if (TR.on) trColideArc();                                              // v30: treino (companheiros, goleiro, paredão, cones)
 }
-// v85: o analógico em 256 direções (NF.direcao, FR-85); a força do dedo não muda a velocidade (corrida ou parado).
-function direcaoAnalogico(mx, my){ const d = NF.direcao(mx, my); return {mx:d.mx, my:d.my}; }
+// O analógico: 32 direções de 11,25 graus; o quanto o dedo vai longe não muda a velocidade.
+function direcaoOriginal(mx,my){
+  if(!Number.isFinite(mx)||!Number.isFinite(my)||Math.hypot(mx,my)<=ZONA_MORTA) return {mx:0,my:0};
+  const setor=TAU/32, ang=Math.round(Math.atan2(my,mx)/setor)*setor;
+  return {mx:Math.cos(ang),my:Math.sin(ang)};
+}
 /* =====================================================================
    v45: REPLAY DO GOL
    Depois de cada gol (partida contra os bots, sala online e treino livre) o lance passa de novo:
@@ -3731,19 +3591,29 @@ function physicsStep(dt, mx, my){
   if (RQ.on) rqPre();                                   // v35: ranqueada (os bots decidem, andam e chutam)
   if(NET49.playing&&NET49.host&&NET49.localSlot<0){const i=net49HostInput();mx=i.mx;my=i.my;}
   if (RQ.on && RQ.autoH){ mx = P.mx; my = P.my; }        // (testes)
-  amostraBotoes(dt);                                    // v85: o chute sai antes do movimento deste passo (a mesma ordem do servidor)
-  if (RQ.on && RQ.autoH && P.chutar){ if (kickBall(P.chutar)){ rqToque(P); P.chuteT = RQ.tick; rqHmChute(P, P.chutar); fxChute(P, P.chutar >= FORCA_POWER); } P.chutar = 0; }   // (testes)
-  const d = direcaoAnalogico(mx, my);
-  NF.anda(P, d.mx, d.my, VEL_JOG, dt);                  // v85: aceleração limitada (arrancada e freio da FR-85)
+  const d=direcaoOriginal(mx,my);
+  if(d.mx||d.my){
+    // o impulso do passo: a direção × a velocidade de corrida, somada e cortada no teto (VEL_JOG)
+    P.vx+=d.mx*VEL_JOG; P.vy+=d.my*VEL_JOG;
+    const speed=Math.hypot(P.vx,P.vy);
+    if(speed>VEL_JOG){P.vx*=VEL_JOG/speed;P.vy*=VEL_JOG/speed;}
+  }else{P.vx=P.vy=0;}
   if (RQ.on && RQ.jogo === 'ginga') gnPre(mx, my);     // v61: drible e finta (a arrancada passa por cima do analógico)
+  amostraBotoes(dt);
   if (RQ.on && RQ.jogo === 'curva') cvAmostra(dt, mx, my);   // v61: o botão CURVA (carrega segurando, chuta ao soltar)
-  const tk = dt*TICKS_POR_S;
-  NF.amortece(B, CAMPO.fatorBola, tk);                  // v85: o piso de cada campo (meia-vida), o teto e a parada (FR-85)
-  B.w *= Math.pow(.5, dt/.6);                           // (o giro é só do desenho e da curva: perde metade a cada 0,6 s)
-  const speed = Math.hypot(B.vx, B.vy);
-  // subpassos: ninguém anda mais que 30% do raio da bola de uma vez (o chute e as batidas não se repetem)
-  const relative = Math.hypot(B.vx - P.vx, B.vy - P.vy);
-  const steps = NF.subpassos(Math.max(speed, relative), dt);
+  if (RQ.on && RQ.autoH && P.chutar){ if (kickBall(P.chutar)){ rqToque(P); P.chuteT = RQ.tick; rqHmChute(P, P.chutar); fxChute(P, P.chutar >= FORCA_POWER); } P.chutar = 0; }   // (testes)
+  const tk=dt*TICKS_POR_S;
+  B.vy+=U(GRAVIDADE_BOLA)*dt;
+  const al=Math.pow(1/(1+AMORT_LINEAR/TICKS_POR_S),tk);
+  B.vx*=al;B.vy*=al;
+  B.w*=Math.pow(1/(1+AMORT_ANGULAR/TICKS_POR_S),tk);
+  const damping=Math.pow(CAMPO.fatorBola,tk);           // v21: cada campo tem a sua (estádio = FATOR_BOLA)
+  B.vx*=damping;B.vy*=damping;
+  const speed=Math.hypot(B.vx,B.vy);
+  if(speed>LIMITE_VEL_BOLA){B.vx*=LIMITE_VEL_BOLA/speed;B.vy*=LIMITE_VEL_BOLA/speed;}
+  // Adaptação ao solver Canvas: subdividir deslocamento sem repetir impulso/chute.
+  const relative=Math.hypot(B.vx-P.vx,B.vy-P.vy);
+  const steps=Math.max(2,Math.min(12,Math.ceil(Math.max(speed,relative)*dt/(R_BOLA*.3))));
   const sub=dt/steps;
   for(let i=0;i<steps;i++){
     const bx0=B.x, by0=B.y;                             // v21: onde a bola estava (para ver se cruzou a linha do gol)
@@ -3769,7 +3639,7 @@ function physicsStep(dt, mx, my){
 }
 // v21: gol = o centro da bola cruzou a linha do gol entre as traves (ou entre os chinelos), saindo do campo. (v55: a bola inteira)
 // Com rede dá no mesmo que antes (a bola só entra no gol pela boca); sem rede a bola pode passar ao lado e rolar atrás da linha.
-function golCruzou(x0, y0, x1, y1){                    // v55: com a bola inteira do lado de dentro (o centro 1 raio depois da linha) — Regras do Jogo
+function golCruzou(x0, y0, x1, y1){                    // v55: com a bola inteira do lado de dentro (o centro 1 raio depois da linha)
   const m = REGRA55.golInteiro ? R_BOLA : 0, xa = LX0 - m, xb = LX1 + m;
   if (x0 >= xa && x1 < xa){ const yc = y0 + (y1 - y0)*(x0 - xa)/(x0 - x1); if (yc > GOL_Y0 && yc < GOL_Y1) return -1; }
   if (x0 <= xb && x1 > xb){ const yc = y0 + (y1 - y0)*(xb - x0)/(x1 - x0); if (yc > GOL_Y0 && yc < GOL_Y1) return 1; }
@@ -3931,8 +3801,8 @@ function cvPreve(){                                    // (a cada quadro, carreg
   let dx = B.x - P.x, dy = B.y - P.y, d = Math.hypot(dx, dy);
   if (d > ALCANCE_CHUTE*2.2 || d === 0) return;
   dx /= d; dy /= d;
-  const c = CV.segura ? Math.max(CV.carga, .02) : CV.armaC, kv = chuteVel(P, CV_FORCA, dx, dy), s = cvSinal(dx, dy, CV.mx, CV.my);
-  CV.n = cvSimula(B.x, B.y, kv.vx, kv.vy, s*cvW(c), cvT(c), CV_PASSOS, CV.buf);
+  const c = CV.segura ? Math.max(CV.carga, .02) : CV.armaC, dv = U(CV_FORCA/B.m), s = cvSinal(dx, dy, CV.mx, CV.my);
+  CV.n = cvSimula(B.x, B.y, B.vx + dx*dv, B.vy + dy*dv, s*cvW(c), cvT(c), CV_PASSOS, CV.buf);
 }
 function cvBotPlano(q){                                // (rqAtaca, plano novo) às vezes o bot bate de curva: mira por fora e a bola volta para o canto
   const p = q.plano; if (!p || p.tipo !== 'chute' || p.cv || q.remote) return;
@@ -3946,11 +3816,11 @@ function cvBotMira(q, p, c){                           // acha a mira por fora p
   if (!a0){ const x = p.x - B.x, y = p.y - B.y, l = Math.hypot(x, y) || 1; a0 = {x:x/l, y:y/l}; }
   const gx = p.x, D = Math.hypot(p.x - B.x, p.y - B.y), sx = Math.sign(gx - B.x);
   if (!sx || D < U(6)) return false;
-  const w = cvW(c), T = cvT(c);
+  const w = cvW(c), T = cvT(c), dv = U(CV_FORCA/B.m);
   let s = Math.sign(a0.x*(CY - p.y)); if (!s) s = Math.random() < .5 ? -1 : 1;   // a bola volta para o meio do gol
   const erro = th => {                                 // onde ela cruza a linha do gol (com sinal: > 0 = ainda entortou demais)
     const cs = Math.cos(-s*th), sn = Math.sin(-s*th), ux = a0.x*cs - a0.y*sn, uy = a0.x*sn + a0.y*cs;
-    const kv = chuteVel(q, CV_FORCA, ux, uy), n = cvSimula(B.x, B.y, kv.vx, kv.vy, s*w, T, 120, CV.tmp);
+    const n = cvSimula(B.x, B.y, B.vx + ux*dv, B.vy + uy*dv, s*w, T, 120, CV.tmp);
     let xa = B.x, ya = B.y;
     for (let i = 0; i < n; i++){
       const x = CV.tmp[2*i], y = CV.tmp[2*i + 1];
@@ -4259,8 +4129,10 @@ function kickBall(strength){
   if (TR.presa) return false;                 // v30: bola no pé de um companheiro do treino (ele vai tocar)
   let dx = B.x-P.x, dy = B.y-P.y, d = Math.hypot(dx, dy);
   if (d === 0){ dx = 1; dy = 0; d = 1; }
-  if (!NF.chuta(P, B, strength, ALCANCE_CHUTE)) return false;   // v85: a bola sai com a velocidade do botão + o embalo (FR-85)
+  if (d > ALCANCE_CHUTE) return false;
   B.w = 0;                                    // o chute zera o giro da bola
+  const dv = U(strength/B.m);                 // impulso: Δv = strength ÷ massa da bola (em u/s), convertido para px/s
+  B.vx += dx/d*dv; B.vy += dy/d*dv;           // soma à velocidade que a bola já tinha (o teto da bola entra no próximo tick)
   RP.toque = Math.max(RP.toque, strength >= FORCA_POWER ? 2 : 1);   // v45: o som do chute no replay
   if (RQ.on){ RQ.chuteDe = {x:B.x, y:B.y, time:P.time || 0}; mdAplicaCurva(P, dx, dy, d, strength); }   // v59: origem do chute (3 pontos) e a curva
   return true;
@@ -4371,31 +4243,31 @@ function rqPre(){                                      // começo do tick: os bo
   rqBots();                                            // v47: (com RQ.autoH, o jogo joga por você lá dentro)
   for (const q of RQ.bots){
     q.ax = q.x; q.ay = q.y;
-    if (q.chutar){ rqChuta(q, q.chutar); q.chutar = 0; }   // v85: o chute antes do movimento (a ordem do servidor)
-    const d = direcaoAnalogico(q.mx, q.my);
-    NF.anda(q, d.mx, d.my, vmax, 1/TICKS_POR_S);       // v85: o mesmo movimento da tampinha de quem joga (FR-85)
+    const d = direcaoOriginal(q.mx, q.my);
+    if (d.mx || d.my){ q.vx += d.mx*vmax; q.vy += d.my*vmax; const v = Math.hypot(q.vx, q.vy); if (v > vmax){ q.vx *= vmax/v; q.vy *= vmax/v; } }
+    else q.vx = q.vy = 0;
+    if (q.chutar){ rqChuta(q, q.chutar); q.chutar = 0; }
   }
   if (RQ.jogo === 'ginga') gnRapido();                 // v61: a arrancada do drible e quem para para armar a finta
 }
 function rqMove(sub){ for (const q of RQ.bots){ q.x += q.vx*sub; q.y += q.vy*sub; if (RQ.travaMeio) mdTravaMeio(q); } }
 function rqParedes(q){                                 // os mesmos limites que você tem
-  const e = PAR.tampinhaParede.e;
-  hitBox(q, JOG_X0, JOG_Y0, JOG_X1, JOG_Y1, e, 0);
-  for (let i = 0; i < JOG_SEGS.length; i++){ const s = JOG_SEGS[i]; hitSeg(q, s[0], s[1], s[2], s[3], e, 0); }
+  hitBox(q, JOG_X0, JOG_Y0, JOG_X1, JOG_Y1, 0.65, 0);
+  for (let i = 0; i < JOG_SEGS.length; i++){ const s = JOG_SEGS[i]; hitSeg(q, s[0], s[1], s[2], s[3], 0.6, 0); }
   if (CAMPO.rede && !CAMPO.entraGol){
-    hitRect(q, POCKET_L.x0 - REDE_E, GOL_Y0 - POST_R, POCKET_L.x1, GOL_Y1 + POST_R, e, 0);
-    hitRect(q, POCKET_R.x0, GOL_Y0 - POST_R, POCKET_R.x1 + REDE_E, GOL_Y1 + POST_R, e, 0);
+    hitRect(q, POCKET_L.x0 - REDE_E, GOL_Y0 - POST_R, POCKET_L.x1, GOL_Y1 + POST_R, 0.6, 0);
+    hitRect(q, POCKET_R.x0, GOL_Y0 - POST_R, POCKET_R.x1 + REDE_E, GOL_Y1 + POST_R, 0.6, 0);
   }
-  for (let i = 0; i < OBST.length; i++){ const o = OBST[i]; hitPoint(q, o[0], o[1], o[2], e, 0); }
+  for (let i = 0; i < OBST.length; i++){ const o = OBST[i]; hitPoint(q, o[0], o[1], o[2], 0.3, 0); }
 }
 function rqColide(){                                   // chamado no collide(): bots x bola e paredes, e jogador x jogador
   const J = RQ.jog;
-  for (const q of RQ.bots){ hitBodies(q, B, PAR.bolaTampinha.e, PAR.bolaTampinha.mu); rqParedes(q); }
-  for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], PAR.tampinhaTampinha.e, PAR.tampinhaTampinha.mu);
+  for (const q of RQ.bots){ hitBodies(q, B, QUIQUE_BOLA, ATRITO_JOG_BOLA); rqParedes(q); }
+  for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], .3, 0);
   if (RQ.estado === 'saida') rqBarreira();
 }
 function rqBarreira(){ for (const q of RQ.jog) rqBarreiraUm(q); }   // na saída: cada um no seu campo; quem não dá a saída fica fora do círculo
-function rqBarreiraUm(q){                              // v55: a saída (Regras do Jogo): cada time no seu campo; quem espera fica fora do círculo do meio
+function rqBarreiraUm(q){                              // v55: o meio-campo segura todo mundo; o arco do lado de quem espera segura os dois times
   const G = RQ.geo, s = rqLado(q.time);
   if (q.time !== RQ.saidaTime || !REGRA55.saidaCirculo){   // quem espera: no seu campo e fora do círculo
     if (s < 0 && q.x > CX){ q.x = CX; if (q.vx > 0) q.vx = 0; }
@@ -4421,19 +4293,12 @@ function rqToque(q){                                   // quem tocou na bola, em
   if (cd && cd.time !== q.time && e.tick - e.t0 > RQ_DESVIO_TK) RQ.chuteDe = null;
   if (RQ.estado === 'saida' && q.time === RQ.saidaTime) RQ.estado = 'jogo';   // a saída foi dada: o relógio volta a andar
 }
-// v85: a velocidade da bola logo depois de um chute de q na direção (ux, uy) com a força (velocidade de saída) dada —
-// o mesmo cálculo do NF.chuta, sem mexer na bola (os bots, o treino e a prévia da curva usam para prever)
-function chuteVel(q, forca, ux, uy){
-  const vq = q ? Math.max(0, (q.vx || 0)*ux + (q.vy || 0)*uy) : 0, s = forca + NF.CHUTE.embalo*vq;
-  const vbn = B.vx*ux + B.vy*uy, r = NF.CHUTE.raspao;
-  return {vx:ux*s + r*(B.vx - vbn*ux), vy:uy*s + r*(B.vy - vbn*uy)};
-}
 function rqChuta(q, forca){                            // o chute do bot: igual ao seu (centro do jogador → centro da bola)
   let dx = B.x - q.x, dy = B.y - q.y, d = Math.hypot(dx, dy);
   if (d === 0){ dx = 1; dy = 0; d = 1; }
   if (d > ALCANCE_CHUTE) return false;
   if (RQ.td && forca >= FORCA_POWER && !q.remote){ const gl = q.time === 0 ? LX1 : LX0;   /* v70: (a regra é do bot; quem joga de fora chuta como o anfitrião) */ if (Math.abs(gl - B.x) > U(16)) return false; }   // v59: americano — chutão de longe não vale: o bot carrega até o fundo
-  if (!NF.chuta(q, B, forca, ALCANCE_CHUTE)) return false; B.w = 0;   // v85: o mesmo chute de quem joga (FR-85)
+  B.w = 0; const dv = U(forca/B.m); B.vx += dx/d*dv; B.vy += dy/d*dv;
   q.chuteT = RQ.tick; rqToque(q);
   RQ.chuteDe = {x:B.x, y:B.y, time:q.time, p:q, tick:RQ.tick}; mdAplicaCurva(q, dx, dy, d, forca);   // v59: origem do chute (3 pontos) e a curva · v70: de quem e quando
   const plan=q.plano;
@@ -4662,21 +4527,21 @@ function rqMontaCol(r){                                // caixas de alcance de c
 function rqTrajeto(vx,vy,passos,dt,buf){
  buf = buf || RQ_BUF.tmp;
  const q = RQ_SIM, a = buf.arr; a.length = 0;
- q.x = B.x; q.y = B.y; q.vx = vx; q.vy = vy; q.w = B.w; q.r = B.r; q.m = B.m;
+ q.x = B.x; q.y = B.y; q.vx = vx; q.vy = vy; q.w = B.w; q.r = B.r; q.m = B.m; q.I = B.I;
  a.push(rqPt(buf, 0, q.x, q.y, vx, vy, 0, false));
  const C = RQ_COL; if (C.ver !== GEO_VER || C.r !== q.r) rqMontaCol(q.r);
  const ix0 = C.x0, ix1 = C.x1, iy0 = C.y0, iy1 = C.y1, wb = C.w, pb = C.p, nb = C.n, r = q.r;
- const tk = dt*TICKS_POR_S, f = Math.pow(CAMPO.fatorBola, tk);   // v85: o piso (FR-85); sem giro físico
+ const tk = dt*TICKS_POR_S, f = Math.pow(CAMPO.fatorBola/(1 + AMORT_LINEAR/TICKS_POR_S), tk), fw = Math.pow(1/(1 + AMORT_ANGULAR/TICKS_POR_S), tk), gy = U(GRAVIDADE_BOLA)*dt;
  for(let i=1;i<=passos;i++){
-  q.vx *= f; q.vy *= f;
+  q.vy += gy; q.vx *= f; q.vy *= f; q.w *= fw;
   const v=Math.hypot(q.vx,q.vy);if(v>LIMITE_VEL_BOLA){q.vx*=LIMITE_VEL_BOLA/v;q.vy*=LIMITE_VEL_BOLA/v;}
   for(let j=0;j<4;j++){
    const x0=q.x,y0=q.y;q.x+=q.vx*dt/4;q.y+=q.vy*dt/4;
    if (q.x > ix0 && q.x < ix1 && q.y > iy0 && q.y < iy1) continue;   // no miolo: nenhuma batida possível (e não há gol)
-   for(let k=0;k<WALL_SEGS.length;k++){const b=k*4;if(q.x<wb[b]||q.x>wb[b+2]||q.y<wb[b+1]||q.y>wb[b+3])continue;const w=WALL_SEGS[k];hitSeg(q,w[0],w[1],w[2],w[3],PAR.bolaLinha.e,PAR.bolaLinha.mu);}
-   if (q.x < GL + r || q.x > GR - r || q.y < GT + r || q.y > GB - r) hitBox(q,GL,GT,GR,GB,PAR.bolaLinha.e,PAR.bolaLinha.mu);
-   for(let k=0;k<POSTS.length;k++){const b=k*4;if(q.x<pb[b]||q.x>pb[b+2]||q.y<pb[b+1]||q.y>pb[b+3])continue;const w=POSTS[k];if(w.length===4){const dx=w[2]-w[0],dy=w[3]-w[1],t=rqCl(((q.x-w[0])*dx+(q.y-w[1])*dy)/(dx*dx+dy*dy||1),0,1);hitPoint(q,w[0]+t*dx,w[1]+t*dy,POST_R,PAR_POSTE.e,PAR_POSTE.mu);}else hitPoint(q,w[0],w[1],POST_R,PAR_POSTE.e,PAR_POSTE.mu);}
-   for(let k=0;k<NET_SEGS.length;k++){const b=k*4;if(q.x<nb[b]||q.x>nb[b+2]||q.y<nb[b+1]||q.y>nb[b+3])continue;const w=NET_SEGS[k];hitSeg(q,w[0],w[1],w[2],w[3],PAR.bolaRede.e,PAR.bolaRede.mu);}
+   for(let k=0;k<WALL_SEGS.length;k++){const b=k*4;if(q.x<wb[b]||q.x>wb[b+2]||q.y<wb[b+1]||q.y>wb[b+3])continue;const w=WALL_SEGS[k];hitSeg(q,w[0],w[1],w[2],w[3],Q_PAREDE,ATRITO_BOLA);}
+   if (q.x < GL + r || q.x > GR - r || q.y < GT + r || q.y > GB - r) hitBox(q,GL,GT,GR,GB,Q_PAREDE,ATRITO_BOLA);
+   for(let k=0;k<POSTS.length;k++){const b=k*4;if(q.x<pb[b]||q.x>pb[b+2]||q.y<pb[b+1]||q.y>pb[b+3])continue;const w=POSTS[k];if(w.length===4){const dx=w[2]-w[0],dy=w[3]-w[1],t=rqCl(((q.x-w[0])*dx+(q.y-w[1])*dy)/(dx*dx+dy*dy||1),0,1);hitPoint(q,w[0]+t*dx,w[1]+t*dy,POST_R,Q_POSTE,ATRITO_POSTE);}else hitPoint(q,w[0],w[1],POST_R,Q_POSTE,ATRITO_POSTE);}
+   for(let k=0;k<NET_SEGS.length;k++){const b=k*4;if(q.x<nb[b]||q.x>nb[b+2]||q.y<nb[b+1]||q.y>nb[b+3])continue;const w=NET_SEGS[k];hitSeg(q,w[0],w[1],w[2],w[3],Q_REDE,ATRITO_BOLA);}
    if(golCruzou(x0,y0,q.x,q.y)){a.push(rqPt(buf,a.length,q.x,q.y,q.vx,q.vy,i*dt,true));return a;}
   }
   a.push(rqPt(buf,a.length,q.x,q.y,q.vx,q.vy,i*dt,false));
@@ -4716,16 +4581,16 @@ function rqEspaco(x,y,time){
 /* Saídas contextuais depois da sequência de parede: leitura do adversário observado. */
 function xeRival(q){return RQ.jog.find(e=>e.time!==q.time);}
 function xeBote(q,e){if(!e)return false;const dx=B.x-e.x,dy=B.y-e.y,d=Math.hypot(dx,dy)||1;return d<RQ.geo.rr*3.8&&(e.vx*dx+e.vy*dy)/d>VEL_JOG*.28;}
-function xeMira(x,y,F){   // v85: a direção do chute para a bola ir até (x, y): o chute FR-85 só guarda NF.CHUTE.raspao do que ela tinha de lado
- const dx=x-B.x,dy=y-B.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,side=(-B.vx*uy+B.vy*ux)*NF.CHUTE.raspao;
- if(Math.abs(side)>=F*.95)return null;
- const a=-Math.asin(side/F),c=Math.cos(a),s=Math.sin(a);
- return {nx:ux*c-uy*s,ny:ux*s+uy*c};
+function xeMira(x,y,F){
+ const dx=x-B.x,dy=y-B.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,a=B.vx*ux+B.vy*uy;
+ const disc=a*a-B.vx*B.vx-B.vy*B.vy+F*F;if(disc<=0)return null;
+ const c=a+Math.sqrt(disc);if(c<=0)return null;
+ return {nx:(c*ux-B.vx)/F,ny:(c*uy-B.vy)/F};
 }
 function xeChutePlano(q){
  const rr=RQ.geo.rr,gx=rqGolX(1-q.time),e=xeRival(q);let best=null;
  for(const y of [CY,CY-RQ.geo.gh*.65,CY+RQ.geo.gh*.65]){
-  const F=FORCA_POWER,aim=xeMira(gx,y,F);if(!aim)continue;
+  const F=U(FORCA_POWER/B.m),aim=xeMira(gx,y,F);if(!aim)continue;
   const body={x:B.x-aim.nx*(rr+.5),y:B.y-aim.ny*(rr+.5)};
   if(!rqHmCabe(q,body)||rqDist(q,body)/VEL_JOG>.5)continue;
   const path=rqTrajeto(B.vx+aim.nx*F,B.vy+aim.ny*F,90,1/60);let margin=Infinity,goal=false,time=0;
@@ -4743,7 +4608,7 @@ function xeChutePlano(q){
 function xeEscapePlano(q){
  const rr=RQ.geo.rr,e=xeRival(q);let best=null;
  for(const w of xkParedes(B,3.2))for(const tangent of [-.72,-.45,.45,.72])for(const force of [FORCA_KICK,FORCA_POWER]){
-  const normal=w.sg*Math.sqrt(1-tangent*tangent),nx=w.axis==='x'?normal:tangent,ny=w.axis==='y'?normal:tangent,F=force,vel=w.axis==='x'?'vx':'vy';
+  const normal=w.sg*Math.sqrt(1-tangent*tangent),nx=w.axis==='x'?normal:tangent,ny=w.axis==='y'?normal:tangent,F=U(force/B.m),vel=w.axis==='x'?'vx':'vy';
   if((B[vel]+normal*F)*w.sg<U(4))continue;
   const body={x:B.x-nx*(rr+.5),y:B.y-ny*(rr+.5)};
   if(!rqHmCabe(q,body)||rqDist(q,body)/VEL_JOG>.4)continue;
@@ -4855,7 +4720,7 @@ function xkPlano(q){
   const destination=w.axis==='y'?(K?.destX??(B.x<CX?LX0:LX1)):(K?.destY??(B.y<CY?LY0:LY1));
   const travel=Math.sign(destination-B[other])||1;
   for(const tv of [0,travel*U(3),travel*U(6),travel*U(9),travel*U(12),-travel*U(3)])for(const force of [FORCA_KICK,FORCA_POWER]){
-   const F=force,ti=tv-B[tvel];if(Math.abs(ti)>F*.85)continue;
+   const F=U(force/B.m),ti=tv-B[tvel];if(Math.abs(ti)>F*.85)continue;
    const normal=w.sg*Math.sqrt(F*F-ti*ti),nx=w.axis==='x'?normal/F:ti/F,ny=w.axis==='y'?normal/F:ti/F;
    if((B[vel]+normal)*w.sg<U(5))continue;
    const body={x:B.x-nx*(rr+.5),y:B.y-ny*(rr+.5)};
@@ -4866,7 +4731,7 @@ function xkPlano(q){
     if(Math.sign(p[vel])!==Math.sign(prev)&&Math.abs(p[w.axis]-w.v)<rr*.8)bounced=true;
     prev=p[vel];if(!bounced||p.t<.05||p.t>1.15)continue;
     for(const nw of xkParedes(p,3.8)){
-     const ot=nw.axis==='x'?'y':'x',nv=nw.axis==='x'?'vx':'vy',nt=nw.axis==='x'?'vy':'vx',nextF=FORCA_KICK;
+     const ot=nw.axis==='x'?'y':'x',nv=nw.axis==='x'?'vx':'vy',nt=nw.axis==='x'?'vy':'vx',nextF=U(FORCA_KICK/B.m);
      const dest=nw.axis==='y'?(K?.destX??destination):(K?.destY??(B.y<CY?LY0:LY1));
      const want=Math.sign(dest-p[ot])*U(6),side=rqCl((want-p[nt])/nextF,-.8,.8),nn=nw.sg*Math.sqrt(1-side*side);
      const ax=nw.axis==='x'?nn:side,ay=nw.axis==='y'?nn:side;
@@ -5145,7 +5010,7 @@ function rqPressiona(q){
  }
  rqVai(q,tx,ty);
  const d=rqDist(q,B);if(d>0&&d<ALCANCE_CHUTE-1&&RQ.tick-q.chuteT>=12){
-  const kv=chuteVel(q,FORCA_POWER,(B.x-q.x)/d,(B.y-q.y)/d),vx=kv.vx,vy=kv.vy;
+  const vx=B.vx+(B.x-q.x)/d*U(FORCA_POWER/B.m),vy=B.vy+(B.y-q.y)/d*U(FORCA_POWER/B.m);
   if(!rqVaiProGol(q.time,B.x,B.y,vx,vy)){
    if(!q.plano||RQ.tick-q.planoT>=RQ_ELITE.planoTicks){q.plano=rqPlanoAtaque(q);q.planoT=RQ.tick;}const p=q.plano;
    const dot=((B.x-q.x)*(p.x-B.x)+(B.y-q.y)*(p.y-B.y))/(d*Math.hypot(p.x-B.x,p.y-B.y)||1);
@@ -5158,7 +5023,7 @@ function rqPressiona(q){
 function rqDefendeGol(q){
  const target=rqGkAlvo(q,q.time);rqHmGkSuave(q,target);rqVai(q,target.x,target.y);   // v47
  const d=rqDist(q,B);if(d>0&&d<ALCANCE_CHUTE-1&&RQ.tick-q.chuteT>=12){
-  const kv=chuteVel(q,FORCA_POWER,(B.x-q.x)/d,(B.y-q.y)/d),vx=kv.vx,vy=kv.vy;
+  const dv=U(FORCA_POWER/B.m),vx=B.vx+(B.x-q.x)/d*dv,vy=B.vy+(B.y-q.y)/d*dv;
   if(!rqVaiProGol(q.time,B.x,B.y,vx,vy)&&!rqHmContra(q,FORCA_POWER)){q.plano={tipo:'afasta',...rqAfasta(q)};q.chutar=FORCA_POWER;RQ.stats.salvamentos++;}
  }
 }
@@ -5185,8 +5050,8 @@ function rqBot(q){
 }
 function rqRota(q,target,force,receiver,bank){
  const rr=RQ.geo.rr,dx=target.x-B.x,dy=target.y-B.y,d=Math.hypot(dx,dy);if(d<rr*.5)return null;
- const dv=force,ux=dx/d,uy=dy/d,side=-B.vx*uy+B.vy*ux,angle=bank?0:-Math.asin(rqCl(NF.CHUTE.raspao*side/dv,-.60,.60));
- const ax=ux*Math.cos(angle)-uy*Math.sin(angle),ay=ux*Math.sin(angle)+uy*Math.cos(angle),kv=chuteVel(q,dv,ax,ay),path=rqTrajeto(kv.vx,kv.vy,Math.ceil(RQ_ELITE.alcancePrevisao/.04),.04);
+ const dv=U(force/B.m),ux=dx/d,uy=dy/d,side=-B.vx*uy+B.vy*ux,angle=bank?0:-Math.asin(rqCl(side/dv,-.60,.60));
+ const ax=ux*Math.cos(angle)-uy*Math.sin(angle),ay=ux*Math.sin(angle)+uy*Math.cos(angle),path=rqTrajeto(B.vx+ax*dv,B.vy+ay*dv,Math.ceil(RQ_ELITE.alcancePrevisao/.04),.04);
  let best=null,margin=Infinity,blocked=false,reception=null;
  for(let i=1;i<path.length;i++){
   const p=path[i],err=Math.hypot(p.x-target.x,p.y-target.y);
@@ -5219,7 +5084,7 @@ function rqPasse(q,o,bonus){
  const pressure=rqPressao(q,rr*RQ_ELITE.pressaoRaios),back=q.k>=2&&RQ.n>=3,otherBack=o.k>=2&&RQ.n===4;
  for(const force of [FORCA_KICK,FORCA_POWER]){
   if(force===FORCA_POWER&&d<rr*3.8)continue;
-  const lead=rqCl(d/force,.08,.50),velocity=Math.hypot(o.vx,o.vy),time=velocity?Math.min(lead,rr*1.35/velocity):lead;
+  const lead=rqCl(d/U(force/B.m),.08,.50),velocity=Math.hypot(o.vx,o.vy),time=velocity?Math.min(lead,rr*1.35/velocity):lead;
   let target=rqPonto(o.x+o.vx*time,o.y+o.vy*time,rr);
   const space=rqEspaco(target.x,target.y,q.time);if(space<rr*1.12||!rqLinhaLivre(B.x,B.y,target.x,target.y,q.time,2))continue;
   const route=rqRota(q,target,force,o,false);if(!route)continue;
@@ -5243,12 +5108,12 @@ function rqTabela(q,o,self){
  const target=self?rqPonto(B.x+dir*rr*3.5,B.y+(B.y<CY?1:-1)*rr*2,rr*1.4):rqPonto(o.x+o.vx*.16,o.y+o.vy*.16,rr);
  let best=null;
  for(const wall of [{axis:'y',value:LY0+B.r},{axis:'y',value:LY1-B.r},{axis:'x',value:GL+B.r},{axis:'x',value:GR-B.r}]){
-  const axis=wall.axis,other=axis==='x'?'y':'x',v=wall.value,a=Math.abs(B[axis]-v),b=Math.abs(target[axis]-v),z=B[other]+(target[other]-B[other])*a/(a+b/Math.max(.1,PAR.bolaLinha.e));
+  const axis=wall.axis,other=axis==='x'?'y':'x',v=wall.value,a=Math.abs(B[axis]-v),b=Math.abs(target[axis]-v),z=B[other]+(target[other]-B[other])*a/(a+b/Math.max(.1,Q_PAREDE));
   if(axis==='y'&&(z<LX0+rr||z>LX1-rr)||axis==='x'&&(z<LY0+rr||z>LY1-rr))continue;
   const x=axis==='x'?v:z,y=axis==='y'?v:z,total=Math.hypot(x-B.x,y-B.y)+Math.hypot(target.x-x,target.y-y);if(total>U(38))continue;
-  const angle=Math.atan2(y-B.y,x-B.x),force=total>U(14)?FORCA_POWER:FORCA_KICK,dv=force;
+  const angle=Math.atan2(y-B.y,x-B.x),force=total>U(14)?FORCA_POWER:FORCA_KICK,dv=U(force/B.m);
   for(const delta of [-.12,0,.12]){
-   const ax=Math.cos(angle+delta),ay=Math.sin(angle+delta),kv=chuteVel(q,dv,ax,ay),path=rqTrajeto(kv.vx,kv.vy,Math.ceil((RQ_ELITE.alcancePrevisao+.16)/.04),.04);
+   const ax=Math.cos(angle+delta),ay=Math.sin(angle+delta),path=rqTrajeto(B.vx+ax*dv,B.vy+ay*dv,Math.ceil((RQ_ELITE.alcancePrevisao+.16)/.04),.04);
    let hit=false,previous=path[0],point=null,error=Infinity,margin=Infinity,blocked=false;
    for(const p of path){
     if(Math.sign(axis==='x'?previous.vx:previous.vy)!==Math.sign(axis==='x'?p.vx:p.vy))hit=true;previous=p;if(p.gol){blocked=true;break;}
@@ -5271,7 +5136,7 @@ function rqSaidaDuelo(q){
  for(let i=0;i<16;i++){
   const angle=i*Math.PI/8,ux=Math.cos(angle),uy=Math.sin(angle),body={x:B.x-ux*(rr+1),y:B.y-uy*(rr+1)};
   if(body.x<JOG_X0+q.r||body.x>JOG_X1-q.r||body.y<JOG_Y0+q.r||body.y>JOG_Y1-q.r)continue;
-  const force=FORCA_KICK,kv=chuteVel(q,force,ux,uy),vx=kv.vx,vy=kv.vy;
+  const force=FORCA_KICK,dv=U(force/B.m),vx=B.vx+ux*dv,vy=B.vy+uy*dv;
   if(rqVaiProGol(q.time,B.x,B.y,vx,vy))continue;
   const path=rqTrajeto(vx,vy,12,.05);if(path.some(p=>p.gol))continue;const end=path[path.length-1];
   let risk=0;for(const p of path)if(p.t>.12&&p.t<.45)for(const e of RQ.jog)if(e!==q&&rqDist(e,p)<e.r+B.r)risk+=rr*.5;
@@ -5325,7 +5190,7 @@ function rqAtaca(q,fixo){
  let ux=dx/d,uy=dy/d;
  if(plan.aim&&rqDist(q,B)<rr*3){ux=plan.aim.x;uy=plan.aim.y;}
  else if(plan.tipo==='passe'||plan.tipo==='chute'){
-  const force=plan.forca||FORCA_POWER,dv=force,side=-B.vx*uy+B.vy*ux,a=-Math.asin(rqCl(NF.CHUTE.raspao*side/dv,-.60,.60)),x=ux*Math.cos(a)-uy*Math.sin(a);uy=ux*Math.sin(a)+uy*Math.cos(a);ux=x;
+  const force=plan.forca||FORCA_POWER,dv=U(force/B.m),side=-B.vx*uy+B.vy*ux,a=-Math.asin(rqCl(side/dv,-.60,.60)),x=ux*Math.cos(a)-uy*Math.sin(a);uy=ux*Math.sin(a)+uy*Math.cos(a);ux=x;
  }
  if(q.hm&&q.hm.erro){const c=Math.cos(q.hm.erro),sn=Math.sin(q.hm.erro),x=ux*c-uy*sn;uy=ux*sn+uy*c;ux=x;}   // v47: a mira um pouco torta
  const alvo=rqHmVolta(q,pb,ux,uy,plan.tipo==='conduz');   // v58: dá a volta na bola sem empurrar
@@ -5334,8 +5199,8 @@ function rqAtaca(q,fixo){
  const tolerance=['afasta','saida'].includes(plan.tipo)?.46:plan.tipo==='tabela'?.115:plan.tipo==='passe'?.13:.18;
  if((bx*ux+by*uy)/dist<Math.cos(tolerance)){rqHmBicoSePreciso(q);return;}   // v58: sem alinhar e apertado: o chute de onde está, se for bom
  if(plan.tipo==='conduz'&&!rqPressao(q,rr*1.9))return;
- const force=plan.forca||(plan.tipo==='conduz'||plan.tipo==='saida'?FORCA_KICK:FORCA_POWER),kv=chuteVel(q,force,bx/dist,by/dist);
- if(rqVaiProGol(q.time,B.x,B.y,kv.vx,kv.vy)||rqHmContra(q,force))return;   // v58: (com as batidas)
+ const force=plan.forca||(plan.tipo==='conduz'||plan.tipo==='saida'?FORCA_KICK:FORCA_POWER),dv=U(force/B.m);
+ if(rqVaiProGol(q.time,B.x,B.y,B.vx+bx/dist*dv,B.vy+by/dist*dv)||rqHmContra(q,force))return;   // v58: (com as batidas)
  if(plan.tipo!=='afasta'&&rqHmHesita(q))return;            // v58: (às vezes ele demora para chutar)
  q.chutar=force;if(plan.tipo!=='conduz')q.mx=q.my=0;
 }
@@ -5373,7 +5238,7 @@ const RQ_HM = {
     foco:true, motor:true, bico:true, destrava:true},   // v58
   dbg:{dblIni:0, dblDom:0, dblChute:0, fintaIni:0, fintaCorte:0, fintaChute:0, tabIni:0, bico:0, recua:0, bicoJogo:0, seguro:0}   // (testes: quantas vezes cada parte das jogadas aconteceu)
 };
-const RQ_SETOR = TAU/NF.DIRECOES, RQ_SET_K = NF.DIRECOES/32;   // v85: o analógico tem 256 direções; RQ_SET_K converte os limites (escritos em 1/32 de volta)
+const RQ_SETOR = TAU/32;                               // o joystick tem 32 direções (direcaoOriginal)
 
 /* ---- a partida: o estilo e o tempo de reação de cada um ---- */
 /* ---- a partida: o estilo, o tempo de reação e o ritmo de cada um ---- */
@@ -5424,9 +5289,8 @@ function rqHmBolaVista(d){
   let x = H.bx[k], y = H.by[k], vx = H.bvx[k], vy = H.bvy[k];
   for (let j = 0; j < d; j++){                         // o mesmo caminho (rebatendo nas linhas), sem saber do que aconteceu depois
     vx *= f; vy *= f; x += vx*dt; y += vy*dt;
-    const qp = PAR.bolaLinha.e;
-    if (y < y0){ y = 2*y0 - y; vy = -vy*qp; } else if (y > y1){ y = 2*y1 - y; vy = -vy*qp; }
-    if (Math.abs(y - CY) > gh){ if (x < x0){ x = 2*x0 - x; vx = -vx*qp; } else if (x > x1){ x = 2*x1 - x; vx = -vx*qp; } }
+    if (y < y0){ y = 2*y0 - y; vy = -vy*Q_PAREDE; } else if (y > y1){ y = 2*y1 - y; vy = -vy*Q_PAREDE; }
+    if (Math.abs(y - CY) > gh){ if (x < x0){ x = 2*x0 - x; vx = -vx*Q_PAREDE; } else if (x > x1){ x = 2*x1 - x; vx = -vx*Q_PAREDE; } }
   }
   V.x = x; V.y = y; V.vx = vx; V.vy = vy; V.w = H.bw[k];
   return V;
@@ -5490,13 +5354,13 @@ function rqHmFino(q){                                  // perto da bola (ou numa
 function rqHmCorpo(q){
   if(xkAtivo(q)&&q.xk){if(q.hm){q.hm.dir=-1;q.hm.dirT=RQ.tick;}return;}
   const h = q.hm; if (!h || !RQ_HM.liga[q.time] || !RQ_HM.f.corpo) return;
-  const ND = NF.DIRECOES, K = RQ_SET_K; let s = q.mx || q.my ? ((Math.round(Math.atan2(q.my, q.mx)/RQ_SETOR) % ND) + ND) % ND : -1;
+  let s = q.mx || q.my ? ((Math.round(Math.atan2(q.my, q.mx)/RQ_SETOR) % 32) + 32) % 32 : -1;
   if (s !== h.dir){
     const fino = rqHmFino(q), segura = RQ.tick - h.dirT;
     if (s >= 0 && h.dir >= 0){
-      let dd = Math.abs(s - h.dir); if (dd > ND/2) dd = ND - dd;
-      if (dd >= 12*K && segura < (fino ? 3 : 5)) s = -1;   // voltar logo depois de virar: para antes (gente não fica indo e voltando)
-      else if (fino ? dd <= K && segura < 2 : (dd <= K && segura < 6) || (dd <= 2*K && segura < 3)) s = h.dir;
+      let dd = Math.abs(s - h.dir); if (dd > 16) dd = 32 - dd;
+      if (dd >= 12 && segura < (fino ? 3 : 5)) s = -1;   // voltar logo depois de virar: para antes (gente não fica indo e voltando)
+      else if (fino ? dd === 1 && segura < 2 : (dd === 1 && segura < 6) || (dd === 2 && segura < 3)) s = h.dir;
     } else if (s < 0 && h.dir >= 0 && !fino && segura < 3) s = h.dir;   // não para logo depois de virar
     if (s !== h.dir){ h.dir = s; h.dirT = RQ.tick; }
   }
@@ -5525,8 +5389,8 @@ function rqHmAtras(q, a, folga){                       // vai para trás da bola
   rqHmAnda(q, tx, ty, 1.2);
 }
 function rqHmMira(alvo, forca){                        // a direção do chute para a bola ir até o alvo (descontando a velocidade que ela já tem)
-  const dx = alvo.x - B.x, dy = alvo.y - B.y, d = Math.hypot(dx, dy) || 1, ux = dx/d, uy = dy/d, dv = forca;
-  const side = -B.vx*uy + B.vy*ux, a = -Math.asin(rqCl(NF.CHUTE.raspao*side/dv, -.6, .6)), c = Math.cos(a), s = Math.sin(a);
+  const dx = alvo.x - B.x, dy = alvo.y - B.y, d = Math.hypot(dx, dy) || 1, ux = dx/d, uy = dy/d, dv = U(forca/B.m);
+  const side = -B.vx*uy + B.vy*ux, a = -Math.asin(rqCl(side/dv, -.6, .6)), c = Math.cos(a), s = Math.sin(a);
   return {x:ux*c - uy*s, y:ux*s + uy*c};
 }
 const rqHmGauss = () => (Math.random() + Math.random() + Math.random() - 1.5)*2;   // ~normal (desvio 1)
@@ -5671,11 +5535,10 @@ function rqHmCanto(q, bx, by){                         // o canto livre, longe d
 // na mesma direção: soma com o que ela já tinha e sai uma bomba. A conta do 1º toque: velocidade final = a que ela tem + o
 // chute na direção (centro dele → centro da bola); ele se coloca no caminho dela de um jeito que essa direção saia certa.
 function rqHmDomina(vx, vy, ux, uy, F, folga){         // o 1º toque com força F (px/s): a velocidade c que sobra para o canto e a direção n1 do toque
-  // v85: com o chute FR-85 a bola sai com a velocidade do botão (não dá para "matar" a bola somando contra ela), então o toque
-  // curto de dois tempos só existe quando a saída cabe na faixa de antes — com o PASSE e o CHUTE do jogo ele não acontece
-  const side = (-vx*uy + vy*ux)*NF.CHUTE.raspao, c = F;
-  if (Math.abs(side) >= F*.95 || c < U(folga ? -9 : -6) || c > U(folga ? 14 : 11)) return null;
-  const a = -Math.asin(side/F), nx = ux*Math.cos(a) - uy*Math.sin(a), ny = ux*Math.sin(a) + uy*Math.cos(a);
+  const a = ux*vx + uy*vy, disc = a*a - (vx*vx + vy*vy) + F*F;
+  if (disc < 0) return null;
+  const c = a + Math.sqrt(disc); if (c < U(folga ? -9 : -6) || c > U(folga ? 14 : 11)) return null;   // (c perto de 0 = ela morre no pé dele; um pouco negativo = ainda encosta nele devagar)
+  const nx = (c*ux - vx)/F, ny = (c*uy - vy)/F;
   return {c, nx, ny, cos:nx*ux + ny*uy};
 }
 function rqHmTentaDouble(q){
@@ -5698,7 +5561,7 @@ function rqHmTentaDouble(q){
   const tl = Math.hypot(alvo.x - px, alvo.y - py) || 1, tx = (alvo.x - px)/tl, ty = (alvo.y - py)/tl;
   let melhor = null;
   for (const F of [FORCA_KICK, FORCA_POWER]){
-    const d = rqHmDomina(B.vx, B.vy, tx, ty, F);
+    const d = rqHmDomina(B.vx, B.vy, tx, ty, U(F/B.m));
     const ok = d && (d.cos > Math.cos(.3) || (d.c < U(7) && d.cos > Math.cos(.75)) || (Math.abs(d.c) < U(4) && d.cos > Math.cos(1.15)));   // na direção do canto; ou devagar (dá tempo de dar a volta nela)
     if (ok && (!melhor || Math.abs(d.c - U(3)) < Math.abs(melhor.c - U(3)))) melhor = Object.assign(d, {F});
   }
@@ -5718,7 +5581,7 @@ function rqHmDouble(q){
     if (RQ.tick - S.t0 > 50) return false;
     const s = Math.hypot(B.vx, B.vy), vin = -(B.vx*bx + B.vy*by)/dist;
     if (s < U(6) || (vin < U(4) && dist > rr*1.6)) return false;   // a bola desviou ou parou: volta ao jogo normal
-    const tl = Math.hypot(S.alvo.x - B.x, S.alvo.y - B.y) || 1, d = rqHmDomina(B.vx, B.vy, (S.alvo.x - B.x)/tl, (S.alvo.y - B.y)/tl, S.F1, true);
+    const tl = Math.hypot(S.alvo.x - B.x, S.alvo.y - B.y) || 1, d = rqHmDomina(B.vx, B.vy, (S.alvo.x - B.x)/tl, (S.alvo.y - B.y)/tl, U(S.F1/B.m), true);
     if (!d) return false;
     // fica onde a bola, entrando no alcance dele, chega pela direção do toque certo
     const ux = B.vx/s, uy = B.vy/s, Rk = ALCANCE_CHUTE - 2, qx = q.x + d.nx*Rk, qy = q.y + d.ny*Rk, k = (qx - B.x)*ux + (qy - B.y)*uy;
@@ -5732,13 +5595,13 @@ function rqHmDouble(q){
   const a = rqHmMira(S.alvo, FORCA_POWER), al = (bx*a.x + by*a.y)/dist;   // 2º toque: por trás dela, na mesma direção, forte
   if (al > Math.cos(.2)) rqHmAnda(q, B.x, B.y, 1); else rqHmAtras(q, a, rr + 1);   // (alinhado: vai em cima dela, para alcançar logo)
   if (dist <= ALCANCE_CHUTE - .5 && RQ.tick - q.chuteT >= 1 && (al >= Math.cos(.2) || rqHmNoAlvo(q, bx/dist, by/dist))){   // alinhado com o canto, ou já sai no gol de onde está
-    const kv = chuteVel(q, FORCA_POWER, bx/dist, by/dist);
-    if (!rqVaiProGol(q.time, B.x, B.y, kv.vx, kv.vy)){ q.chutar = FORCA_POWER; S.fase = 'feito'; }
+    const dv = U(FORCA_POWER/B.m);
+    if (!rqVaiProGol(q.time, B.x, B.y, B.vx + bx/dist*dv, B.vy + by/dist*dv)){ q.chutar = FORCA_POWER; S.fase = 'feito'; }
   }
   return true;
 }
 function rqHmNoAlvo(q, nx, ny){                        // chutando agora (direção n), a bola entra no gol deles longe do goleiro?
-  const kv = chuteVel(q, FORCA_POWER, nx, ny), vx = kv.vx, vy = kv.vy, gx = rqGolX(1 - q.time);
+  const dv = U(FORCA_POWER/B.m), vx = B.vx + nx*dv, vy = B.vy + ny*dv, gx = rqGolX(1 - q.time);
   if ((gx - B.x)*vx <= 0) return false;
   const y = B.y + vy*(gx - B.x)/vx, G = RQ.geo, k = rqGoleiroDe(1 - q.time);
   return Math.abs(y - CY) < G.gh*.85 && (!k || Math.abs(y - k.y) > k.r + B.r*1.5);
@@ -5792,8 +5655,8 @@ function rqHmFinta(q){
   const al = (bx*a.x + by*a.y)/dist;                   // 'chute': encosta e chuta no canto de verdade
   if (al > Math.cos(.2)) rqHmAnda(q, B.x, B.y, 1); else rqHmAtras(q, a, rr + 1);
   if (dist <= ALCANCE_CHUTE - .5 && RQ.tick - q.chuteT >= 6 && (al >= Math.cos(.16) || rqHmNoAlvo(q, bx/dist, by/dist))){
-    const kv = chuteVel(q, FORCA_POWER, bx/dist, by/dist);
-    if (!rqVaiProGol(q.time, B.x, B.y, kv.vx, kv.vy)) q.chutar = FORCA_POWER;
+    const dv = U(FORCA_POWER/B.m);
+    if (!rqVaiProGol(q.time, B.x, B.y, B.vx + bx/dist*dv, B.vy + by/dist*dv)) q.chutar = FORCA_POWER;
   }
   return RQ.tick - S.ft <= 24;
 }
@@ -6020,7 +5883,7 @@ function rqHmBico(q, preso){
   const nx = bx/d, ny = by/d, dir = -rqLado(q.time), own = rqGolX(q.time);
   let melhor = null;
   for (const F of [FORCA_KICK, FORCA_POWER]){
-    const kv = chuteVel(q, F, nx, ny), path = rqTrajeto(kv.vx, kv.vy, 30, .04), r = rqHmQuemPega(path, q);
+    const dv = U(F/B.m), path = rqTrajeto(B.vx + nx*dv, B.vy + ny*dv, 30, .04), r = rqHmQuemPega(path, q);
     let nota;
     if (r.gol < 0) continue;                           // gol contra: nunca
     if (r.gol > 0) nota = rr*8;
@@ -6121,8 +5984,8 @@ function rqHmMotor(q){
 // a linha reta: um "afasta" do lado do gol batia na linha de fundo, subia rente a ela e entrava)
 function rqHmContra(q, forca){
   if (Math.abs(B.x - rqGolX(q.time)) > RQ.geo.L*.75) return false;
-  const bx = B.x - q.x, by = B.y - q.y, d = Math.hypot(bx, by) || 1, kv = chuteVel(q, forca, bx/d, by/d);
-  const path = rqTrajeto(kv.vx, kv.vy, 30, .04);
+  const bx = B.x - q.x, by = B.y - q.y, d = Math.hypot(bx, by) || 1, dv = U(forca/B.m);
+  const path = rqTrajeto(B.vx + bx/d*dv, B.vy + by/d*dv, 30, .04);
   for (const p of path) if (p.gol) return Math.sign(p.x - CX) === rqLado(q.time);
   return false;
 }
@@ -6199,7 +6062,7 @@ const TR_INFO = {
            dica:'Cone pelo lado errado: +2 s · bater no cone: +1 s'}
 };
 const TR_INTRO = 150;                                  // ticks do cartão de abertura (2,5 s) antes da 1ª bola
-const TR_QUIQUE_PAREDAO = PAR.bolaParedao.e;                          // Arcade: o paredão (rebatedor de treino) devolve 80% (as linhas do campo, 65%)
+const TR_QUIQUE_PAREDAO = .8;                          // Arcade: o paredão (rebatedor de treino) devolve 80% (as linhas do campo, 65%)
 const TR = {
   id:'livre', on:false, motor:null, G:null,
   fase:'off', ft:0, tk:0, rod:0, nRod:0, tempo:0, tempoMax:0,
@@ -6758,7 +6621,7 @@ const TRA = {
     return {L, A, gy:(GOL_Y1 - GOL_Y0)/2, postR:POST_R, gp:GOL_PROF, circ:M.circulo,
       areaD:M.areaW, areaH:M.areaH/2, pen:M.penalti, peqD:M.pequenaW, peqH:M.pequenaH/2,
       rp, rb:R_BOLA, reach:ALCANCE_CHUTE,
-      vPasse:FORCA_KICK/TICKS_POR_S, vChute:FORCA_POWER/TICKS_POR_S,
+      vPasse:U(FORCA_KICK/MASSA_BOLA)/TICKS_POR_S, vChute:U(FORCA_POWER/MASSA_BOLA)/TICKS_POR_S,
       f:CAMPO.fatorBola, vJog:VEL_JOG/TICKS_POR_S, paredes:true,
       jx0:JOG_X0 - CX, jx1:JOG_X1 - CX, jy0:JOG_Y0 - CY, jy1:JOG_Y1 - CY,
       cruzVa:[1.15, 2], domH:Math.min(L*.72, rp*9), domV:Math.min(A - rp*1.6, rp*6.2), domZona:rp*2.7, domVa:[1.3, 2.3], domCtl:.3,
@@ -6797,19 +6660,19 @@ function trColideArc(){
       const t = trLim(((o.x - ax)*ex + (o.y - ay)*ey)/L2, 0, 1), px = ax + ex*t, py = ay + ey*t;
       const dx = o.x - px, dy = o.y - py, d = Math.hypot(dx, dy);
       if (d >= w.e + o.r) continue;
-      if (o === B){ const vn = d > 1e-9 ? -(B.vx*dx + B.vy*dy)/d : 0; hitPoint(B, px, py, w.e, TR_QUIQUE_PAREDAO, PAR.bolaParedao.mu); if (vn > 30) trParedeBateu(w, px - CX, py - CY, vn/TICKS_POR_S); }
+      if (o === B){ const vn = d > 1e-9 ? -(B.vx*dx + B.vy*dy)/d : 0; hitPoint(B, px, py, w.e, TR_QUIQUE_PAREDAO, ATRITO_BOLA); if (vn > 30) trParedeBateu(w, px - CX, py - CY, vn/TICKS_POR_S); }
       else hitPoint(P, px, py, w.e, .6, 0);
     }
   }
   for (const c of TR.cones){
     const x = CX + c.x, y = CY + c.y;
-    if (hitPoint(B, x, y, c.r, .45, PAR.bolaLinha.mu)) trConeBateu(c);
+    if (hitPoint(B, x, y, c.r, .45, ATRITO_BOLA)) trConeBateu(c);
     hitPoint(P, x, y, c.r, .3, 0);
   }
   for (const n of TR.npcs){                            // companheiro/goleiro: a bola bate como num corpo que não recua (no referencial dele)
     const x = CX + n.x, y = CY + n.y, vx = n.vx*TICKS_POR_S, vy = n.vy*TICKS_POR_S;
     B.vx -= vx; B.vy -= vy;
-    const bateu = hitPoint(B, x, y, n.r, n.funcao === 'gk' ? .35 : PAR.bolaTampinha.e, PAR.bolaTampinha.mu);
+    const bateu = hitPoint(B, x, y, n.r, n.funcao === 'gk' ? .35 : 0, ATRITO_JOG_BOLA);
     B.vx += vx; B.vy += vy;
     if (bateu) TR.ev.npc = n;
     hitPoint(P, x, y, n.r, .3, 0);
@@ -6842,8 +6705,8 @@ function txt(g, s, x, y, size, fill, stroke, lw){
    v61: A MARCA DA RACHA (o placar com a cara do RACHA; a informação de jogo continua: placar, tempo e quem fez)
    · o HALO DE SPRAY em todo jogador (você, bots, companheiros do treino e no replay): o traço de tinta neon na cor
      do time, torto como pintado à mão, com contorno escuro, sombra dura e brilho; a borda de fora continua sendo o
-     alcance do chute (v85: o da FR-85). A TAG (a ponta do pixo) aponta para onde ele está virado. Imagens prontas por cor e
-     tamanho: o halo redondo e a tag já girada em 32 desenhos (2 drawImage, nada gira nem borra no quadro)
+     alcance do chute (2,49 u). A TAG (a ponta do pixo) aponta para onde ele está virado. Imagens prontas por cor e
+     tamanho: o halo redondo e a tag já girada nas 32 direções (2 drawImage, nada gira nem borra no quadro)
    · CHUTE ARMADO (segurando o botão): o tracejado de carga girando por cima do halo (PASSE 60%, CHUTE 100%)
    · NO CHUTE QUE SAI: o RESPINGO de tinta na cor do time jogado para onde a bola vai (PASSE 4 gotas, CHUTE 7),
      0,18 s; no CHUTE um estalo pequeno no ponto do chute (do mesmo tamanho na tela em qualquer zoom)
@@ -6852,8 +6715,8 @@ function txt(g, s, x, y, size, fill, stroke, lw){
    (v48, continua: o limitador só pula quadro quando a tela é mais rápida que o limite; textos e botões do HUD
    viram imagens prontas.) Só desenho: física, colisão, força do chute e bots não mudam.
    ===================================================================== */
-const AROV = {ate:(R_JOG + MARGEM_CHUTE)/R_JOG, de:(R_JOG + MARGEM_CHUTE)/R_JOG - .16, meio:(R_JOG + MARGEM_CHUTE)/R_JOG - .08, repete:11/60};   // v85: a borda de fora no alcance do chute da FR-85   // em raios do jogador: a borda de dentro e a de fora do traço (a de fora = alcance)
-const HALO = {brilho:.22, tag:.3, dirs:32, giro:[3.2, 5.6], gotas:[4, 7], vida:.18, estalo:.1, estaloPx:58};   // v61: brilho e tag em raios · dirs = quantos desenhos prontos da tag (32 bastam para o olho; o analógico tem 256) · giro da carga (rad/s, PASSE/CHUTE)
+const AROV = {ate:1.245, de:1.085, meio:1.165, repete:11/60};   // em raios do jogador: a borda de dentro e a de fora do traço (a de fora = alcance)
+const HALO = {brilho:.22, tag:.3, dirs:32, giro:[3.2, 5.6], gotas:[4, 7], vida:.18, estalo:.1, estaloPx:58};   // v61: brilho e tag em raios · dirs = as direções da tag (32, como o analógico) · giro da carga (rad/s, PASSE/CHUTE)
 const SPR_ARO = new Map();
 function haloForma(g, m, rpx, ri, re, sem){            // v61: o anel torto (a borda de fora encosta no alcance; a de dentro varia: pincelada)
   const n = 56, rnd = rndFixo(sem);
@@ -6933,7 +6796,7 @@ function spriteAro(cor, rpx, camada){ return spriteHalo(cor, rpx, camada === 'b'
 function aroJog(g, x, y, r, cor, ang, luz, giro, semTag){      // v61: o halo parado, a tag girando para onde ele está virado e a carga (luz 0 a 1, girando sozinha)
   const rpx = tamPronto(r*K*cam.z), c = spriteHalo(cor, rpx, 'p'), m = c.width/2*r/rpx, s = r/rpx;
   const k = ((Math.round(ang/TAU*HALO.dirs) % HALO.dirs) + HALO.dirs) % HALO.dirs, tg = spriteTag(cor, rpx, k), a = k/HALO.dirs*TAU, h = tg.width/2*s;
-  g.drawImage(c, x - m, y - m, 2*m, 2*m);              // (nada gira no quadro: o halo é redondo e a tag vem pronta em 32 desenhos)
+  g.drawImage(c, x - m, y - m, 2*m, 2*m);              // (nada gira no quadro: o halo é redondo e a tag vem pronta em 32 direções)
   if (!semTag) g.drawImage(tg, x + Math.cos(a)*tg.dc*s - h, y + Math.sin(a)*tg.dc*s - h, 2*h, 2*h);
   if (luz > 0){
     const kc = spriteHalo(cor, rpx, 'c'), mk = kc.width/2*r/rpx, a0 = g.globalAlpha;
@@ -6998,7 +6861,8 @@ function spriteEstalo(){                               // v61: o estalo do CHUTE
   return SPR_ESTALO = c;
 }
 function armadoNivel(){                                // o seu chute armado (segurando o botão e ainda sem chutar)
-  return BOTAO.armado === NF.GATILHO.CHUTE ? 2 : BOTAO.armado === NF.GATILHO.PASSE ? 1 : 0;
+  if (!BOTAO.livre) return 0;
+  return BOTAO.estado === 3 ? 2 : BOTAO.estado === 2 ? 1 : 0;
 }
 function viradoDe(q, x, y){                            // v61: para onde q está virado (você: a setinha; os outros: para onde andaram por último)
   if (q === P && !RP.ativo) return dirVis.a;
@@ -7155,7 +7019,7 @@ function fpsTela(now){
 const HAP = {el:null, ok:false};
 try { HAP.ok = !navigator.vibrate && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)); } catch (_) {}
 function hapticoChute(){                               // no toque do PASSE/CHUTE com a bola no alcance (o chute sai no próximo passo da física)
-  if (!HAP.ok || CONTA.vibrar === false || Math.hypot(B.x - P.x, B.y - P.y) > ALCANCE_CHUTE || (BOTAO.bits && !BOTAO.armado)) return;   // (sem chute possível, sem vibração)
+  if (!HAP.ok || CONTA.vibrar === false || Math.hypot(B.x - P.x, B.y - P.y) > ALCANCE_CHUTE || (!BOTAO.livre && BOTAO.estado !== 1)) return;   // (sem chute possível, sem vibração)
   try {
     if (!HAP.el){
       const l = document.createElement('label'), i = document.createElement('input');
@@ -11854,7 +11718,7 @@ const CAMV = {vx:0, vy:0, z:0, zAlvo:0, lx:null, ly:null, svx:0, svy:0, ax:0, ay
 const ESPEC = {alvo:-1};                               // quem o espectador acompanha: -1 = a bola · i = RQ.jog[i]
 function camN(){ return RQ.on ? Math.max(1, Math.min(4, RQ.n | 0)) : 1; }
 function camZoomDe(p){                                 // a escala de um enquadramento (sem o zoom automático)
-  if (p === 'campo'){ const m = Math.max(R_JOG*2.2, (GB - GT - (LY1 - LY0))/2 + MARGEM_Y*.5); return Math.min(W/(LX1 - LX0 + 2*m), H/(LY1 - LY0 + 2*m)); }   // a quadra inteira, com uma folga (v85: a folga cobre a beira onde a tampinha anda, para a câmera não cortar a quadra)
+  if (p === 'campo'){ const m = R_JOG*2.2; return Math.min(W/(LX1 - LX0 + 2*m), H/(LY1 - LY0 + 2*m)); }   // a quadra inteira, com uma folga
   const pct = CAM_PRESET_PCT[p] ? CAM_PRESET_PCT[p][camN() - 1] : cam.zoom;
   return Math.max(.2, Math.min(ZOOM_MAX, ARC_ZOOM_BASE*(pct/ZOOM_PADRAO)));
 }
@@ -13643,12 +13507,12 @@ function segurandoPasse(){                             // botão KICK (passe) se
   for (const r of ptrs.values()) if (r === 'kick') return true;
   return false;
 }
-/* v85: os botões PASSE e CHUTE pelo gatilho da FR-85 (NF.gatilho):
-   - lê os botões uma vez por passo da física; um toque que sobe antes da leitura fica guardado em kickL/powerL
-   - o último botão apertado é o que vale (os dois no mesmo passo: o CHUTE)
-   - segurando, o chute fica armado até a bola entrar no alcance; depois do chute, só um aperto novo arma de novo
-   BOTAO.bits = o que está apertado (1 = PASSE, 2 = CHUTE) · BOTAO.armado = o chute que sai se a bola chegar (0, 1 ou 2) */
-const BOTAO = {g:NF.novoGatilho(), bits:0, armado:0, novo:false, kickL:false, powerL:false};
+/* Botões PASSE/CHUTE (a mecânica clássica). Estados: 1 = neutro, 2 = passe (kick), 3 = chute (power).
+   - lê os botões uma vez por passo da física (amostra); um toque que sobe antes da amostra fica guardado em kickL/powerL
+   - o CHUTE tem prioridade sobre o PASSE
+   - só aceita trocar de botão se passou mais de 20 ms desde o último toque reconhecido (segurar o mesmo botão sempre vale)
+   - "livre" é a trava do chute: depois de um chute fica desligada e só volta quando o estado volta ao neutro */
+const BOTAO = {estado:1, t:0, ultimo:-1e9, livre:true, kickL:false, powerL:false};
 function kickSegurado(){
   if (keys.Space || keys.KeyJ) return true;
   for (const r of ptrs.values()) if (r === 'kick') return true;
@@ -13659,17 +13523,26 @@ function powerSegurado(){
   for (const r of ptrs.values()) if (r === 'power') return true;
   return false;
 }
-function resetBotoes(){ BOTAO.g = NF.novoGatilho(); BOTAO.bits = 0; BOTAO.armado = 0; BOTAO.kickL = BOTAO.powerL = false; }
+function resetBotoes(){ BOTAO.estado = 1; BOTAO.livre = true; BOTAO.kickL = BOTAO.powerL = false; }
 function amostraBotoes(dt){
-  const bits = (kickSegurado() || BOTAO.kickL ? NF.GATILHO.PASSE : 0) | (powerSegurado() || BOTAO.powerL ? NF.GATILHO.CHUTE : 0);
+  BOTAO.t += dt;
+  const p = powerSegurado() || BOTAO.powerL, k = kickSegurado() || BOTAO.kickL;
   BOTAO.kickL = BOTAO.powerL = false;
-  const antes = BOTAO.armado;
-  BOTAO.bits = bits; BOTAO.armado = NF.gatilho(BOTAO.g, bits);
-  BOTAO.novo = BOTAO.armado !== 0 && antes !== BOTAO.armado;   // v48: o botão acabou de ser apertado (aí a luz do aro pisca no chute)
-  if (BOTAO.armado && Math.hypot(B.x-P.x, B.y-P.y) <= ALCANCE_CHUTE){   // armado e a bola no alcance: o chute sai
-    const forte = BOTAO.armado === NF.GATILHO.CHUTE;
-    if (doKick(forte)){ NF.gastaGatilho(BOTAO.g); BOTAO.armado = 0; vibrarChute(forte);
-      ARMADO.saiu = forte ? 'power' : 'kick'; ARMADO.saiuT = performance.now();   // v70: o botão pisca: o chute aconteceu
+  const alvo = p ? 3 : k ? 2 : 1;
+  const aceito = alvo !== 1 &&
+    (BOTAO.t-BOTAO.ultimo > COOLDOWN_BOTAO || BOTAO.estado === alvo);
+  const antes = BOTAO.estado;
+  BOTAO.estado = aceito ? alvo : 1;
+  BOTAO.novo = BOTAO.estado !== 1 && antes !== BOTAO.estado;   // v48: o botão acabou de ser apertado (aí a luz do aro pisca no chute)
+  if (aceito) BOTAO.ultimo = BOTAO.t;
+  if (BOTAO.estado === 1){ BOTAO.livre = true; return; }
+  // Só consome a autorização ao alcançar a bola. Segurar fora do alcance
+  // deixa o chute armado.
+  if (BOTAO.livre && Math.hypot(B.x-P.x, B.y-P.y) <= ALCANCE_CHUTE){
+    if (doKick(BOTAO.estado === 3)){
+      BOTAO.livre = false;
+      vibrarChute(BOTAO.estado === 3);
+      ARMADO.saiu = BOTAO.estado === 3 ? 'power' : 'kick'; ARMADO.saiuT = performance.now();   // v70: o botão pisca: o chute aconteceu
     }
   }
 }
@@ -13796,7 +13669,7 @@ function getInput(){
     if (l > 0){ mx = ax/l; my = ay/l; }
   }
   const length=Math.hypot(mx,my);
-  return length>0 ? direcaoAnalogico(mx/length,my/length) : {mx:0,my:0};
+  return length>0 ? direcaoOriginal(mx/length,my/length) : {mx:0,my:0};
 }
 
 /* ---------- perfil: nome, skin equipada, avatar e estatísticas (ficam salvos no aparelho) ---------- */
@@ -15216,11 +15089,13 @@ function net49BotSkin(room,i){                       // v51: o botão do bot da 
   return L.length ? L[k % L.length] : 'tampinha';
 }
 function net49Control(q){
- const inp=NET49.inputs.get(q.netId);if(!inp||performance.now()-inp.at>350){q.mx=q.my=q.chutar=0;if(q.netButton49)q.netButton49=NF.novoGatilho();return;}
+ const inp=NET49.inputs.get(q.netId);if(!inp||performance.now()-inp.at>350){q.mx=q.my=q.chutar=0;if(q.netButton49)q.netButton49.livre=true;return;}
  q.mx=inp.x;q.my=inp.y;q.ack49=inp.seq;q.chutar=0;
  if(!['saida','jogo'].includes(RQ.estado)){q.mx=q.my=0;return;}
- const b=q.netButton49||(q.netButton49=NF.novoGatilho()),arm=NF.gatilho(b,inp.acao|0);   // v85: o gatilho da FR-85
- if(arm&&Math.hypot(B.x-q.x,B.y-q.y)<=ALCANCE_CHUTE){if(rqChuta(q,arm===NF.GATILHO.CHUTE?FORCA_POWER:FORCA_KICK))NF.gastaGatilho(b);}
+ const b=q.netButton49||(q.netButton49={estado:1,livre:true,t:0,ultimo:-1e9});b.t+=STEP;
+ const accepted=inp.button!==1&&(b.t-b.ultimo>COOLDOWN_BOTAO||b.estado===inp.button);b.estado=accepted?inp.button:1;if(accepted)b.ultimo=b.t;
+ if(b.estado===1)b.livre=true;
+ else if(b.livre&&Math.hypot(B.x-q.x,B.y-q.y)<=ALCANCE_CHUTE){if(rqChuta(q,b.estado===3?FORCA_POWER:FORCA_KICK)){b.livre=false;}}
 }
 function net49HostInput(){if(P.remote){net49Control(P);return {mx:P.mx,my:P.my};}if(!P.netId){if(P.chutar){rqChuta(P,P.chutar);P.chutar=0;}return {mx:P.mx,my:P.my};}return {mx:0,my:0};}   // v58: (ele decide no rqBots)
 function net49Publish(now,force=false){
@@ -15230,8 +15105,8 @@ function net49Publish(now,force=false){
 }
 function net49Predict(command){
  if(!['jogo','saida'].includes(RQ.estado))return;
- const d=direcaoAnalogico(command.x,command.y);NF.anda(P,d.mx,d.my,VEL_JOG,STEP);   // v85: o mesmo movimento do servidor (FR-85)
- const sub=STEP/2;for(let i=0;i<2;i++){P.x+=P.vx*sub;P.y+=P.vy*sub;hitBodies(P,{...B},PAR.bolaTampinha.e,PAR.bolaTampinha.mu);for(const q of RQ.bots)hitBodies(P,{...q},PAR.tampinhaTampinha.e,0);rqParedes(P);if(RQ.estado==='saida')rqBarreiraUm(P);}
+ const d=direcaoOriginal(command.x,command.y);if(d.mx||d.my){P.vx+=d.mx*VEL_JOG;P.vy+=d.my*VEL_JOG;const v=Math.hypot(P.vx,P.vy);if(v>VEL_JOG){P.vx*=VEL_JOG/v;P.vy*=VEL_JOG/v;}}else P.vx=P.vy=0;
+ const sub=STEP/2;for(let i=0;i<2;i++){P.x+=P.vx*sub;P.y+=P.vy*sub;hitBodies(P,{...B},QUIQUE_BOLA,ATRITO_JOG_BOLA);for(const q of RQ.bots)hitBodies(P,{...q},.3,0);rqParedes(P);if(RQ.estado==='saida')rqBarreiraUm(P);}
 }
 function net49Snapshot(s){
  if(s.tick<=NET49.lastTick)return;NET49.lastTick=s.tick;NET49.snapshotAt=performance.now();
@@ -15246,7 +15121,7 @@ function net49RemoteFrame(dt,now){
  if(NET49.paused||now-NET49.snapshotAt>2000){net49Draw(0);x49GameUI();return;}
  if(NET49.localSlot>=0&&!fimAberto()&&!X49UI.open){
   acc+=dt;const d=getInput();dirSegue(dt,d.mx,d.my);
-  while(acc+1e-9>=STEP){const acao=(kickSegurado()||BOTAO.kickL?NF.GATILHO.PASSE:0)|(powerSegurado()||BOTAO.powerL?NF.GATILHO.CHUTE:0);BOTAO.kickL=BOTAO.powerL=false;const command={type:'input',seq:++NET49.seq,x:d.mx,y:d.my,acao,k:v70ConvidadoK(d.mx,d.my)};net49Send(command);NET49.pending.push(command);if(NET49.pending.length>120)NET49.pending.shift();net49Predict(command);acc=Math.max(0,acc-STEP);rpGrava();}
+  while(acc+1e-9>=STEP){const button=powerSegurado()||BOTAO.powerL?3:kickSegurado()||BOTAO.kickL?2:1;BOTAO.kickL=BOTAO.powerL=false;const command={type:'input',seq:++NET49.seq,x:d.mx,y:d.my,button,k:v70ConvidadoK(d.mx,d.my)};net49Send(command);NET49.pending.push(command);if(NET49.pending.length>120)NET49.pending.shift();net49Predict(command);acc=Math.max(0,acc-STEP);rpGrava();}
  }else{acc+=dt;while(acc>=STEP){acc-=STEP;rpGrava();}}
  if(goalT>=0){goalT+=dt;if(goalT>1.7)goalT=-1;}
  if(RP.golN>=0&&RP.n-RP.golN>=TICKS_POR_S){const rep=rpMonta();RP.golN=-1;if(rep)rpGuardaRecente(rep);}
@@ -15275,7 +15150,7 @@ function x49Init(){
  fimEl('fim-denovo').addEventListener('click',e=>{if(NET49.playing){e.stopImmediatePropagation();if(NET49.room.tournament)x49Open('cup');else{net49Send({type:'rematch'});fimEl('fim-denovo').textContent='REVANCHE PEDIDA';}}},true);
  fimEl('fim-lobby').addEventListener('click',e=>{if(NET49.playing){e.stopImmediatePropagation();x49Open('online');}},true);
  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&X49UI.open){e.stopImmediatePropagation();x49Close();}},true);
- window.addEventListener('blur',()=>{if(NET49.playing&&!NET49.host){NET49.pending=[];net49Send({type:'input',seq:++NET49.seq,x:0,y:0,acao:0});}});
+ window.addEventListener('blur',()=>{if(NET49.playing&&!NET49.host){NET49.pending=[];net49Send({type:'input',seq:++NET49.seq,x:0,y:0,button:1});}});
  document.addEventListener('visibilitychange',()=>{if(NET49.playing&&NET49.host)net49Send({type:'pause',paused:document.hidden});});
  setInterval(()=>{if(NET49.id)net49Send({type:'ping',time:performance.now()});},3000);
  const tick=()=>{x49GameUI();requestAnimationFrame(tick);};requestAnimationFrame(tick);
@@ -15298,7 +15173,7 @@ const base49Confetti=drawConfetti;drawConfetti=function(dt){base49Confetti(dt);i
 const base49Lobby=abrirLobby;abrirLobby=function(inicio){previewSk49=null;X49.previewSkin=null;return base49Lobby(inicio);};
 const base49Video=rpVideo;rpVideo=function(){base49Video();if(RP.gravando)RP.gravando.rec.addEventListener('error',()=>{rpVideoPara(false);x49Toast('A gravação falhou neste navegador. O replay continua salvo.');},{once:true});};
 const base49Equip=equipaBotao;equipaBotao=function(id){const v=base49Equip(id);if(NET49.id)net49Send({type:'profile',name:perfil.nome,skin:perfil.skin});return v;};
-const base49Clear=limparEntrada;limparEntrada=function(){base49Clear();if(NET49.playing&&!NET49.host){NET49.pending=[];net49Send({type:'input',seq:++NET49.seq,x:0,y:0,acao:0});}};
+const base49Clear=limparEntrada;limparEntrada=function(){base49Clear();if(NET49.playing&&!NET49.host){NET49.pending=[];net49Send({type:'input',seq:++NET49.seq,x:0,y:0,button:1});}};
 x49Init();
 
 /* =====================================================================================================
@@ -17296,7 +17171,7 @@ net49Message = function(m){
     }
     f.visto = seq;
     const k70 = (m.k | 0) & 7;                           // v70: 1 = CURVA segurada · 2 = FINTA · 4 = DRIBLE (o pedido vale uma vez)
-    f.fila.push({seq, x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0)), acao:(m.acao | 0) & 3, k:k70});
+    f.fila.push({seq, x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0)), button:[1, 2, 3].includes(m.button) ? m.button : 1, k:k70});
     if (k70 & 2) f.pedeF = true;
     if (k70 & 4) f.pedeD = {x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0))};
     f.chegou = performance.now();
@@ -17325,32 +17200,35 @@ function nsDonoMudou(){
 }
 function nsDescarta(f){                                // pula o comando mais velho da fila (sem perder o chute que estava nele)
   const v = f.fila.shift(), p = f.fila[0]; if (!v) return;
-  if (p) p.acao |= v.acao;                             // (o aperto que estava nele passa para o próximo)
+  if (p && v.button > p.button) p.button = v.button;
   f.feito = Math.max(f.feito, v.seq);
 }
-function nsBotao(b, bits){                             // v85: o gatilho da FR-85 lê os botões do comando (bits)
-  b.arm = NF.gatilho(b, bits);
+function nsBotao(b, bt){                               // o botão do comando (a regra de antes): aperta, segura, solta
+  b.t += STEP;
+  const aceito = bt !== 1 && (b.t - b.ultimo > COOLDOWN_BOTAO || b.estado === bt);
+  b.estado = aceito ? bt : 1; if (aceito) b.ultimo = b.t;
 }
-function nsSegura(q, b){                               // armado e a bola no alcance: o chute sai
-  if (b.arm && Math.hypot(B.x - q.x, B.y - q.y) <= ALCANCE_CHUTE){ if (rqChuta(q, b.arm === NF.GATILHO.CHUTE ? FORCA_POWER : FORCA_KICK)){ NF.gastaGatilho(b); b.arm = 0; } }
+function nsSegura(q, b){                               // o botão segurado chuta quando a bola entra no alcance (como antes)
+  if (b.estado === 1) b.livre = true;
+  else if (b.livre && Math.hypot(B.x - q.x, B.y - q.y) <= ALCANCE_CHUTE){ if (rqChuta(q, b.estado === 3 ? FORCA_POWER : FORCA_KICK)) b.livre = false; }
 }
 net49Control = function(q){                            // (uma vez por passo da física para cada convidado)
-  const f = NET49.inputs.get(q.netId), b = q.netButton49 || (q.netButton49 = NF.novoGatilho());
+  const f = NET49.inputs.get(q.netId), b = q.netButton49 || (q.netButton49 = {estado:1, livre:true, t:0, ultimo:-1e9});
   q.chutar = 0;
   if (!f || !f.fila || performance.now() - f.chegou > 350){   // sem notícia dele: parado
     if (f && f.fila){ f.fila.length = 0; f.ult = null; }
-    q.mx = q.my = 0; Object.assign(b, NF.novoGatilho(), {arm:0}); return;
+    q.mx = q.my = 0; b.livre = true; return;
   }
   const vale = ['saida', 'jogo'].includes(RQ.estado);
   if (f.fila.length > 8) while (f.fila.length > 3) nsDescarta(f);   // voltou de um tranco grande da internet: alcança de uma vez
-  while (f.fila.length && f.fila[0].seq <= f.feito){ const c = f.fila.shift(); f.ult = c; if (vale) nsBotao(b, c.acao); }   // os atrasados: já andaram no palpite
+  while (f.fila.length && f.fila[0].seq <= f.feito){ const c = f.fila.shift(); f.ult = c; if (vale) nsBotao(b, c.button); }   // os atrasados: já andaram no palpite
   f.min = Math.min(f.min, f.fila.length);
   if (++f.n >= 30){ if (f.min >= 2) for (let i = 1; i < f.min; i++) nsDescarta(f); f.min = 99; f.n = 0; }   // meio segundo com comando sobrando na fila (atraso à toa): pula
   const c = f.fila[0];
   let dir = null;
   if (!c){ if (vale && f.ult && f.feito - f.ult.seq < 4){ f.feito++; dir = f.ult; } }   // ainda não chegou: palpite (segue o último)
   else if (f.feito && c.seq > f.feito + 1){ f.feito++; dir = c; }                         // um se perdeu no caminho: este passo anda como o próximo
-  else { f.fila.shift(); f.ult = c; f.feito = c.seq; dir = c; if (vale) nsBotao(b, c.acao); }
+  else { f.fila.shift(); f.ult = c; f.feito = c.seq; dir = c; if (vale) nsBotao(b, c.button); }
   if (dir && vale){ q.mx = dir.x; q.my = dir.y; q.ack49 = f.feito; }
   else { q.mx = q.my = 0; if (dir) q.ack49 = f.feito; }
   if (vale) nsSegura(q, b);
@@ -17407,19 +17285,19 @@ net49Snapshot = function(s){
   NS.iniciado = true;
 };
 function nsBolaAnda(s, t){                             // a bola sozinha por t segundos: paredes, traves e rede (os jogadores ficam com o dono)
-  const o = {x:s.x, y:s.y, vx:s.vx, vy:s.vy, w:s.w || 0, r:B.r, m:B.m}, v = Math.hypot(o.vx, o.vy);
+  const o = {x:s.x, y:s.y, vx:s.vx, vy:s.vy, w:s.w || 0, r:B.r, m:B.m, I:B.I}, v = Math.hypot(o.vx, o.vy);
   if (t <= 0 || v < 1) return o;
   const n = Math.max(1, Math.min(24, Math.ceil(v*t/(R_BOLA*.3)))), sub = t/n, am = Math.pow(CAMPO.fatorBola, sub*TICKS_POR_S);
   for (let i = 0; i < n; i++){
     o.vx *= am; o.vy *= am; o.x += o.vx*sub; o.y += o.vy*sub;
-    for (const w of WALL_SEGS) hitSeg(o, w[0], w[1], w[2], w[3], PAR.bolaLinha.e, PAR.bolaLinha.mu);
-    hitBox(o, GL, GT, GR, GB, PAR.bolaLinha.e, PAR.bolaLinha.mu);
+    for (const w of WALL_SEGS) hitSeg(o, w[0], w[1], w[2], w[3], Q_PAREDE, ATRITO_BOLA);
+    hitBox(o, GL, GT, GR, GB, Q_PAREDE, ATRITO_BOLA);
     for (const q of POSTS){
       let px = q[0], py = q[1];
       if (q.length === 4){ const ax = q[2] - q[0], ay = q[3] - q[1], u = Math.max(0, Math.min(1, ((o.x - q[0])*ax + (o.y - q[1])*ay)/(ax*ax + ay*ay))); px = q[0] + ax*u; py = q[1] + ay*u; }
-      hitPoint(o, px, py, POST_R, PAR_POSTE.e, PAR_POSTE.mu);
+      hitPoint(o, px, py, POST_R, Q_POSTE, ATRITO_POSTE);
     }
-    for (const g of NET_SEGS) hitSeg(o, g[0], g[1], g[2], g[3], PAR.bolaRede.e, PAR.bolaRede.mu);
+    for (const g of NET_SEGS) hitSeg(o, g[0], g[1], g[2], g[3], Q_REDE, ATRITO_BOLA);
   }
   return o;
 }
@@ -17546,7 +17424,7 @@ function p2DoJogador(de, x, txt){                      // (dono) chegou do jogad
   if (!m) return;
   if (m.type === 'pi'){ try { if (x.dc && x.dc.readyState === 'open') x.dc.send(JSON.stringify({type:'po', t:m.t})); } catch (_) {} return; }
   if (m.type !== 'in' || !Array.isArray(m.v) || !NET49.playing || !NET49.host || !NET49.room || NET49.room.roster.indexOf(de) < 0) return;
-  for (const v of m.v.slice(-4)) if (Array.isArray(v)) net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], acao:v[3], k:v[4] | 0});   // (cada comando vem 3 vezes: se um pacote se perde, o próximo cobre)
+  for (const v of m.v.slice(-4)) if (Array.isArray(v)) net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], button:v[3], k:v[4] | 0});   // (cada comando vem 3 vezes: se um pacote se perde, o próximo cobre)
 }
 function p2Diretos(){ let n = 0; for (const x of P2.pcs.values()) if (x.dc && x.dc.readyState === 'open') n++; return n; }   // (dono) quantos recebem direto
 function p2Manda(str){                                 // (dono) o quadro da partida direto para cada jogador
@@ -17597,7 +17475,7 @@ net49Message = function(m){
 const p2BaseSend = net49Send;
 net49Send = function(m){                               // (jogador) o comando vai direto quando dá
   if (m && m.type === 'input' && p2Saudavel() && P2.eu.dc.bufferedAmount < 16384){
-    P2.ult3.push([m.seq, m.x, m.y, m.acao | 0, m.k | 0]); if (P2.ult3.length > 3) P2.ult3.shift();
+    P2.ult3.push([m.seq, m.x, m.y, m.button, m.k | 0]); if (P2.ult3.length > 3) P2.ult3.shift();
     try { P2.eu.dc.send(JSON.stringify({type:'in', v:P2.ult3})); return; } catch (_) {}
   }
   return p2BaseSend(m);
@@ -17621,14 +17499,14 @@ x49GameUI = function(){
       toque fora do centro já saía correndo para aquele lado (o "pulo").
    2. Zona morta: o dedo parado no meio não anda. Antes qualquer tremidinha do dedo virava corrida para um lado
       qualquer (o boneco anda sempre na velocidade máxima, então o menor movimento contava).
-   3. Direção firme: o boneco anda em 256 direções (v85; eram 32); com o dedo perto da divisa entre duas, ele ficava trocando
+   3. Direção firme: o boneco anda em 32 direções; com o dedo perto da divisa entre duas, ele ficava trocando
       (zigue-zague). Agora a direção só muda quando o dedo passa um pouco da divisa.
    4. A base acompanha o dedo quando ele passa do alcance (Vai com o Dedo): virar para o outro lado é na hora.
    Vale para quem já tinha o jogo salvo; dá para voltar ao antigo em EDITAR HUD › Nasce Onde Tocar e Vai com o Dedo.
    ===================================================================================================== */
 const AN = {ativo:false, setor:null};
 const AN_LIGA = .2, AN_DESLIGA = .12;                   // zona morta: anda com o dedo a 20% do alcance, para abaixo de 12%
-const AN_FOLGA = TAU/NF.DIRECOES/2;                    // v85: meio setor (~0,7°): quanto o dedo passa da divisa antes de trocar de direção
+const AN_FOLGA = .05;                                   // rad (~3°): quanto o dedo passa da divisa antes de trocar de direção
 function joyZona(x, y){                                 // o toque começa o analógico?
   const e = hud.joy;
   if (Math.hypot(x - e.x, y - e.y) < JOY.zone*e.s*(e.adere ? 1.6 : 1)) return true;   // (o círculo de sempre)
@@ -17643,13 +17521,13 @@ getInput = function(){
   else if (l < AN_DESLIGA){ AN.ativo = false; AN.setor = null; }
   joy.ativo = AN.ativo;
   if (!AN.ativo) return {mx:0, my:0};
-  const S = TAU/NF.DIRECOES, ND = NF.DIRECOES, ang = Math.atan2(joy.dy, joy.dx);
+  const S = TAU/32, ang = Math.atan2(joy.dy, joy.dx);
   let k = Math.round(ang/S);
   if (AN.setor !== null){                               // continua na direção de antes até passar da divisa com folga
     let d = ang - AN.setor*S; d = Math.atan2(Math.sin(d), Math.cos(d));
     if (Math.abs(d) < S/2 + AN_FOLGA) k = AN.setor;
   }
-  k = ((k % ND) + ND) % ND; AN.setor = k;
+  k = ((k % 32) + 32) % 32; AN.setor = k;
   return {mx:Math.cos(k*S), my:Math.sin(k*S)};
 };
 try {                                                   // quem já tinha o jogo salvo ganha o analógico novo uma vez
@@ -17729,7 +17607,7 @@ function joyDesenha(){
   pintaHud(g, sprHud('joyAro|' + anel, q, anel + 6, anel + 6, anel + 6, anel + 6, h => joyAroCorpo(h, anel)));
   if (joy.id !== null){
     if (joy.ativo){
-      const ang = AN.setor !== null ? AN.setor*TAU/NF.DIRECOES : Math.atan2(joy.dy, joy.dx);   // a direção que o jogo usa (v85: 256 direções)
+      const ang = AN.setor !== null ? AN.setor*TAU/32 : Math.atan2(joy.dy, joy.dx);   // a direção que o jogo usa (32 direções)
       const gf = g.createRadialGradient(0, 0, R*.18, 0, 0, R - 3);
       gf.addColorStop(0, 'rgba(245,197,66,0)'); gf.addColorStop(1, 'rgba(245,197,66,.62)');
       g.fillStyle = gf; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R - 3, ang - .42, ang + .42); g.closePath(); g.fill();
@@ -21123,9 +21001,9 @@ const ARMADO = {desde:0, saiu:'', saiuT:-1e9};
 function desenhaArmado(){
   if (editing || lobby.aberto || PAUSA.aberta) return;
   const agora = performance.now(), g = ctx;
-  const seg = BOTAO.armado === NF.GATILHO.CHUTE ? 'power' : BOTAO.armado === NF.GATILHO.PASSE ? 'kick' : '';
+  const seg = BOTAO.estado === 3 ? 'power' : BOTAO.estado === 2 ? 'kick' : '';
   const longe = Math.hypot(B.x - P.x, B.y - P.y) > ALCANCE_CHUTE;
-  if (seg && longe && controleVisivel(seg)){ if (!ARMADO.desde) ARMADO.desde = agora; } else ARMADO.desde = 0;
+  if (seg && BOTAO.livre && longe && controleVisivel(seg)){ if (!ARMADO.desde) ARMADO.desde = agora; } else ARMADO.desde = 0;
   if (ARMADO.desde && agora - ARMADO.desde > 150){       // (um instante de folga: no chute normal a bola já está no pé e o aviso nem aparece)
     const e = hud[seg], r = BASE[seg].r*e.s, pulso = .5 + .5*Math.sin(agora/110);
     g.save(); g.globalAlpha = .55 + .45*pulso; g.lineWidth = 7; g.strokeStyle = '#ffe14d'; g.setLineDash([16, 10]);
@@ -22682,7 +22560,7 @@ function v70Reanexa(){                                     // (anfitrião) quem 
   r.roster.forEach((id, i) => {
     const q = RQ.jog[i]; if (!q || !id || id === NET49.id || i === NET49.localSlot || (q.netId === id && q.remote)) return;
     const m = r.members.find(x => x.id === id);
-    Object.assign(q, {netId:id, remote:true, mx:0, my:0, chutar:0, ack49:0, netButton49:NF.novoGatilho(), cv70:null, nsA:null});
+    Object.assign(q, {netId:id, remote:true, mx:0, my:0, chutar:0, ack49:0, netButton49:{estado:1, livre:true, t:0, ultimo:-1e9}, cv70:null, nsA:null});
     q.nome = m && m.name ? m.name : String(q.nome || 'Jogador').replace(/ \(bot\)$/, '');
     if (m && m.skin) q.netSkin = m.skin;
     NET49.inputs.delete(id);
@@ -26572,7 +26450,7 @@ function b78Desvia(q, raio){                                                 // 
 /* ---------------------------------------------------------------- bater na bola (passe, chute, alívio) */
 function b78Gira(ux, uy, a){ const c = Math.cos(a), s = Math.sin(a); return {x:ux*c - uy*s, y:ux*s + uy*c}; }
 function b78Seguro(q, forca){                                                // o chute de agora não vai para o próprio gol (com as batidas)?
-  const bx = B.x - q.x, by = B.y - q.y, d = Math.hypot(bx, by) || 1, kv = chuteVel(q, forca, bx/d, by/d), vx = kv.vx, vy = kv.vy;
+  const bx = B.x - q.x, by = B.y - q.y, d = Math.hypot(bx, by) || 1, dv = U(forca/B.m), vx = B.vx + bx/d*dv, vy = B.vy + by/d*dv;
   if (rqVaiProGol(q.time, B.x, B.y, vx, vy)) return false;
   if (rqHmContra(q, forca)) return false;
   if ((B.x - rqGolX(q.time))*b78Dir(q.time) < RQ.geo.L*.35){                // colado no próprio gol: nenhum companheiro no caminho (o desvio nele entrava)
@@ -26662,7 +26540,7 @@ function b78Opcoes(q){
       if (!lv || (lv < 1 && J.chute < 1.25)){ if (LG){ if (!lv) LG.lane0++; else LG.risco++; } continue; }   // (com alguém no caminho só o Fominha e o Matador arriscam)
       let chance = 1;
       if (gkLinha){
-        const dist = Math.hypot(opp - B.x, y - B.y), tc = dist/(FORCA_POWER*.85), enc = gkLinha.r + B.r;
+        const dist = Math.hypot(opp - B.x, y - B.y), tc = dist/(U(FORCA_POWER/B.m)*.85), enc = gkLinha.r + B.r;
         const alc = VEL_JOG*Math.max(0, tc - (gkLinha.b78 ? gkLinha.b78.reacao/TICKS_POR_S : .2)), dy = Math.abs(y - gkLinha.y) - enc;
         chance = dy <= 0 ? 0 : b78Cl(dy/Math.max(1, alc), 0, 1);
       }
@@ -26678,7 +26556,7 @@ function b78Opcoes(q){
   for (const o of RQ.jog){
     if (o === q || o.time !== q.time || o === gkMeu) continue;
     const d = Math.hypot(o.x - B.x, o.y - B.y); if (d < rr*1.9 || d > G.L*1.7) continue;
-    const forca = d > rr*6.5 ? FORCA_POWER : FORCA_KICK, vb = forca*.82, tl = b78Cl(d/vb, .1, .6);
+    const forca = d > rr*6.5 ? FORCA_POWER : FORCA_KICK, vb = U(forca/B.m)*.82, tl = b78Cl(d/vb, .1, .6);
     const sp = Math.hypot(o.vx, o.vy), lead = sp > 1 ? Math.min(tl, rr*1.5/sp) : 0;
     const p = rqPonto(o.x + o.vx*lead, o.y + o.vy*lead, rr*.9), lv = b78Linha(B.x, B.y, p.x, p.y, q.time, U(.45));
     if (!lv) continue;
@@ -26726,7 +26604,7 @@ function b78Opcoes(q){
       if (Math.abs(B.y - wy) > G.A*.45) continue;
       const tx = marc.x + dir*rr*2.6, ty = B.y + (marc.y - B.y)*.3;          // o lugar atrás do marcador
       const my = 2*wy - ty, ax = tx - B.x, ay = my - B.y, al = Math.hypot(ax, ay) || 1;
-      const ux = ax/al, uy = ay/al, kv = chuteVel(q, FORCA_KICK, ux, uy), path = rqTrajeto(kv.vx, kv.vy, 34, .04);
+      const ux = ax/al, uy = ay/al, dv = U(FORCA_KICK/B.m), path = rqTrajeto(B.vx + ux*dv, B.vy + uy*dv, 34, .04);
       let bateu = false, passou = false, ok = true;
       for (const p of path){
         if (p.gol){ ok = false; break; }
