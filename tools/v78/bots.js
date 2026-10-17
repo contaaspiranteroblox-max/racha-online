@@ -236,7 +236,7 @@ function b78Desvia(q, raio){                                                 // 
 /* ---------------------------------------------------------------- bater na bola (passe, chute, alívio) */
 function b78Gira(ux, uy, a){ const c = Math.cos(a), s = Math.sin(a); return {x:ux*c - uy*s, y:ux*s + uy*c}; }
 function b78Seguro(q, forca){                                                // o chute de agora não vai para o próprio gol (com as batidas)?
-  const bx = B.x - q.x, by = B.y - q.y, d = Math.hypot(bx, by) || 1, kv = chuteVel(q, forca, bx/d, by/d), vx = kv.vx, vy = kv.vy;
+  const bx = B.x - q.x, by = B.y - q.y, d = Math.hypot(bx, by) || 1, dv = U(forca/B.m), vx = B.vx + bx/d*dv, vy = B.vy + by/d*dv;
   if (rqVaiProGol(q.time, B.x, B.y, vx, vy)) return false;
   if (rqHmContra(q, forca)) return false;
   if ((B.x - rqGolX(q.time))*b78Dir(q.time) < RQ.geo.L*.35){                // colado no próprio gol: nenhum companheiro no caminho (o desvio nele entrava)
@@ -326,7 +326,7 @@ function b78Opcoes(q){
       if (!lv || (lv < 1 && J.chute < 1.25)){ if (LG){ if (!lv) LG.lane0++; else LG.risco++; } continue; }   // (com alguém no caminho só o Fominha e o Matador arriscam)
       let chance = 1;
       if (gkLinha){
-        const dist = Math.hypot(opp - B.x, y - B.y), tc = dist/(FORCA_POWER*.85), enc = gkLinha.r + B.r;
+        const dist = Math.hypot(opp - B.x, y - B.y), tc = dist/(U(FORCA_POWER/B.m)*.85), enc = gkLinha.r + B.r;
         const alc = VEL_JOG*Math.max(0, tc - (gkLinha.b78 ? gkLinha.b78.reacao/TICKS_POR_S : .2)), dy = Math.abs(y - gkLinha.y) - enc;
         chance = dy <= 0 ? 0 : b78Cl(dy/Math.max(1, alc), 0, 1);
       }
@@ -342,7 +342,7 @@ function b78Opcoes(q){
   for (const o of RQ.jog){
     if (o === q || o.time !== q.time || o === gkMeu) continue;
     const d = Math.hypot(o.x - B.x, o.y - B.y); if (d < rr*1.9 || d > G.L*1.7) continue;
-    const forca = d > rr*6.5 ? FORCA_POWER : FORCA_KICK, vb = forca*.82, tl = b78Cl(d/vb, .1, .6);
+    const forca = d > rr*6.5 ? FORCA_POWER : FORCA_KICK, vb = U(forca/B.m)*.82, tl = b78Cl(d/vb, .1, .6);
     const sp = Math.hypot(o.vx, o.vy), lead = sp > 1 ? Math.min(tl, rr*1.5/sp) : 0;
     const p = rqPonto(o.x + o.vx*lead, o.y + o.vy*lead, rr*.9), lv = b78Linha(B.x, B.y, p.x, p.y, q.time, U(.45));
     if (!lv) continue;
@@ -390,7 +390,7 @@ function b78Opcoes(q){
       if (Math.abs(B.y - wy) > G.A*.45) continue;
       const tx = marc.x + dir*rr*2.6, ty = B.y + (marc.y - B.y)*.3;          // o lugar atrás do marcador
       const my = 2*wy - ty, ax = tx - B.x, ay = my - B.y, al = Math.hypot(ax, ay) || 1;
-      const ux = ax/al, uy = ay/al, kv = chuteVel(q, FORCA_KICK, ux, uy), path = rqTrajeto(kv.vx, kv.vy, 34, .04);
+      const ux = ax/al, uy = ay/al, dv = U(FORCA_KICK/B.m), path = rqTrajeto(B.vx + ux*dv, B.vy + uy*dv, 34, .04);
       let bateu = false, passou = false, ok = true;
       for (const p of path){
         if (p.gol){ ok = false; break; }

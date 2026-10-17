@@ -52,13 +52,9 @@ def bloco_fisica(t):
     a = t.index('/*PHYS_START*/'); b = t.index('/*PHYS_END*/')
     return t[a:b]
 hash_antes = hashlib.sha256(bloco_fisica(src).encode()).hexdigest()
-# v85 (auditoria de 17/10/2026): o bloco de física da base passou a ser o da FR-85 (as batidas, o passo, o chute e o analógico
-# chamam o núcleo server/partida/nucleo_fisica.js). A trava continua: mudar a física sem atualizar este sha falha o build.
-assert hash_antes == 'e4e7b513d7a5329c46f3d44bd16f7a8440a21488c70c9d4a81139b697cd66692', 'O BLOCO DE FÍSICA DA BASE MUDOU (atualize o sha conscientemente)'
-NUCLEO = RAIZ / 'server' / 'partida' / 'nucleo_fisica.js'      # v85: o núcleo da física (o mesmo arquivo do servidor), colado no jogo
-nucleo_txt = NUCLEO.read_text(encoding='utf-8')
-hash_nucleo = hashlib.sha256(nucleo_txt.encode()).hexdigest()
-assert hash_nucleo == 'a49da152802d862eea2591c87f97b29a024fdae0b6cdcb8067c59d57e1d2fe75', 'O NÚCLEO DA FÍSICA MUDOU (atualize o sha conscientemente)'
+# v86: o bloco de física da base voltou a ser o da v84 (a mecânica clássica; a v85 tinha trocado pela FR-85). A trava
+# continua: mudar a física sem atualizar este sha falha o build.
+assert hash_antes == 'ad9f1d2216409b0e6d80b5227cc1fceda1869a5c2f0431075989af902b4d45ac', 'O BLOCO DE FÍSICA DA BASE MUDOU (atualize o sha conscientemente)'
 
 # v70: as etapas (cada arquivo define SUBS e, se precisar, SUBS_PHYS); a ordem é a do pedido
 V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 'enxuto',   # v70.2: enxuto (2 modos, 2 mapas, a bola sem efeitos)
@@ -457,8 +453,6 @@ for nome, subs, sp in V70:
 
 # ---------------------------------------------------------------- conferência: a física não pode mudar
 assert bloco_fisica(out) == fisica_esperada, 'BLOCO DE FISICA ALTERADO (fora das trocas de regra documentadas)'
-assert out.count('/*NUCLEO_FISICA*/') == 1, 'a marca do núcleo da física sumiu'
-out = out.replace('/*NUCLEO_FISICA*/', '\n' + nucleo_txt + '\n', 1)   # v85: o núcleo FR-85 antes do script do jogo (window.RACHA_FISICA)
 SAIDA.write_text(out, encoding='utf-8')
 # a cópia de teste (tests/build/racha_teste.html): o mesmo jogo + window.__RT, que avalia expressões dentro do script do jogo.
 # Só para os testes automáticos (tests/*.py); não vai para a pasta pública nem para o pacote.

@@ -35,16 +35,16 @@ SUBS = [
   ("net49Send({type:'hello',token,name:perfil.nome,skin:perfil.skin,avatar:perfil.avatar,flag:slPais()});",
    "net49Send(Object.assign({type:'hello',token,name:perfil.nome,skin:perfil.skin,avatar:perfil.avatar,flag:slPais()},v70HelloExtra()));"),
   # ---- 3) o comando do convidado leva a CURVA segurada, a FINTA e o DRIBLE (k) — e a carga aparece na tela dele
-  ("const command={type:'input',seq:++NET49.seq,x:d.mx,y:d.my,acao};",
-   "const command={type:'input',seq:++NET49.seq,x:d.mx,y:d.my,acao,k:v70ConvidadoK(d.mx,d.my)};"),
-  ("    f.fila.push({seq, x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0)), acao:(m.acao | 0) & 3});",
+  ("const command={type:'input',seq:++NET49.seq,x:d.mx,y:d.my,button};",
+   "const command={type:'input',seq:++NET49.seq,x:d.mx,y:d.my,button,k:v70ConvidadoK(d.mx,d.my)};"),
+  ("    f.fila.push({seq, x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0)), button:[1, 2, 3].includes(m.button) ? m.button : 1});",
    "    const k70 = (m.k | 0) & 7;                           // v70: 1 = CURVA segurada · 2 = FINTA · 4 = DRIBLE (o pedido vale uma vez)\n"
-   "    f.fila.push({seq, x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0)), acao:(m.acao | 0) & 3, k:k70});\n"
+   "    f.fila.push({seq, x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0)), button:[1, 2, 3].includes(m.button) ? m.button : 1, k:k70});\n"
    "    if (k70 & 2) f.pedeF = true;\n    if (k70 & 4) f.pedeD = {x:Math.max(-1, Math.min(1, +m.x || 0)), y:Math.max(-1, Math.min(1, +m.y || 0))};"),
   ("  if (vale) nsSegura(q, b);\n};",
    "  if (vale) nsSegura(q, b);\n  v70Remoto(q, f, vale, dir);                          // v70: a CURVA, a FINTA e o DRIBLE de quem joga de fora (as regras do botão do anfitrião)\n};"),
-  ("P2.ult3.push([m.seq, m.x, m.y, m.acao | 0]);", "P2.ult3.push([m.seq, m.x, m.y, m.acao | 0, m.k | 0]);"),
-  ("net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], acao:v[3]});", "net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], acao:v[3], k:v[4] | 0});"),
+  ("P2.ult3.push([m.seq, m.x, m.y, m.button]);", "P2.ult3.push([m.seq, m.x, m.y, m.button, m.k | 0]);"),
+  ("net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], button:v[3]});", "net49Message({type:'input', id:de, seq:v[0], x:v[1], y:v[2], button:v[3], k:v[4] | 0});"),
   # o convidado vê CURVA, FINTA e DRIBLE como o anfitrião
   ("  if (k === 'curva') return v61Humano() && RQ.jogo === 'curva';\n  if (k === 'finta' || k === 'drible') return v61Humano() && RQ.jogo === 'ginga';",
    "  if (k === 'curva') return v70Joga() && RQ.jogo === 'curva';             // v70: o convidado da sala também tem os botões do modo\n  if (k === 'finta' || k === 'drible') return v70Joga() && RQ.jogo === 'ginga';"),

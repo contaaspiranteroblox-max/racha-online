@@ -248,7 +248,7 @@ async def principal():
                   'na apresentação dos times: o jeito de cada bot (v79: sem o nível escrito; o seu companheiro continua jogando no Difícil)', r)
         # ---------------------------------------------------------------- o mesmo corpo
         r = await rt(pg, CORPO)
-        P.confere(r['vmax'] <= r['vjog']*1.001 and r['vel'] == [1, 1] and r['longe'] == 0 and set(float(k) for k in r['forcas']) <= {float(r['kick']), float(r['power'])} and r['chutes'] > 10,
+        P.confere(r['vmax'] <= r['vjog']*1.001 and r['vel'] == [1, 1] and r['longe'] == 0 and set(int(k) for k in r['forcas']) <= {r['kick'], r['power']} and r['chutes'] > 10,
                   'o mesmo corpo de todo mundo: em 45 s de 4v4 nenhum bot passa da velocidade do jogador e todo chute é PASSE ou CHUTE com a bola no alcance', r)
         # ---------------------------------------------------------------- jogar com você
         r = await rt(pg, NAO_ROUBA)
@@ -321,8 +321,8 @@ async def principal():
         if REF:
             b2, pg2, _ = await abre(pw, 1280, 720, pagina=pathlib.Path(REF))
             ref = await rt(pg2, "R_JOG"); await b2.close()
-        P.confere(all(x == r['R'] for x in r['rs']) and abs(r['R'] - 1.8*19) < 1e-9,
-                  'na partida a tampinha tem o tamanho da física (v85, FR-85: raio 1,8 u = 34,2 px; todo mundo igual)', {'agora':r, 'v71.1':ref})
+        P.confere(all(x == r['R'] for x in r['rs']) and r['R'] == 38 and (ref is None or ref == r['R']),
+                  'na partida a tampinha tem o tamanho de sempre (o raio da física: 38 px%s)' % (', igual ao da v71.1' if ref is not None else ''), {'agora':r, 'v71.1':ref})
         await b.close()
     return P.fim()
 

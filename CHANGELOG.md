@@ -2,6 +2,35 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v86 — 17/10/2026 · a mecânica clássica de volta, com o chute mais forte
+
+A pedido, depois do teste da v85 no site: a mecânica da v84 de volta e só a força do chute mudada.
+
+- **A mecânica da v84 voltou** (no jogo e no servidor): a física (o movimento que soma e corta no teto e para ao soltar, o
+  chute força ÷ massa, os materiais, o giro), as quadras e as marcas, o analógico de 32 direções, os botões 1/2/3 com os
+  0,02 s, o comando `button` na rede, a câmera da base, os bots, o treino e as previsões. Arquivos: `backup/racha.html`,
+  `tools/partida_rua.js`, `tools/v78/bots.js`, `tools/v70/camera.py`, `tools/v70/online.{py,js}`,
+  `tools/v70/interface.{py,js}`, `server/turma.js`, `server/partida/fisica.js` e `server/partida/sala.js` — os da v84 com os
+  textos da v85. Saíram `server/partida/nucleo_fisica.js`, `tools/v85/FISICA_RACHA.md`, `tests/v85_fisica_test.mjs` e
+  `tests/v85_sincronia_test.py`.
+- **O chute:** `FORCA_KICK` 250 → **275** (PASSE), `FORCA_POWER` 400 → **440** (CHUTE), `LIMITE_VEL_BOLA` 55 → **60 u/s**,
+  iguais no `backup/racha.html` (AJUSTES) e no `server/partida/fisica.js`. A bola parada sai a 27,5 e 44 u/s (eram 25 e 40).
+- **Continua da v85:** os textos próprios, as chaves sem a marca e a migração das antigas (a chave do modo também:
+  `racha-treino-modo-v1`), as fontes no pacote, o SÓ TREINAR OFFLINE, a imagem da favela fora, o FPS verde a 90% do alvo,
+  o build reconciliado (`tools/v84/`) e o site de teste (v85.1).
+- **Comentários** da mecânica que voltou sem o nome do outro jogo e sem as descrições da análise; o cabeçalho do
+  `server/partida/fisica.js` diz o que ele é (o porte da física do jogo) e aponta para o `PROVENIENCIA.md`, que registra
+  a origem da mecânica da v86.
+- **Build:** `tools/aplicar_rua.py` sem o núcleo FR-85; o sha256 do bloco de física é o da v86 (`ad9f1d22…`).
+- **Testes:** `tests/v86_chute_test.py` (novo, 18 verificações); `tests/v85_online_test.py` percebe a mecânica clássica
+  (o `button`, as 32 direções e a força do PASSE e do CHUTE na sala hospedada); os testes que a v85 tinha ajustado à FR-85
+  (v78, v83_sala, v83_salas_ws, servidor) voltaram aos da v84; o `tests/roda_tudo.sh` roda o v86_chute.
+- **Repositório:** as duas migrações da v84 (`app/db/migrations/v84_economia.sql` e `v84_login_obrigatorio.sql`) entram no
+  git — o `app/.gitignore` ignorava `db/migrations/*.sql` e elas tinham ficado de fora do GitHub na v85. O `SHA256SUMS.txt`
+  (que confere o pacote da auditoria) e os logs da bateria da v85 ficaram na branch `v85-auditada`; os logs da bateria da
+  v86 estão em `tests/saida/logs/`.
+- Um jogo da v85 (que manda `acao`) não chuta num servidor da v86, e vice-versa: o jogo e o servidor vão juntos.
+
 ## v85.1 — 17/10/2026 · o site de teste (Render e GitHub Pages)
 
 - `server/servidor.js`: `--visitantes` (`RACHA_VISITANTES=1`) aceita nas salas quem joga sem conta — opcional; o padrão

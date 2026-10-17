@@ -320,9 +320,9 @@ const ARMADO = {desde:0, saiu:'', saiuT:-1e9};
 function desenhaArmado(){
   if (editing || lobby.aberto || PAUSA.aberta) return;
   const agora = performance.now(), g = ctx;
-  const seg = BOTAO.armado === NF.GATILHO.CHUTE ? 'power' : BOTAO.armado === NF.GATILHO.PASSE ? 'kick' : '';
+  const seg = BOTAO.estado === 3 ? 'power' : BOTAO.estado === 2 ? 'kick' : '';
   const longe = Math.hypot(B.x - P.x, B.y - P.y) > ALCANCE_CHUTE;
-  if (seg && longe && controleVisivel(seg)){ if (!ARMADO.desde) ARMADO.desde = agora; } else ARMADO.desde = 0;
+  if (seg && BOTAO.livre && longe && controleVisivel(seg)){ if (!ARMADO.desde) ARMADO.desde = agora; } else ARMADO.desde = 0;
   if (ARMADO.desde && agora - ARMADO.desde > 150){       // (um instante de folga: no chute normal a bola já está no pé e o aviso nem aparece)
     const e = hud[seg], r = BASE[seg].r*e.s, pulso = .5 + .5*Math.sin(agora/110);
     g.save(); g.globalAlpha = .55 + .45*pulso; g.lineWidth = 7; g.strokeStyle = '#ffe14d'; g.setLineDash([16, 10]);

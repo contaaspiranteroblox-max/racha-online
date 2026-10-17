@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v85
+# RACHA · Futebol de Rua — v86
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -55,8 +55,10 @@ volta a valer** (o `cargoDo` do `app/api/racha/guard.ts` ignorava a lista ajusta
 sempre limitada ao teto dele) — detalhes no `server/LEIAME.md` e nos testes `v83_*` e `guard_test.mjs`. A **v84** trouxe o
 **login obrigatório** sem o site (o online só com a conta da plataforma). A **v85** é a correção da **auditoria de
 proveniência**: a física, as quadras, os controles e os textos que vinham de outro jogo foram trocados por uma
-implementação própria (a física FR-85, num núcleo só para o jogo e o servidor), e as fontes passaram a vir no pacote —
-logo abaixo.
+implementação própria (a física FR-85, num núcleo só para o jogo e o servidor), e as fontes passaram a vir no pacote.
+A **v86** voltou, a pedido, à **mecânica da v84** (a física, as quadras, o analógico de 32 direções e os botões) com o
+**chute mais forte** — PASSE e CHUTE 10% mais fortes e o teto da bola de 55 para 60 u/s —, e o resto da v85 continua
+(textos, chaves, fontes, login) — logo abaixo.
 
 ---
 
@@ -104,9 +106,10 @@ selo DEMONSTRAÇÃO e as salas online desligadas com aviso claro; `presente: fal
 | `origensPlataforma` | páginas que recebem os eventos do jogo quando ele está num iframe de outro endereço |
 
 **Editar o jogo.** As fontes ficam em `tools/` (por versão e por etapa) e `backup/racha.html` (o original, com a física).
-Depois de mexer: `python3 tools/aplicar_rua.py` gera `app/public/game/racha.html` e confere o sha256 do bloco de física e
-o do núcleo da física (`server/partida/nucleo_fisica.js`, a FR-85 da v85), com só as trocas de regra documentadas: mudar a
-física sem querer quebra o build (ver `tools/v85/FISICA_RACHA.md`, seção 8). `python3 tools/mapa_codigo.py` mostra, para cada função que foi
+Depois de mexer: `python3 tools/aplicar_rua.py` gera `app/public/game/racha.html` e confere o sha256 do bloco de física
+(v86: o da mecânica clássica), com só as trocas de regra documentadas: mudar a física sem querer quebra o build. A força do
+chute fica no bloco AJUSTES do `backup/racha.html` (`FORCA_KICK` = PASSE, `FORCA_POWER` = CHUTE, `LIMITE_VEL_BOLA` = o teto
+da bola) **e** no começo do `server/partida/fisica.js` — os dois iguais (o `tests/v86_chute_test.py` confere). `python3 tools/mapa_codigo.py` mostra, para cada função que foi
 trocada por uma versão posterior, qual implementação está valendo ([`tools/MAPA_REDEFINICOES.md`](tools/MAPA_REDEFINICOES.md)).
 
 **Sem internet de verdade (fontes).** Desde a v85 as quatro famílias (Lilita One, Anton, Barlow e Barlow Condensed, licença
@@ -115,7 +118,39 @@ desenhar as letras. Ver `app/public/game/fontes/LEIA-ME.txt`.
 
 ---
 
+## v86 · a mecânica clássica de volta, com o chute mais forte
+
+A física nova da v85 não agradou no teste; a v86 volta, a pedido, à **mecânica da v84** e muda só a força do chute:
+
+* **O que voltou (o jeito da v84):** a física do jogo-base (a tampinha soma a direção nova à velocidade e corta no teto, e
+  para na hora ao soltar; o chute soma força ÷ massa à bola; os quiques e o atrito dos materiais; o giro da bola), as
+  quadras e as marcas da v84 (56 × 40 u no 1v1 até 108 × 90 u no 4v4), o analógico de 32 direções, os botões PASSE/CHUTE
+  com os estados 1/2/3 e os 0,02 s entre trocas, o comando `button` na rede, os bots, o treino e as previsões com esse
+  chute. No servidor, a partida autoritativa e o motor das salas com a mesma física. Saíram o núcleo FR-85
+  (`server/partida/nucleo_fisica.js`), a especificação dele e os testes dele — a v85 inteira ficou na branch `v85-auditada`.
+* **O chute mais forte:** PASSE **275** e CHUTE **440** (eram 250 e 400: a bola parada sai a 27,5 e 44 u/s em vez de 25
+  e 40) e o teto da bola **60 u/s** (era 55, para o chute de quem vem correndo não bater no teto antes). Os mesmos números
+  no jogo e no servidor; os bots, o treino, a CURVA e as previsões usam essas constantes e acompanham sozinhos. Todo
+  mundo igual: nenhum cosmético mexe nisso.
+* **O que continua da v85:** os textos próprios, as chaves salvas `racha-treino-*` (com a migração das antigas), as fontes no
+  pacote, o SÓ TREINAR OFFLINE no login, a imagem da favela fora, o contador de FPS verde a 90% do alvo, o build que
+  reproduz a v84 (`tools/v84/`) e o site de teste (o `server.js` com o modo visitantes, o Render e o GitHub Pages).
+* **Os comentários** da mecânica que voltou não têm o nome do outro jogo nem as descrições da análise; de onde vem a
+  mecânica está registrado no [`PROVENIENCIA.md`](PROVENIENCIA.md). O documento de código próprio da auditoria vale para a
+  v85, não para a mecânica desta versão.
+* **Os testes:** `tests/v86_chute_test.py` (novo: os números iguais no jogo e no servidor, a bola depois do PASSE e do
+  CHUTE pelo `kickBall`, pelos botões e pelo comando da rede, o teto, as 32 direções, os botões 1/2/3 e a quadra da v84) e
+  o `tests/v85_online_test.py`, que percebe a mecânica clássica e confere o `button`, as 32 direções e a força do PASSE e
+  do CHUTE na sala hospedada. Os testes que a v85 tinha ajustado à FR-85 (v78, v83_sala, v83_salas_ws, servidor) voltaram
+  aos da v84.
+
+**O que muda para quem joga:** a sensação da v84 (o arranque e a parada na hora, a bola e as quadras de antes), com a bola
+saindo 10% mais rápida no PASSE e no CHUTE. Isso foi medido nos testes; **se ficou bom, só jogando**. Para mudar de novo,
+é um número em cada um dos dois arquivos (ver "Editar o jogo", acima).
+
 ## v85 · a auditoria de proveniência: a física própria (FR-85), os controles, os textos e as fontes no pacote
+
+> Na v86, a física, as quadras e os controles desta seção voltaram aos da v84 (ver acima); o resto da v85 continua.
 
 A v85 é a correção pedida na auditoria de 17/10/2026, que comparou o RACHA v84 com o APK de um jogo de futebol de discos
 de terceiros (o "jogo de referência"). O que a auditoria achou e o que mudou está em [`PROVENIENCIA.md`](PROVENIENCIA.md)
@@ -918,9 +953,9 @@ no RELATORIO_DE_TESTES da auditoria.
 | `online_test.py` (e `--p2p`) | duas sessões de navegador contra o servidor de verdade: sala, árbitro, partida, COM CURVA no ESTÁDIO, a sala recusando o modo/mapa que saiu, reconexão, resultado conferido, o clube da turma e a tela AMIGOS (v77: era a COMUNIDADE; só os amigos e o chat) | 43/43 e 43/43 (as verificações de tempo da CURVA do convidado falham às vezes neste Chromium de teste, na v78 também: abaixo) |
 | `servidor_test.js` | regras do servidor (memória) e duas sessões pela rede (HTTP, origem, reconexão); só os 2 modos e os 2 mapas nas salas; v80: a partida normal (a regra e o relógio no start, a cada segundo e parado na pausa; 1 × 1 antes do tempo recusado e no fim empate guardado; gol depois do tempo, depois do gol de ouro, depois do 3º gol e depois da prorrogação recusados; 2 × 1 no fim; o gol de ouro; 0 × 0 até o fim; o relógio do anfitrião longe do servidor recusado; a hora do gol (goal.el); o servidor encerrando sozinho 10 s depois da hora, nos 3:00 e na prorrogação; o tempo encurtado por opção; a sala personalizada sem a regra nova); v79: a fila da ranqueada (juntar, misturar com bots depois de 8 s, os times pelos pontos, fila_nada depois de 20 s, sair, cair, recusar quem está numa sala), a sala ranqueada (no Estádio, fora da lista, sem entrar pelo código, sem trocar de time nem de regra, sem revanche, `ranked` no resultado), o Estádio como o mapa padrão e o selo da conta (só o assinado pela plataforma; no hello, nos cartões, na lista e no Chat do Brasil); v81: o filtro com telefone, CPF e e-mail nos dois chats, o `mid` de cada mensagem da sala, a repetida, 1 denúncia sem esconder, a do autor ignorada, 2 pessoas diferentes escondendo (`say_hide` para todos, `escondida` no histórico), o autor silenciado (`codigo:'silenciado'`) e os outros falando; v82: o selo diz se a partida era da ranqueada (`k`) e o tamanho (`n`) — a sala personalizada `k:0`, a fila da ranqueada com duas contas `k:1` e o placar de cada lado —, os IDs de visitante com 7 dígitos (9000000+, nunca o de uma conta) | 189/189 |
 | `plataforma_salas_test.mjs` | o servidor montado na plataforma (sessão do site, selo conferido, origem); v79: o selo V vindo do banco (`selosDe`) só para quem está logado, no hello e no cartão da sala | 10/10 |
-| `v85_fisica_test.mjs` (v85) | o núcleo FR-85: os números e as metas da especificação (corrida, arrancada e freio, passe e chute, meia-vida, batidas, gatilho, 256 direções, quadras) | ver o RELATORIO_DE_TESTES |
-| `v85_sincronia_test.py` (v85) | o mesmo lance roteirizado no jogo (o physicsStep de verdade) e no servidor (`fisica.js`): posição e velocidade da tampinha e da bola iguais passo a passo | ver o RELATORIO_DE_TESTES |
-| `v85_online_test.py` (v85) | duas sessões do jogo numa sala hospedada no servidor: os comandos com `acao` (sem `button`) e o analógico em 1/256 de volta, a tampinha correndo e parando no servidor, o PASSE e o CHUTE saindo com a velocidade da FR-85 | ver o RELATORIO_DE_TESTES |
+| `v86_chute_test.py` (v86) | a mecânica clássica e o chute mais forte: PASSE 275, CHUTE 440 e o teto de 60 u/s iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (27,5 e 44 u/s) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
+| `v85_online_test.py` (v85, v86) | duas sessões do jogo numa sala hospedada no servidor: a tampinha correndo e parando no servidor; na v86 (mecânica clássica) os comandos com `button` e o analógico em 1/32 de volta, o PASSE e o CHUTE saindo com a força do jogo (na v85: `acao` e 1/256, com a FR-85) | 14/14 |
+| (`v85_fisica_test.mjs` e `v85_sincronia_test.py`) | testavam o núcleo FR-85; saíram na v86 (estão na branch `v85-auditada`) | — |
 | `v85_chaves_test.py` (v85) | as chaves antigas do treino (perfil, HUD, som, campo, modo) indo para as novas no aparelho, nas gavetas das contas e na cópia antiga da conta; a chave nova que já existe fica | ver o RELATORIO_DE_TESTES |
 | `contas_test.mjs` (v82) | as regras da patente (`app/contracts/patentes.ts`: as 8 patentes e as divisões, vitória, bônus, derrota no Bronze pela metade, o piso, o empate, a desistência, o teto do dia contra os bots, a importação até 799), o que a partida faz com a patente (`partida.ts`: o selo da ranqueada, o tamanho, a desistência sem selo, a partida que mudou de tipo) e a cópia do progresso (`progresso.ts`: só as chaves de progresso, os tamanhos, o que não vai para a conta) | 33/33 |
 
@@ -1029,12 +1064,14 @@ no RELATORIO_DE_TESTES da auditoria.
 
 ## Limitações conhecidas (e o porquê)
 
-* **A física FR-85 foi medida, não jogada por pessoas** (v85): as metas, a sincronia aparelho × servidor e o online com o jogo
-  de verdade foram testados no Chromium; o equilíbrio, a sensação no celular e a eficácia de cada jogada dependem de jogar.
-  Os bots usam as mesmas funções de todo mundo e a previsão do chute deles passou a usar o chute da FR-85; o jeito deles
-  jogarem foi conferido pelos testes dos bots (v78), não por partidas contra pessoas.
-* **Jogo da v84 e servidor da v85 não conversam direito** (v85): o comando de entrada mudou (`acao` no lugar de `button`);
-  um jogo antigo anda, mas não chuta num servidor novo. O jogo e o servidor vão juntos na mesma versão.
+* **O chute mais forte da v86 foi medido, não jogado por pessoas**: a velocidade da bola depois do PASSE e do CHUTE, o
+  teto e os números iguais no jogo e no servidor foram testados no Chromium; se 10% a mais ficou bom, o equilíbrio e a
+  sensação no celular dependem de jogar. Os bots usam as mesmas constantes (a previsão do chute deles acompanha); o jeito
+  deles jogarem foi conferido pelos testes dos bots (v78), não por partidas contra pessoas.
+* **A mecânica da v86 é a da v84** (a pedido): os números e a estrutura dela vieram da análise de outro jogo (ver
+  `PROVENIENCIA.md`); a física própria da v85 está na branch `v85-auditada`.
+* **Jogo e servidor de versões diferentes não conversam direito**: o comando de entrada da v85 é `acao` e o da v84/v86 é
+  `button`; um jogo de uma anda, mas não chuta num servidor da outra. O jogo e o servidor vão juntos na mesma versão.
 
 * **Sem conta, moedas, gemas, peças e a patente ficam neste aparelho** (localStorage), como antes; dá para exportar/importar o
   progresso. **Com a conta** (v82: o jogo dentro da plataforma), a patente fica na conta (o servidor faz a conta) e o progresso
@@ -1061,12 +1098,12 @@ no RELATORIO_DE_TESTES da auditoria.
   ranqueada com um amigo no mesmo time) nem faixa de patente máxima entre os que se juntam (vale quem espera há mais
   tempo e os de pontos mais perto dele).
 * **Até a v82, o servidor das salas não simulava a bola** (o anfitrião simulava e o servidor conferia o resultado). Desde a
-  v83 as partidas online das salas são simuladas no servidor (salas hospedadas), e desde a v85 com o mesmo núcleo de física
-  do jogo; a partida contra os bots continua simulada no aparelho.
+  v83 as partidas online das salas são simuladas no servidor (salas hospedadas), com o porte da física do jogo (as mesmas
+  constantes; na v85 era o núcleo FR-85, e na v86 voltou o porte da v84); a partida contra os bots continua simulada no aparelho.
 * **As fontes vêm no pacote desde a v85** (antes vinham do Google Fonts). São `.ttf` (os originais): mais pesados que `.woff2`
   (~850 KB as oito), mas sem conversão — a Lilita One tem nome reservado na licença.
-* **O jogo ainda é um arquivo grande montado em camadas** (o original + v67–v84; a v85 mexeu no original e nas camadas no
-  lugar, e pôs a física num núcleo separado). As fontes estão separadas por versão e
+* **O jogo ainda é um arquivo grande montado em camadas** (o original + v67–v84; a v85 e a v86 mexeram no original e nas
+  camadas no lugar). As fontes estão separadas por versão e
   por assunto em `tools/`, a física fica isolada e conferida por hash, e o mapa das redefinições mostra qual versão de
   cada função vale; juntar as camadas num código único é o próximo passo e não foi feito agora para não arriscar a física
   e o online já testados.

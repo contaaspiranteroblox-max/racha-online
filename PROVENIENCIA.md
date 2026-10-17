@@ -1,24 +1,31 @@
-# RACHA · proveniência dos componentes (v85, auditoria de 17/10/2026)
+# RACHA · proveniência dos componentes (v86; auditoria de 17/10/2026)
+
+> **v86 (17/10/2026), a pedido: a mecânica da v84 voltou.** A física, as quadras, o analógico de 32 direções e os botões
+> da v86 são os da v84 — os que a auditoria achou montados a partir da análise do jogo de referência (a coluna "até a v84"
+> da tabela abaixo) —, com só três números mudados: o PASSE (250 → 275), o CHUTE (400 → 440) e o teto da bola (55 → 60 u/s).
+> Mudar esses números muda o jogo, mas **não muda a origem** do resto da mecânica. Os comentários do código não têm o nome
+> do outro jogo nem as descrições da análise; o registro da origem é este arquivo. O resto da correção da v85 continua
+> (textos, marca, chaves, imagem, fontes). A v85 (com a física própria FR-85) está na branch `v85-auditada`.
 
 Este arquivo resume de onde vem cada parte do RACHA. O detalhe está nos relatórios da auditoria: AUDITORIA_INICIAL,
 RELATORIO_DE_CORRECOES, AUDITORIA_FINAL, RELATORIO_DE_TESTES e DOCUMENTO_DE_CODIGO_PROPRIO_RACHA. A auditoria comparou o
 RACHA v84 com o APK de um jogo de futebol de discos para celular de terceiros (o "jogo de referência"; nome, versão e
 hashes nos relatórios). Nenhum arquivo desse jogo faz parte do RACHA.
 
-## O que vinha do jogo de referência e foi trocado na v85
+## O que vinha do jogo de referência: até a v84, na v85 e na v86
 
-| componente | o que era | o que é agora |
-|---|---|---|
-| física (números) | velocidade, chutes, massas, raios, desaceleração, teto, materiais: valores do jogo de referência | FR-85: núcleo próprio `server/partida/nucleo_fisica.js` (`tools/v85/FISICA_RACHA.md`) |
-| física (modelo) | movimento "impulso + teto + zera ao soltar"; chute "força ÷ massa"; combinação de materiais da Unity; giro | aceleração limitada; chute com velocidade de saída; tabela de batidas por par; sem giro físico |
-| quadras | medidas dos mapas do jogo de referência (linhas, gols, marcas, barreira da saída, posição de saída) | regra própria de quadras (FR-85, seção 5) |
-| analógico | 32 direções (o mesmo número do jogo de referência) | 256 direções |
-| botões | estados 1/2/3 e 0,02 s entre trocas (os do jogo de referência) | gatilho próprio em bits; o comando de rede leva `acao` |
-| câmera da base | suavização 3·dt (o valor do jogo de referência; a câmera da v70 já a substituía) | meia-vida 0,18 s; a câmera ativa continua a da v70 |
-| contador de FPS | verde a partir de 57 (o limite do jogo de referência) | verde a 90% do alvo |
-| textos | 34 expressões iguais à tradução pt-BR do jogo de referência, 20 delas distintivas (EDITAR HUD, Ajustes, clube, sala, chat) | textos próprios; as frases genéricas restantes estão listadas nos relatórios |
-| marca e rastros | o nome do jogo de referência em código, chaves salvas, ferramentas e testes; comentários de engenharia reversa | removidos; chaves `racha-treino-*` (o jogo leva os dados das chaves antigas para as novas uma vez, reconhecendo a chave pelo formato, sem o nome antigo no código) |
-| imagem do 1v1 da favela (v42) | imagem embutida sem proveniência demonstrável (e sem uso) | removida |
+| componente | até a v84 | v85 (a correção da auditoria) | v86 (agora) |
+|---|---|---|---|
+| física (números) | velocidade, chutes, massas, raios, desaceleração, teto, materiais: valores do jogo de referência | FR-85: núcleo próprio `server/partida/nucleo_fisica.js` (`tools/v85/FISICA_RACHA.md`) | **os da v84**, com PASSE 275 / CHUTE 440 (eram 250 / 400) e teto 60 u/s (era 55) |
+| física (modelo) | movimento "impulso + teto + zera ao soltar"; chute "força ÷ massa"; combinação de materiais da Unity; giro | aceleração limitada; chute com velocidade de saída; tabela de batidas por par; sem giro físico | **o da v84** |
+| quadras | medidas dos mapas do jogo de referência (linhas, gols, marcas, barreira da saída, posição de saída) | regra própria de quadras (FR-85, seção 5) | **as da v84** |
+| analógico | 32 direções (o mesmo número do jogo de referência) | 256 direções | **32 direções** (o da v84) |
+| botões | estados 1/2/3 e 0,02 s entre trocas (os do jogo de referência) | gatilho próprio em bits; o comando de rede leva `acao` | **os da v84** (1/2/3, 0,02 s, o comando `button`) |
+| câmera da base | suavização 3·dt (o valor do jogo de referência; a câmera da v70 já a substituía) | meia-vida 0,18 s; a câmera ativa continua a da v70 | a da v84 (a câmera ativa continua a da v70) |
+| contador de FPS | verde a partir de 57 (o limite do jogo de referência) | verde a 90% do alvo | verde a 90% do alvo (o da v85) |
+| textos | 34 expressões iguais à tradução pt-BR do jogo de referência, 20 delas distintivas (EDITAR HUD, Ajustes, clube, sala, chat) | textos próprios; as frases genéricas restantes estão listadas nos relatórios | os da v85 |
+| marca e rastros | o nome do jogo de referência em código, chaves salvas, ferramentas e testes; comentários de engenharia reversa | removidos; chaves `racha-treino-*` (o jogo leva os dados das chaves antigas para as novas uma vez, reconhecendo a chave pelo formato, sem o nome antigo no código) | removidos também dos comentários da mecânica que voltou; a origem fica registrada aqui |
+| imagem do 1v1 da favela (v42) | imagem embutida sem proveniência demonstrável (e sem uso) | removida | removida |
 
 ## O que é próprio do RACHA (sem evidência de cópia)
 
@@ -51,9 +58,13 @@ responde deste ambiente).
 
 Imagem do Cristo Redentor (tampinha CRISTO e fundos do lobby/perfil), a bandeira do Brasil em item cosmético, o rosto
 amarelo da tampinha DEBOCHE, a titularidade de imagens geradas por IA e os termos de uso do jogo de referência sobre a
-análise do APK. Ver o DOCUMENTO_DE_CODIGO_PROPRIO_RACHA, seção 11.
+análise do APK — que na v86 voltam a importar também para a mecânica (os números e a estrutura dela vieram dessa análise).
+Ver o DOCUMENTO_DE_CODIGO_PROPRIO_RACHA, seção 11. Esta versão não teve análise jurídica.
 
 ## Sobre a independência
+
+**v86:** a mecânica desta versão é a da v84, não a reimplementação da v85. O DOCUMENTO_DE_CODIGO_PROPRIO_RACHA da
+auditoria descreve a v85 e não cobre a física, as quadras, o analógico nem os botões da v86. O que segue vale para a v85.
 
 A reimplementação foi feita pelo mesmo assistente de IA que analisou o jogo de referência nesta sessão de trabalho.
 **Não houve separação de equipes (clean room).** A independência está na especificação escrita por metas

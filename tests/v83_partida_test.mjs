@@ -34,7 +34,7 @@ console.log('1) a física: o campo, a bola e as paredes');
     if (sim.bola.x < G.LX0 - G.GOL_PROF - sim.bola.r - 2 || sim.bola.x > G.LX1 + G.GOL_PROF + sim.bola.r + 2) dentroOk = false;
     if (sim.bola.y < G.LY0 - sim.bola.r - 2 || sim.bola.y > G.LY1 + sim.bola.r + 2) dentroOk = false;
   }
-  confere_(tetoOk, 'a bola nunca passa do teto de 55 u/s');
+  confere_(tetoOk, 'a bola nunca passa do teto (F.LIMITE_VEL_BOLA: 60 u/s desde a v86)');
   confere_(dentroOk, 'a bola nunca atravessa as paredes (só entra no gol pela boca)');
   // chute fora do alcance não vale
   const sim2 = F.novaSimulacao(2);

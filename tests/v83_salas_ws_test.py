@@ -73,7 +73,7 @@ try:
             setTimeout(() => rej(new Error('hello demorou ' + nome)), 8000);
           });
           const manda = (c, obj) => c.ws.send(JSON.stringify(obj));
-          const input = (c, x, y, acao = 0, k = 0) => manda(c, {type: 'input', seq: ++c.seq, x, y, acao, k});
+          const input = (c, x, y, button = 1, k = 0) => manda(c, {type: 'input', seq: ++c.seq, x, y, button, k});
           const espera = ms => new Promise(r => setTimeout(r, ms));
           const ate = async (fn, ms, rotulo) => { const t0 = Date.now(); while (!fn()) { if (Date.now() - t0 > ms) throw new Error('demorou: ' + rotulo); await espera(100); } };
 
@@ -242,8 +242,8 @@ try:
           L.regraV80 = D.start.room.regra === 'v80';
           const t1 = Date.now();
           while (Date.now() - t1 < 3000) {
-            D.ws.send(JSON.stringify({type: 'input', seq: ++D.seq, x: 1, y: 0, acao: 0, k: 0}));
-            E.ws.send(JSON.stringify({type: 'input', seq: ++E.seq, x: -1, y: 0, acao: 0, k: 0}));
+            D.ws.send(JSON.stringify({type: 'input', seq: ++D.seq, x: 1, y: 0, button: 1, k: 0}));
+            E.ws.send(JSON.stringify({type: 'input', seq: ++E.seq, x: -1, y: 0, button: 1, k: 0}));
             await espera(33);
           }
           L.snapsD = D.snaps; L.relogiosD = D.relogios;
@@ -299,7 +299,7 @@ try:
           }
           const t2 = Date.now();
           while (Date.now() - t2 < 20000) {
-            for (const c of L.salas) c.ws.send(JSON.stringify({type: 'input', seq: ++c.seq, x: 1, y: 0, acao: 0, k: 0}));
+            for (const c of L.salas) c.ws.send(JSON.stringify({type: 'input', seq: ++c.seq, x: 1, y: 0, button: 1, k: 0}));
             await espera(33);
           }
           return {snaps: L.salas.map(c => c.snaps), bytes: L.salas.map(c => c.bytes), codigos: L.salas.map(c => c.room && c.room.code)};

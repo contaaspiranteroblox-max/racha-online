@@ -95,10 +95,10 @@ function regras(){
   A.manda({type:'start'});
   s = A.sala();
   confira(s.state === 'playing' && s.round === 1 && A.ult('start') && B.ult('start'), 'começar: os dois recebem start (rodada 1)', s && s.state);
-  B.manda({type:'input', seq:7, x:.6, y:-2, acao:1, k:5});
+  B.manda({type:'input', seq:7, x:.6, y:-2, button:2, k:5});
   const inp = A.ult('input');
-  confira(inp && inp.id === B.id && inp.seq === 7 && inp.x === .6 && inp.y === -1 && inp.acao === 1 && inp.k === 5, 'o comando do convidado chega ao anfitrião, com a curva/finta/drible (k) e o analógico limitado', inp);
-  A.limpa(); A.manda({type:'input', seq:1, x:1, y:0, acao:0});
+  confira(inp && inp.id === B.id && inp.seq === 7 && inp.x === .6 && inp.y === -1 && inp.button === 2 && inp.k === 5, 'o comando do convidado chega ao anfitrião, com a curva/finta/drible (k) e o analógico limitado', inp);
+  A.limpa(); A.manda({type:'input', seq:1, x:1, y:0, button:1});
   confira(!A.ult('input') && !B.ult('input'), 'o anfitrião não manda comando (ele simula)');
   quadro(A, 1, [0, 0]);
   confira(B.ult('snapshot') && B.ult('snapshot').round === 1, 'o quadro do anfitrião chega ao convidado');
@@ -643,9 +643,9 @@ async function rede(){
     A.manda({type:'start'});
     const st = await B.espera('start');
     confira(st && st.room.round === 1, 'começou: start nas duas sessões');
-    B.manda({type:'input', seq:1, x:1, y:0, acao:2, k:1});
+    B.manda({type:'input', seq:1, x:1, y:0, button:3, k:1});
     const ic = await A.espera('input');
-    confira(ic && ic.id === hB.id && ic.acao === 2 && ic.k === 1, 'o comando (com a curva) chega ao anfitrião pela rede', ic);
+    confira(ic && ic.id === hB.id && ic.button === 3 && ic.k === 1, 'o comando (com a curva) chega ao anfitrião pela rede', ic);
     A.manda({type:'snapshot', round:1, data:{tick:3, elapsed:.1, state:'jogo', score:[0, 1], ball:[1, 2, 0, 0, 0], players:[]}});
     const sn = await B.espera('snapshot');
     confira(sn && sn.data.score.join() === '0,1', 'o quadro chega ao convidado pela rede');

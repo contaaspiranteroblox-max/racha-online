@@ -10,6 +10,9 @@ Confere, pelos quadros do servidor (o que os outros veem):
 Sobe o servidor de verdade pelo tests/servidor_visitantes.cjs (o mesmo server/servidor.js, aceitando quem joga sem conta:
 ver o arnês da v84 em tests/online_test.py). Com RACHA_V84=1 roda na v84 (antes da FR-85): aí só as verificações de jogo
 valem (anda, para, chuta), e o teste diz qual campo de botão o jogo manda.
+v86: a mecânica clássica voltou (a da v84, sem o núcleo FR-85 no jogo). O teste percebe sozinho (não há NF no jogo) e
+confere o caminho clássico: o analógico de 32 direções, os botões no `button` (2 = PASSE, 3 = CHUTE) e a velocidade do
+PASSE e do CHUTE na sala do servidor com os números do jogo (Δv = força ÷ massa da bola, mais o embalo de quem corre).
 Uso: python3 tests/v85_online_test.py"""
 import asyncio, json, math, os, subprocess, sys, time
 from comum import Placar, rt, async_playwright, RAIZ
@@ -73,6 +76,10 @@ async def principal():
                 await rt(pg, "(() => { filaPop.length = 0; if (!LB.pop.hidden) fechaPop(); return 1; })()")
             K = await rt(A, "({VEL_JOG, R_JOG, ALCANCE_CHUTE, U1:U(1), nf:typeof NF !== 'undefined' ? {dir:NF.DIRECOES, passe:NF.CHUTE.passe, forte:NF.CHUTE.forte, embalo:NF.CHUTE.embalo, raspao:NF.CHUTE.raspao} : null})")
             DIR = K['nf']['dir'] if K['nf'] else 32
+            CLASSICA = V84 or not K['nf']                    # v86: a mecânica clássica (sem o núcleo FR-85 no jogo)
+            if CLASSICA and not V84:
+                P.nome = 'v85 · o online de ponta a ponta com o jogo de verdade (v86: a mecânica clássica)'
+                K.update(await rt(A, "({FORCA_KICK, FORCA_POWER, MASSA_BOLA, LIMITE_VEL_BOLA, U1:U(1)})"))
             sB = await rt(B, "NET49.localSlot"); sA = await rt(A, "NET49.localSlot")
             # ------------------------------------------------ 1) o analógico: corre na direção apontada e para ao soltar
             print('\n1) o analógico na sala hospedada')
@@ -102,6 +109,8 @@ async def principal():
             campos = sorted(set().union(*[set(m.keys()) for m in cmds])) if cmds else []
             if V84:
                 print('  (v84: o jogo manda os botões no campo %s)' % ('button' if 'button' in campos else 'acao' if 'acao' in campos else '?'))
+            elif CLASSICA:
+                P.confere(cmds and all('button' in m and 'acao' not in m for m in cmds), 'os comandos do jogo levam os botões no button (1/2/3), o da mecânica clássica', campos)
             else:
                 P.confere(cmds and all('acao' in m and 'button' not in m for m in cmds), 'os comandos do jogo levam os botões em bits (acao) e não têm mais o button', campos)
             quant = [abs(math.atan2(m['y'], m['x'])/S - round(math.atan2(m['y'], m['x'])/S)) < 1e-6 and abs(math.hypot(m['x'], m['y']) - 1) < 1e-9 for m in mov]
@@ -117,6 +126,11 @@ async def principal():
             if K['nf'] and r1 and r1['chutou']:
                 ini, teto = K['nf']['passe'], (K['nf']['passe'] + K['nf']['embalo']*K['VEL_JOG'])*1.05   # (os números do núcleo já estão em px/s)
                 P.confere(0.9*ini <= r1['v'] <= teto, 'o passe sai com a velocidade da FR-85 (%.0f px/s; a saída é %.0f px/s, mais o embalo até %.0f)' % (r1['v'], ini, teto), r1)
+            elif r1 and r1['chutou'] and CLASSICA and not V84:
+                dv = K['FORCA_KICK']/K['MASSA_BOLA']*K['U1']
+                # (medido no aparelho quando o quadro do chute chega: alguns passos depois, e a bola perde 1% por passo)
+                P.confere(0.8*dv <= r1['v'] <= min(K['LIMITE_VEL_BOLA'], (dv + K['VEL_JOG'])*1.05),
+                          'o passe sai com a força do jogo (%.0f px/s; Δv = %.0f px/s, mais o embalo até %.0f)' % (r1['v'], dv, dv + K['VEL_JOG']), r1)
             elif r1 and r1['chutou']:
                 P.confere(r1['v'] > 1.2*K['VEL_JOG'], 'o passe sai mais rápido que a corrida (%.0f px/s)' % r1['v'], r1)
             await espera(seg, "Math.hypot(B.vx, B.vy) < 40 ? 1 : 0", 6000)   # (espera a bola quase parar: o chute de agora é medido sozinho)
@@ -127,9 +141,17 @@ async def principal():
                 ini = K['nf']['forte']
                 teto = (K['nf']['forte'] + K['nf']['embalo']*K['VEL_JOG'] + K['nf']['raspao']*K['nf']['passe'])*1.05   # (o raspão: 20% do que a bola tinha de lado)
                 P.confere(0.9*ini <= r2['v'] <= teto, 'o chute sai com a velocidade da FR-85 (%.0f px/s; a saída é %.0f px/s, mais embalo e raspão até %.0f)' % (r2['v'], ini, teto), r2)
+            elif r2 and r2['chutou'] and CLASSICA and not V84:
+                dv = K['FORCA_POWER']/K['MASSA_BOLA']*K['U1']
+                P.confere(0.8*dv <= r2['v'] <= min(K['LIMITE_VEL_BOLA'], (dv + K['VEL_JOG'])*1.05) + 1e-6,
+                          'o chute sai com a força do jogo (%.0f px/s; Δv = %.0f px/s, mais o embalo, no teto de %.0f)' % (r2['v'], dv, K['LIMITE_VEL_BOLA']), r2)
             elif r2 and r2['chutou']:
                 P.confere(r2['v'] > 2*K['VEL_JOG'], 'o chute sai bem mais rápido que a corrida (%.0f px/s)' % r2['v'], r2)
-            if not V84:
+            if CLASSICA and not V84:
+                todos = [json.loads(c) for c in enviados['A'] + enviados['B'] if c.startswith('{"type":"input"')]
+                P.confere(any(m.get('button') == 2 for m in todos) and any(m.get('button') == 3 for m in todos), 'na rede: o PASSE vai como button 2 e o CHUTE como button 3',
+                          sorted(set(m.get('button') for m in todos)))
+            elif not V84:
                 todos = [json.loads(c) for c in enviados['A'] + enviados['B'] if c.startswith('{"type":"input"')]
                 P.confere(any(m.get('acao') == 1 for m in todos) and any(m.get('acao') == 2 for m in todos), 'na rede: o PASSE vai como acao 1 e o CHUTE como acao 2', sorted(set(m.get('acao') for m in todos)))
             erros = [e for pg in sess for e in pg.erros if 'Failed to load resource' not in e]

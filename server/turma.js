@@ -550,13 +550,13 @@ class Turma {
     if (!this.balde(c, 'comando', 130, 200)) return;
     if (r.servidor){                                     // v83: todos mandam para o servidor — inclusive quem criou a sala
       if (!r.partida) return;
-      r.partida.entrada(c.id, {seq:inteiro(m.seq, 0, 2e9, 0), x:+m.x || 0, y:+m.y || 0, acao:inteiro(m.acao, 0, 3, 0), k:inteiro(m.k, 0, 7, 0)});
+      r.partida.entrada(c.id, {seq:inteiro(m.seq, 0, 2e9, 0), x:+m.x || 0, y:+m.y || 0, button:[1, 2, 3].includes(m.button) ? m.button : 1, k:inteiro(m.k, 0, 7, 0)});
       return;
     }
     if (r.host === c.id) return;
     const h = this.porId.get(r.host); if (!h || h.sala !== r.code) return;
     const num = v => Math.max(-1, Math.min(1, Number(v) || 0));
-    this.manda(h, {type:'input', id:c.id, seq:inteiro(m.seq, 0, 2e9, 0), x:num(m.x), y:num(m.y), acao:inteiro(m.acao, 0, 3, 0), k:inteiro(m.k, 0, 7, 0)});
+    this.manda(h, {type:'input', id:c.id, seq:inteiro(m.seq, 0, 2e9, 0), x:num(m.x), y:num(m.y), button:[1, 2, 3].includes(m.button) ? m.button : 1, k:inteiro(m.k, 0, 7, 0)});
   }
   pause(c, m){
     const r = this.salaDe(c); if (!r || r.host !== c.id || r.state !== 'playing') return;

@@ -32,7 +32,7 @@ function novaPartida(o = {}) {
   }
   return { p, out, ag };
 }
-const manda = (p, id, seq, x, y, acao = 0, k = 0) => p.entrada(id, { seq, x, y, acao, k });   // v85: acao = bits (1 = PASSE, 2 = CHUTE)
+const manda = (p, id, seq, x, y, button = 1, k = 0) => p.entrada(id, { seq, x, y, button, k });
 const solta = (p, id) => { const q = p.jog.find(x => x.netId === id); if (q) q.fila.chegou = 0; };   // finge 350 ms de silêncio
 
 console.log('1) a saída: formação, barreira e o relógio');
@@ -86,10 +86,8 @@ console.log('2) a fila de comandos (o net49Control do jogo): seq, palpite, salto
   confere(q.y > y0, 'o palpite segue o último comando quando o pacote atrasa');
   p.rodar(2);
   const y1 = q.y;
-  p.rodar(4);                                              // v85 (FR-85): sem comando a tampinha freia em ~0,045 s (3 passos)
-  const y2 = q.y;
   p.rodar(10);
-  confere(q.y === y2 && y2 - y1 < F.U(0.5), 'mas para depois dos 4 passos de palpite (freia e não sai andando sozinho)', { y1, y2, y3: q.y });
+  confere(q.y === y1, 'mas para depois dos 4 passos de palpite (não sai andando sozinho)');
 }
 
 console.log('3) o chute: alcance, força e ritmo');
@@ -286,8 +284,8 @@ console.log('11) COM CURVA: carregar, soltar e a bola entorta');
   p.estado = 'jogo';
   const q = p.jog[0];
   q.x = p.B.x - (F.ALCANCE_CHUTE - 4); q.y = p.B.y;   // colado na bola, à esquerda
-  for (let s = 1; s <= 80; s++) { manda(p, 'A', s, 0, 0, 0, 1); p.passo(); }   // segura CURVA ~1,3 s (parado)
-  manda(p, 'A', 81, 0, 0, 0, 0);                       // soltou: o chute de curva sai
+  for (let s = 1; s <= 80; s++) { manda(p, 'A', s, 0, 0, 1, 1); p.passo(); }   // segura CURVA ~1,3 s (parado)
+  manda(p, 'A', 81, 0, 0, 1, 0);                       // soltou: o chute de curva sai
   p.passo();
   confere(p.B.cvT > 0, 'a bola saiu com efeito (cvT valendo)', p.B.cvT);
   confere(p.B.vx > 0, 'e para a frente (a força do CHUTE)');

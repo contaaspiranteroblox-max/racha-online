@@ -23,7 +23,7 @@ function updateCamera(dt,snap){
   const hw=W/(2*cam.z),hh=H/(2*cam.z);
   const target=cam.mode==='seguir'?alvoCamera(hw,hh):{x:CX,y:CY};
   if(X49?.camera==='stable'&&!snap&&cam.mode==='seguir'){const margin=8/cam.z;target.x-=Math.max(-margin,Math.min(margin,target.x-cam.x));target.y-=Math.max(-margin,Math.min(margin,target.y-cam.y));}
-  const k=snap?1:1-Math.pow(.5,dt/CAM_MEIA_VIDA);
+  const k=snap?1:Math.max(0,Math.min(1,CAM_SUAVE*dt));
   cam.x+=(target.x-cam.x)*k;cam.y+=(target.y-cam.y)*k;
   // v20: a câmera não mostra fora do mundo; se o mundo é menor que a tela naquele eixo, fica centralizada
   cam.x = 2*hw >= MW ? MW/2 : Math.max(hw, Math.min(MW-hw, cam.x));
@@ -51,7 +51,7 @@ const CAMV = {vx:0, vy:0, z:0, zAlvo:0, lx:null, ly:null, svx:0, svy:0, ax:0, ay
 const ESPEC = {alvo:-1};                               // quem o espectador acompanha: -1 = a bola · i = RQ.jog[i]
 function camN(){ return RQ.on ? Math.max(1, Math.min(4, RQ.n | 0)) : 1; }
 function camZoomDe(p){                                 // a escala de um enquadramento (sem o zoom automático)
-  if (p === 'campo'){ const m = Math.max(R_JOG*2.2, (GB - GT - (LY1 - LY0))/2 + MARGEM_Y*.5); return Math.min(W/(LX1 - LX0 + 2*m), H/(LY1 - LY0 + 2*m)); }   // a quadra inteira, com uma folga (v85: a folga cobre a beira onde a tampinha anda, para a câmera não cortar a quadra)
+  if (p === 'campo'){ const m = R_JOG*2.2; return Math.min(W/(LX1 - LX0 + 2*m), H/(LY1 - LY0 + 2*m)); }   // a quadra inteira, com uma folga
   const pct = CAM_PRESET_PCT[p] ? CAM_PRESET_PCT[p][camN() - 1] : cam.zoom;
   return Math.max(.2, Math.min(ZOOM_MAX, ARC_ZOOM_BASE*(pct/ZOOM_PADRAO)));
 }

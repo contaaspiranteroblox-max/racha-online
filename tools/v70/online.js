@@ -182,7 +182,7 @@ function v70Reanexa(){                                     // (anfitrião) quem 
   r.roster.forEach((id, i) => {
     const q = RQ.jog[i]; if (!q || !id || id === NET49.id || i === NET49.localSlot || (q.netId === id && q.remote)) return;
     const m = r.members.find(x => x.id === id);
-    Object.assign(q, {netId:id, remote:true, mx:0, my:0, chutar:0, ack49:0, netButton49:NF.novoGatilho(), cv70:null, nsA:null});
+    Object.assign(q, {netId:id, remote:true, mx:0, my:0, chutar:0, ack49:0, netButton49:{estado:1, livre:true, t:0, ultimo:-1e9}, cv70:null, nsA:null});
     q.nome = m && m.name ? m.name : String(q.nome || 'Jogador').replace(/ \(bot\)$/, '');
     if (m && m.skin) q.netSkin = m.skin;
     NET49.inputs.delete(id);

@@ -12,21 +12,15 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
-## v85 · a física própria (FR-85) e o comando `acao`
+## v86 · a mecânica clássica de volta (o comando `button`)
 
-A auditoria de proveniência de 17/10/2026 trocou a física e os controles que vinham de outro jogo (ver `PROVENIENCIA.md` na
-raiz). Para o servidor, isso quer dizer:
-
-* **Um núcleo só** (`server/partida/nucleo_fisica.js`, a FR-85): os números (corrida, chutes, bola, batidas) e as funções
-  (movimento com aceleração limitada, chute com velocidade de saída, meia-vida da bola, batidas por par, subpassos, o
-  analógico de 256 direções e o gatilho dos botões). O jogo usa **o mesmo arquivo** (o build cola o texto dele e confere o
-  sha256), e a partida autoritativa (`fisica.js`) e o motor das salas (`sala.js`) chamam esse núcleo. A especificação está
-  em `tools/v85/FISICA_RACHA.md`; o teste `tests/v85_sincronia_test.py` confere o mesmo lance no jogo e aqui (diferença 0).
-* **O comando de entrada mudou:** `input {seq, x, y, acao, k}`. `acao` são os botões em bits: **1 = PASSE**, **2 = CHUTE**
-  (os dois apertados = 3). O `button` (1/2/3) e o intervalo de 0,02 s entre trocas de botão da v84 saíram. O gatilho é o da
-  FR-85: o último botão apertado arma o chute, segurando ele espera a bola entrar no alcance, e um aperto dá um chute só.
-  Um jogo da v84 que mande `button` anda, mas não chuta neste servidor (o jogo e o servidor vão juntos na mesma versão).
-* **A direção** que chega é arredondada a 1/256 de volta (a v84 usava 32 direções).
+A v86 voltou, a pedido, à mecânica da v84 — e o servidor junto: a partida autoritativa (`partida/fisica.js`) e o motor das
+salas (`partida/sala.js`) usam de novo a física da v84 (o porte da física do jogo, com as mesmas constantes), o analógico
+de 32 direções e o comando `input {seq, x, y, button, k}` (`button`: 1 = nada, 2 = PASSE, 3 = CHUTE, com 0,02 s entre
+trocas de botão). Só o chute mudou: **PASSE 275 e CHUTE 440** (eram 250 e 400) e o **teto da bola 60 u/s** (era 55), os
+mesmos números no jogo (`backup/racha.html`, bloco AJUSTES) e aqui (`server/partida/fisica.js`); o
+`tests/v86_chute_test.py` confere os dois lados. Um jogo da v85 (que manda `acao`) anda, mas não chuta num servidor da
+v86, e vice-versa: o jogo e o servidor vão juntos na mesma versão. (A FR-85 da v85 ficou na branch `v85-auditada`.)
 
 ## Opções
 
@@ -91,10 +85,10 @@ relógio. Ninguém é anfitrião: cada aparelho **só manda intenção** (a dire
 número de sequência) e **só recebe quadros** (as posições calculadas pelo servidor). O placar não passa pelo
 aparelho de ninguém.
 
-* **A simulação** (`server/partida/fisica.js`): a física do jogo — desde a v85, o mesmo núcleo FR-85 que o jogo usa
-  (`server/partida/nucleo_fisica.js`: passo fixo de 60 por segundo, a corrida, os chutes, a bola, as batidas, as traves,
-  as redes e as paredes com a boca do gol aberta, o gol só com a bola inteira dentro), sem depender de nada.
-  Determinística: os mesmos comandos dão a mesma partida.
+* **A simulação** (`server/partida/fisica.js`): a mesma física do jogo (passo fixo de 60 por segundo, as mesmas
+  constantes — a velocidade do jogador, a força dos chutes, o amortecimento da bola, o limite de velocidade, as
+  traves, as redes e as paredes com a boca do gol aberta, o gol só com a bola inteira dentro), reescrita para o
+  servidor, sem depender de nada. Determinística: os mesmos comandos dão a mesma partida.
 * **A partida** (`server/partida/partida.js`): a regra da partida normal da v80, no relógio do servidor — **3:00**,
   **3 gols acabam na hora**, **empate no 1 × 1 e no 2 × 2**, só o **0 × 0** vai para a **prorrogação** (até 2:00 a
   mais, gol de ouro; sem gol, empate). Os quadros saem a **20 por segundo** (um a cada 3 passos). Quem cai tem **45
@@ -111,7 +105,7 @@ placar). O que chega do aparelho é conferido um a um:
 
 * o **número de sequência** só anda para frente (comando repetido ou atrasado é descartado);
 * o **ritmo** tem teto (120 comandos por segundo; rajada anormal é registrada);
-* a **direção** é o joystick quantizado do jogo (256 direções desde a v85); módulo acima de 1 é cortado — e acima de 1,05 é
+* a **direção** é o joystick quantizado do jogo (32 direções); módulo acima de 1 é cortado — e acima de 1,05 é
   registrado como `direcao_acima_de_1`;
 * o **chute** tem o tempo mínimo entre um e outro (33 ms — macro de chute vira `chute_rapido_demais`) e **só vale no
   alcance** (chute longe demais da bola não acontece e vira `chute_fora_do_alcance`).
@@ -135,7 +129,7 @@ A etapa final da v83 leva a simulação do servidor para **todas** as partidas o
 caminho independente). Nenhuma sala nasce mais no aparelho de alguém.
 
 * **O motor da sala** (`server/partida/sala.js`): a mesma simulação do jogo, passo a passo — 60 passos por segundo,
-  o mesmo núcleo FR-85 (v85), a mesma ordem de colisões, a barreira da saída, o toque, o chute (com alcance e tempo mínimo,
+  as mesmas constantes, a mesma ordem de colisões, a barreira da saída, o toque, o chute (com alcance e tempo mínimo,
   igual para todo mundo), a autoria do gol (autor, assistência, contra e desvio), a comemoração, a saída do outro
   time, a meta ou o relógio com gol de ouro (partida livre) e a regra v80 (ranqueada: 3:00 do servidor, meta 3,
   prorrogação só no 0 × 0). Os quadros saem a **30 por segundo no formato clássico** (`snapshot` com `tick`, `state`,
@@ -269,7 +263,7 @@ mensagens do Chat do Brasil; o jogo desenha o V na frente do nome. Só o dono da
 Cliente → servidor: `hello {token, name, skin, avatar, flag, conta?, clube?}` · `ping` · `list` ·
 `create {n, map, jogo, tempo, bots, pub, name}` · `join {code, spectate?, slot?, rapido?}` · `leave` ·
 `seat {slot?|team?, id?}` · `config {n, map, jogo, tempo, bots, pub, name}` · `ready {on}` · `rematch {on}` · `start` ·
-`pause {paused}` · `input {seq, x, y, acao, k}` (v85: `acao` = os botões em bits, 1 = PASSE, 2 = CHUTE) · `snapshot {round, data}` · `finish {round, score}` · `kick {id}` ·
+`pause {paused}` · `input {seq, x, y, button, k}` (`button`: 1 = nada, 2 = PASSE, 3 = CHUTE; na v85 era `acao`, em bits) · `snapshot {round, data}` · `finish {round, score}` · `kick {id}` ·
 `promote {id}` · `say {text}` · `typing {on}` · `report {mid}` (v81) · `profile {name, skin, avatar, clube?}` · `social` · `rtc {to, d}` ·
 `p2p {on}` · `cupCreate {name}` · `cupNext` · `cupEnd` · `club_req {rid, op, args}` ·
 `brasil_join {name, skin, avatar, token}` · `brasil_say {text}` · `brasil_report {id}` · `fila {n, pts}` · `fila_sai` (v79) ·

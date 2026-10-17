@@ -67,7 +67,7 @@ function joyDesenha(){
   pintaHud(g, sprHud('joyAro|' + anel, q, anel + 6, anel + 6, anel + 6, anel + 6, h => joyAroCorpo(h, anel)));
   if (joy.id !== null){
     if (joy.ativo){
-      const ang = AN.setor !== null ? AN.setor*TAU/NF.DIRECOES : Math.atan2(joy.dy, joy.dx);   // a direção que o jogo usa (v85: 256 direções)
+      const ang = AN.setor !== null ? AN.setor*TAU/32 : Math.atan2(joy.dy, joy.dx);   // a direção que o jogo usa (32 direções)
       const gf = g.createRadialGradient(0, 0, R*.18, 0, 0, R - 3);
       gf.addColorStop(0, 'rgba(245,197,66,0)'); gf.addColorStop(1, 'rgba(245,197,66,.62)');
       g.fillStyle = gf; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R - 3, ang - .42, ang + .42); g.closePath(); g.fill();

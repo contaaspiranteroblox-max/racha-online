@@ -100,7 +100,7 @@ Se o `arena.js` falhar ou não carregar, a Arena antiga é desenhada (os ganchos
 
 ## v67 · analógico novo, mais câmeras e sem skins
 Tudo no `tools/partida_rua.js`. A física e a entrada continuam iguais: o analógico entrega as mesmas 32 direções
-de antes (até a v84; desde a v85 são 256, ver `tools/v85/FISICA_RACHA.md`), com a mesma zona morta (anda com o dedo a 20% do curso, para abaixo de 12%). O hash do bloco PHYS não mudou.
+de antes, com a mesma zona morta (anda com o dedo a 20% do curso, para abaixo de 12%). O hash do bloco PHYS não mudou.
 
 **Analógico**
 - Maior: a 100% a base tem raio 170 (era 129), a tampinha do manipulador 60 (era 32) e o curso 128 (era 100). O toque pega num círculo de 300.

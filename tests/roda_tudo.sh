@@ -19,11 +19,12 @@
 # reconexão, a bola e o placar sincronizados, a ranqueada hospedada, as partidas simultâneas com CPU/RAM/banda); ~5 min.
 # O v83_medida (Node, fora da lista por não ser teste de passa/falha) imprime o custo de CPU do passo de 60 Hz e o
 # tamanho dos quadros na rede — a medida que o plano da v83 pede antes de fixar a frequência.
-# v85: o v85_fisica (Node) testa o núcleo da física FR-85 e as metas; o v85_sincronia confere o mesmo lance no jogo e no
-# servidor (diferença zero); o v85_online joga com duas sessões do jogo numa sala hospedada (o analógico de 256 direções e
-# os botões em bits chegando ao servidor); o v85_chaves confere a migração das chaves antigas do treino. O online, o v79, o
-# v80, o v81 e a parte "pela rede" do servidor_test sobem o tests/servidor_visitantes.cjs (o servidor de verdade aceitando
-# quem não tem conta: o padrão da v84 exige a conta). Para guardar a saída inteira de cada teste: bash tests/roda_lista.sh.
+# v85: o v85_online joga com duas sessões do jogo numa sala hospedada (o comando chegando ao servidor; na v86 ele confere a
+# mecânica clássica: 32 direções e os botões 1/2/3); o v85_chaves confere a migração das chaves antigas do treino. O online,
+# o v79, o v80, o v81 e a parte "pela rede" do servidor_test sobem o tests/servidor_visitantes.cjs (o servidor de verdade
+# aceitando quem não tem conta: o padrão da v84 exige a conta). Para guardar a saída inteira de cada teste: bash tests/roda_lista.sh.
+# v86: o v86_chute confere a mecânica clássica de volta e o chute mais forte — os mesmos números no jogo e no servidor, a
+# velocidade da bola depois do PASSE e do CHUTE no jogo de verdade e na sala do servidor.
 cd "$(dirname "$0")/.." || exit 1
 python3 tools/aplicar_rua.py | head -1 || exit 1
 falhou=0
@@ -49,9 +50,7 @@ printf '%-12s ' "v83_salas_ws"
 if out=$(python3 tests/v83_salas_ws_test.py 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU|Error' | head -4; echo "$out" | tail -1; fi
 printf '%-12s ' "guard"
 if out=$(node tests/compila_guard.cjs >/dev/null 2>&1 && node tests/guard_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
-printf '%-12s ' "v85_fisica"
-if out=$(node tests/v85_fisica_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
-for t in v85_sincronia v85_online v85_chaves; do
+for t in v85_online v85_chaves v86_chute; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done
