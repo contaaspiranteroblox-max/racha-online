@@ -78,4 +78,4 @@
   OK      aparelho B: sem erros de JavaScript (no jogo e na página-mãe)
   OK      aparelho C: sem erros de JavaScript (no jogo e na página-mãe)
 
-v82 · as contas: 63/63 verificações ok em 59.5 s
+v82 · as contas: 63/63 verificações ok em 59.2 s

@@ -59,7 +59,7 @@
   OK      a setinha que cairia em placar fica num lugar livre [1200, 40]
   OK      a setinha que cairia em pausa fica num lugar livre [89, 40]
   OK      com Seguir bola e você fora da tela aparece VOCÊ; no Seguir jogador não precisa
-     {"nomes": ["JOGADOR", "Pipoca", "Caio", "Tico", "BOLA"], "visivel": true, "rotulos": ["CÂMERA: PIPOCA"], "nomeAlvo": "Pipoca"}
+     {"nomes": ["JOGADOR", "Nina", "Neném", "Vini", "BOLA"], "visivel": true, "rotulos": ["CÂMERA: NINA"], "nomeAlvo": "Nina"}
   OK      o espectador troca: jogadores e de volta para a bola
   OK      a câmera do espectador mantém o jogador escolhido inteiro na tela
   OK      o rótulo diz quem a câmera acompanha
@@ -74,4 +74,4 @@
   OK      o editor de HUD ficou só com os controles
   OK      nenhum erro de JavaScript
 
-Etapa 2 · câmeras: 47/47 verificações ok em 4.6 s
+Etapa 2 · câmeras: 47/47 verificações ok em 4.7 s

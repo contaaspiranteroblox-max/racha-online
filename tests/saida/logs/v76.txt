@@ -23,10 +23,10 @@
   OK      editor › MODELOS PRONTOS: começa pelas 8 da coleção, com o selo ANIMADA
   OK      editor: os cartões da coleção mexem
   OK      editor › ÍCONE: com uma cara animada, sem posição, tamanho e estilo; as 8 caras com o selo na faixa
-     ms por quadro, 8 tampinhas iguais na tela: {"Cria": 0.53, "Cristo": 1.7, "Brasil": 1.79, "Pitbull": 1.51, "Deboche": 1.98, "Fé": 2.42, "Dragão": 2.6, "Galáxia": 0.44}
-  OK      o custo: 8 tampinhas animadas por quadro, no pior caso 2.6 ms (Chromium de teste, sem placa de vídeo)
+     ms por quadro, 8 tampinhas iguais na tela: {"Cria": 0.55, "Cristo": 1.77, "Brasil": 2.32, "Pitbull": 1.78, "Deboche": 2.23, "Fé": 2.27, "Dragão": 2.9, "Galáxia": 0.44}
+  OK      o custo: 8 tampinhas animadas por quadro, no pior caso 2.9 ms (Chromium de teste, sem placa de vídeo)
   OK      nenhum erro de JavaScript (computador)
   OK      844x390: a coleção no começo da faixa dos modelos prontos (52 cartões)
   OK      844x390: nenhum erro de JavaScript
 
-v76 · a grama de fora escura, a calçada de Copacabana e as tampinhas animadas: 28/28 verificações ok em 17.3 s
+v76 · a grama de fora escura, a calçada de Copacabana e as tampinhas animadas: 28/28 verificações ok em 17.6 s

@@ -1,6 +1,6 @@
 
 · gol contra depois do domínio do defensor (o caso da auditoria)
-    {"tocouA": true, "g": {"ticks": 40, "placar": [1, 0], "time": 0, "pts": 1, "autor": null, "assist": null, "contra": true, "contraDe": "Kaká", "desvio": null, "golH": false, "assistH": false, "golsH": 0, "info": {"time": 0, "placar": [1, 0], "autor": "", "assist": "", "contra": true, "contraDe": "Kaká", "desvio": "", "jogo": "futebol", "pts": 1, "ginga": false, "meu": 0}}, "D": "Kaká", "faixa": {"t
+    {"tocouA": true, "g": {"ticks": 40, "placar": [1, 0], "time": 0, "pts": 1, "autor": null, "assist": null, "contra": true, "contraDe": "Cris", "desvio": null, "golH": false, "assistH": false, "golsH": 0, "info": {"time": 0, "placar": [1, 0], "autor": "", "assist": "", "contra": true, "contraDe": "Cris", "desvio": "", "jogo": "futebol", "pts": 1, "ginga": false, "meu": 0}}, "D": "Cris", "faixa": {"t
   OK      o atacante tocou antes do defensor
   OK      saiu o ponto
   OK      é gol contra, sem autor no time que marcou
@@ -11,22 +11,22 @@
   OK      a faixa explica: GOL CONTRA DE ...
 
 · assistência não sobrevive ao gol contra
-    {"g": {"ticks": 40, "placar": [1, 0], "time": 0, "pts": 1, "autor": null, "assist": null, "contra": true, "contraDe": "Malu", "desvio": null, "golH": false, "assistH": false, "golsH": 0, "info": {"time": 0, "placar": [1, 0], "autor": "", "assist": "", "contra": true, "contraDe": "Malu", "desvio": ""
+    {"g": {"ticks": 40, "placar": [1, 0], "time": 0, "pts": 1, "autor": null, "assist": null, "contra": true, "contraDe": "Zeca", "desvio": null, "golH": false, "assistH": false, "golsH": 0, "info": {"time": 0, "placar": [1, 0], "autor": "", "assist": "", "contra": true, "contraDe": "Zeca", "desvio": ""
   OK      sem autor e sem assistência
 
 · gol com passe do companheiro
-    {"g": {"ticks": 40, "placar": [1, 0], "time": 0, "pts": 1, "autor": "EU", "assist": "Tico", "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [1, 0], "autor": "Jogador", "assist": "Tico", "contra": false, "contraDe": "", "des
+    {"g": {"ticks": 40, "placar": [1, 0], "time": 0, "pts": 1, "autor": "EU", "assist": "Nina", "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [1, 0], "autor": "Jogador", "assist": "Nina", "contra": false, "contraDe": "", "des
   OK      seu gol, assistência do companheiro
 
 · touchdown só com o portador do time que ataca
     {"m": {"meta": 3, "jogo": "americano", "n": 2, "td": true, "tres": 0, "metaTxt": "PRIMEIRO A 3 TOUCHDOWNS"}, "g": {"ticks": 35, "placar": [1, 0], "time": 0, "pts": 1, "autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info":
   OK      quem conduz pela linha faz o touchdown
-    {"g": null, "cruzou": true, "tocouD": false, "folgaNaLinha": 4.052354147064186, "folgaMin": 4.032778078668514, "placar": [0, 0], "dx": 19}
+    {"g": null, "cruzou": true, "tocouD": false, "folgaNaLinha": 4.011523232873188, "folgaMin": 4.006878191509074, "placar": [0, 0], "dx": 19}
   OK      o chutão chegou à linha com o defensor a menos de 8 px, sem encostar
   OK      chutão com defensor perto não vale touchdown
 
 · basquete: os pontos da tentativa atual
-    {"m": {"meta": 12, "jogo": "basquete", "n": 2, "td": false, "tres": 209, "metaTxt": "PRIMEIRO A 12 PONTOS"}, "g": {"ticks": 27, "placar": [3, 0], "time": 0, "pts": 3, "autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info":
+    {"m": {"meta": 12, "jogo": "basquete", "n": 2, "td": false, "tres": 209, "metaTxt": "PRIMEIRO A 12 PONTOS"}, "g": {"ticks": 36, "placar": [3, 0], "time": 0, "pts": 3, "autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info":
   OK      arremesso de fora do arco vale 3
     {"origem": {"time": 0, "longe": true}, "depois": false, "g": {"ticks": 27, "placar": [2, 0], "time": 0, "pts": 2, "autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [2, 0], "autor": "Jogador", "a
   OK      a tentativa anterior foi de fora do arco
@@ -37,14 +37,14 @@
 
 · a regra, caso a caso (sequências montadas)
     simples          {"autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "tres": false}
-    passe            {"autor": "EU", "assist": "Vini", "contra": false, "contraDe": null, "desvio": null, "tres": false}
+    passe            {"autor": "EU", "assist": "Nando", "contra": false, "contraDe": null, "desvio": null, "tres": false}
     passeVelho       {"autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "tres": false}
     interceptado     {"autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "tres": false}
     desvioNoCaminho  {"autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": null, "tres": false}
     contraDominado   {"autor": null, "assist": null, "contra": true, "contraDe": "Neném", "desvio": null, "tres": false}
-    desvioNoAlvo     {"autor": "EU", "assist": "Vini", "contra": false, "contraDe": null, "desvio": "Neném", "tres": false}
+    desvioNoAlvo     {"autor": "EU", "assist": "Nando", "contra": false, "contraDe": null, "desvio": "Neném", "tres": false}
     desvioFora       {"autor": null, "assist": null, "contra": true, "contraDe": "Neném", "desvio": null, "tres": false}
-    desvioDuplo      {"autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": "Mel", "tres": false}
+    desvioDuplo      {"autor": "EU", "assist": null, "contra": false, "contraDe": null, "desvio": "Rafa", "tres": false}
     desvioTarde      {"autor": null, "assist": null, "contra": true, "contraDe": "Neném", "desvio": null, "tres": false}
     chutouDeNovo     {"autor": null, "assist": null, "contra": true, "contraDe": "Neném", "desvio": null, "tres": false}
     contraDoSeuTime  {"autor": null, "assist": null, "contra": true, "contraDe": "EU", "desvio": null, "tres": false}
@@ -90,7 +90,7 @@
   OK      ginga: a apresentação diz PRIMEIRO A 5 PONTOS
 
 · placar, faixa, replay, estatística, prêmio e plataforma usam a mesma classificação
-    {"g1": {"L": {"ticks": 0, "placar": [1, 0], "time": 0, "pts": 1, "autor": "EU", "assist": "Zeca", "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [1, 0], "autor": "Jogador", "assist": "Zeca", "contra": false, "contraDe": "", "desvio": "", "jogo": "futebol", "pts": 1, "ginga": false, "meu": 0}}, "f": {"t": "GOL!", "s": "PASSE DE ZECA", "azul": false}}, "g2": {"L": {"ticks": 0, "placar": [2, 0], "time": 0, "pts": 1, "autor": null, "assist": null, "contra": true, "contraDe": "Biel", "desvio": null, "golH": false, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [2, 0], "autor": "", "assist": "", "contra": true, "contraDe": "Biel", "desvio": "", "jogo": "futebol", "pts": 1, "ginga": false, "meu": 0}}, "f": {"t": "GOL!", "s": "GOL CONTRA DE BIEL", "azul": false}}, "g3": {"L": {"ticks": 0, "placar": [2, 1],
+    {"g1": {"L": {"ticks": 0, "placar": [1, 0], "time": 0, "pts": 1, "autor": "EU", "assist": "Vini", "contra": false, "contraDe": null, "desvio": null, "golH": true, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [1, 0], "autor": "Jogador", "assist": "Vini", "contra": false, "contraDe": "", "desvio": "", "jogo": "futebol", "pts": 1, "ginga": false, "meu": 0}}, "f": {"t": "GOL!", "s": "PASSE DE VINI", "azul": false}}, "g2": {"L": {"ticks": 0, "placar": [2, 0], "time": 0, "pts": 1, "autor": null, "assist": null, "contra": true, "contraDe": "Lelê", "desvio": null, "golH": false, "assistH": false, "golsH": 1, "info": {"time": 0, "placar": [2, 0], "autor": "", "assist": "", "contra": true, "contraDe": "Lelê", "desvio": "", "jogo": "futebol", "pts": 1, "ginga": false, "meu": 0}}, "f": {"t": "GOL!", "s": "GOL CONTRA DE LELÊ", "azul": false}}, "g3": {"L": {"ticks": 0, "placar": [2, 1],
   OK      gol 1: seu, com passe
   OK      faixa do gol 1: GOL! · PASSE DE ...
   OK      gol 2: contra deles, faixa explica

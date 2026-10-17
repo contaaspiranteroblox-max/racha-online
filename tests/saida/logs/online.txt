@@ -2,7 +2,7 @@
 1) conectar sozinho (o mesmo endereço do jogo) e criar uma sala pública
   OK      as duas sessões conectam sozinhas no servidor do mesmo endereço (ws://127.0.0.1)
   OK      a lista mostra ONLINE e o nome do servidor
-  FALHOU  criar sala online: o árbitro começa nos espectadores (como a v68)  ·  {'id': 'u0ugbzxgla', 'sala': '3TNJ33', 'estado': 'waiting', 'rodada': 0, 'roster': ['u0ugbzxgla', None], 'dono': 'srv', 'jogando': False, 'host': False, 'slot': -1, 'rq': None, 'placar': [0, 0], 'tick': 0}
+  FALHOU  criar sala online: o árbitro começa nos espectadores (como a v68)  ·  {'id': 'uqhgtczsqq', 'sala': 'Q74TBK', 'estado': 'waiting', 'rodada': 0, 'roster': ['uqhgtczsqq', None], 'dono': 'srv', 'jogando': False, 'host': False, 'slot': -1, 'rq': None, 'placar': [0, 0], 'tick': 0}
   OK      o título diz SALA PÚBLICA (Pública · código …)
 
 2) JOGAR AGORA com lugar no time · ENTRAR NO TIME perto do INICIAR
@@ -11,7 +11,7 @@
   OK      ENTRAR NO TIME: a Ana vai para o time vazio (1v1 completo)
 
 3) a partida: começo, comandos e quadros
-  FALHOU  começou: a Ana roda a partida (anfitriã) e o Beto recebe os quadros  ·  [{'id': 'u0ugbzxgla', 'sala': '3TNJ33', 'estado': 'playing', 'rodada': 1, 'roster': ['u0ugbzxgla', 'uplxsihedx'], 'dono': 'srv', 'jogando': True, 'host': False, 'slot': 0, 'rq': 'saida', 'placar': [0, 0], 'tick': 370}, {'id': 'uplxsihedx', 'sala': '3TNJ33', 'estado': 'playing', 'rodada': 1, 'roster': ['u0ugbzxgla', 'uplxsihedx'], 'dono': 'srv', 'jogando': True, 'host': False, 'slot': 1, 'rq': 'saida', 'placar': [0, 0], 'tick': 370}]
+  FALHOU  começou: a Ana roda a partida (anfitriã) e o Beto recebe os quadros  ·  [{'id': 'uqhgtczsqq', 'sala': 'Q74TBK', 'estado': 'playing', 'rodada': 1, 'roster': ['uqhgtczsqq', 'utjytcmnjw'], 'dono': 'srv', 'jogando': True, 'host': False, 'slot': 0, 'rq': 'saida', 'placar': [0, 0], 'tick': 360}, {'id': 'utjytcmnjw', 'sala': 'Q74TBK', 'estado': 'playing', 'rodada': 1, 'roster': ['uqhgtczsqq', 'utjytcmnjw'], 'dono': 'srv', 'jogando': True, 'host': False, 'slot': 1, 'rq': 'saida', 'placar': [0, 0], 'tick': 360}]
   OK      evento de começo uma vez em cada sessão
   OK      COM CURVA: o convidado tem o botão CURVA (antes não tinha)
   OK      o anfitrião tem o boneco do convidado ligado ao id dele
@@ -27,7 +27,7 @@ Traceback (most recent call last):
   File "/home/claude/racha-online/tests/online_test.py", line 238, in <module>
     roda(principal())
     ~~~~^^^^^^^^^^^^^
-  File "/home/claude/racha-online/tests/comum.py", line 80, in roda
+  File "/home/claude/racha-online/tests/comum.py", line 86, in roda
     sys.exit(asyncio.run(corrotina))
              ~~~~~~~~~~~^^^^^^^^^^^
   File "/usr/lib/python3.13/asyncio/runners.py", line 196, in run
@@ -42,7 +42,7 @@ Traceback (most recent call last):
   File "/home/claude/racha-online/tests/online_test.py", line 136, in principal
     fimB = await rt(B, "window.__ev[1][1]")
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/claude/racha-online/tests/comum.py", line 76, in rt
+  File "/home/claude/racha-online/tests/comum.py", line 82, in rt
     return await pg.evaluate('s => window.__RT(s)', js)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/usr/local/lib/python3.13/dist-packages/playwright/async_api/_generated.py", line 8514, in evaluate
@@ -65,8 +65,8 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/dist-packages/playwright/_impl/_connection.py", line 559, in wrap_api_call
     raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
 playwright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading '1')
-    at eval (eval at window.__RT (http://127.0.0.1:39627/tests/build/racha_teste.html:26988:35), <anonymous>:1:15)
-    at window.__RT (http://127.0.0.1:39627/tests/build/racha_teste.html:29857:35)
+    at eval (eval at window.__RT (http://127.0.0.1:46023/tests/build/racha_teste.html:27007:35), <anonymous>:1:15)
+    at window.__RT (http://127.0.0.1:46023/tests/build/racha_teste.html:29876:35)
     at eval (eval at evaluate (:290:30), <anonymous>:1:13)
     at UtilityScript.evaluate (<anonymous>:297:18)
     at UtilityScript.<anonymous> (<anonymous>:1:44)

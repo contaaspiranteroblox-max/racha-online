@@ -11,10 +11,10 @@
 
 2) os botões na sala hospedada: PASSE e CHUTE
   OK      quem dá a saída vai até a bola e o PASSE (Espaço) sai no servidor
-  OK      o passe sai com a força do jogo (466 px/s; Δv = 522 px/s, mais o embalo até 790)
+  OK      o passe sai com a força do jogo (393 px/s; Δv = 404 px/s, mais o embalo até 672)
   OK      o outro vai atrás da bola e o CHUTE (K) sai no servidor
-  OK      o chute sai com a força do jogo (809 px/s; Δv = 836 px/s, mais o embalo, no teto de 1140)
+  OK      o chute sai com a força do jogo (660 px/s; Δv = 646 px/s, mais o embalo, no teto de 888)
   OK      na rede: o PASSE vai como button 2 e o CHUTE como button 3
   OK      nenhum erro de JavaScript nas duas sessões
 
-v85 · o online de ponta a ponta com o jogo de verdade (v86: a mecânica clássica): 14/14 verificações ok em 14.4 s
+v85 · o online de ponta a ponta com o jogo de verdade (v86: a mecânica clássica): 14/14 verificações ok em 13.7 s

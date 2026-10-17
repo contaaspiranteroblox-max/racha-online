@@ -34,4 +34,4 @@
   OK      844x390: o lobby, o perfil (VISÃO GERAL, CONQUISTAS, PARTIDAS) e as telas cabem sem rolar
   OK      844x390: nenhum erro de JavaScript
 
-v77 · o lobby, o perfil, as telas e o mapa principal das imagens enviadas: 34/34 verificações ok em 37.5 s
+v77 · o lobby, o perfil, as telas e o mapa principal das imagens enviadas: 34/34 verificações ok em 38.8 s

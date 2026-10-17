@@ -26,7 +26,7 @@
   OK      COM CURVA no Estádio: abre com o botão CURVA
 
 · a bola sem efeitos
-    {'respAntes': 8, 'respDepois': 0, 'desenhos': 0, 'bola': 'classic', 'efeitos': ['border', 'celebration', 'uniform'], 'vel': 787}
+    {'respAntes': 8, 'respDepois': 0, 'desenhos': 0, 'bola': 'classic', 'efeitos': ['border', 'celebration', 'uniform'], 'vel': 608}
   OK      chute de verdade com os Efeitos ligados: o rastro e o respingo não desenham nada
   OK      a bola é sempre a clássica; a cor da bola saiu de EFEITOS (borda, comemoração e uniforme ficam)
   OK      a tela EFEITOS não oferece mais a cor da bola
@@ -55,4 +55,4 @@
   OK      depois disso vale o que a pessoa escolher: ligou de novo, continua ligado ao reabrir
   OK      nenhum erro de JavaScript (salvo antigo)
 
-v70.2 · enxuto: 2 modos, a Arena e o Estádio, a bola sem efeitos, o indicador desligado: 37/37 verificações ok em 10.9 s
+v70.2 · enxuto: 2 modos, a Arena e o Estádio, a bola sem efeitos, o indicador desligado: 37/37 verificações ok em 11.6 s

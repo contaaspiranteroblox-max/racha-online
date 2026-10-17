@@ -54,7 +54,7 @@
   OK      com o servidor: a BUSCA conecta e entra na fila do 1v1
   OK      a busca diz o que está fazendo e quando vira contra bots (sem o aviso das salas embaixo)
   OK      o hello do servidor traz o seu selo (sem conta: nenhum)
-  FALHOU  os dois da fila jogam juntos: a sala ranqueada 1v1 no Estádio (um roda a partida)  ·  [{'id': 'u8hlejtfiq', 'sala': 'B4EBST', 'ranked': True, 'map': 4, 'n': 1, 'jogando': True, 'host': False, 'slot': 0, 'rq': 'saida', 'mm': 'ranked', 'nome': 'RANQUEADA ONLINE', 'aviso': 'RANQUEADA ONLINE', 'busca': None, 'lobby': False, 'pts': 1000, 'selo': ''}, {'id': 'uq7jdzrou7', 'sala': 'B4EBST', 'ranked': True, 'map': 4, 'n': 1, 'jogando': True, 'host': False, 'slot': 1, 'rq': 'saida', 'mm': 'ranked', 'nome': 'RANQUEADA ONLINE', 'aviso': 'RANQUEADA ONLINE', 'busca': None, 'lobby': False, 'pts': 1000, 'selo': ''}]
+  FALHOU  os dois da fila jogam juntos: a sala ranqueada 1v1 no Estádio (um roda a partida)  ·  [{'id': 'uexluoyvlw', 'sala': 'AK7AW3', 'ranked': True, 'map': 4, 'n': 1, 'jogando': True, 'host': False, 'slot': 0, 'rq': 'saida', 'mm': 'ranked', 'nome': 'RANQUEADA ONLINE', 'aviso': 'RANQUEADA ONLINE', 'busca': None, 'lobby': False, 'pts': 1000, 'selo': ''}, {'id': 'u5beslpt4d', 'sala': 'AK7AW3', 'ranked': True, 'map': 4, 'n': 1, 'jogando': True, 'host': False, 'slot': 1, 'rq': 'saida', 'mm': 'ranked', 'nome': 'RANQUEADA ONLINE', 'aviso': 'RANQUEADA ONLINE', 'busca': None, 'lobby': False, 'pts': 1000, 'selo': ''}]
   OK      a busca fecha, o lobby sai e a faixa diz RANQUEADA ONLINE
   OK      a sala da ranqueada não abre a tela da sala (a partida vem direto)
   OK      a sala da ranqueada não aparece na lista das salas
@@ -63,7 +63,7 @@ Traceback (most recent call last):
   File "/home/claude/racha-online/tests/v79_test.py", line 346, in <module>
     roda(principal())
     ~~~~^^^^^^^^^^^^^
-  File "/home/claude/racha-online/tests/comum.py", line 80, in roda
+  File "/home/claude/racha-online/tests/comum.py", line 86, in roda
     sys.exit(asyncio.run(corrotina))
              ~~~~~~~~~~~^^^^^^^^^^^
   File "/usr/lib/python3.13/asyncio/runners.py", line 196, in run
@@ -80,7 +80,7 @@ Traceback (most recent call last):
   File "/home/claude/racha-online/tests/v79_test.py", line 258, in online
     rh = await rt(host, "({pts:CONTA.rq.pts, d:RQ.resultado.pr.delta, nivel:RQ.resultado.nivel, tit:fimEl('fim-titulo').textContent, bt:fimEl('fim-denovo').textContent, liga:ecoMissoes().l[0].p})")
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/claude/racha-online/tests/comum.py", line 76, in rt
+  File "/home/claude/racha-online/tests/comum.py", line 82, in rt
     return await pg.evaluate('s => window.__RT(s)', js)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/usr/local/lib/python3.13/dist-packages/playwright/async_api/_generated.py", line 8514, in evaluate
@@ -103,8 +103,8 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.13/dist-packages/playwright/_impl/_connection.py", line 559, in wrap_api_call
     raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
 playwright._impl._errors.Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading 'delta')
-    at eval (eval at window.__RT (http://127.0.0.1:60595/tests/build/racha_teste.html:26988:35), <anonymous>:1:39)
-    at window.__RT (http://127.0.0.1:60595/tests/build/racha_teste.html:29857:35)
+    at eval (eval at window.__RT (http://127.0.0.1:42435/tests/build/racha_teste.html:27007:35), <anonymous>:1:39)
+    at window.__RT (http://127.0.0.1:42435/tests/build/racha_teste.html:29876:35)
     at eval (eval at evaluate (:290:30), <anonymous>:1:13)
     at UtilityScript.evaluate (<anonymous>:297:18)
     at UtilityScript.<anonymous> (<anonymous>:1:44)

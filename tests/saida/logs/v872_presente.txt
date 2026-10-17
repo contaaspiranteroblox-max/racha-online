@@ -1,0 +1,26 @@
+  OK      o config.js do build liga o presente de teste (presente: true)
+
+1) produção com o config.js do build
+  OK      produção: o jogo dá o presente de teste (500 + 50.000 moedas, 25 + 5.000 gemas), sem o selo DEMONSTRAÇÃO
+  OK      a janela do presente diz que é de teste (+50.000 moedas, +5.000 gemas) e não fala em demonstração
+
+2) uma vez só
+  OK      recarregar não dá o presente de novo (o mesmo saldo, nada pendente)
+
+3) a loja com o presente
+  OK      a loja funciona com o presente: comprou uma peça de moedas (800) e uma de gemas (40), pelo preço de sempre
+
+4) presente: {id, moedas, gemas}
+  OK      presente: {id:"loja2", moedas:100000, gemas:10000} dá o valor novo no mesmo aparelho (um id novo dá de novo)
+  OK      e também uma vez só
+  OK      os valores do config.js têm teto (até 10 milhões de moedas e 1 milhão de gemas; negativo vira 0)
+
+5) presente: false (o lançamento)
+  OK      presente: false: sem presente (500 moedas e 25 gemas), como no lançamento
+
+6) a demonstração continua igual
+  OK      demonstração: o presente v32 de sempre (50.000 + 5.000) e o selo DEMONSTRAÇÃO
+  OK      e a janela da demonstração com o texto dela
+  OK      nenhum erro de JavaScript
+
+v87.2 · moedas e gemas para testar o jogo: 12/12 verificações ok em 12.1 s

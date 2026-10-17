@@ -8,6 +8,8 @@
 2) entrar pelo formulário do jogo
   OK      entrou: a conta aparece no jogo (CROY) e a sessão fica no aparelho
   OK      depois do login o jogo busca a conta completa (o XP vem do auth.eu)
+  OK      v87.2: com presente: true no config.js, a conta ganha o presente de teste uma vez (50500 moedas e 5025 gemas)
+  OK      a janela do presente diz que é de teste (sem falar em demonstração)
   OK      Ajustes › Conta: o SAIR DA CONTA está lá (e o RACHA CONTROL não, para quem não é da equipe)
 
 3) as páginas da conta abrem por cima do jogo
@@ -37,4 +39,4 @@
   OK      e o SÓ TREINAR OFFLINE abre o jogo
   OK      nenhum erro de JavaScript
 
-v87 · tudo dentro do jogo (o site abre o jogo direto): 22/22 verificações ok em 15.4 s
+v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 17.3 s
