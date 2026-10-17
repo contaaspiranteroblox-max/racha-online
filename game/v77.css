@@ -1,0 +1,329 @@
+/* =====================================================================================================================
+   RACHA rua v77 · o jogo com a cara das imagens enviadas do LOBBY e do PERFIL (o JS em tools/v77/). Vem depois do v71.css e
+   só vale com a classe .v77 no #lb (posta pelo tools/v77/lobby.js quando as peças da imagem abriram): sem ela, o jogo fica
+   com o visual da v76. Tudo em px do palco (888 de altura deitado; a imagem de 1844 × 853 é quase do tamanho do palco).
+   ===================================================================================================================== */
+#lb.v77{ --v77-k:#060607; --v77-tx:#fbfaf6; --v77-am:#ffd23f; --v77-am2:#f2a20c;
+  --v77-face:linear-gradient(180deg, #303135 0%, #1f2023 46%, #141517 100%);
+  --v77-face2:linear-gradient(180deg, #232427 0%, #17181a 100%);
+  --v77-relevo:inset 0 2px 0 rgba(255,255,255,.13), inset 0 -4px 0 rgba(0,0,0,.4);
+  --v77-sombra:0 5px 0 var(--v77-k), 0 10px 16px rgba(0,0,0,.42);
+  --v77-tit:"Lilita One","Anton","Arial Black",Impact,sans-serif;
+  --v77-num:"Barlow Condensed","Roboto Condensed","sans-serif-condensed","Arial Narrow",system-ui,sans-serif;
+  --v77-contorno:0 3px 0 #060607, 2px 2px 0 #060607, -2px 2px 0 #060607, 2px -2px 0 #060607, -2px -2px 0 #060607, 2.4px 0 0 #060607, -2.4px 0 0 #060607, 0 -2.4px 0 #060607; }
+.v77-ic{ display:inline-block; flex:none; background-image:var(--v77-ic); background-repeat:no-repeat; vertical-align:middle; }
+#lb i.v77-ic, #lb .v77-ic{ background-image:var(--v77-ic) !important; background-repeat:no-repeat !important; background-color:transparent !important; border:0 !important; border-radius:0 !important;
+  box-shadow:none !important; padding:0 !important; margin:0; transform:none; }   /* (as regras antigas de "i" dentro dos botões não pintam por cima do desenho) */
+
+/* ---------------------------------------------------------------- 1) o lobby */
+/* os botões dos lados: quadrados escuros com o desenho da imagem e uma palavra (como na imagem: sem a luz colorida da v71) */
+#lb.v77{ --v77-tw:144px; --v77-th:124px; --v77-tg:10px; }
+#lb.v77 #rx .rx-bt.v71-tile{ width:var(--v77-tw); height:var(--v77-th); gap:2px; padding:4px 4px 8px; border:3px solid var(--v77-k); border-radius:20px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v77 #rx .rx-bt.v71-tile:active{ transform:translateY(4px); box-shadow:var(--v77-relevo), 0 1px 0 var(--v77-k), 0 3px 8px rgba(0,0,0,.35); }
+#lb.v77 #rx .rx-bt.v71-tile > i.v77-ic-box{ display:flex; align-items:center; justify-content:center; width:96px; height:78px; }
+#lb.v77 #rx .rx-bt.v71-tile > i .v77-ic{ filter:drop-shadow(0 3px 2px rgba(0,0,0,.45)); }
+#lb.v77 #rx .rx-bt.v71-tile > b{ font:400 24px/1 var(--v77-tit); letter-spacing:.4px; color:#fff; text-shadow:var(--v77-contorno); }
+#lb.v77:not(.retrato) .v71-col{ top:calc(30px + max(92px, calc(46px / var(--s, 1))) + 26px); gap:var(--v77-tg); }
+#lb.v77:not(.retrato) .v71-esq{ left:34px; }
+#lb.v77:not(.retrato) .v71-dir{ right:34px; }
+#lb.v77 #rx .rx-bt.v71-tile.rx-ponto::after{ right:-9px; top:-9px; width:26px; height:26px; border:3px solid var(--v77-k); background:radial-gradient(circle at 40% 35%, #ff7a6e, #ff2d20 60%, #c4140a); box-shadow:0 2px 0 var(--v77-k); }
+
+/* o topo: você (a tampinha com o nível no selo, o nome e o XP em números) e a LIGA com a barra; à direita, moedas, gemas e 3 ícones */
+#lb.v77:not(.retrato) .lb-topo{ left:34px; right:34px; top:22px; height:max(90px, calc(46px / var(--s, 1))); gap:16px; }
+#lb.v77 .lb-topo #lb-eu{ height:max(90px, calc(46px / var(--s, 1))); max-width:320px; padding:0 22px 0 8px; gap:14px; border:3px solid var(--v77-k); border-radius:20px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v77 #lb-eu .hm-av{ width:76px; height:76px; border:3px solid var(--v77-k); box-shadow:0 0 0 2px rgba(255,255,255,.18); }
+#lb.v77 #lb-eu .v71-nv{ left:58px; bottom:-2px; min-width:32px; height:32px; border:3px solid var(--v77-k); border-radius:16px; font:400 19px/26px var(--v77-tit);
+  background:radial-gradient(circle at 40% 30%, #fff1a0, #ffd23f 50%, #e9a50c); color:#1a1300; }
+#lb.v77 #lb-eu .tp-eu-tx{ position:relative; gap:6px; }
+#lb.v77 #lb-eu .tp-eu-tx b{ font:400 30px/1 var(--v77-tit); letter-spacing:.6px; text-transform:uppercase; text-shadow:var(--v77-contorno); }
+#lb.v77 #lb-eu .hm-xp{ width:186px; height:22px; border:3px solid var(--v77-k); border-radius:12px; background:#0b0c0d; }
+#lb.v77 #lb-eu .hm-xp i{ border-radius:9px; background:linear-gradient(#ffe680, #ffd23f 55%, #f2a20c); }
+#lb.v77 #lb-eu .v77-xp{ position:absolute; right:10px; bottom:3px; font:800 17px/1 var(--v77-num); letter-spacing:.3px; color:#fff; text-shadow:0 0 3px #000, 0 1px 0 #000; pointer-events:none; }
+#lb.v77 .lb-topo .rx-bt.v71-liga{ grid-template-rows:auto auto auto; row-gap:3px; height:max(90px, calc(46px / var(--s, 1))); padding:0 22px 0 10px; border:3px solid var(--v77-k); border-radius:20px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v77 .lb-topo .rx-bt.v71-liga > i{ grid-row:1 / 4; width:66px; height:66px; }
+#lb.v77 .lb-topo .rx-bt.v71-liga .rx-ins{ width:66px; height:66px; }
+#lb.v77 .lb-topo .rx-bt.v71-liga > b{ font:800 17px/1 var(--v77-num); letter-spacing:2.5px; color:var(--v77-am); }
+#lb.v77 .lb-topo .rx-bt.v71-liga > small{ font:400 27px/1 var(--v77-tit); }
+#lb.v77 .lb-topo .v77-liga-barra{ grid-column:2; grid-row:3; display:block; width:118px; height:13px; margin-top:3px; border:3px solid var(--v77-k); border-radius:8px; background:#0b0c0d; overflow:hidden; }
+#lb.v77 .lb-topo .v77-liga-barra i{ display:block; height:100%; min-width:8px; border-radius:5px; background:linear-gradient(#ffe680, #ffd23f 55%, #f2a20c); }
+#lb.v77 .lb-topo .tp-dir{ gap:16px; }
+#lb.v77 .lb-topo .tp-dir .hm-grana + .hm-grana{ margin-left:0; }
+#lb.v77 .lb-topo .hm-grana{ height:max(70px, calc(46px / var(--s, 1))); min-width:200px; padding:0 62px 0 70px; border:3px solid var(--v77-k); border-radius:36px; background:linear-gradient(180deg, #1c1d20, #0e0f10);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.08), var(--v77-sombra); }
+#lb.v77 .lb-topo .hm-grana i{ left:10px; margin-top:-26px; font-size:41.6px; }
+#lb.v77 .lb-topo .hm-grana b{ font:800 33px/1 var(--v77-num); }
+#lb.v77 .lb-topo .hm-grana::after{ right:9px; width:44px; height:44px; margin-top:-22px; border-radius:12px; border:3px solid var(--v77-k);
+  background:linear-gradient(#5ee07a, #1fb350 55%, #12823a); font:400 38px/36px var(--v77-tit); }
+#lb.v77 .lb-topo .tp-ic{ width:max(74px, calc(46px / var(--s, 1))); height:max(74px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:18px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); display:flex; align-items:center; justify-content:center; }
+#lb.v77 .lb-topo .tp-ic svg{ width:46px; height:46px; }
+#lb.v77 .lb-topo .tp-ic .v77-ic{ filter:drop-shadow(0 2px 1px rgba(0,0,0,.5)); }
+#lb.v77 .lb-topo .tp-badge{ top:-10px; right:-10px; min-width:28px; height:28px; border:3px solid var(--v77-k); font:400 17px/22px var(--v77-tit); background:radial-gradient(circle at 40% 35%, #ff7a6e, #ff2d20 60%, #c4140a); }
+
+/* o letreiro da imagem em cima da tampinha (o "RACHA" escrito some quando a imagem abriu) */
+#lb.v77:not(.retrato) .rx-marca{ top:calc(var(--rx-cy, 570px) - 108px - 38px - 232px); gap:0; }
+#lb.v77 .v77-letreiro{ display:none; width:466px; height:auto; max-width:none; pointer-events:none; filter:drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
+#lb.v77 .rx-marca.v77-com-letreiro .v77-letreiro{ display:block; }
+#lb.v77 .rx-marca.v77-com-letreiro .rx-logo{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+#lb.v77.retrato .v77-letreiro{ width:400px; }
+
+/* embaixo: DESAFIOS (a estrela, a barra e o prêmio na pilha de moedas), o MODO escuro e o JOGAR */
+#lb.v77 #lb-missoes{ grid-template-columns:auto minmax(0, 1fr) auto; column-gap:14px; row-gap:10px; padding:0 10px 0 14px; border:3px solid var(--v77-k); border-radius:22px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v77:not(.retrato) #lb-missoes{ left:34px; bottom:42px; width:430px; height:114px; }
+#lb.v77 #lb-missoes .v77-mi-ic{ grid-column:1; grid-row:1 / 3; align-self:center; filter:drop-shadow(0 3px 2px rgba(0,0,0,.45)); }
+#lb.v77 #lb-missoes::before{ font:400 28px/1 var(--v77-tit); text-shadow:var(--v77-contorno); }
+#lb.v77 #lb-missoes .mi-barra{ height:22px; border:3px solid var(--v77-k); border-radius:12px; }
+#lb.v77 #lb-missoes .mi-barra i{ border-radius:9px; background:linear-gradient(#ffe680, #ffd23f 55%, #f2a20c); }
+#lb.v77 #lb-missoes .mi-n{ grid-column:2; grid-row:2; justify-self:start; margin-left:calc(100% - 52px); position:relative; z-index:1; font:800 19px/1 var(--v77-num); color:#fff; text-shadow:0 0 3px #000, 0 1px 0 #000; }
+#lb.v77 #lb-missoes .mi-premio{ grid-column:3; grid-row:1 / 3; align-self:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:94px; height:90px; padding:0;
+  border-radius:16px; border:3px solid var(--v77-k); background:linear-gradient(180deg, #111214, #1b1c1f); box-shadow:inset 0 3px 6px rgba(0,0,0,.6); }
+#lb.v77 #lb-missoes .mi-premio .v77-pilha{ filter:drop-shadow(0 2px 1px rgba(0,0,0,.5)); }
+#lb.v77 #lb-missoes .mi-premio b{ font:800 21px/1 var(--v77-num); color:#ffe9a6; text-shadow:0 1px 0 #000; }
+#lb.v77 #lb-missoes .mi-premio b::before{ content:'x'; }
+#lb.v77 #lb-missoes.pronta .mi-tx{ grid-column:2; }
+#lb.v77 #lb-modo{ grid-template-columns:auto minmax(0, 1fr); grid-template-rows:1fr; column-gap:10px; padding:10px 12px 10px 12px; border:3px solid var(--v77-k); border-radius:22px;
+  background:var(--v77-face); color:#fff; box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v77:not(.retrato) #lb-modo{ right:calc(34px + 344px + 14px); bottom:42px; width:292px; height:118px; }
+#lb.v77 #lb-modo:active{ transform:translateY(4px); box-shadow:var(--v77-relevo), 0 1px 0 var(--v77-k); }
+#lb.v77 #lb-modo .v71-modo-ic{ width:auto; height:auto; filter:drop-shadow(0 3px 2px rgba(0,0,0,.45)); }
+#lb.v77 #lb-modo .v71-modo-tx{ gap:8px; }
+#lb.v77 #lb-modo .v71-modo-tx b{ font:400 34px/1 var(--v77-tit); letter-spacing:.6px; color:#fff; text-shadow:var(--v77-contorno); }
+#lb.v77 #lb-modo .v71-modo-tx small, #lb.v77 #lb-modo .v71-modo-tr{ display:none; }
+#lb.v77 #lb-modo .v77-modo-sub{ display:flex; align-items:center; gap:5px; min-width:0; font:800 17px/1.05 var(--v77-num); letter-spacing:.2px; color:#fff; }
+#lb.v77 #lb-modo .v77-modo-sub svg{ flex:none; width:20px; height:20px; color:var(--v77-am); }
+#lb.v77 #lb-modo .v77-modo-nm{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb.v77 #lb-jogar{ border:3px solid var(--v77-k); border-radius:24px; background:linear-gradient(180deg, #fff09a 0%, #ffd23f 40%, #f4a30b 100%);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.65), inset 0 -8px 0 rgba(160,90,0,.35), 0 6px 0 var(--v77-k), 0 14px 22px rgba(0,0,0,.45); }
+#lb.v77:not(.retrato) #lb-jogar{ right:34px; bottom:42px; width:344px; height:124px; }
+#lb.v77 #lb-jogar .lb-jogar-tit{ gap:20px; font:400 74px/1 var(--v77-tit); transform:none; }
+#lb.v77 #lb-jogar .lb-jogar-tit::before{ border-width:26px 0 26px 40px; }
+#lb.v77.retrato .lb-joga{ grid-template-columns:292px minmax(0, 1fr); grid-template-rows:124px auto; }
+#lb.v77.retrato #lb-modo, #lb.v77.retrato #lb-jogar{ height:124px; }
+#lb.v77.retrato #lb-missoes{ height:114px; }
+#lb.v77.retrato #rx .rx-bt.v71-tile{ width:calc((100% - 48px) / 4); height:132px; }
+
+/* ---------------------------------------------------------------- 2) as telas: cada uma só com o que é dela, a mesma barra em cima e a quadra atrás
+   (o JS em tools/v77/telas.js: os títulos, o desenho do título, as moedas e os 3 ícones; as abas de grupo saíram) */
+#lb.v71.v77{ --k:#060607; --k-face:var(--v77-face); --k-face2:var(--v77-face2); --k-relevo:var(--v77-relevo); }
+#lb.v77.v77-tela #lb-rolagem{ visibility:hidden; }          /* (com uma tela aberta, o lobby some: fica só a quadra no fundo) */
+#lb.v71.v77 #lb-camada .lb-tela.v77-tl:not(.sl-tela):not(.tpe-tela){ background:linear-gradient(180deg, rgba(5,6,8,.74) 0%, rgba(5,6,8,.62) 30%, rgba(5,6,8,.78) 100%); }
+#lb.v71.v77 #lb-camada #tela-perfil.v77-tl{ background:none; }
+/* a barra de cima: o VOLTAR, o título na pincelada escura com o desenho, as moedas e os 3 ícones */
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab{ height:116px; gap:18px; padding:0 34px; background:none; box-shadow:none; border:0; }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-voltar{ width:max(80px, calc(46px / var(--s, 1))); height:max(80px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:18px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-voltar svg{ width:46px; height:46px; }
+#lb.v71.v77 #lb-camada .v77-tit{ position:relative; display:flex; align-items:center; gap:16px; flex:none; padding:14px 64px 14px 30px; margin-left:-6px; z-index:0; }
+#lb.v71.v77 #lb-camada .v77-tit::before{ content:''; position:absolute; inset:2px 0 2px 0; z-index:-1; background:linear-gradient(90deg, rgba(8,8,10,.94) 0%, rgba(8,8,10,.9) 72%, rgba(8,8,10,0) 100%);
+  clip-path:polygon(0 14%, 6% 4%, 30% 9%, 55% 0, 80% 7%, 100% 18%, 97% 52%, 100% 86%, 76% 96%, 48% 90%, 22% 100%, 3% 92%, 1% 55%); }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab h2{ font:400 56px/1 var(--v77-tit); letter-spacing:1.5px; color:#fff; text-shadow:var(--v77-contorno), 0 5px 0 #060607; transform:skewX(-4deg); white-space:nowrap; }
+#lb.v71.v77 #lb-camada .v77-tit-ic{ filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)); }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-info{ flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font:800 22px/1.1 var(--v77-num); letter-spacing:.8px; color:#d9dce0; }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-carteira{ margin-left:auto; gap:16px; }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-carteira .lb-grana{ position:relative; height:max(70px, calc(46px / var(--s, 1))); min-width:200px; padding:0 62px 0 70px; justify-content:flex-end; border:3px solid var(--v77-k); border-radius:36px;
+  background:linear-gradient(180deg, #1c1d20, #0e0f10); box-shadow:inset 0 2px 0 rgba(255,255,255,.08), var(--v77-sombra); font:800 33px/1 var(--v77-num); }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-carteira .lb-grana i{ position:absolute; left:10px; top:50%; margin-top:-26px; font-size:41.6px; }
+#lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-carteira .lb-grana::after{ content:'+'; position:absolute; right:9px; top:50%; width:44px; height:44px; margin-top:-22px; border-radius:12px; border:3px solid var(--v77-k);
+  background:linear-gradient(#5ee07a, #1fb350 55%, #12823a); color:#fff; font:400 38px/36px var(--v77-tit); text-align:center; text-shadow:0 2px 0 rgba(0,0,0,.45); box-sizing:border-box; }
+#lb.v71.v77 #lb-camada .v77-cab-ic{ display:flex; gap:16px; flex:none; }
+#lb.v71.v77 #lb-camada .v77-cab-bt{ width:max(74px, calc(46px / var(--s, 1))); height:max(74px, calc(46px / var(--s, 1))); display:flex; align-items:center; justify-content:center; border:3px solid var(--v77-k); border-radius:18px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-cab-bt svg{ width:48px; height:48px; filter:drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
+#lb.v71.v77 #lb-camada .v77-cab-bt .v77-ic{ filter:drop-shadow(0 2px 1px rgba(0,0,0,.5)); }
+#lb.v71.v77 #lb-camada .v77-cab-bt:active, #lb.v71.v77 #lb-camada .tl-cab.v77-cab .tl-voltar:active{ transform:translateY(4px); box-shadow:var(--v77-relevo), 0 1px 0 var(--v77-k); }
+/* o miolo das telas: o mesmo respiro dos lados que o lobby */
+#lb.v71.v77 #lb-camada .lb-tela.v77-tl > .tl-corpo{ padding:8px 34px 30px; }
+
+/* AMIGOS (era a COMUNIDADE): os amigos e o chat lado a lado */
+#lb.v71.v77 .cm-grade.v77-amg-grade{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+
+/* ---------------------------------------------------------------- 3) o PERFIL da imagem: a tampinha reta na quadra à esquerda, o cartão à direita */
+#lb.v71.v77 #lb-camada #tela-perfil .pf-corpo.v77-pf{ position:relative; display:block; padding:0; overflow:hidden; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf > .v70-pf-sub, #lb.v71.v77 #lb-camada .pf-corpo.v77-pf > .pf-cartao{ display:none !important; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf > .pf-lado.v77-pf-lado{ position:absolute; left:34px; top:0; bottom:20px; right:calc(clamp(720px, 41%, 800px) + 47px); height:auto; display:block; padding:0; margin:0; }
+#lb.v71.v77 #lb-camada .v77-pf-lado > :not(.pf-palco){ display:none !important; }
+#lb.v71.v77 #lb-camada .v77-pf-lado .pf-palco{ position:absolute; inset:0; width:auto; height:auto; margin:0; cursor:pointer; border-radius:24px; }
+#lb.v71.v77 #lb-camada .v77-pf-lado .pf-palco:focus-visible{ outline:4px solid #4fb3ff; outline-offset:-6px; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf.v77-pf-largo > .pf-lado{ visibility:hidden; }
+#lb.v71.v77 #lb-camada .v77-pf-painel{ position:absolute; right:27px; top:0; bottom:22px; width:clamp(720px, 41%, 800px); display:flex; flex-direction:column; gap:12px; z-index:1; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf.v77-pf-largo .v77-pf-painel{ left:34px; width:auto; }
+/* o banner: o morro no escuro e o letreiro */
+#lb.v71.v77 #lb-camada .v77-pf-banner{ position:relative; flex:none; height:178px; border:3px solid var(--v77-k); border-radius:20px; overflow:hidden; background:#151618 center/cover no-repeat;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.06), var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-pf-banner::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(6,7,9,.55), rgba(6,7,9,0) 45%); pointer-events:none; }
+#lb.v71.v77 #lb-camada .v77-pf-letreiro{ position:absolute; right:7%; top:10px; height:154px; width:auto; z-index:1; filter:drop-shadow(0 6px 8px rgba(0,0,0,.5)); pointer-events:none; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-banner{ height:132px; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-letreiro{ height:118px; top:6px; right:36px; }
+/* você: a tampinha no aro, o hexágono do nível, o nome, a bandeira, o ID e o XP */
+#lb.v71.v77 #lb-camada .v77-pf-id{ position:relative; flex:none; height:134px; border:3px solid var(--v77-k); border-radius:20px; background:var(--v77-face); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-pf-av{ position:absolute; left:40px; top:-58px; width:136px; height:136px; padding:0; border-radius:50%; border:4px solid var(--v77-k); background:radial-gradient(circle at 50% 40%, #2a2b2f, #0d0e10 70%);
+  box-shadow:0 0 0 5px #c99208, 0 0 0 8px var(--v77-k), 0 8px 14px rgba(0,0,0,.5); z-index:2; cursor:pointer; }
+#lb.v71.v77 #lb-camada .v77-pf-av::before{ content:''; position:absolute; inset:-3px; border-radius:50%; background:conic-gradient(from 0deg, #ffe680, #c99208, #ffe680, #b07a06, #ffe680); z-index:-1;
+  -webkit-mask:radial-gradient(circle, transparent 63px, #000 64px); mask:radial-gradient(circle, transparent 63px, #000 64px); }
+#lb.v71.v77 #lb-camada .v77-pf-avc{ position:absolute; inset:0; width:100%; height:100%; border-radius:50%; }
+#lb.v71.v77 #lb-camada .v77-pf-nv{ position:absolute; left:18px; top:58px; width:72px; height:80px; z-index:3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; pointer-events:none; }
+#lb.v71.v77 #lb-camada .v77-pf-nv svg{ position:absolute; inset:0; width:100%; height:100%; filter:drop-shadow(0 3px 2px rgba(0,0,0,.55)); }
+#lb.v71.v77 #lb-camada .v77-pf-nv small{ position:relative; font:400 17px/1 var(--v77-tit); color:#ffd23f; letter-spacing:.5px; }
+#lb.v71.v77 #lb-camada .v77-pf-nv b{ position:relative; font:400 32px/1 var(--v77-tit); color:#ffd23f; text-shadow:0 2px 0 #000; }
+#lb.v71.v77 #lb-camada .v77-pf-nv.dois b{ font-size:28px; } #lb.v71.v77 #lb-camada .v77-pf-nv.tres b{ font-size:22px; }
+#lb.v71.v77 #lb-camada .v77-pf-info{ position:absolute; left:206px; right:20px; top:6px; display:flex; flex-direction:column; gap:2px; }
+#lb.v71.v77 #lb-camada .v77-pf-nome{ display:flex; align-items:center; gap:14px; min-width:0; height:50px; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-nomew{ display:flex; flex:0 1 auto; align-items:center; gap:10px; width:auto; max-width:none; min-width:0; height:50px; min-height:0; margin:0; padding:0; background:none; border:0; box-shadow:none; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-nome{ flex:0 1 auto; min-width:0; height:auto; min-height:0; padding:0; background:none; border:0; box-shadow:none; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-nome span{ font:400 38px/1.05 var(--v77-tit); color:#fff; text-shadow:var(--v77-contorno); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:320px; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-nome input{ width:300px; height:52px; font:400 32px/1 var(--v77-tit); }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-lapis, #lb.v71.v77 #lb-camada .v77-pf-bio .lb-lapis{ position:static; display:grid; place-items:center; flex:none; width:max(44px, calc(46px / var(--s, 1))); height:max(44px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:12px;
+  background:var(--v77-face); box-shadow:var(--v77-relevo), 0 3px 0 var(--v77-k); }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-lapis svg, #lb.v71.v77 #lb-camada .v77-pf-bio .lb-lapis svg{ width:24px; height:24px; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-lapis .ic-ed path:first-child, #lb.v71.v77 #lb-camada .v77-pf-bio .lb-lapis .ic-ed path:first-child{ fill:#fff; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-lapis .ic-ed path + path, #lb.v71.v77 #lb-camada .v77-pf-bio .lb-lapis .ic-ed path + path{ stroke:#2a2b2f; }
+#lb.v71.v77 #lb-camada .v77-pf-nome .lb-lapis.ok, #lb.v71.v77 #lb-camada .v77-pf-bio .lb-lapis.ok{ background:linear-gradient(#5ee07a, #1fb350 55%, #12823a); }
+#lb.v71.v77 #lb-camada .v77-pf-pais{ display:inline-flex; flex:none; }
+#lb.v71.v77 #lb-camada .v77-pf-pais .sl-flag{ width:52px; height:38px; }
+#lb.v71.v77 #lb-camada .v77-pf-pais .sl-flag-e{ font-size:36px; line-height:1; }
+#lb.v71.v77 #lb-camada .v77-pf-idl{ display:flex; align-items:center; gap:10px; min-width:0; height:40px; font:700 23px/1 var(--k-txt, system-ui); color:#c8ccd2; }
+#lb.v71.v77 #lb-camada .v77-pf-idl b{ font:700 24px/1 var(--k-txt, system-ui); color:#c8ccd2; letter-spacing:.5px; }
+#lb.v71.v77 #lb-camada .v77-pf-copia{ display:grid; place-items:center; width:max(44px, calc(46px / var(--s, 1))); height:max(44px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:12px; background:var(--v77-face); color:#fff; box-shadow:var(--v77-relevo), 0 3px 0 var(--v77-k); }
+#lb.v71.v77 #lb-camada .v77-pf-copia svg{ width:24px; height:24px; }
+#lb.v71.v77 #lb-camada .v77-pf-copia.ok{ color:#5fe07a; }
+#lb.v71.v77 #lb-camada .v77-pf-idl .pf-ident{ flex:none; padding:5px 9px 4px; border:2px solid #3a3c41; border-radius:9px; font:800 15px/1 var(--v77-num); letter-spacing:1.2px; color:#aab0b8; white-space:nowrap; }
+#lb.v71.v77 #lb-camada .v77-pf-idl .pf-ident.conta{ border-color:#1fb350; color:#5fe07a; }
+#lb.v71.v77 #lb-camada .v77-pf-xpl{ position:absolute; left:112px; right:20px; bottom:9px; height:24px; }
+#lb.v71.v77 #lb-camada .v77-pf-xpl .pf-xp{ position:absolute; inset:0; display:block; width:auto; max-width:none; height:auto; margin:0; border:3px solid var(--v77-k); border-radius:16px; background:#0b0c0d; overflow:hidden; box-shadow:inset 0 2px 0 rgba(0,0,0,.5); }
+#lb.v71.v77 #lb-camada .v77-pf-xpl .pf-xp i{ display:block; height:100%; border-radius:12px; background:linear-gradient(#ffe680, #ffd23f 55%, #f2a20c); }
+#lb.v71.v77 #lb-camada .v77-pf-xpl #pf-xp-tx{ position:absolute; right:14px; top:50%; transform:translateY(-50%); font:800 22px/1 var(--v77-num); letter-spacing:.4px; color:#fff; text-shadow:0 0 3px #000, 0 1px 0 #000; }
+/* as abas: VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS (a escolhida, amarela, com o desenho preto) */
+#lb.v71.v77 #lb-camada .v77-pf-abas{ flex:none; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-aba{ display:flex; align-items:center; justify-content:center; gap:7px; height:max(64px, calc(46px / var(--s, 1))); min-width:0; padding:0 6px; border:3px solid var(--v77-k); border-radius:16px;
+  background:var(--v77-face); color:#fff; font:400 19px/1 var(--v77-tit); letter-spacing:0; text-shadow:0 2px 0 rgba(0,0,0,.5); box-shadow:var(--v77-relevo), var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-pf-aba span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb.v71.v77 #lb-camada .v77-pf-aba svg{ flex:none; width:24px; height:24px; }
+#lb.v71.v77 #lb-camada .v77-pf-aba.on{ background:linear-gradient(180deg, #fff09a 0%, #ffd23f 45%, #f2a20c 100%); color:#141414; text-shadow:none; box-shadow:inset 0 3px 0 rgba(255,255,255,.6), inset 0 -5px 0 rgba(160,90,0,.3), var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-pf-aba:active{ transform:translateY(4px); }
+#lb.v71.v77 #lb-camada .v77-pf-parte{ flex:1 1 auto; min-height:0; }
+#lb.v71.v77 #lb-camada .v77-pf-parte[hidden]{ display:none !important; }
+/* VISÃO GERAL: os 3 cartões e os 5 números */
+#lb.v71.v77 #lb-camada .v77-pf-geral{ display:flex; flex-direction:column; gap:12px; padding:14px; border:3px solid var(--v77-k); border-radius:20px; background:var(--v77-face2); box-shadow:var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-pf-cards{ flex:1 1 0; min-height:0; display:grid; grid-template-columns:1.1fr 1fr 1.4fr; gap:12px; }
+#lb.v71.v77 #lb-camada .v77-pf-card{ position:relative; display:flex; flex-direction:column; justify-content:space-between; min-width:0; padding:14px 16px; border:3px solid var(--v77-k); border-radius:16px; background:var(--v77-face); box-shadow:var(--v77-relevo), 0 4px 0 var(--v77-k); }
+#lb.v71.v77 #lb-camada .v77-pf-card-cab{ display:flex; align-items:center; gap:12px; min-width:0; }
+#lb.v71.v77 #lb-camada .v77-pf-card-cab small{ font:800 18px/1.1 var(--v77-num); letter-spacing:1px; color:#d6d9dd; text-transform:uppercase; }
+#lb.v71.v77 #lb-camada .v77-pf-card .v77-pf-v{ font:400 36px/1 var(--v77-tit); color:#fff; text-shadow:0 3px 0 #000; padding-left:4px; white-space:nowrap; }
+#lb.v71.v77 #lb-camada .v77-pf-card .v77-pf-v small{ font:800 20px/1 var(--v77-num); color:#d6d9dd; text-shadow:none; }
+#lb.v71.v77 #lb-camada .v77-pf-bio .pf-bio{ position:static; display:flex; align-items:center; gap:10px; margin:0; padding:0; min-height:0; background:none; border:0; box-shadow:none; }
+#lb.v71.v77 #lb-camada .v77-pf-bio .pf-bio-tx{ flex:1 1 auto; min-width:0; margin:0; font:600 21px/1.25 var(--k-txt, system-ui); color:#eceae3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+#lb.v71.v77 #lb-camada .v77-pf-bio .pf-bio-in{ flex:1 1 auto; min-width:0; height:48px; font:600 21px/1 var(--k-txt, system-ui); }
+#lb.v71.v77 #lb-camada .v77-pf-bio .pf-bio-n{ font:800 15px/1 var(--v77-num); color:#9aa0a8; }
+#lb.v71.v77 #lb-camada .v77-pf-bio .lb-lapis{ position:absolute; right:12px; top:10px; width:max(46px, calc(46px / var(--s, 1))); height:max(46px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:12px; background:var(--v77-face); box-shadow:var(--v77-relevo), 0 3px 0 var(--v77-k); }
+#lb.v71.v77 #lb-camada .v77-pf-nums{ flex:1 1 0; min-height:0; display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px; }
+#lb.v71.v77 #lb-camada .pf-st.v77-st{ position:relative; display:grid; grid-template-columns:auto minmax(0, 1fr); grid-template-rows:auto 1fr; align-items:center; column-gap:8px; row-gap:4px; min-width:0; min-height:0; margin:0; padding:10px 10px 8px;
+  border:3px solid var(--v77-k); border-radius:16px; background:var(--v77-face); box-shadow:var(--v77-relevo), 0 4px 0 var(--v77-k); transform:none; }
+#lb.v71.v77 #lb-camada .pf-st.v77-st > i.v77-st-ic{ grid-column:1; grid-row:1; display:flex; width:auto; height:auto; margin:0; border:0; background:none; box-shadow:none; }
+#lb.v71.v77 #lb-camada .pf-st.v77-st small{ grid-column:2; grid-row:1; align-self:center; min-width:0; font:800 14px/1.05 var(--v77-num); letter-spacing:.2px; color:#e3e5e8; text-transform:uppercase; hyphens:manual; }
+#lb.v71.v77 #lb-camada .pf-st.v77-st b{ grid-column:1 / 3; grid-row:2; justify-self:center; align-self:center; font:400 34px/1 var(--v77-tit); color:#fff; text-shadow:0 3px 0 #000; }
+/* ESTATÍSTICAS, CONQUISTAS e PARTIDAS: o cartão abre para a tela toda (as listas cabem sem rolar) */
+#lb.v71.v77 #lb-camada .v77-pf-est, #lb.v71.v77 #lb-camada .v77-pf-conq, #lb.v71.v77 #lb-camada .v77-pf-hist{ overflow:hidden; padding:12px 16px; border:3px solid var(--v77-k); border-radius:20px; background:var(--v77-face2); box-shadow:var(--v77-sombra); }
+#lb.v71.v77 #lb-camada .v77-pf-est .pf-est{ display:flex; flex-direction:column; gap:10px; margin:0; }
+#lb.v71.v77 #lb-camada .v77-pf-est .pf-est-cab{ display:none; }
+#lb.v71.v77 #lb-camada .v77-pf-est .pf-est-grade{ grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-est .pf-est-grade .card{ padding:8px 12px; min-height:0; }
+#lb.v71.v77 #lb-camada .v77-pf-est .pf-est-grade .card b{ font-size:34px; }
+#lb.v71.v77 #lb-camada .v77-pf-est .pf-est-nota{ margin:0; font-size:17px; line-height:1.3; }
+#lb.v71.v77 #lb-camada .v77-pf-conq{ display:grid; grid-template-columns:minmax(0, 1fr); grid-auto-rows:auto; align-content:start; gap:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-conq-topo{ display:grid; grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr); gap:12px; align-items:stretch; }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-emblemas{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin:0; padding:10px; border:3px solid var(--v77-k); border-radius:16px; background:var(--v77-face); }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-meta{ margin:0; }
+#lb.v71.v77 #lb-camada .v77-pf-h{ margin:0; font:400 26px/1 var(--v77-tit); color:var(--v77-am); text-shadow:0 3px 0 #000; }
+#lb.v71.v77 #lb-camada .v77-pf-tits{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-tit{ display:flex; flex-direction:column; gap:5px; min-width:0; padding:10px 10px 8px; border:3px solid var(--v77-k); border-radius:14px; background:var(--v77-face); box-shadow:var(--v77-relevo), 0 3px 0 var(--v77-k); }
+#lb.v71.v77 #lb-camada .v77-pf-tit b{ font:400 21px/1.05 var(--v77-tit); color:#cfd3d8; }
+#lb.v71.v77 #lb-camada .v77-pf-tit small{ font:700 14px/1.15 var(--k-txt, system-ui); color:#9aa0a8; }
+#lb.v71.v77 #lb-camada .v77-pf-tit em{ font:800 15px/1 var(--v77-num); font-style:normal; color:#d6d9dd; }
+#lb.v71.v77 #lb-camada .v77-pf-tit-bar{ display:block; height:12px; border:2px solid var(--v77-k); border-radius:7px; background:#0b0c0d; overflow:hidden; }
+#lb.v71.v77 #lb-camada .v77-pf-tit-bar i{ display:block; height:100%; background:linear-gradient(90deg, var(--c1), var(--c2)); }
+#lb.v71.v77 #lb-camada .v77-pf-tit.ok{ background:linear-gradient(180deg, color-mix(in srgb, var(--c1) 35%, #1e1f22), #16171a); box-shadow:inset 0 0 0 2px var(--c1), 0 3px 0 var(--v77-k); }
+#lb.v71.v77 #lb-camada .v77-pf-tit.ok b{ color:#fff; }
+#lb.v71.v77 #lb-camada .v77-pf-tit.ok small{ color:var(--c1); font-weight:800; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao{ display:flex; align-items:center; gap:12px; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao small{ font:800 17px/1 var(--v77-num); letter-spacing:1.2px; color:#9aa0a8; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-titulo{ flex:0 1 330px; min-height:0; height:max(56px, calc(46px / var(--s, 1))); margin:0; padding:4px 40px; border-radius:14px; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-titulo::before, #lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-titulo::after{ width:24px; height:42px; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-tit-tx{ gap:1px; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-tit-tx b{ font-size:19px; letter-spacing:.6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:-1.5px -1.5px 0 var(--o), 1.5px -1.5px 0 var(--o), -1.5px 1.5px 0 var(--o), 1.5px 1.5px 0 var(--o), 0 2px 0 var(--o); }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-tit-tx small{ font-size:13px; }
+#lb.v71.v77 #lb-camada .v77-pf-nocartao .pf-tit-tx .pf-barra{ display:none; }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-recs{ margin:0; }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-recs .lb-stats{ grid-template-columns:repeat(8, minmax(0, 1fr)); gap:8px; }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-recs .lb-stats > h3{ grid-column:1 / -1; margin:0; font-size:22px; }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-recs .card{ padding:6px 10px; min-height:0; }
+#lb.v71.v77 #lb-camada .v77-pf-conq .pf-recs .card b{ font-size:26px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist{ display:flex; flex-direction:column; gap:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-partidas{ display:flex; flex-direction:column; gap:8px; margin:0; min-height:0; flex:1 1 auto; overflow:hidden; }
+#lb.v71.v77 #lb-camada .v77-pf-hist #pf-rec-partidas{ grid-template-columns:repeat(4, minmax(0, 1fr)) ; gap:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist #pf-rec-partidas > h3{ display:none; }
+#lb.v71.v77 #lb-camada .v77-pf-hist #pf-rec-partidas .card{ padding:6px 12px; min-height:0; }
+#lb.v71.v77 #lb-camada .v77-pf-hist #pf-rec-partidas .card b{ font-size:30px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-partidas > .lb-sub{ margin:2px 0 0; font-size:22px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); grid-auto-rows:min-content; gap:6px 10px; margin:0; padding:0; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist li{ display:grid; grid-template-columns:auto auto minmax(0, 1fr); grid-template-rows:auto auto; column-gap:10px; row-gap:0; min-height:0; padding:4px 10px; border-width:2px; border-left-width:8px; border-radius:10px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist li b{ font-size:17px; } #lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist li span{ font-size:19px; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist li small{ grid-column:1 / -1; grid-row:2; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist li em{ display:block; grid-column:3; grid-row:1; justify-self:end; font-size:13px; white-space:nowrap; }
+#lb.v71.v77 #lb-camada .v77-pf-hist .pf-hist li.vazio{ grid-column:1 / -1; }
+#lb.v71.v77 #lb-camada .v77-pf-replays{ flex:none; align-self:flex-end; display:inline-flex; align-items:center; gap:10px; height:max(62px, calc(46px / var(--s, 1))); padding:0 26px; font-size:24px; }
+#lb.v71.v77 #lb-camada .v77-pf-replays svg{ width:28px; height:28px; }
+
+/* (as partes que vieram do perfil antigo tinham lugar marcado na grade antiga: aqui cada uma segue a ordem da aba) */
+#lb.v71.v77 #lb-camada .v77-pf-painel :is(.pf-est, .pf-recs, .pf-partidas, .pf-meta, .pf-emblemas, .lb-sub){ grid-area:auto; grid-column:auto; }
+#lb.v71.v77 #lb-camada .v77-pf-painel .lb-stats > .lb-sub{ grid-column:1 / -1; }
+/* fora da VISÃO GERAL: sem o banner e com você numa linha só (o XP do lado), para as listas caberem */
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-banner{ display:none; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-id{ height:108px; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-av{ left:20px; top:9px; width:84px; height:84px; box-shadow:0 0 0 4px #c99208, 0 0 0 7px var(--v77-k), 0 5px 10px rgba(0,0,0,.5); }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-av::before{ -webkit-mask:radial-gradient(circle, transparent 38px, #000 39px); mask:radial-gradient(circle, transparent 38px, #000 39px); }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-nv{ left:82px; top:44px; width:50px; height:56px; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-nv small{ font-size:12px; } #lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-nv b{ font-size:22px; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-info{ left:156px; right:auto; width:46%; top:6px; }
+#lb.v71.v77 #lb-camada .pf-corpo.v77-pf-largo .v77-pf-xpl{ left:auto; right:24px; top:50%; bottom:auto; width:38%; height:30px; transform:translateY(-50%); }
+
+/* o CHAT DO BRASIL: o painel ocupa a tela (a barra de cima é a mesma das outras), a quadra escurecida atrás */
+#lb.v71.v77 #lb-camada #tela-chat.v77-tl .br-painel{ background:none; background-image:none; border:0; box-shadow:none; }
+#lb.v71.v77 #lb-camada #tela-chat.v77-tl .br-corpo{ width:min(1200px, 100%); margin:0 auto; padding:8px 34px 0; }
+/* o editor da tampinha: a mesma quadra escurecida atrás (era a favela da sala) */
+#lb.v71.v77 #lb-camada .lb-tela.tpe-tela.v77-tl{ background:linear-gradient(180deg, rgba(5,6,8,.74) 0%, rgba(5,6,8,.62) 30%, rgba(5,6,8,.78) 100%); }
+#lb.v71.v77 #lb-camada .tpe-tela.v77-tl .tpe-favela{ display:none; }
+
+/* ---------------------------------------------------------------- 4) em pé (só no computador com a janela estreita: no celular o jogo pede para deitar)
+   a barra de cima sem os 3 ícones (ficam no lobby) e o perfil numa coluna que rola: a tampinha em cima, o cartão embaixo */
+#lb.v71.v77.retrato #lb-camada .tl-cab.v77-cab{ height:auto; min-height:112px; flex-wrap:wrap; row-gap:10px; padding:10px 22px; }
+#lb.v71.v77.retrato #lb-camada .v77-cab-ic{ display:none; }
+#lb.v71.v77.retrato #lb-camada .tl-cab.v77-cab h2{ font-size:44px; }
+#lb.v71.v77.retrato #lb-camada .v77-tit{ padding:10px 40px 10px 22px; }
+#lb.v71.v77.retrato #lb-camada .tl-cab.v77-cab .tl-carteira .lb-grana{ min-width:0; padding:0 58px 0 62px; }
+#lb.v71.v77.retrato #lb-camada #tela-perfil .pf-corpo.v77-pf{ overflow-y:auto; padding:6px 22px 30px; }
+#lb.v71.v77.retrato #lb-camada .pf-corpo.v77-pf > .pf-lado.v77-pf-lado{ position:relative; inset:auto; height:360px; margin:0 0 14px; }
+#lb.v71.v77.retrato #lb-camada .pf-corpo.v77-pf.v77-pf-largo > .pf-lado{ display:none !important; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-painel, #lb.v71.v77.retrato #lb-camada .pf-corpo.v77-pf.v77-pf-largo .v77-pf-painel{ position:relative; inset:auto; width:auto; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-abas{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#lb.v71.v77.retrato #lb-camada .v77-pf-cards, #lb.v71.v77.retrato #lb-camada .v77-pf-nums{ flex:none; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-cards{ grid-template-columns:1fr 1fr; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-bio{ grid-column:1 / -1; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-card{ min-height:150px; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-nums{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+#lb.v71.v77.retrato #lb-camada .pf-st.v77-st{ min-height:120px; }
+#lb.v71.v77.retrato #lb-camada :is(.v77-pf-est, .v77-pf-conq, .v77-pf-hist){ overflow:visible; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-conq-topo{ grid-template-columns:1fr; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-tits{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#lb.v71.v77.retrato #lb-camada .v77-pf-nocartao{ flex-wrap:wrap; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-conq .pf-recs .lb-stats, #lb.v71.v77.retrato #lb-camada .v77-pf-hist #pf-rec-partidas{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#lb.v71.v77.retrato #lb-camada .v77-pf-hist .pf-hist{ grid-template-columns:1fr; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-hist .pf-partidas{ overflow:visible; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-id{ height:auto; min-height:220px; padding-bottom:12px; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-info{ position:relative; left:auto; right:auto; top:auto; margin:10px 20px 0 206px; gap:10px; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-nome, #lb.v71.v77.retrato #lb-camada .v77-pf-idl{ height:auto; flex-wrap:wrap; row-gap:8px; }
+#lb.v71.v77.retrato #lb-camada .v77-pf-xpl{ position:relative; left:auto; right:auto; bottom:auto; margin:16px 20px 4px; height:30px; }

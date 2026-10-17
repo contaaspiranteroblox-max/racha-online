@@ -1,0 +1,629 @@
+/* =====================================================================================================================
+   RACHA rua v70 — camada de interface em tamanho real (não encolhe com o palco do lobby).
+   Tokens: amarelo = ação principal e seleção · verde = confirmar · vermelho = desistir/excluir · neutro = voltar/cancelar.
+   ===================================================================================================================== */
+:root{
+  --v70-fundo:#1b1e20; --v70-caixa:#24282b; --v70-linha:rgba(255,255,255,.08); --v70-tinta:#0f1112; --v70-giz:#f3efe4; --v70-giz2:#b9bdb4;
+  --v70-amarelo:#ffd23f; --v70-amarelo-tx:#2a1d00; --v70-verde:#2fa84f; --v70-verde-tx:#ffffff; --v70-vermelho:#d8392b; --v70-vermelho-tx:#ffffff;
+  --v70-neutro:#3a3f43; --v70-foco:#5cc8ff; --v70-raio:16px; --v70-alvo:48px;
+  --v70-ui:1;                                          /* Ajustes › Acessibilidade › Tamanho da interface (1 = 100%) */
+}
+
+/* ---------------- a janela de AJUSTES ---------------- */
+#pop-ajustes.ajx{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+  padding:max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background:rgba(6,7,7,.66); font-family:system-ui, "Segoe UI", Roboto, sans-serif; color:var(--v70-giz); letter-spacing:.2px; line-height:1.25;
+  font-size:calc(17px*var(--v70-ui)); touch-action:manipulation; }
+#pop-ajustes.ajx[hidden]{ display:none !important; }
+#pop-ajustes .ajx-caixa{ display:flex; flex-direction:column; width:min(860px, 100%); max-height:100%; min-height:0; padding:0; border:3px solid var(--v70-tinta);
+  border-radius:22px 12px 22px 12px; background:var(--v70-caixa); box-shadow:0 8px 0 var(--v70-tinta), 0 24px 60px rgba(0,0,0,.55); text-align:left; overflow:hidden; }
+#pop-ajustes .ajx-cab{ display:flex; align-items:center; gap:12px; padding:12px 12px 6px 20px; }
+#pop-ajustes .ajx-cab h2{ flex:1 1 auto; margin:0; font-family:'Lilita One', 'Anton', system-ui, sans-serif; font-weight:400; font-size:calc(30px*var(--v70-ui)); letter-spacing:1px;
+  color:var(--v70-amarelo); text-shadow:0 3px 0 var(--v70-tinta); text-align:left; }
+#pop-ajustes .ajx-fechar{ flex:0 0 auto; width:var(--v70-alvo); height:var(--v70-alvo); border:3px solid var(--v70-tinta); border-radius:14px; background:var(--v70-neutro);
+  color:var(--v70-giz); font:700 calc(22px*var(--v70-ui))/1 system-ui, sans-serif; cursor:pointer; box-shadow:0 4px 0 var(--v70-tinta); }
+#pop-ajustes .ajx-abas{ display:flex; gap:6px; padding:4px 14px 10px; overflow-x:auto; scrollbar-width:thin; flex:0 0 auto; }
+#pop-ajustes .ajx-aba{ flex:0 0 auto; min-height:var(--v70-alvo); padding:0 16px; border:3px solid var(--v70-tinta); border-radius:12px; background:var(--v70-neutro); color:var(--v70-giz);
+  font:800 calc(16px*var(--v70-ui))/1 system-ui, sans-serif; letter-spacing:.3px; cursor:pointer; box-shadow:0 3px 0 var(--v70-tinta); }
+#pop-ajustes .ajx-aba[aria-selected="true"]{ background:var(--v70-amarelo); color:var(--v70-amarelo-tx); }
+#pop-ajustes .ajx-corpo{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:4px 20px 12px; -webkit-overflow-scrolling:touch; }
+#pop-ajustes .ajx-sec[hidden]{ display:none !important; }
+#pop-ajustes .ajx-grupo{ padding:8px 0 10px; border-bottom:2px solid var(--v70-linha); }
+#pop-ajustes .ajx-h, #pop-ajustes h3.aj-sec{ margin:10px 0 6px; font:800 calc(14px*var(--v70-ui))/1.2 system-ui, sans-serif; letter-spacing:1.4px; text-transform:uppercase; color:var(--v70-amarelo); }
+#pop-ajustes .ajx-nota{ margin:6px 0 2px; font-size:calc(15px*var(--v70-ui)); color:var(--v70-giz2); }
+#pop-ajustes .aj-lin{ display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; min-height:calc(56px*var(--v70-ui)); padding:6px 0; border-bottom:2px solid var(--v70-linha);
+  font-size:calc(17px*var(--v70-ui)); }
+#pop-ajustes .aj-lin > span:first-child, #pop-ajustes .aj-lin .ajx-tx{ flex:1 1 220px; min-width:0; }
+#pop-ajustes .aj-lin > span:first-child{ white-space:normal; }
+#pop-ajustes .aj-lin.lin{ height:auto; }   /* (as linhas que vieram do editor de HUD: o texto quebra em vez de passar por baixo do deslizante) */
+#pop-ajustes .ajx-tx b{ display:block; font-weight:700; }
+#pop-ajustes .ajx-tx small{ display:block; margin-top:2px; font-size:calc(14px*var(--v70-ui)); color:var(--v70-giz2); }
+#pop-ajustes .aj-lin.aj-col > span:first-child{ flex-basis:100%; }
+#pop-ajustes .aj-lin[hidden], #pop-ajustes .ajx-velha{ display:none !important; }
+#pop-ajustes .aj-lin.apagada{ opacity:.45; }
+/* chaves liga/desliga: 56 × 32 de desenho dentro de um alvo de 48 px */
+#pop-ajustes .aj-chave{ position:relative; flex:0 0 auto; width:calc(64px*var(--v70-ui)); height:var(--v70-alvo); min-height:44px; padding:0; border:0; background:transparent; cursor:pointer; }
+#pop-ajustes .aj-chave::before{ content:''; position:absolute; left:4px; right:4px; top:50%; height:calc(30px*var(--v70-ui)); transform:translateY(-50%); border:3px solid var(--v70-tinta); border-radius:99px; background:#4a4f53; }
+#pop-ajustes .aj-chave i{ position:absolute; left:8px; top:50%; width:calc(22px*var(--v70-ui)); height:calc(22px*var(--v70-ui)); margin-top:calc(-11px*var(--v70-ui)); border-radius:50%; background:#d6d2c6; transition:transform .15s; }
+#pop-ajustes .aj-chave[aria-pressed="true"]::before{ background:var(--v70-verde); }
+#pop-ajustes .aj-chave[aria-pressed="true"] i{ transform:translateX(calc(26px*var(--v70-ui))); background:#ffffff; }
+#pop-ajustes .aj-chave:disabled{ opacity:.4; cursor:default; }
+/* os seletores em pílula (gráficos, FPS, trilha) e os grupos de botões da câmera */
+#pop-ajustes .tl-seg, #pop-ajustes .ajx-seg{ display:flex; flex-wrap:wrap; gap:6px; width:100%; }
+#pop-ajustes .tl-seg button, #pop-ajustes .ajx-seg button{ flex:1 1 120px; min-height:var(--v70-alvo); padding:6px 12px; border:3px solid var(--v70-tinta); border-radius:12px;
+  background:var(--v70-neutro); color:var(--v70-giz); font:800 calc(15px*var(--v70-ui))/1.1 system-ui, sans-serif; cursor:pointer; box-shadow:0 3px 0 var(--v70-tinta); }
+#pop-ajustes .tl-seg button.on, #pop-ajustes .ajx-seg button.on, #pop-ajustes .ajx-seg button[aria-pressed="true"]{ background:var(--v70-amarelo); color:var(--v70-amarelo-tx); }
+#pop-ajustes .ajx-seg button:disabled{ opacity:.45; cursor:default; }
+#pop-ajustes .ajx-seg.ajx-seg5 button{ flex-basis:140px; }
+#pop-ajustes .ajx-pre{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+#pop-ajustes .ajx-pre b{ font-size:calc(16px*var(--v70-ui)); }
+#pop-ajustes .ajx-pre small{ font-weight:600; font-size:calc(13px*var(--v70-ui)); opacity:.85; }
+#pop-ajustes .ajx-seg.apagada{ opacity:.6; }
+/* deslizantes: a pista e o puxador grandes (o toque pega 44 px) */
+#pop-ajustes input[type=range]{ -webkit-appearance:none; appearance:none; flex:1 1 220px; min-width:160px; height:var(--v70-alvo); margin:0; background:transparent; cursor:pointer; touch-action:none; }
+#pop-ajustes input[type=range]::-webkit-slider-runnable-track{ height:12px; border-radius:6px; background:linear-gradient(90deg, var(--v70-amarelo) var(--p, 50%), rgba(255,255,255,.16) var(--p, 50%)); }
+#pop-ajustes input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:34px; height:34px; margin-top:-11px; border-radius:50%; background:#ffffff; border:5px solid #f59a0c; }
+#pop-ajustes input[type=range]::-moz-range-track{ height:12px; border-radius:6px; background:rgba(255,255,255,.16); }
+#pop-ajustes input[type=range]::-moz-range-progress{ height:12px; border-radius:6px; background:var(--v70-amarelo); }
+#pop-ajustes input[type=range]::-moz-range-thumb{ width:26px; height:26px; border-radius:50%; background:#ffffff; border:5px solid #f59a0c; }
+#pop-ajustes input[type=range]:disabled{ opacity:.4; }
+#pop-ajustes .aj-lin output{ flex:0 0 auto; min-width:56px; text-align:right; font-weight:700; color:var(--v70-giz2); }
+#pop-ajustes .ajx-range.apagada{ opacity:.5; }
+/* botões de ação dentro da janela */
+#pop-ajustes .lb-btn, #pop-ajustes .ajx-rest, #pop-ajustes .ajx-acao{ min-height:var(--v70-alvo); padding:0 18px; border:3px solid var(--v70-tinta); border-radius:12px; background:var(--v70-neutro);
+  color:var(--v70-giz); font:800 calc(15px*var(--v70-ui))/1 system-ui, sans-serif; letter-spacing:.4px; cursor:pointer; box-shadow:0 4px 0 var(--v70-tinta); }
+#pop-ajustes .ajx-acao{ width:100%; margin-top:6px; background:var(--v70-amarelo); color:var(--v70-amarelo-tx); }
+#pop-ajustes .ajx-rest{ margin:12px 0 4px; }
+#pop-ajustes .lb-btn.vermelho{ background:var(--v70-vermelho); color:var(--v70-vermelho-tx); }
+#pop-ajustes .lb-btn.verde{ background:var(--v70-verde); color:var(--v70-verde-tx); }
+#pop-ajustes .pop-acoes{ display:flex; justify-content:flex-end; gap:10px; padding:10px 16px 14px; border-top:2px solid var(--v70-linha); flex:0 0 auto; }
+#pop-ajustes .pop-acoes .lb-btn{ min-width:150px; }
+#pop-ajustes .aj-serv{ display:flex; flex-wrap:wrap; gap:8px; width:100%; }
+#pop-ajustes .aj-serv input{ flex:1 1 220px; min-height:var(--v70-alvo); padding:0 12px; border:3px solid var(--v70-tinta); border-radius:12px; background:#15181a; color:var(--v70-giz); font-size:calc(16px*var(--v70-ui)); }
+#pop-ajustes .aj-serv-tx{ display:block; width:100%; margin-top:4px; font-size:calc(14px*var(--v70-ui)); color:var(--v70-giz2); }
+/* foco visível (teclado) */
+#pop-ajustes :focus-visible{ outline:3px solid var(--v70-foco); outline-offset:2px; }
+/* tela baixa (celular deitado): a janela ocupa tudo e o cabeçalho encolhe */
+@media (max-height:520px){
+  #pop-ajustes.ajx{ padding:max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+  #pop-ajustes .ajx-caixa{ width:100%; height:100%; border-radius:14px; }
+  #pop-ajustes .ajx-cab{ padding:6px 8px 2px 14px; }
+  #pop-ajustes .ajx-cab h2{ font-size:calc(22px*var(--v70-ui)); }
+  #pop-ajustes .ajx-abas{ padding:2px 10px 6px; }
+  #pop-ajustes .pop-acoes{ padding:6px 10px 8px; }
+}
+@media (max-width:560px){
+  #pop-ajustes .ajx-caixa{ width:100%; height:100%; border-radius:14px; }
+  #pop-ajustes .ajx-corpo{ padding:4px 14px 12px; }
+  #pop-ajustes .ajx-abas{ flex-wrap:wrap; overflow:visible; }
+  #pop-ajustes .ajx-aba{ flex:1 1 30%; padding:0 8px; }
+}
+/* o editor de HUD: as partes que foram para os Ajustes */
+#hp .ajx-saiu{ display:none !important; }
+#hp .ajx-hp-nota{ margin-top:8px; }
+@media (prefers-reduced-motion:reduce){ #pop-ajustes .aj-chave i{ transition:none; } }
+
+/* =====================================================================================================================
+   v70 · interface em tamanho real: pisos de toque (44–48 px de verdade) nas telas e no palco do lobby.
+   --s = a escala de cada camada (as telas: PALCO.sc; o palco: PALCO.s), dividida pelo Tamanho da interface.
+   ===================================================================================================================== */
+/* (v70-pequeno: só quando a escala das telas é pequena — em tela grande o desenho original já passa de 44 px) */
+#lb.v70-pequeno #lb-camada button, #lb.v70-pequeno #lb-camada [role="button"], #lb.v70-pequeno #lb-camada [role="tab"], #lb.v70-pequeno #lb-camada .lb-btn,
+#lb.v70-pequeno #lb-camada select, #lb.v70-pequeno #lb-camada textarea, #lb.v70-pequeno #lb-camada input[type="text"], #lb.v70-pequeno #lb-camada input[type="search"],
+#lb.v70-pequeno #lb-camada input[type="url"], #lb.v70-pequeno #lb-camada input:not([type]), #lb.v70-pequeno #lb-camada input[type="range"]{ min-height:calc(44px / var(--s, 1)); }
+#lb.v70-pequeno #lb-camada button, #lb.v70-pequeno #lb-camada [role="button"]{ min-width:calc(44px / var(--s, 1)); }
+#lb #lb-camada .tl-voltar{ width:max(72px, calc(46px / var(--s, 1))); height:max(72px, calc(46px / var(--s, 1))); }
+#lb #lb-camada .tl-abas [role="tab"], #lb #lb-camada .tl-aba{ min-height:max(56px, calc(46px / var(--s, 1))); }
+/* o palco do lobby: o topo, os ícones e as moedas com toque de verdade. O JOGAR e o ⇄ TROCAR ficam como na v69 (v70.1: o
+   JOGAR inteiro e o TROCAR em cima do canto dele); o toque do TROCAR é maior que o desenho, para cima e para os lados (sem
+   pegar o JOGAR) */
+#lb .tp-ic{ width:max(78px, calc(46px / var(--s, 1))); height:max(78px, calc(46px / var(--s, 1))); }
+#lb .hm-grana{ height:max(70px, calc(46px / var(--s, 1))); }
+#lb:not(.retrato) .lb-topo{ height:max(104px, calc(48px / var(--s, 1))); }
+#lb:not(.retrato) .rx-esq, #lb:not(.retrato) .rx-dir{ top:calc(42px + max(104px, calc(48px / var(--s, 1)))); }
+#lb:not(.retrato) .lb-trocar{ white-space:nowrap; }
+#lb:not(.retrato):not(.v70-cabe) .lb-trocar{ height:clamp(38px, calc(44px / var(--s, 1)), 46px); min-height:0; }   /* (fora do celular: cresce até 46 para cima) */
+/* o toque: 13 px para cada lado, 4 para baixo e para cima até perto da coluna da direita (a borda de 3 px entra na conta) */
+#lb:not(.retrato) .lb-trocar::after{ content:''; position:absolute; left:-16px; right:-16px; top:-17px; bottom:-7px; }
+#lb:not(.retrato):not(.v70-cabe) .lb-trocar::after{ top:-9px; }
+#lb.retrato .lb-trocar{ min-height:calc(46px / var(--s, 1)); padding:0 28px; font-size:max(22px, calc(13px / var(--s, 1))); }
+#lb.retrato .hm-placa{ min-height:calc(46px / var(--s, 1)); }
+#lb.retrato .mi-faixa{ min-height:calc(46px / var(--s, 1)); }
+#lb.retrato .hm-grana::before{ display:none; }
+#lb.retrato .hm-grana{ padding:0 16px; }
+/* o editor da tampinha: as ferramentas com toque de verdade em qualquer tela; em tela estreita deitada os controles viram uma coluna */
+#lb #lb-camada .tpe-mini{ width:max(54px, calc(46px / var(--s, 1))); height:max(54px, calc(46px / var(--s, 1))); }
+#lb #lb-camada .tpe-menu-bt{ width:max(58px, calc(46px / var(--s, 1))); height:max(58px, calc(46px / var(--s, 1))); }
+#lb #lb-camada .tpe-zera{ width:max(40px, calc(44px / var(--s, 1))); height:max(40px, calc(44px / var(--s, 1))); min-width:0; min-height:0; }
+#lb #lb-camada .tpe-rng{ height:max(44px, calc(46px / var(--s, 1))); }
+#lb.v70-baixo #lb-camada .tpe-hist{ flex-direction:row; }
+#lb.v70-estreitas #lb-camada .tpe-meio{ grid-template-columns:minmax(300px, 32%) minmax(0, 1fr); }
+#lb.v70-estreitas #lb-camada .tpe-ctl{ grid-template-columns:minmax(0, 1fr); }
+#lb.v70-estreitas #lb-camada .tpe-slots{ grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); }
+#lb.v70-estreitas #lb-camada .tpe-baixo{ grid-template-columns:minmax(0, 1fr) 300px; }
+#lb #lb-camada .tpe-hex{ min-width:calc(60px / var(--s, 1)); }
+/* o perfil: as legendas das estatísticas maiores (e quebram linha em vez de cortar) */
+#lb .pf-st small{ font-size:20px; letter-spacing:.3px; white-space:normal; line-height:1.1; }
+
+/* ---------------- o editor dos controles (EDITAR CONTROLES): toques de 44 px e texto legível ---------------- */
+#hp{ width:min(560px, calc(100% - 16px)); max-height:calc(100% - 12px); overflow-y:auto; overscroll-behavior:contain; padding:4px 12px 10px; font-size:15px;
+  font-family:system-ui, "Segoe UI", Roboto, sans-serif; }
+#hp .hp-cab b{ font-size:19px; } #hp .hp-cab small{ font-size:13px; }
+#hp h4{ font-size:14px; margin:6px 0 2px; }
+#hp .lin{ grid-template-columns:minmax(120px, 34%) 1fr 48px; height:auto; min-height:46px; }
+#hp .lin span{ font-size:15px; white-space:normal; line-height:1.1; }
+#hp .lin output{ font-size:15px; }
+#hp input[type=range]{ height:44px; }
+#hp input[type=range]::-webkit-slider-runnable-track{ height:10px; border-radius:5px; }
+#hp input[type=range]::-webkit-slider-thumb{ width:30px; height:30px; margin-top:-10px; }
+#hp input[type=range]::-moz-range-thumb{ width:22px; height:22px; }
+#hp .chips.c3{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#hp .chip{ min-height:44px; font-size:15px; padding:4px 10px 4px 8px; }
+#hp .nota{ font-size:13px; line-height:1.25; }
+#hp .hp-acoes{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+#hp .hp-acoes > i{ flex:1 1 auto; }
+#hp .hp-acoes button{ min-height:44px; padding:0 16px; border-radius:12px; font-size:15px; font-weight:700; border:3px solid #0f1112; }
+#hp #hp-rest{ background:#3a3f43; color:#f3efe4; }
+#hp #hp-canc{ background:#3a3f43; color:#f3efe4; }
+#hp #hp-salvar{ background:#2fa84f; color:#ffffff; }
+#hp .hed{ margin:4px 0 6px; padding-bottom:6px; border-bottom:2px solid rgba(255,255,255,.08); }
+#hp .hed-moldes{ display:flex; flex-wrap:wrap; gap:6px; }
+#hp .hed-molde{ flex:1 1 90px; min-height:44px; padding:0 8px; border:3px solid #0f1112; border-radius:12px; background:#3a3f43; color:#f3efe4; font-size:15px; font-weight:700; }
+#hp .hed-molde.on{ background:#ffd23f; color:#2a1d00; }
+#hp .hed-opcoes{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-top:6px; }
+#hp .hed-arruma{ min-height:44px; border:3px solid #0f1112; border-radius:12px; background:#ffd23f; color:#2a1d00; font-size:14px; font-weight:800; line-height:1.05; }
+#hp .hed-arruma:disabled{ background:#3a3f43; color:#9aa0a4; }
+#hp .hed-aviso{ margin:6px 0 0; font-size:14px; line-height:1.25; color:#b9bdb4; }
+#hp .hed-aviso.ruim{ color:#ffb4a8; font-weight:700; }
+#hp :focus-visible{ outline:3px solid #5cc8ff; outline-offset:2px; }
+@media (max-width:520px){ #hp .hed-opcoes{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+/* a pausa: botões com 46 px mesmo em tela baixa */
+.pa-bt{ min-height:46px !important; }
+.pa-nota, .pa-rot{ font-size:max(13px, 1em) !important; }
+#hp .hp-acoes{ position:sticky; bottom:-10px; z-index:2; margin:8px -12px -10px; padding:8px 12px 10px; background:rgba(14,16,17,.97); border-top:2px solid rgba(255,255,255,.08); }
+/* Ajustes › Controles: o teclado e a ajuda do toque */
+#pop-ajustes .ajx-tecla .ajx-tx{ flex:1 1 200px; }
+#pop-ajustes .ajx-tecla-bts{ display:flex; gap:8px; }
+#pop-ajustes .ajx-tbt{ min-width:72px; min-height:var(--v70-alvo); padding:0 12px; border:3px solid var(--v70-tinta); border-radius:10px; background:#15181a; color:var(--v70-giz);
+  font:800 calc(16px*var(--v70-ui))/1 ui-monospace, Menlo, Consolas, monospace; box-shadow:0 3px 0 var(--v70-tinta); cursor:pointer; }
+#pop-ajustes .ajx-tbt.vazia{ color:var(--v70-giz2); background:var(--v70-neutro); }
+#pop-ajustes .ajx-tbt.on{ background:var(--v70-amarelo); color:var(--v70-amarelo-tx); }
+#pop-ajustes .ajx-ajuda{ margin:4px 0 0; }
+#pop-ajustes .ajx-ajuda dt{ margin-top:8px; font-weight:800; color:var(--v70-amarelo); }
+#pop-ajustes .ajx-ajuda dd{ margin:2px 0 0; color:var(--v70-giz); font-size:calc(15px*var(--v70-ui)); line-height:1.3; }
+#lb #lb-camada .tpe-pop-x{ width:max(56px, calc(46px / var(--s, 1))); height:max(56px, calc(46px / var(--s, 1))); }
+
+/* =====================================================================================================================
+   Etapa 4 — perfil, estatísticas, zerar, salvamento, missões, loja, liga/dificuldade, inventário (tamanhos do palco: o
+   lobby encolhe tudo junto; os pisos de 44 px e 12 px da Etapa 3 valem aqui também)
+   ===================================================================================================================== */
+/* o lobby: o PASSE (em breve) sem destaque e o selo DEMONSTRAÇÃO */
+#lb .rx-bt.v70-mudo{ filter:saturate(.15) brightness(.82); opacity:.78; }
+#lb .rx-bt.v70-mudo b{ color:#d6d2c6; }
+#lb .v70-demo{ display:inline-block; margin-top:6px; padding:6px 14px; border:3px solid #0f1112; border-radius:10px; background:#d8392b; color:#fff; font:800 20px/1 system-ui, sans-serif;
+  letter-spacing:1.5px; box-shadow:0 4px 0 #0f1112; transform:rotate(-2deg); }
+/* PERFIL: a etiqueta da identidade, o clube, a próxima meta e as estatísticas por contexto e modo */
+#lb .pf-uid{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; line-height:1.05; }
+#lb .pf-ident{ font:800 15px/1 system-ui, sans-serif; letter-spacing:1px; color:#ffd23f; white-space:nowrap; }
+#lb .pf-ident.conta{ color:#7fdc9a; }
+#lb .pf-clube{ display:flex; align-items:center; gap:14px; width:100%; margin-top:18px; padding:12px 16px; border:3px solid #0f1112; border-radius:16px; background:#25292c; color:#f3efe4; text-align:left;
+  box-shadow:0 4px 0 #0f1112; min-height:92px; }
+#lb .pf-clube-esc{ flex:none; width:64px; height:64px; } #lb .pf-clube-esc canvas{ width:64px; height:64px; display:block; }
+#lb .pf-clube-tx{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+#lb .pf-clube-tx small{ font:800 16px/1 system-ui, sans-serif; letter-spacing:1.4px; color:#ffd23f; }
+#lb .pf-clube-tx b{ font-size:24px; line-height:1.1; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+#lb .pf-clube-tx em{ font-style:normal; font-size:17px; color:#b9bdb4; }
+#lb .pf-clube-seta{ flex:none; width:30px; height:30px; color:#ffd23f; } #lb .pf-clube-seta svg{ width:100%; height:100%; }
+#lb .pf-meta{ display:flex; flex-direction:column; gap:6px; width:100%; margin-top:16px; padding:14px 16px; border-radius:16px; background:rgba(0,0,0,.32); box-shadow:inset 0 0 0 2px rgba(255,255,255,.1); text-align:left; }
+#lb .pf-meta-rot{ font:800 16px/1 system-ui, sans-serif; letter-spacing:1.4px; color:#ffd23f; }
+#lb .pf-meta b{ font-size:26px; color:#fff; }
+#lb .pf-meta em{ font-style:normal; font-size:18px; color:#d6d2c6; line-height:1.25; }
+#lb .pf-meta .pf-barra{ display:block; height:12px; border-radius:6px; background:rgba(255,255,255,.12); overflow:hidden; }
+#lb .pf-meta .pf-barra i{ display:block; height:100%; background:#ffd23f; }
+#lb .pf-meta-nv{ margin:4px 0 0; font-size:17px; color:#b9bdb4; line-height:1.25; }
+#lb .pf-corpo{ grid-template-areas:"lado cartao" "lado est" "lado recs" "lado partidas" "lado zerar"; }
+#lb.retrato .pf-corpo{ grid-template-areas:"lado" "cartao" "est" "recs" "partidas" "zerar"; }
+#lb .pf-est{ grid-area:est; min-width:0; display:flex; flex-direction:column; gap:12px; }
+#lb .pf-est-cab .lb-sub{ margin:4px 2px 0; }
+#lb .pf-est .tl-seg{ margin-left:0; flex-wrap:wrap; border-radius:14px; }
+#lb .pf-est .tl-seg button{ flex:1 1 auto; height:auto; min-height:max(56px, calc(46px / var(--s, 1))); padding:8px 18px; font-size:21px; }
+#lb .pf-est .pf-est-modo button{ font-size:19px; min-height:max(52px, calc(46px / var(--s, 1))); }
+#lb .pf-est .tl-seg[hidden]{ display:none; }
+#lb .pf-est-grade{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+#lb.retrato .pf-est-grade{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#lb .pf-est-grade .card{ padding:12px 16px; gap:2px; min-width:0; }
+#lb .pf-est-grade .card small{ font-size:17px; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb .pf-est-grade .card b{ font-size:40px; line-height:1.05; }
+#lb .pf-est-grade .card em{ font-size:17px; letter-spacing:.2px; color:#d6d2c6; line-height:1.2; }
+#lb .pf-est-grade .card.top b{ color:#ffd23f; }
+#lb .pf-est-grade .card.fin{ box-shadow:inset 0 0 0 2px rgba(92,200,255,.45); }
+#lb .pf-est-nota{ margin:0; font-size:18px; line-height:1.35; }
+#lb .pf-hist li.e b{ color:#e8c34a; }
+/* ZERAR o progresso: o que apaga, o que fica e as escolhas */
+#lb .pop-caixa.v70-zerar{ width:min(1040px, 94vw); text-align:left; }
+#lb .v70-zerar-l{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:8px 0 12px; }
+#lb.retrato .v70-zerar-l{ grid-template-columns:1fr; }
+#lb .v70-zerar-l > div{ padding:12px 16px; border-radius:14px; background:rgba(0,0,0,.28); }
+#lb .v70-zerar-l b{ font:800 20px/1 system-ui, sans-serif; letter-spacing:1.4px; }
+#lb .v70-zerar-a b{ color:#ff8a7a; } #lb .v70-zerar-m b{ color:#7fdc9a; }
+#lb .v70-zerar-l ul{ margin:8px 0 0; padding-left:22px; font-size:19px; line-height:1.35; color:#ece8dc; }
+#lb .v70-ops{ display:flex; flex-direction:column; gap:8px; margin:4px 0 10px; }
+#lb .v70-op{ display:flex; align-items:center; gap:14px; min-height:max(60px, calc(46px / var(--s, 1))); padding:8px 14px; border:3px solid #0f1112; border-radius:14px; background:#2a2e31; color:#f3efe4; text-align:left; }
+#lb .v70-op-ch{ flex:none; width:34px; height:34px; border:3px solid #0f1112; border-radius:9px; background:#15181a; display:grid; place-items:center; }
+#lb .v70-op[aria-pressed="true"]{ background:#4a2420; }
+#lb .v70-op[aria-pressed="true"] .v70-op-ch{ background:#d8392b; }
+#lb .v70-op[aria-pressed="true"] .v70-op-ch::after{ content:'✓'; color:#fff; font:900 24px/1 system-ui, sans-serif; }
+#lb .v70-op-tx{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+#lb .v70-op-tx b{ font-size:21px; } #lb .v70-op-tx small{ font-size:17px; color:#c8c4b8; }
+#lb .v70-zerar-nota{ font-size:18px !important; margin:4px 0 !important; }
+/* MISSÕES */
+#lb .pop-caixa.v70-mi{ width:min(980px, 94vw); }
+#lb .v70-mi-l{ list-style:none; margin:10px 0; padding:0; display:flex; flex-direction:column; gap:10px; text-align:left; }
+#lb .v70-mi-i{ display:flex; align-items:center; gap:16px; padding:12px 16px; border-radius:14px; background:rgba(0,0,0,.28); box-shadow:inset 0 0 0 2px rgba(255,255,255,.08); }
+#lb .v70-mi-i.pronta{ box-shadow:inset 0 0 0 3px #2fa84f; }
+#lb .v70-mi-i.feita{ opacity:.62; }
+#lb .v70-mi-t{ flex:1 1 auto; min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 12px; align-items:center; }
+#lb .v70-mi-t b{ grid-column:1 / -1; font-size:22px; color:#fff; line-height:1.2; }
+#lb .v70-mi-bar{ display:block; height:12px; border-radius:6px; background:rgba(255,255,255,.12); overflow:hidden; }
+#lb .v70-mi-bar i{ display:block; height:100%; background:#ffd23f; }
+#lb .v70-mi-t small{ font-size:18px; color:#d6d2c6; }
+#lb .v70-mi-pr{ flex:none; display:flex; align-items:center; gap:6px; font-size:19px; color:#ffd23f; white-space:nowrap; }
+#lb .v70-mi-ok{ flex:none; font:800 17px/1 system-ui, sans-serif; letter-spacing:1px; color:#7fdc9a; }
+#lb .v70-mi-i .lb-btn{ flex:none; min-width:130px; }
+#lb.retrato .v70-mi-i{ flex-wrap:wrap; } #lb.retrato .v70-mi-t{ flex-basis:100%; }
+#lb .v70-mi-nota{ font-size:18px !important; }
+/* LOJA: as peças da tampinha, como ganhar, a troca e o em breve */
+#lb .v70-lj-pecas{ display:flex; flex-direction:column; gap:12px; margin-bottom:22px; }
+#lb .v70-lj-cab{ display:flex; align-items:baseline; flex-wrap:wrap; gap:8px 18px; }
+#lb .v70-lj-cab .tl-sub{ margin:0; }
+#lb .v70-lj-tem{ font-size:20px; color:#d6d2c6; }
+#lb .v70-lj-precos{ display:flex; flex-wrap:wrap; gap:10px; }
+#lb .v70-lj-pr{ display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:12px; background:rgba(0,0,0,.3); font-size:19px; color:#f3efe4; }
+#lb .v70-lj-pr b{ margin-right:4px; font-size:19px; letter-spacing:.6px; }
+#lb .v70-lj-pr.tpe-r-comum b{ color:#cfd6dc; } #lb .v70-lj-pr.tpe-r-raro b{ color:#6fb4ff; } #lb .v70-lj-pr.tpe-r-epico b{ color:#c28dff; } #lb .v70-lj-pr.tpe-r-lendario b{ color:#ffb84d; }
+#lb .v70-lj-dest-t{ font:800 18px/1 system-ui, sans-serif; letter-spacing:1.4px; color:#ffd23f; }
+#lb .v70-lj-dest{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; }
+#lb.retrato .v70-lj-dest{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+#lb .v70-lj-peca{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 10px 14px; border:3px solid #0f1112; border-radius:16px; background:#25292c; color:#f3efe4; box-shadow:0 4px 0 #0f1112; min-width:0; }
+#lb .v70-lj-peca canvas{ width:96px; height:96px; }
+#lb .v70-lj-peca-t{ display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; max-width:100%; }
+#lb .v70-lj-peca-t small{ font:800 14px/1 system-ui, sans-serif; letter-spacing:1px; color:#b9bdb4; }
+#lb .v70-lj-peca-t b{ font-size:22px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#lb .v70-lj-peca-pr{ display:flex; align-items:center; gap:6px; font-style:normal; font-size:19px; color:#ffd23f; }
+#lb .v70-lj-peca-x{ margin-top:2px; padding:6px 12px; border-radius:10px; background:#ffd23f; color:#2a1d00; font:800 16px/1 system-ui, sans-serif; letter-spacing:.6px; }
+#lb .v70-lj-ir{ align-self:flex-start; }
+#lb .v70-lj-como{ margin-bottom:20px; }
+#lb .v70-lj-ganhos{ margin:8px 0 0; padding:0; list-style:none; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 18px; }
+#lb.retrato .v70-lj-ganhos{ grid-template-columns:1fr; }
+#lb .v70-lj-ganhos li{ display:block; padding:10px 14px; border-radius:12px; background:rgba(0,0,0,.24); font-size:19px; color:#ece8dc; line-height:1.45; }
+#lb .v70-lj-ganhos li i, #lb .v70-mi-pr i, #lb .v70-lj-pr i, #lb .tpe-saldo i{ display:inline-block; vertical-align:-.18em; margin:0 2px; }
+#lb .v70-lj-ganhos li b{ color:#fff; margin-right:4px; }
+#lb .v70-lj-breve{ margin-top:22px; opacity:.85; }
+/* JOGAR › CASUAL: a escolha dos bots */
+#lb .v70-bots{ display:flex; flex-direction:column; gap:8px; }
+#lb .v70-bots-seg{ margin-left:0; }
+#lb .v70-bots-seg button{ flex:1 1 0; height:auto; min-height:max(58px, calc(46px / var(--s, 1))); font-size:22px; }
+#lb .v70-bots-seg[hidden]{ display:none; }
+#lb .v70-bots-nota{ margin:0; font-size:19px; color:#d6d2c6; line-height:1.3; }
+/* o editor da tampinha: o rascunho, a busca e as salvas (com o menu e a favorita) */
+#lb .tpe-rasc{ position:absolute; left:12px; right:12px; bottom:10px; z-index:3; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px 8px 14px;
+  border:3px solid #0f1112; border-radius:12px; background:#3d3420; color:#ffe9a8; font:700 18px/1.2 system-ui, sans-serif; }
+#lb .tpe-rasc[hidden]{ display:none; }
+#lb .tpe-rasc-bt{ flex:none; min-height:max(48px, calc(46px / var(--s, 1))); padding:8px 12px; border:3px solid #0f1112; border-radius:10px; background:#3a3f43; color:#f3efe4; font:800 16px/1 system-ui, sans-serif; }
+#lb .tpe-busca{ display:block; margin:6px 0 10px; }
+#lb .tpe-busca-in{ width:100%; min-height:max(56px, calc(46px / var(--s, 1))); padding:0 16px; border:3px solid #0f1112; border-radius:12px; background:#15181a; color:#f3efe4; font:600 21px system-ui, sans-serif; }
+#lb .tpe-salva{ position:relative; display:flex; }
+#lb .tpe-salva > .tpe-card{ flex:1 1 auto; }
+#lb .tpe-card-mais{ position:absolute; right:4px; top:4px; z-index:2; width:max(52px, calc(46px / var(--s, 1))); height:max(52px, calc(46px / var(--s, 1))); display:grid; place-items:center; border:3px solid #0f1112; border-radius:12px; background:#2a2e31; color:#f3efe4; }
+#lb .tpe-card-mais svg{ width:26px; height:26px; }
+#lb .tpe-fav{ position:absolute; left:8px; top:6px; color:#ffd23f; font-size:28px; text-shadow:0 2px 0 #0f1112; }
+#lb .tpe-salva-pop{ width:min(620px, 94vw); }
+#lb .tpe-salva-mini{ display:block; width:96px; height:96px; margin:4px auto 8px; }
+#lb .tpe-salva-acoes{ display:flex; flex-direction:column; gap:10px; margin:6px 0 4px; }
+#lb .tpe-salva-acoes .lb-btn{ width:100%; }
+#lb .tpe-saldo{ font-size:20px !important; }
+#lb .fim-premio .v70-premio-nota, .fim-premio .v70-premio-nota{ flex-basis:100%; font-size:max(13px, .7em); color:#e6d9a8; }
+/* a faixa de baixo (DESFAZER) e o aviso do salvamento: tamanho real, fora do palco */
+.v70-desfaz{ position:fixed; left:50%; bottom:max(14px, env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:80; display:flex; align-items:center; gap:14px; max-width:calc(100vw - 24px);
+  padding:8px 8px 8px 18px; border:3px solid #0f1112; border-radius:14px; background:#24282b; color:#f3efe4; font:700 calc(16px*var(--v70-ui))/1.25 system-ui, sans-serif; box-shadow:0 6px 0 #0f1112, 0 14px 30px rgba(0,0,0,.45); }
+.v70-desfaz[hidden]{ display:none; }
+.v70-desfaz-bt{ flex:none; min-height:48px; padding:0 16px; border:3px solid #0f1112; border-radius:12px; background:#ffd23f; color:#2a1d00; font:800 calc(16px*var(--v70-ui))/1 system-ui, sans-serif; cursor:pointer; }
+.v70-salva{ position:fixed; left:50%; top:max(10px, env(safe-area-inset-top)); transform:translateX(-50%); z-index:85; display:flex; align-items:center; gap:10px; width:min(760px, calc(100vw - 20px));
+  padding:8px 8px 8px 16px; border:3px solid #0f1112; border-radius:14px; background:#5a1f17; color:#fff; font:700 calc(15px*var(--v70-ui))/1.3 system-ui, sans-serif; box-shadow:0 6px 0 #0f1112; }
+.v70-salva[hidden]{ display:none; }
+.v70-salva-tx{ flex:1 1 auto; min-width:0; }
+.v70-salva-bt, .v70-salva-x{ flex:none; min-width:48px; min-height:48px; padding:0 12px; border:3px solid #0f1112; border-radius:12px; font:800 calc(15px*var(--v70-ui))/1 system-ui, sans-serif; cursor:pointer; }
+.v70-salva-bt{ background:#ffd23f; color:#2a1d00; } .v70-salva-x{ background:#3a3f43; color:#f3efe4; }
+/* Ajustes › Conta: exportar e importar */
+#pop-ajustes .v70-arq{ gap:10px; }
+#pop-ajustes .v70-arq .lb-btn{ flex:1 1 200px; min-height:var(--v70-alvo); border:3px solid var(--v70-tinta); border-radius:12px; font:800 calc(15px*var(--v70-ui))/1 system-ui, sans-serif; cursor:pointer; }
+#pop-ajustes .v70-arq .lb-btn.verde{ background:var(--v70-verde); color:#fff; }
+#pop-ajustes .v70-arq .lb-btn:not(.verde){ background:var(--v70-neutro); color:var(--v70-giz); }
+#pop-ajustes .v70-salva-st{ font-weight:700; color:var(--v70-giz); }
+#lb .tpe-ok.volta{ background:linear-gradient(#5a5f63, #3a3f43); color:#f3efe4; }
+#lb .tpe-ok.volta b{ color:#f3efe4; }
+/* PRIMEIROS TOQUES (o painel do passo), o cartão COMO JOGA dos modos e o BOT na apresentação — tamanho real, fora do palco */
+.tu-painel{ box-sizing:border-box; position:absolute; left:50%; top:max(8px, env(safe-area-inset-top)); transform:translateX(-50%); z-index:5; width:min(640px, calc(100% - 200px)); min-width:280px;
+  padding:10px 14px 10px; border:3px solid #0f1112; border-radius:16px; background:rgba(20,23,25,.9); color:#f3efe4; box-shadow:0 5px 0 #0f1112;
+  font:600 calc(15px*var(--v70-ui))/1.3 system-ui, "Segoe UI", Roboto, sans-serif; pointer-events:auto; }
+.tu-painel[hidden]{ display:none; }
+.tu-cab{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.tu-passo{ font:800 calc(12.5px*var(--v70-ui))/1.1 system-ui, sans-serif; letter-spacing:1.2px; color:#ffd23f; }
+.tu-pular{ flex:none; min-height:44px; min-width:64px; padding:0 12px; border:3px solid #0f1112; border-radius:12px; background:#3a3f43; color:#f3efe4; font:800 calc(14px*var(--v70-ui))/1 system-ui, sans-serif; cursor:pointer; }
+.tu-tit{ display:block; margin:2px 0 2px; font:400 calc(24px*var(--v70-ui))/1.1 'Lilita One', 'Anton', system-ui, sans-serif; letter-spacing:.8px; color:#fff; }
+.tu-txt{ margin:0; } .tu-como{ margin:4px 0 0; color:#c8c4b8; font-size:calc(14px*var(--v70-ui)); }
+.tu-pontos{ display:flex; gap:6px; margin-top:8px; } .tu-pontos i{ flex:1 1 0; height:7px; border-radius:4px; background:rgba(255,255,255,.16); }
+.tu-pontos i.ok{ background:#2fa84f; } .tu-pontos i.agora{ background:#ffd23f; }
+@media (max-width:700px){ .tu-painel{ width:calc(100% - 132px); top:max(6px, env(safe-area-inset-top)); padding:8px 10px; } .tu-como{ display:none; } .tu-tit{ font-size:calc(20px*var(--v70-ui)); } }
+@media (max-height:420px){ .tu-como{ display:none; } .tu-pontos{ margin-top:5px; } }
+.tu-intro{ position:absolute; inset:0; z-index:40;   /* (Etapa 6: acima do lobby, z 30 — o COMO JOGA do JOGAR abria por trás dele) */ display:flex; align-items:center; justify-content:center; padding:max(10px, env(safe-area-inset-top)) 12px; background:rgba(6,7,7,.62); }
+.tu-intro[hidden]{ display:none; }
+.tu-intro-cx{ box-sizing:border-box; width:min(560px, 100%); max-height:100%; overflow:auto; padding:16px 18px 18px; border:3px solid #0f1112; border-radius:20px 10px 20px 10px; background:#24282b; color:#f3efe4;
+  box-shadow:0 8px 0 #0f1112; font:600 calc(16px*var(--v70-ui))/1.3 system-ui, "Segoe UI", Roboto, sans-serif; text-align:left; }
+.tu-intro-tag{ display:inline-block; padding:5px 10px; border:3px solid #0f1112; border-radius:9px; background:#ffd23f; color:#2a1d00; font:800 calc(12.5px*var(--v70-ui))/1 system-ui, sans-serif; letter-spacing:1.2px; }
+.tu-intro-cx h2{ margin:8px 0 6px; font:400 calc(30px*var(--v70-ui))/1.1 'Lilita One', 'Anton', system-ui, sans-serif; color:#ffd23f; letter-spacing:1px; text-shadow:0 3px 0 #0f1112; }
+.tu-intro-l{ margin:0 0 12px; } .tu-intro-l dt{ margin-top:8px; font:800 calc(13px*var(--v70-ui))/1 system-ui, sans-serif; letter-spacing:1.2px; color:#7fe8ff; }
+.tu-intro-l dd{ margin:3px 0 0; color:#f3efe4; }
+.tu-intro-ok{ position:sticky; bottom:0; display:block; width:100%; min-height:52px; border:3px solid #0f1112; border-radius:14px; background:#ffd23f; color:#2a1d00; font:800 calc(18px*var(--v70-ui))/1 system-ui, sans-serif; cursor:pointer; box-shadow:0 4px 0 #0f1112; }
+.tu-intro-ok:focus-visible, .tu-pular:focus-visible{ outline:3px solid #5cc8ff; outline-offset:2px; }
+#lb .tu-card{ box-shadow:inset 0 0 0 3px #2fa84f; }
+#lb .tu-como-joga{ grid-column:1 / -1; justify-self:start; margin:-4px 0 4px; min-height:max(52px, calc(46px / var(--s, 1))); padding:0 18px; font-size:20px; }
+#lb .tu-como-joga[hidden]{ display:none; }
+#rq-vs .vs-ins.vs-bot{ display:grid; place-items:center; font:800 14px/1 system-ui, sans-serif; letter-spacing:1px; color:#0f1112; background:#d6d2c6; border-radius:8px; }
+#lb .v70-mi-i .lb-btn, #lb .v70-lj-ir, #lb .tpe-salva-acoes .lb-btn{ min-height:max(56px, calc(46px / var(--s, 1))); }
+#lb .pf-clube{ min-height:max(92px, calc(46px / var(--s, 1))); }
+@media (max-height:420px){ .tu-intro-cx{ padding:10px 14px 12px; } .tu-intro-cx h2{ margin:4px 0 2px; font-size:calc(24px*var(--v70-ui)); } .tu-intro-l dt{ margin-top:5px; } .tu-intro-l{ margin-bottom:8px; } }
+
+/* =====================================================================================================================
+   Etapa 5 — clube e online: os atalhos da sala (ENTRAR NO TIME / MONTAR COM BOTS), a COMUNIDADE (início) e o clube único
+   (tamanhos do palco; os pisos de 44 px reais valem: max(Npx, calc(46px / var(--s,1))))
+   ===================================================================================================================== */
+#lb .v70-sl-atalhos{ display:flex; flex-direction:column; gap:10px; }
+#lb:not(.retrato) .sl-botoes > .v70-sl-atalhos{ position:absolute; right:24px; bottom:150px; width:262px; z-index:3; }
+#lb.estreito:not(.retrato) .sl-botoes > .v70-sl-atalhos{ right:20px; width:218px; bottom:142px; }
+/* deitado e baixo (celular): uma linha logo acima das regras e do INICIAR (em cima dele não cabe sem cobrir os times) */
+#lb .sl-corpo > .v70-sl-atalhos{ position:relative; z-index:2; flex:none; align-self:flex-end; flex-direction:row; gap:16px; margin:10px 24px 0 auto; }
+#lb .sl-corpo > .v70-sl-atalhos .sl-botao.v70-sl-at{ width:auto; padding:6px 26px; flex-direction:row; gap:12px; }
+#lb .sl-corpo > .v70-sl-atalhos .v70-sl-at small{ display:none; }
+#lb.retrato .v70-sl-atalhos{ flex-direction:row; flex-wrap:wrap; justify-content:center; width:100%; flex-basis:100%; order:-1; }
+#lb.retrato .sl-botoes{ flex-wrap:wrap; justify-content:center; }
+#lb .sl-botao.v70-sl-at{ position:static; width:100%; height:auto; min-height:max(58px, calc(46px / var(--s,1))); padding:6px 14px; flex-direction:column; gap:3px; font-size:25px; line-height:1;
+  border-radius:14px; border:4px solid #12306b; background:linear-gradient(#56b4ff, #1f74e0); box-shadow:inset 0 3px 0 rgba(255,255,255,.4), 0 5px 0 rgba(0,0,0,.3); }
+#lb .sl-botao.v70-sl-at.bots{ background:linear-gradient(#e6ecf7, #9aa6c2); color:#141a33; border-color:#141a33; text-shadow:none; }
+#lb .v70-sl-at b{ font-weight:400; letter-spacing:.5px; }
+#lb .v70-sl-at small{ font:600 15px/1 var(--sx-f-txt); letter-spacing:0; opacity:.92; }
+#lb.retrato .sl-botao.v70-sl-at{ width:auto; flex:1 1 280px; max-width:380px; }
+#lb .v70-sl-atalhos[hidden], #lb .v70-sl-at[hidden]{ display:none !important; }
+
+/* COMUNIDADE › INÍCIO: salas, amigos, chat, copa e o clube (cada um com o estado de agora) */
+#lb .cm .sx-corpo2{ gap:18px; }
+#lb .cm-sala{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:14px 18px; border-radius:18px; background:#3a2d06; border:3px solid var(--sx-amarelo); }
+#lb .cm-sala-tx{ flex:1 1 320px; min-width:0; display:flex; flex-direction:column; gap:4px; }
+#lb .cm-sala-tx b{ font:400 30px/1.1 var(--sx-f-tit); font-style:italic; color:var(--sx-amarelo); overflow-wrap:anywhere; }
+#lb .cm-sala-tx small{ font:600 21px var(--sx-f-txt); color:#f3efe4; }
+#lb .cm-onde{ margin:0; font:600 22px/1.3 var(--sx-f-txt); color:#c3cbef; }
+#lb .cm-onde.cm-demo{ color:#ffb4a8; }
+#lb .cm-grade{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:18px; }
+#lb.retrato .cm-grade{ grid-template-columns:minmax(0, 1fr); }
+#lb .cm-card{ display:flex; flex-direction:column; gap:10px; min-width:0; padding:18px 20px; border-radius:20px; background:rgba(255,255,255,.06); box-shadow:inset 0 0 0 3px rgba(255,255,255,.08); }
+#lb .cm-cab{ display:flex; align-items:center; gap:14px; }
+#lb .cm-ic{ flex:none; width:56px; height:56px; border-radius:14px; display:grid; place-items:center; background:#26316a; color:var(--sx-amarelo); }
+#lb .cm-ic svg{ width:34px; height:34px; }
+#lb .cm-salas .cm-ic{ color:#56b4ff; } #lb .cm-amigos .cm-ic{ color:#ff8fa3; } #lb .cm-chat .cm-ic{ color:#7fe24e; } #lb .cm-copa .cm-ic{ color:var(--sx-amarelo); }
+#lb .cm-cab h3{ margin:0; font:400 34px/1 var(--sx-f-tit); font-style:italic; color:#fff; letter-spacing:.5px; }
+#lb .cm-tx{ margin:0; font:600 22px/1.3 var(--sx-f-txt); color:#dfe4ff; }
+#lb .cm-sub{ font:800 18px var(--sx-f-num); letter-spacing:2px; color:var(--sx-amarelo); }
+#lb .cm-duelos{ margin:0; padding:0 0 0 24px; font:600 21px/1.35 var(--sx-f-txt); color:#dfe4ff; }
+#lb .cm-vazio, #lb .cm-id{ font:600 19px/1.3 var(--sx-f-txt); color:var(--sx-sub); }
+#lb .cm-acoes{ margin-top:auto; padding-top:4px; display:flex; flex-wrap:wrap; gap:12px; }
+#lb .cm-acoes .sx-bt, #lb .cm-sala .sx-bt, #lb .cm-clube .sx-bt{ min-height:max(60px, calc(46px / var(--s,1))); height:auto; padding:8px 22px; font-size:26px; white-space:normal; text-align:center; line-height:1.05; }
+#lb .cm-clube{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 18px; border-radius:18px; background:rgba(0,0,0,.2); }
+#lb .cm-clube-tx{ flex:1 1 300px; min-width:0; display:flex; flex-direction:column; gap:4px; }
+#lb .cm-clube-tx b{ font:400 28px/1.1 var(--sx-f-tit); font-style:italic; color:#fff; overflow-wrap:anywhere; }
+#lb .cm-clube-tx small{ font:600 19px var(--sx-f-txt); color:var(--sx-sub); }
+
+/* o clube único: onde ele mora, MEU PAÍS, a explicação dos troféus, o clube pessoal sem ranking */
+#lb .clb-onde-plataforma{ background:#7fdc9a; } #lb .clb-onde-turma{ background:#56b4ff; color:#06183a; } #lb .clb-onde-local{ background:#cfd3dc; color:#1b1f2a; }
+#lb .clb-pais .sl-flag{ width:30px; height:22px; } #lb .clb-pais span{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap; }
+#lb .clb-cols.sem-rank{ grid-template-columns:minmax(0, 1fr) 130px 150px; }
+#lb .clb-rows.sem-rank .clb-row{ grid-template-columns:76px minmax(0, 1fr) 130px 150px; }
+#lb.retrato .clb-rows.sem-rank .clb-row{ grid-template-columns:72px repeat(2, minmax(0, 1fr)); }
+#lb.retrato .clb-rows.sem-rank .clb-row .clb-row-id{ grid-column:2 / 4; }
+#lb .clb-como{ margin-top:8px; display:flex; align-items:center; justify-content:center; min-height:max(52px, calc(46px / var(--s,1))); padding:6px 16px; border-radius:14px; background:#141c44; border:3px solid #26316a; }
+#lb .clb-como span{ font:800 19px var(--sx-f-num); letter-spacing:1.4px; color:var(--sx-amarelo); }
+#lb .clb-como-lk{ display:inline-flex; align-items:center; min-height:max(40px, calc(44px / var(--s,1))); padding:2px 12px; margin-left:6px; border-radius:10px; background:#141c44; border:2px solid #26316a;
+  font:800 17px var(--sx-f-num); letter-spacing:1.2px; color:var(--sx-amarelo); vertical-align:middle; }
+#lb .clb-grade3.um{ grid-template-columns:minmax(0, 460px); }
+#lb .cm-tela #cm-st{ display:none; }
+/* (Etapa 5) as setas das regras da sala e o lápis do escudo também com 44 px de verdade nas telas grandes */
+#lb .sl-seta{ min-width:max(40px, calc(46px / var(--s,1))); min-height:max(52px, calc(46px / var(--s,1))); }
+#lb .clb-esc-ed{ min-width:max(44px, calc(46px / var(--s,1))); min-height:max(44px, calc(46px / var(--s,1))); }
+
+/* =====================================================================================================================
+   Etapa 6 · um só código de cores para os botões, contraste, foco visível e estado desabilitado
+   amarelo = ação principal e seleção (JOGAR, CRIAR SALA, CRIAR CLUBE, ABRIR…, abas e chips escolhidos)
+   verde   = confirmar (salvar, criar no formulário, concluir, aceitar, entrar no clube, comprar)
+   vermelho= sair, desistir, excluir, tirar do clube
+   neutro  = voltar, cancelar, fechar (grafite no jogo; ardósia nas telas azuis) · azul = ir para outra tela / alternativa
+   ===================================================================================================================== */
+:root{
+  --v70-verde:#23893d; --v70-verde-a:#45bf55; --v70-verde-b:#1a7030; --v70-verde-borda:#0b3514;
+  --v70-amarelo-a:#ffe066; --v70-amarelo-b:#f5a300; --v70-amarelo-borda:#3a2600;
+  --v70-azul:#1f6fd1; --v70-azul-a:#3d8fe8; --v70-azul-b:#1759ad; --v70-azul-borda:#0b2a55;
+  --v70-vermelho-a:#ea5545; --v70-vermelho-b:#b32a1e; --v70-vermelho-borda:#4a0d07;
+}
+/* as telas azuis (salas, clube, comunidade, copa): .sx-bt e .sx-criar */
+#lb .sx-bt.amarelo, #lb .sx-criar{ border-color:var(--v70-amarelo-borda); background:linear-gradient(var(--v70-amarelo-a), #ffc41f 55%, var(--v70-amarelo-b)); color:var(--v70-amarelo-tx);
+  text-shadow:0 2px 0 rgba(255,255,255,.4); box-shadow:0 5px 0 var(--v70-amarelo-borda), 0 10px 18px rgba(0,0,0,.25), inset 0 3px 0 rgba(255,255,255,.55); }
+#lb .sx-criar svg{ filter:none; }
+#lb .sx-bt.amarelo:active, #lb .sx-criar:active{ box-shadow:0 2px 0 var(--v70-amarelo-borda), inset 0 3px 0 rgba(255,255,255,.55); }
+/* confirmar: o CRIAR SALA do formulário, o CRIAR/SALVAR do clube, os verdes (ACEITAR, ENTRAR, SALVAR A ATUAL) */
+#lb .sx-pe .sx-criar, #lb .sx-criar.clb-ok, #lb .sx-bt.verde{ border-color:var(--v70-verde-borda); background:linear-gradient(var(--v70-verde-a), var(--v70-verde) 55%, var(--v70-verde-b)); color:#fff;
+  text-shadow:-2px -2px 0 var(--v70-verde-borda), 2px -2px 0 var(--v70-verde-borda), -2px 2px 0 var(--v70-verde-borda), 2px 2px 0 var(--v70-verde-borda), 0 3px 0 var(--v70-verde-borda);
+  box-shadow:0 5px 0 var(--v70-verde-borda), 0 10px 18px rgba(0,0,0,.25), inset 0 3px 0 rgba(255,255,255,.35); }
+#lb .sx-pe .sx-criar:active, #lb .sx-criar.clb-ok:active, #lb .sx-bt.verde:active{ box-shadow:0 2px 0 var(--v70-verde-borda), inset 0 3px 0 rgba(255,255,255,.35); }
+#lb .sx-bt.azul{ border-color:var(--v70-azul-borda); background:linear-gradient(var(--v70-azul-a), var(--v70-azul) 55%, var(--v70-azul-b)); color:#fff;
+  text-shadow:-2px -2px 0 var(--v70-azul-borda), 2px -2px 0 var(--v70-azul-borda), -2px 2px 0 var(--v70-azul-borda), 2px 2px 0 var(--v70-azul-borda), 0 3px 0 var(--v70-azul-borda); }
+#lb .sx-bt.verm{ border-color:var(--v70-vermelho-borda); background:linear-gradient(var(--v70-vermelho-a), var(--v70-vermelho) 55%, var(--v70-vermelho-b)); color:#fff;
+  text-shadow:-2px -2px 0 var(--v70-vermelho-borda), 2px -2px 0 var(--v70-vermelho-borda), -2px 2px 0 var(--v70-vermelho-borda), 2px 2px 0 var(--v70-vermelho-borda), 0 3px 0 var(--v70-vermelho-borda); }
+/* o editor da tampinha: CONCLUÍDO/COMPRAR = confirmar (verde mais escuro); VOLTAR (nada mudou) = neutro */
+#lb .tpe-ok{ border-color:var(--v70-verde-borda) !important; background:linear-gradient(var(--v70-verde-a), var(--v70-verde) 55%, var(--v70-verde-b)) !important;
+  box-shadow:0 6px 0 var(--v70-verde-borda), 0 10px 18px rgba(0,0,0,.3), inset 0 3px 0 rgba(255,255,255,.35);
+  text-shadow:-2px -2px 0 var(--v70-verde-borda), 2px -2px 0 var(--v70-verde-borda), -2px 2px 0 var(--v70-verde-borda), 2px 2px 0 var(--v70-verde-borda), 0 4px 0 var(--v70-verde-borda); }
+#lb .tpe-ok.volta{ border-color:var(--v70-tinta) !important; background:linear-gradient(#5a5f63, var(--v70-neutro)) !important; color:var(--v70-giz);
+  box-shadow:0 6px 0 var(--v70-tinta), inset 0 3px 0 rgba(255,255,255,.18); text-shadow:0 3px 0 var(--v70-tinta); }
+/* a sala: ENTRAR NO TIME (azul mais escuro, com contorno) */
+#lb .sl-botao.v70-sl-at.entrar{ border-color:var(--v70-azul-borda); background:linear-gradient(var(--v70-azul-a), var(--v70-azul) 55%, var(--v70-azul-b));
+  text-shadow:-2px -2px 0 var(--v70-azul-borda), 2px -2px 0 var(--v70-azul-borda), -2px 2px 0 var(--v70-azul-borda), 2px 2px 0 var(--v70-azul-borda), 0 3px 0 var(--v70-azul-borda); }
+/* os botões de rua (janelas e telas do lobby): vermelho de verdade para sair/zerar/descartar (era laranja-tijolo) */
+#lb .lb-btn.vermelho{ background:linear-gradient(var(--v70-vermelho-a), var(--v70-vermelho) 50%, var(--v70-vermelho-b)); color:#fff; text-shadow:0 2px 0 var(--v70-vermelho-borda);
+  box-shadow:0 5px 0 var(--v70-vermelho-borda); }
+#lb .lb-btn.vermelho:active{ box-shadow:0 2px 0 var(--v70-vermelho-borda); }
+/* ícones escuros sobre o amarelo (LOJA e DESAFIOS no lobby) */
+#lb .rx-bt[data-loja] > i, #lb .mi-faixa svg, #lb:not(.retrato) .mi-faixa svg{ color:var(--v70-amarelo-tx); }
+#lb .rx-bt[data-loja] > i svg{ filter:drop-shadow(0 2px 0 rgba(255,255,255,.35)); }
+
+/* foco visível: o mesmo anel azul-claro em todo o jogo (teclado e controle); o campo de texto também ganha o anel */
+:where(#lb, #pop-ajustes, #hp, #onb, #cp, .tu-painel, .tu-intro, #v70-modal) :is(button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [role=button], [role=tab]):focus-visible{
+  outline:4px solid var(--v70-foco) !important; outline-offset:3px !important; }
+:where(#lb, #pop-ajustes, #hp, #onb, #cp) :is(input, textarea):focus-visible{ outline-offset:1px !important; }
+canvas:focus-visible{ outline:none !important; }
+/* desabilitado: o mesmo apagado em todas as telas (o selecionado continua aceso) */
+#lb button:disabled:not(.on):not(.pf-tli), #lb .lb-btn[disabled], #pop-ajustes button:disabled, #hp button:disabled{ opacity:.45; filter:saturate(.35); cursor:not-allowed; }
+/* o VOCÊ no seu cartão da sala (além da borda amarela) e o cartão que o AMIGOS do lobby abre */
+#lb .sl-voce{ display:inline-block; padding:0 7px; margin-right:2px; border-radius:6px; background:#ffd21f; color:#2a1d00; font:800 15px/1.35 var(--sx-f-num, system-ui); letter-spacing:1px; vertical-align:1px; }
+#lb .sl-card[role=button]{ cursor:pointer; }
+#lb .cm-card.v70-destaque{ box-shadow:inset 0 0 0 3px rgba(255,255,255,.08), 0 0 0 4px var(--sx-amarelo, #ffd23f); transition:box-shadow .3s; }
+/* Reduzir animações (a chave dos Ajustes; começa igual ao do aparelho): tudo assenta na hora, nada pisca nem gira */
+html.v70-calmo *, html.v70-calmo *::before, html.v70-calmo *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; animation-delay:0s !important;
+  transition-duration:.01ms !important; transition-delay:0s !important; scroll-behavior:auto !important; }
+
+/* =====================================================================================================================
+   v70.1 · o jogo é na horizontal e tudo cabe na tela (o JS mora em tools/v70/celular.js)
+   · aparelho de toque em pé: a tela GIRE O CELULAR cobre tudo (a partida contra os bots pausa)
+   · celular deitado (#lb.v70-cabe: o palco abaixo de UIX.cabe): o lobby e as telas na escala do palco, como na v69, sem os
+     pisos; o que ainda passaria da altura encolhe junto (o zoom do celular.js) em vez de rolar. O perfil ganha sub-abas, o
+     ranking vira três colunas, a criação de sala e a comunidade se arrumam na largura, os modelos prontos viram uma faixa
+     de duas fileiras (arrasta de lado, como as outras faixas do editor). Os Ajustes ficam compactos (.v70-compacto).
+   ===================================================================================================================== */
+#v70-gire{ position:fixed; inset:0; z-index:100000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  padding:max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  background:radial-gradient(120% 80% at 50% 32%, #262b2e, #121416 70%); color:#f3efe4; text-align:center; touch-action:none; -webkit-user-select:none; user-select:none; }
+#v70-gire[hidden]{ display:none !important; }
+#v70-gire:focus{ outline:none; }
+#v70-gire svg{ width:150px; height:150px; margin-bottom:6px; overflow:visible; }
+#v70-gire .v70-gire-cel{ transform-box:fill-box; transform-origin:50% 50%; animation:v70gira 2.8s ease-in-out infinite; }
+@keyframes v70gira{ 0%, 22%{ transform:rotate(0deg); opacity:1; } 52%, 86%{ transform:rotate(90deg); opacity:1; } 94%{ transform:rotate(90deg); opacity:0; }
+  95%{ transform:rotate(0deg); opacity:0; } 100%{ transform:rotate(0deg); opacity:1; } }
+@media (prefers-reduced-motion:reduce){ #v70-gire .v70-gire-cel{ animation:none; transform:rotate(90deg); } }
+html.v70-calmo #v70-gire .v70-gire-cel{ animation:none; transform:rotate(90deg); }
+#v70-gire b{ font:400 34px/1.05 'Lilita One', 'Arial Black', Impact, system-ui, sans-serif; letter-spacing:1px; color:#ffd23f; text-shadow:0 3px 0 #0b0c0d; }
+#v70-gire span{ max-width:300px; font:600 17px/1.4 system-ui, 'Segoe UI', Roboto, sans-serif; color:#e6e1d3; }
+#v70-gire small{ max-width:300px; font:700 15px/1.35 system-ui, 'Segoe UI', Roboto, sans-serif; color:#7fe8ff; }
+#v70-gire small:empty{ display:none; }
+@media (orientation:portrait) and (pointer:coarse){ #rot{ display:none !important; } }
+
+/* criar sala: os campos em duas colunas (nome, onde e quem entra · modo, campo, times, tempo e bots) */
+#lb.v70-cabe .sx-criarform .sx-form{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); grid-auto-rows:min-content; column-gap:34px; align-content:start; }
+#lb.v70-cabe .sx-criarform .sx-form > *{ grid-column:1; }
+#lb.v70-cabe .sx-criarform .sx-form > .sx-grade2{ grid-column:2; grid-row:1 / span 7; align-self:start; }
+#lb.v70-cabe .sx-criarform .sx-form > .sx-nota{ grid-column:2; grid-row:8; }
+/* comunidade: os quatro cartões numa fileira */
+#lb.v70-cabe .cm-grade{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; }
+/* ranking: as 30 posições em três colunas (1–10, 11–20, 21–30) */
+#lb.v70-cabe .rk-lista{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-template-rows:repeat(10, auto); grid-auto-flow:column; gap:6px 18px; }
+#lb.v70-cabe .rk-lista li{ height:54px; }
+/* SUA TAMPINHA › MODELOS PRONTOS: as tampinhas numa faixa de duas fileiras (arrasta de lado, como as outras faixas do editor) */
+#lb.v70-cabe .tpe-ctl.grade > .tpe-nota-topo + .tpe-cards{ grid-template-columns:none; grid-template-rows:repeat(2, auto); grid-auto-flow:column; grid-auto-columns:150px;
+  overflow-x:auto; overflow-y:hidden; overscroll-behavior:contain; scroll-snap-type:x proximity; scrollbar-width:thin; padding:2px 2px 10px; }
+#lb.v70-cabe .tpe-ctl.grade > .tpe-nota-topo + .tpe-cards > .tpe-card{ scroll-snap-align:start; }
+/* perfil: CARTÃO · ESTATÍSTICAS · RECORDES · PARTIDAS (uma parte por vez, ao lado da tampinha) */
+#lb .v70-pf-sub{ display:none; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes{ grid-template-columns:clamp(320px, 23%, 420px) minmax(0, 1fr); grid-template-areas:"lado sub" "lado parte"; grid-template-rows:auto auto;
+  align-items:start; row-gap:16px; padding-top:16px; padding-bottom:12px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes > .v70-pf-sub{ display:flex; grid-area:sub; gap:10px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes > .pf-lado{ grid-area:lado; height:656px; }   /* (cabe na altura das telas: 888 − topo e abas) */
+#lb.v70-cabe .pf-corpo.v70-pf-partes > :is(.pf-cartao, .pf-est, .pf-recs, .pf-partidas){ grid-area:parte; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes:not(.ver-cartao) > .pf-cartao,
+#lb.v70-cabe .pf-corpo.v70-pf-partes:not(.ver-est) > .pf-est,
+#lb.v70-cabe .pf-corpo.v70-pf-partes:not(.ver-rec) > .pf-recs,
+#lb.v70-cabe .pf-corpo.v70-pf-partes:not(.ver-rec):not(.ver-hist) > .pf-partidas{ display:none; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-cartao > .pf-cartao{ margin-top:14px; }
+/* RECORDES: os dos treinos e os das partidas; a lista das últimas partidas fica em PARTIDAS (em três colunas) */
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-rec{ grid-template-areas:"lado sub" "lado parte" "lado parte2"; grid-template-rows:auto auto auto; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-rec > .pf-partidas{ grid-area:parte2; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-rec > .pf-partidas > :not(#pf-rec-partidas){ display:none; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist > .pf-partidas > #pf-rec-partidas{ display:none; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist .pf-hist{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px 14px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist .pf-hist li{ grid-template-columns:auto auto minmax(0, 1fr); grid-template-rows:auto auto; column-gap:12px; row-gap:0; min-height:0;
+  padding:6px 14px; font-size:20px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist .pf-hist li span{ font-size:22px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist .pf-hist li small{ grid-column:1 / -1; grid-row:2; font-size:16px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist .pf-hist li em{ display:block; grid-column:3; grid-row:1; justify-self:end; font-size:16px; }
+#lb.v70-cabe .pf-corpo.v70-pf-partes.ver-hist .pf-hist li.vazio{ grid-column:1 / -1; }
+#lb .v70-pf-sub button{ flex:1 1 0; min-width:0; height:56px; padding:0 10px; border:0; border-radius:14px; font:800 24px/1 var(--rx-f-sub, system-ui), system-ui, sans-serif; letter-spacing:1px;
+  color:#e6e1d3; background:#2a2e31; box-shadow:inset 0 0 0 3px rgba(255,255,255,.12), 0 4px 0 #0f1112; cursor:pointer; white-space:nowrap; }
+#lb .v70-pf-sub button[aria-selected="true"]{ background:#ffd23f; color:#2a1d00; box-shadow:inset 0 0 0 3px #0f1112, 0 4px 0 #0f1112; }
+#lb .v70-pf-sub button:focus-visible{ outline:4px solid var(--v70-foco, #5cc8ff); outline-offset:2px; }
+
+/* os Ajustes no celular deitado: o título, as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas */
+#pop-ajustes.v70-compacto{ --v70-alvo:calc(36px*var(--v70-ui)); padding:max(4px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  font-size:calc(13px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .ajx-caixa{ width:100%; height:100%; max-height:100%; display:grid; grid-template-columns:auto minmax(0, 1fr) auto auto; grid-template-rows:auto minmax(0, 1fr);
+  border-radius:16px 10px 16px 10px; box-shadow:0 5px 0 var(--v70-tinta), 0 16px 40px rgba(0,0,0,.5); }
+#pop-ajustes.v70-compacto .ajx-cab{ display:contents; }
+#pop-ajustes.v70-compacto .ajx-cab h2{ grid-column:1; grid-row:1; align-self:center; padding:6px 4px 6px 14px; font-size:calc(21px*var(--v70-ui)); text-shadow:0 2px 0 var(--v70-tinta); }
+#pop-ajustes.v70-compacto .ajx-abas{ grid-column:2; grid-row:1; align-self:center; gap:4px; padding:6px 4px; }
+#pop-ajustes.v70-compacto .ajx-aba{ min-height:34px; padding:0 10px; border-width:2px; border-radius:10px; font-size:calc(13px*var(--v70-ui)); box-shadow:0 2px 0 var(--v70-tinta); }
+#pop-ajustes.v70-compacto .pop-acoes{ grid-column:3; grid-row:1; align-self:center; padding:6px 4px; border-top:0; }
+#pop-ajustes.v70-compacto .pop-acoes .lb-btn{ min-width:0; min-height:34px; padding:0 14px; font-size:calc(13px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .ajx-fechar{ grid-column:4; grid-row:1; align-self:center; width:36px; height:36px; margin:4px 10px 4px 4px; border-width:2px; border-radius:10px; font-size:16px; box-shadow:0 2px 0 var(--v70-tinta); }
+#pop-ajustes.v70-compacto .ajx-corpo{ grid-column:1 / -1; grid-row:2; min-height:0; padding:2px 14px 10px; border-top:2px solid var(--v70-linha); }
+#pop-ajustes.v70-compacto .ajx-sec:not([hidden]){ column-count:2; column-gap:26px; column-fill:balance; }
+#pop-ajustes.v70-compacto .ajx-sec :is(.aj-lin, .ajx-seg, .ajx-nota, .ajx-ajuda dd, .ajx-rest, .ajx-acao, .v70-arq){ break-inside:avoid; }
+#pop-ajustes.v70-compacto .ajx-sec :is(.ajx-h, h3.aj-sec, .ajx-ajuda dt){ break-after:avoid; break-inside:avoid; }
+#pop-ajustes.v70-compacto .ajx-grupo{ padding:2px 0 6px; }
+#pop-ajustes.v70-compacto .aj-lin{ min-height:calc(38px*var(--v70-ui)); padding:3px 0; gap:4px 10px; font-size:calc(13px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .aj-lin > span:first-child, #pop-ajustes.v70-compacto .aj-lin .ajx-tx{ flex-basis:140px; }
+#pop-ajustes.v70-compacto .ajx-tx small{ font-size:calc(11px*var(--v70-ui)); margin-top:1px; line-height:1.2; }
+#pop-ajustes.v70-compacto .ajx-h, #pop-ajustes.v70-compacto h3.aj-sec{ margin:6px 0 3px; font-size:calc(11px*var(--v70-ui)); letter-spacing:1.2px; }
+#pop-ajustes.v70-compacto .ajx-nota{ margin:3px 0 2px; font-size:calc(11.5px*var(--v70-ui)); line-height:1.25; }
+#pop-ajustes.v70-compacto .tl-seg, #pop-ajustes.v70-compacto .ajx-seg{ gap:4px; }
+#pop-ajustes.v70-compacto .tl-seg button, #pop-ajustes.v70-compacto .ajx-seg button{ flex-basis:64px; min-height:32px; padding:3px 6px; border-width:2px; border-radius:9px;
+  font-size:calc(12px*var(--v70-ui)); box-shadow:0 2px 0 var(--v70-tinta); }
+#pop-ajustes.v70-compacto .ajx-seg.ajx-seg5 button{ flex-basis:80px; }
+#pop-ajustes.v70-compacto .ajx-pre b{ font-size:calc(12px*var(--v70-ui)); } #pop-ajustes.v70-compacto .ajx-pre small{ font-size:calc(10.5px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .aj-chave{ width:54px; height:34px; min-height:0; }
+#pop-ajustes.v70-compacto .aj-chave::before{ height:24px; left:3px; right:3px; border-width:2px; }
+#pop-ajustes.v70-compacto .aj-chave i{ left:7px; width:17px; height:17px; margin-top:-8.5px; }
+#pop-ajustes.v70-compacto .aj-chave[aria-pressed="true"] i{ transform:translateX(23px); }
+#pop-ajustes.v70-compacto input[type=range]{ height:34px; min-width:110px; flex-basis:150px; }
+#pop-ajustes.v70-compacto input[type=range]::-webkit-slider-runnable-track{ height:10px; }
+#pop-ajustes.v70-compacto input[type=range]::-webkit-slider-thumb{ width:24px; height:24px; margin-top:-7px; border-width:4px; }
+#pop-ajustes.v70-compacto .aj-lin output{ min-width:40px; }
+#pop-ajustes.v70-compacto .lb-btn, #pop-ajustes.v70-compacto .ajx-rest, #pop-ajustes.v70-compacto .ajx-acao{ min-height:34px; padding:0 12px; border-width:2px; font-size:calc(12px*var(--v70-ui));
+  box-shadow:0 2px 0 var(--v70-tinta); }
+#pop-ajustes.v70-compacto .ajx-rest{ margin:6px 0 2px; }
+#pop-ajustes.v70-compacto .aj-serv input{ min-height:34px; font-size:calc(13px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .aj-serv-tx{ font-size:calc(11px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .ajx-tbt{ min-width:56px; min-height:32px; border-width:2px; font-size:calc(12px*var(--v70-ui)); box-shadow:0 2px 0 var(--v70-tinta); }
+#pop-ajustes.v70-compacto .ajx-tecla{ min-height:36px; }
+#pop-ajustes.v70-compacto .ajx-ajuda dt{ margin-top:4px; font-size:calc(12px*var(--v70-ui)); }
+#pop-ajustes.v70-compacto .ajx-ajuda dd{ font-size:calc(11.5px*var(--v70-ui)); line-height:1.25; }
+#pop-ajustes.v70-compacto .v70-arq .lb-btn{ min-height:34px; flex-basis:140px; }
+#pop-ajustes.v70-compacto.v70-toque .v70-teclado{ display:none; }
+#pop-ajustes .v70-teclado-nota{ display:none; }
+#pop-ajustes.v70-compacto.v70-toque .v70-teclado-nota{ display:block; }
+@media (max-width:780px){                              /* celular estreito: o título AJUSTES sai da linha (continua sendo o nome da janela) */
+  #pop-ajustes.v70-compacto .ajx-cab h2{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+  #pop-ajustes.v70-compacto .ajx-abas{ padding-left:10px; }
+  #pop-ajustes.v70-compacto .ajx-aba{ padding:0 8px; font-size:calc(12.5px*var(--v70-ui)); }
+  #pop-ajustes.v70-compacto .pop-acoes .lb-btn{ padding:0 10px; }
+}
+
+/* =====================================================================================================================
+   v70.2 · ENXUTO (o JS mora em tools/v70/enxuto.js): os modos e mapas que saíram ficam escondidos (o código continua);
+   o JOGAR mostra os mapas que aparecem numa fileira só (a Arena e o Estádio, lado a lado)
+   ===================================================================================================================== */
+.v702-fora{ display:none !important; }
+#lb .rq-mapas{ grid-template-columns:repeat(var(--v702-n, 4), minmax(0, 1fr)); }

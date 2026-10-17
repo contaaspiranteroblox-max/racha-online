@@ -1,0 +1,129 @@
+/* ============================================================================
+   RACHA · lobby novo (camada visual, depois de rua.css)
+   Deitado: cartão do jogador e ícones em cima, uma coluna de botões de cada lado,
+   o JOGAR grande na direita, DESAFIOS/CHAT/AMIGOS embaixo e a tampinha no meio.
+   Em pé: os mesmos botões viram uma grade de 2 colunas embaixo do JOGAR.
+   ============================================================================ */
+#lb{ --rx-azul:#1b2236; --rx-azul2:#252e48; --rx-borda:#0c101c; --rx-txt:#f3efe4; --rx-sub:#aab3c8;
+  --rx-f-tit:"Lilita One","Anton","Arial Black",Impact,sans-serif; --rx-f-sub:"Barlow Condensed","Roboto Condensed","sans-serif-condensed","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif; }
+
+/* ---------------------------------------------------------------- botões */
+#lb .rx-bt{ position:relative; display:grid; grid-template-columns:auto minmax(0,1fr) auto; grid-template-rows:auto auto; align-items:center; column-gap:18px;
+  padding:0 22px 0 0; min-height:0; border:4px solid var(--rx-borda); border-radius:18px; overflow:hidden; cursor:pointer; text-align:left;
+  background:linear-gradient(180deg, var(--rx-azul2), var(--rx-azul) 55%); color:var(--rx-txt);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.08), 0 6px 0 var(--rx-borda), 0 10px 18px rgba(0,0,0,.35);
+  transition:transform .08s cubic-bezier(.3,1.6,.5,1), box-shadow .08s, filter .12s; pointer-events:auto; touch-action:manipulation; font:inherit; }
+#lb .rx-bt:active{ transform:translateY(4px); box-shadow:inset 0 3px 0 rgba(255,255,255,.08), 0 2px 0 var(--rx-borda), 0 4px 8px rgba(0,0,0,.3); }
+@media (hover:hover){ #lb .rx-bt:hover{ filter:brightness(1.12); } }
+#lb .rx-bt > i{ grid-row:1 / 3; align-self:stretch; display:flex; align-items:center; justify-content:center; width:96px; background:var(--c, #2f73c4);
+  color:#fff; box-shadow:inset -4px 0 0 rgba(0,0,0,.18), inset 0 3px 0 rgba(255,255,255,.25); }
+#lb .rx-bt > i svg{ width:46px; height:46px; filter:drop-shadow(0 2px 0 rgba(0,0,0,.25)); }
+#lb .rx-bt > b{ grid-column:2; grid-row:1 / 3; font-family:var(--rx-f-tit); font-weight:400; font-style:italic; font-size:34px; letter-spacing:1px; line-height:1;
+  text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 3px 0 rgba(0,0,0,.35); }
+#lb .rx-bt.rx-duas > b{ grid-row:1; align-self:end; margin-top:6px; }
+#lb .rx-bt > small{ grid-column:2; grid-row:2; align-self:start; display:block; margin:5px 0 6px; font-family:var(--rx-f-sub); font-weight:700; font-size:20px; letter-spacing:.5px;
+  line-height:1.1; color:var(--rx-sub); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb .rx-bt > u{ grid-column:3; grid-row:1 / 3; width:18px; height:30px; text-decoration:none;
+  background:linear-gradient(currentColor,currentColor); -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Cpath d='M2 2l8 8-8 8' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Cpath d='M2 2l8 8-8 8' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; opacity:.9; }
+#lb .rx-bt .rx-ins{ display:flex; width:62px; height:62px; }
+#lb .rx-bt .rx-ins svg{ width:100%; height:100%; }
+
+/* ---------------------------------------------------------------- deitado */
+#lb:not(.retrato) .rx{ position:absolute; inset:0; z-index:3; pointer-events:none; }
+#lb:not(.retrato) .lb-nav, #lb:not(.retrato) .hm-placa, #lb:not(.retrato) .hm-skin{ display:none; }
+#lb .lb-topo::before{ content:none; display:none; }
+
+/* topo: o cartão do jogador à esquerda; moedas, gemas e os ícones à direita */
+#lb:not(.retrato) .lb-topo{ left:28px; right:28px; top:22px; height:104px; gap:14px; }
+#lb .tp-eu{ height:104px; min-width:440px; padding:0 66px 0 12px; gap:18px; border:4px solid var(--rx-borda); border-radius:20px;
+  background:linear-gradient(180deg, var(--rx-azul2), var(--rx-azul) 60%); box-shadow:inset 0 3px 0 rgba(255,255,255,.08), 0 6px 0 var(--rx-borda); transform:none; position:relative; }
+#lb .tp-eu:active{ transform:translateY(3px); box-shadow:0 2px 0 var(--rx-borda); }
+#lb .tp-eu .hm-av{ width:76px; height:76px; border:4px solid var(--rx-borda); box-shadow:0 0 0 3px rgba(245,197,66,.65); }
+#lb .tp-eu-tx{ gap:4px; }
+#lb .tp-eu-tx b{ order:2; font-family:var(--rx-f-tit); font-weight:400; font-size:38px; letter-spacing:.5px; color:#fff; text-transform:none; max-width:300px; text-shadow:0 3px 0 rgba(0,0,0,.35); }
+#lb .tp-nv{ order:1; display:flex; align-items:center; gap:12px; }
+#lb .tp-nv em{ font-family:var(--rx-f-sub); font-style:normal; font-weight:800; font-size:20px; letter-spacing:3px; color:#f5c542; text-transform:uppercase; }
+#lb .tp-nv em::before{ content:'JOGADOR · '; }
+#lb .tp-eu .hm-xp{ width:110px; height:9px; border:2px solid var(--rx-borda); background:#0e1322; }
+#lb .tp-eu::after{ content:''; position:absolute; right:22px; top:50%; width:30px; height:30px; margin-top:-15px; background:#f5c542;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.3V21h3.7L18 9.7 14.3 6zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0L15.2 5l3.8 3.8z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.3V21h3.7L18 9.7 14.3 6zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0L15.2 5l3.8 3.8z'/%3E%3C/svg%3E") center/contain no-repeat; }
+#lb .hm-grana{ height:70px; padding:0 22px; gap:10px; border:4px solid var(--rx-borda); border-radius:16px; background:var(--rx-azul); box-shadow:0 5px 0 var(--rx-borda); }
+#lb .hm-grana::before{ font-family:var(--rx-f-tit); font-style:italic; font-size:24px; letter-spacing:1px; }
+#lb .hm-grana:nth-of-type(1)::before{ content:'MOEDAS'; color:#f5c542; }
+#lb .hm-grana:nth-of-type(2)::before{ content:'GEMAS'; color:#c79bff; }
+#lb .hm-grana b{ font-family:var(--rx-f-sub); font-weight:800; font-size:27px; color:#fff; }
+#lb .hm-grana i{ transform:scale(.85); }
+#lb .tp-dir{ margin-left:auto; }
+#lb .tp-ic{ width:78px; height:78px; border:4px solid var(--rx-borda); border-radius:16px; background:linear-gradient(180deg, #5a2f2a, #3d1f1c); color:#fff; box-shadow:0 5px 0 var(--rx-borda); }
+#lb .tp-ic svg{ width:36px; height:36px; }
+
+/* as duas colunas */
+#lb:not(.retrato) .rx-esq, #lb:not(.retrato) .rx-dir{ position:absolute; top:146px; width:440px; display:flex; flex-direction:column; gap:16px; }
+#lb:not(.retrato) .rx-esq{ left:28px; bottom:150px; }
+#lb:not(.retrato) .rx-dir{ right:28px; bottom:346px; gap:14px; }
+#lb:not(.retrato) .rx-col{ justify-content:space-between; }
+#lb:not(.retrato) .rx-col .rx-bt{ flex:1 1 0; max-height:132px; }   /* em tela mais quadrada (tablet) os botões não esticam demais */
+#lb.estreito:not(.retrato) .rx-esq, #lb.estreito:not(.retrato) .rx-dir{ width:396px; }
+#lb.estreito .rx-bt > b{ font-size:30px; }
+#lb.estreito .rx-bt > i{ width:86px; }
+
+/* o JOGAR grande (o botão de verdade do jogo, levado para o pé da coluna da direita) */
+#lb:not(.retrato) .lb-joga{ position:static; display:block; padding:0; }
+#lb:not(.retrato) #lb-jogar{ position:absolute; right:28px; bottom:150px; width:440px; height:162px; padding:16px 0 0; transform:none; animation:none; border-radius:22px;
+  border:4px solid var(--rx-borda); background:linear-gradient(180deg, #ffe680 0%, #f5c542 48%, #e4a91f 100%); box-shadow:inset 0 4px 0 rgba(255,255,255,.55), inset 0 -6px 0 rgba(150,95,0,.35), 0 8px 0 var(--rx-borda), 0 14px 24px rgba(0,0,0,.4); }
+#lb.estreito:not(.retrato) #lb-jogar{ width:396px; }
+#lb:not(.retrato) #lb-jogar:active{ transform:translateY(5px); box-shadow:inset 0 4px 0 rgba(255,255,255,.55), 0 3px 0 var(--rx-borda); }
+#lb .lb-jogar-tit{ display:flex; align-items:center; gap:22px; font-family:var(--rx-f-tit); font-style:italic; font-size:76px; letter-spacing:2px; color:#151719; text-shadow:0 3px 0 rgba(255,255,255,.4); }
+#lb .lb-jogar-tit::before{ content:''; width:0; height:0; border-style:solid; border-width:26px 0 26px 40px; border-color:transparent transparent transparent #151719; }
+#lb .lb-jogar-sub{ font-family:var(--rx-f-sub); font-size:21px; color:#3d3216; letter-spacing:1px; }
+#lb:not(.retrato) .lb-trocar{ position:absolute; right:46px; bottom:293px; z-index:2; height:38px; min-height:38px; padding:0 16px; font-family:var(--rx-f-sub); font-weight:800; font-size:19px; letter-spacing:1.5px;
+  background:var(--rx-azul); color:#f5c542; border:3px solid var(--rx-borda); border-radius:12px; box-shadow:0 3px 0 var(--rx-borda); }
+#lb:not(.retrato) .lb-trocar::before{ content:'⇄ '; }
+
+/* a barra de baixo: DESAFIOS (a missão de verdade), CHAT e AMIGOS */
+#lb:not(.retrato) .mi-faixa{ position:absolute; left:28px; bottom:26px; width:calc((100% - 96px) / 3); height:104px; padding:0 22px 0 0; gap:0 18px; justify-items:start; text-align:left;
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; grid-template-rows:auto auto; align-items:center;
+  border:4px solid var(--rx-borda); border-radius:18px; background:linear-gradient(180deg, var(--rx-azul2), var(--rx-azul) 55%); box-shadow:inset 0 3px 0 rgba(255,255,255,.08), 0 6px 0 var(--rx-borda); overflow:hidden; }
+#lb:not(.retrato) .mi-faixa svg{ grid-column:1; grid-row:1 / 3; align-self:stretch; width:96px; height:auto; padding:26px; box-sizing:border-box; background:#f5c542; color:#fff;
+  box-shadow:inset -4px 0 0 rgba(0,0,0,.18); }
+#lb:not(.retrato) .mi-faixa::before{ content:'DESAFIOS'; grid-column:2; grid-row:1; align-self:end; font-family:var(--rx-f-tit); font-style:italic; font-size:32px; letter-spacing:1px; color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.35); }
+#lb:not(.retrato) .mi-faixa .mi-tx{ grid-column:2; grid-row:2; align-self:start; margin-top:4px; font-family:var(--rx-f-sub); font-weight:700; font-size:21px; letter-spacing:.6px; color:var(--rx-sub); text-transform:uppercase; }
+#lb:not(.retrato) .mi-faixa .mi-barra{ display:none; }
+#lb:not(.retrato) .mi-faixa .mi-n{ grid-column:3; grid-row:1 / 3; font-family:var(--rx-f-sub); font-size:26px; color:#fff; }
+#lb:not(.retrato) .mi-faixa .mi-premio{ grid-column:4; grid-row:1 / 3; display:flex; align-items:center; gap:6px; font-family:var(--rx-f-sub); font-size:24px; color:#f5c542; }
+#lb:not(.retrato) .rx-baixo{ position:absolute; right:28px; bottom:26px; height:104px; width:calc((100% - 96px) / 3 * 2 + 20px); display:flex; gap:20px; }
+#lb:not(.retrato) .rx-baixo .rx-bt{ flex:1 1 0; }
+
+/* o meio: o RACHA carimbado e o "Pronto, fulano!" em cima da tampinha */
+#lb:not(.retrato) .rx-marca{ position:absolute; left:50%; top:calc(var(--rx-cy, 520px) - 322px); transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:22px; pointer-events:none; }
+#lb .rx-logo{ display:block; font-family:"Anton","Lilita One",Impact,"Arial Black",sans-serif; font-weight:400; font-size:104px; line-height:1; letter-spacing:6px; color:#f5c542; transform:rotate(-6deg);
+  text-shadow:-4px -4px 0 #0f1011, 4px -4px 0 #0f1011, -4px 4px 0 #0f1011, 4px 4px 0 #0f1011, 0 -4px 0 #0f1011, 0 4px 0 #0f1011, -4px 0 0 #0f1011, 4px 0 0 #0f1011,
+    9px 10px 0 #d86a38, 12px 13px 0 #0f1011, 0 18px 26px rgba(0,0,0,.35); }
+#lb .rx-pronto{ display:block; padding:8px 26px; border-radius:999px; background:rgba(15,16,17,.42); font-family:var(--rx-f-tit); font-size:32px; letter-spacing:.5px; color:rgba(255,255,255,.92);
+  text-shadow:0 2px 0 rgba(0,0,0,.5); }
+#lb.estreito .rx-logo{ font-size:88px; }
+
+/* ---------------------------------------------------------------- em pé */
+#lb.retrato .rx{ order:9; position:relative; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+#lb.retrato .rx-esq, #lb.retrato .rx-dir, #lb.retrato .rx-baixo{ display:contents; }
+#lb.retrato .rx-marca{ display:none; }
+#lb.retrato .lb-nav{ display:none; }
+#lb.retrato .rx-bt{ height:104px; }
+#lb.retrato .rx-bt > b{ font-size:30px; }
+#lb.retrato .rx-bt > small{ font-size:19px; }
+#lb.retrato .rx-baixo .rx-bt:last-child{ grid-column:1 / -1; }
+
+/* o pontinho de novidade do menu antigo (skin nova sem ver, você numa sala) passa para os botões novos */
+#lb .tp-ic.rx-ponto{ position:relative; }
+#lb .rx-bt.rx-ponto::after, #lb .tp-ic.rx-ponto::after{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#e2552f;
+  border:3px solid var(--rx-borda); box-shadow:0 0 10px rgba(226,85,47,.75); pointer-events:none; }
+#lb .rx-bt.rx-ponto::after{ left:66px; top:8px; }
+#lb.estreito .rx-bt.rx-ponto::after{ left:56px; }
+#lb .tp-ic.rx-ponto::after{ right:-7px; top:-7px; }
+
+/* v67 · sem skins: some das telas o que mostrava ou trocava a skin (a tampinha continua aparecendo, lisa) */
+#lb .pf-rar, #lb .pf-trocar, #lb .pf-emb.e-col, #lb .lj-discos, #lb .hm-skin{ display:none !important; }
+
+@media (prefers-reduced-motion:reduce){ #lb .rx-bt{ transition:none; } }
