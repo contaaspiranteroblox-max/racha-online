@@ -75,7 +75,7 @@ function paginaConta(rota, s){
 
 http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
-  const p = u.pathname;
+  let p = u.pathname;
   if (p === '/__log'){ res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(LOG)); }
   if (p === '/__entrar_site'){                               // o login do SITE: só o cookie (a página /entrar do site)
     const us = USUARIOS[u.searchParams.get('u') || 'croy'];
@@ -108,6 +108,9 @@ http.createServer(async (req, res) => {
   if (/^\/(amigos|ranking|perfil|conquistas|inventario|carreira|estatisticas|admin)$/.test(p) || /^\/jogador\/\d{1,9}$/.test(p)){
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(paginaConta(p, sessao(req)));
   }
+  // (a cópia de teste tem <base href="../../app/public/game/"> para abrir do disco; servida em /game/racha.html, os arquivos
+  // ao lado dela — o config.js, o rua.js, o lobby.js, as imagens — são pedidos em /app/public/game/...)
+  if (TESTE && p.startsWith('/app/public/game/')) p = '/game/' + p.slice('/app/public/game/'.length);
   if (p.startsWith('/game/')){
     const f = TESTE && p === '/game/racha.html' ? path.join(RAIZ, 'tests', 'build', 'racha_teste.html') : path.join(JOGO, decodeURIComponent(p.slice(6)));
     if ((f.startsWith(JOGO) || (TESTE && p === '/game/racha.html')) && fs.existsSync(f) && fs.statSync(f).isFile()){

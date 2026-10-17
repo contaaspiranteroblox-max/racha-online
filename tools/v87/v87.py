@@ -55,6 +55,25 @@ SUBS.append(("  let p = null; try { p = window.parent !== window && typeof windo
              "  if (conta && p) bt('VER PERFIL', 'perfil', 'amarelo', () => { som.clique(); try { p.RACHA_ABRIR('/jogador/' + conta); } catch (_) {} c81FichaFecha(); if (!lobby.aberto) cbFecha(); });\n",
              "  if (conta && v87TemSite()) bt('VER PERFIL', 'perfil', 'amarelo', () => { som.clique(); v87Abre('/jogador/' + conta); c81FichaFecha(); if (!lobby.aberto) cbFecha(); });   // v87: também sem o site por fora\n"))
 
+# ---- v87.2: o presente de TESTE (moedas e gemas) também na produção, quando o config.js pede — para testar a loja à vontade
+SUBS.append(("const PRESENTE = {id:'v32', m:50000, g:5000};        // v32: presente que cada aparelho recebe uma vez (moedas e gemas): mude o id para dar outro\n",
+             "const PRESENTE = {id:'v32', m:50000, g:5000};        // v32: presente que cada aparelho recebe uma vez (moedas e gemas): mude o id para dar outro\n"
+             "// v87.2: o presente de teste também na PRODUÇÃO quando o config.js pede: presente: true (50.000 moedas e 5.000 gemas, uma vez\n"
+             "// por aparelho e por conta) ou presente: {id, moedas, gemas} (outro valor; um id novo dá de novo). Na demonstração ele já vinha\n"
+             "// (presente: false tira). Sem o pedido no config.js, nada muda.\n"
+             "function presenteTeste(){\n"
+             "  const c = window.RACHA_CONFIG || {}, p = c.presente;\n"
+             "  if (window.RACHA_MODO === 'demo') return p !== false;\n"
+             "  if (p === true){ PRESENTE.id = 'teste-v87'; return true; }   // (um id novo: quem ganhou o v32 lá atrás também recebe)\n"
+             "  if (!p || typeof p !== 'object') return false;\n"
+             "  PRESENTE.id = 'teste-' + (typeof p.id === 'string' && /^[a-z0-9_-]{1,24}$/i.test(p.id) ? p.id : 'v87');\n"
+             "  if (Number.isFinite(+p.moedas)) PRESENTE.m = Math.max(0, Math.min(1e7, Math.floor(+p.moedas)));\n"
+             "  if (Number.isFinite(+p.gemas)) PRESENTE.g = Math.max(0, Math.min(1e6, Math.floor(+p.gemas)));\n"
+             "  return PRESENTE.m > 0 || PRESENTE.g > 0;\n"
+             "}\n"))
+SUBS.append(("  if (window.RACHA_MODO === 'demo' && !(window.RACHA_CONFIG && window.RACHA_CONFIG.presente === false) && CONTA.presentes.indexOf(PRESENTE.id) < 0){      // v32: o presente (uma vez por aparelho) · v70: só na DEMONSTRAÇÃO (presente:false tira)",
+             "  if (presenteTeste() && CONTA.presentes.indexOf(PRESENTE.id) < 0){      // v32: o presente (uma vez por aparelho) · v70: na DEMONSTRAÇÃO (presente:false tira) · v87.2: e na produção com presente no config.js"))
+
 # ---- o código da v87 entra logo depois do login.js (o fim dele: o código de recuperação guardado antes do jogo reabrir)
 SUBS.append(("    setTimeout(() => { v84Monta(); v84Codigo(cod84); }, 400);\n  }\n} catch (_) {}\n",
              "    setTimeout(() => { v84Monta(); v84Codigo(cod84); }, 400);\n  }\n} catch (_) {}\n" + (AQUI / 'site.js').read_text(encoding='utf-8')))

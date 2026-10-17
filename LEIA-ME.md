@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v87
+# RACHA · Futebol de Rua — v87.2
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -59,7 +59,8 @@ implementação própria (a física FR-85, num núcleo só para o jogo e o servi
 A **v86** voltou, a pedido, à **mecânica da v84** (a física, as quadras, o analógico de 32 direções e os botões) com o
 **chute mais forte** (v87.1: o PASSE, o CHUTE e o teto da bola ficaram 15% abaixo da versão antiga), e o resto da v85 continua
 (textos, chaves, fontes, login). A **v87** leva tudo para **dentro do jogo**: a plataforma abre o jogo direto, em tela
-cheia, com o login do jogo e as coisas da conta nos botões dele — logo abaixo.
+cheia, com o login do jogo e as coisas da conta nos botões dele — logo abaixo. A **v87.2** dá **moedas e gemas de teste**
+(50.000 e 5.000, uma vez em cada aparelho e em cada conta) também na produção, pelo `presente: true` do `config.js`.
 
 ---
 
@@ -120,6 +121,27 @@ OFL) vêm em `app/public/game/fontes/` (os `.ttf` originais, com a licença ao l
 desenhar as letras. Ver `app/public/game/fontes/LEIA-ME.txt`.
 
 ---
+
+## v87.2 · moedas e gemas para testar o jogo
+
+O pedido: moedas e gemas para testar no jogo. O presente de teste (50.000 moedas e 5.000 gemas) existia desde a v32, mas a
+v70 deixou ele só na demonstração — no site com as contas (a produção), todo mundo começava com 500 moedas e 25 gemas.
+
+* **O `presente` do `app/public/game/config.js` vale também na produção.** O do pacote vem com `presente: true`: o jogo dá
+  **50.000 moedas e 5.000 gemas** uma vez em cada aparelho e em cada conta (o visitante do SÓ TREINAR OFFLINE e cada conta
+  que entra têm o seu), com a janela PRESENTE no lobby — o texto dela diz que é um presente de teste. O id é novo
+  (`teste-v87`): quem ganhou o presente da demonstração lá atrás (o `v32`) também recebe.
+* **Outro valor:** `presente: {id: 'loja2', moedas: 100000, gemas: 10000}` — cada id novo dá de novo (até 10 milhões de
+  moedas e 1 milhão de gemas). **No lançamento, apague a linha** (ou `presente: false`). O `config.js` não passa pelo build
+  do jogo; na plataforma, ele vai para o `app/dist` no `npm run build` (mudou: `npm run build` de novo e reiniciar).
+* **A demonstração continua igual** (`modo: 'demo'`: o presente `v32` e o selo DEMONSTRAÇÃO; `presente: false` tira).
+* **Cosmético não dá vantagem:** as moedas e as gemas compram as peças da tampinha; a física e os números do jogo são os
+  mesmos para todos. Elas moram no progresso do jogador (o aparelho e a cópia do progresso na conta), como sempre — a
+  carteira do servidor (`app/api/racha/economia.ts`) continua sem uso, então quem mexe no próprio aparelho consegue mudar o
+  saldo (era assim antes também).
+* Arquivos: `tools/v87/v87.py` (o `presenteTeste()`), `tools/v87/site.js` (o texto da janela), `app/public/game/config.js`.
+  Testes: `tests/v872_presente_test.py` (novo) e o `tests/v87_site_test.py` (a conta que entra pelo jogo ganha o presente
+  uma vez). O `tests/comum.py` abre os outros testes como o lançamento (`presente: false`).
 
 ## v87 · tudo dentro do jogo: o site abre o jogo direto, em tela cheia
 
@@ -986,8 +1008,9 @@ no RELATORIO_DE_TESTES da auditoria.
 | `online_test.py` (e `--p2p`) | duas sessões de navegador contra o servidor de verdade: sala, árbitro, partida, COM CURVA no ESTÁDIO, a sala recusando o modo/mapa que saiu, reconexão, resultado conferido, o clube da turma e a tela AMIGOS (v77: era a COMUNIDADE; só os amigos e o chat) | 43/43 e 43/43 (as verificações de tempo da CURVA do convidado falham às vezes neste Chromium de teste, na v78 também: abaixo) |
 | `servidor_test.js` | regras do servidor (memória) e duas sessões pela rede (HTTP, origem, reconexão); só os 2 modos e os 2 mapas nas salas; v80: a partida normal (a regra e o relógio no start, a cada segundo e parado na pausa; 1 × 1 antes do tempo recusado e no fim empate guardado; gol depois do tempo, depois do gol de ouro, depois do 3º gol e depois da prorrogação recusados; 2 × 1 no fim; o gol de ouro; 0 × 0 até o fim; o relógio do anfitrião longe do servidor recusado; a hora do gol (goal.el); o servidor encerrando sozinho 10 s depois da hora, nos 3:00 e na prorrogação; o tempo encurtado por opção; a sala personalizada sem a regra nova); v79: a fila da ranqueada (juntar, misturar com bots depois de 8 s, os times pelos pontos, fila_nada depois de 20 s, sair, cair, recusar quem está numa sala), a sala ranqueada (no Estádio, fora da lista, sem entrar pelo código, sem trocar de time nem de regra, sem revanche, `ranked` no resultado), o Estádio como o mapa padrão e o selo da conta (só o assinado pela plataforma; no hello, nos cartões, na lista e no Chat do Brasil); v81: o filtro com telefone, CPF e e-mail nos dois chats, o `mid` de cada mensagem da sala, a repetida, 1 denúncia sem esconder, a do autor ignorada, 2 pessoas diferentes escondendo (`say_hide` para todos, `escondida` no histórico), o autor silenciado (`codigo:'silenciado'`) e os outros falando; v82: o selo diz se a partida era da ranqueada (`k`) e o tamanho (`n`) — a sala personalizada `k:0`, a fila da ranqueada com duas contas `k:1` e o placar de cada lado —, os IDs de visitante com 7 dígitos (9000000+, nunca o de uma conta) | 189/189 |
 | `plataforma_salas_test.mjs` | o servidor montado na plataforma (sessão do site, selo conferido, origem); v79: o selo V vindo do banco (`selosDe`) só para quem está logado, no hello e no cartão da sala | 10/10 |
-| `v86_chute_test.py` (v86, v87.1) | a mecânica clássica e a força do chute: PASSE 212,5, CHUTE 340 e o teto de 46,75 u/s (v87.1; na v86, 275, 440 e 60) iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (27,5 e 44 u/s) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
-| `v87_site_test.py` (v87) | tudo dentro do jogo, com a plataforma de mentira (`v87_plataforma_falsa.mjs`): a raiz leva ao jogo; o login é o do jogo, com a cara dele; entrar; o AMIGOS e o ABRIR O PERFIL DA CONTA abrem as páginas da conta por cima do jogo (VOLTAR AO JOGO, o "Jogar" da página e o Esc fecham, sem recarregar); o SAIR DA CONTA; quem entrou pelo site entra direto (pelo cookie, sem ficar recarregando); o RACHA CONTROL da equipe; o SÓ TREINAR OFFLINE enquanto confere; o jogo sem a plataforma | 22/22 |
+| `v86_chute_test.py` (v86, v87.1) | a mecânica clássica e a força do chute: PASSE 212,5, CHUTE 340 e o teto de 46,75 u/s (v87.1; na v86, 275, 440 e 60) iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (21,25 e 34 u/s; na v86, 27,5 e 44) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
+| `v87_site_test.py` (v87) | tudo dentro do jogo, com a plataforma de mentira (`v87_plataforma_falsa.mjs`): a raiz leva ao jogo; o login é o do jogo, com a cara dele; entrar; o AMIGOS e o ABRIR O PERFIL DA CONTA abrem as páginas da conta por cima do jogo (VOLTAR AO JOGO, o "Jogar" da página e o Esc fecham, sem recarregar); o SAIR DA CONTA; quem entrou pelo site entra direto (pelo cookie, sem ficar recarregando); o RACHA CONTROL da equipe; o SÓ TREINAR OFFLINE enquanto confere; o jogo sem a plataforma; v87.2: a conta que entra pelo jogo ganha o presente de teste uma vez (e a janela diz que é de teste) | 24/24 |
+| `v872_presente_test.py` (v87.2) | as moedas e gemas de teste: o `config.js` do pacote com `presente: true`; na produção, +50.000 moedas e +5.000 gemas (o id `teste-v87`), sem o selo DEMONSTRAÇÃO, e a janela de teste; uma vez só (recarregar não dá de novo); a loja com o presente (uma peça de moedas e uma de gemas); `presente: {id, moedas, gemas}` dá de novo com outro valor, uma vez, e com teto; `presente: false` (o lançamento) sem presente; a demonstração igual | 12/12 |
 | `v85_online_test.py` (v85, v86) | duas sessões do jogo numa sala hospedada no servidor: a tampinha correndo e parando no servidor; na v86 (mecânica clássica) os comandos com `button` e o analógico em 1/32 de volta, o PASSE e o CHUTE saindo com a força do jogo (na v85: `acao` e 1/256, com a FR-85) | 14/14 |
 | (`v85_fisica_test.mjs` e `v85_sincronia_test.py`) | testavam o núcleo FR-85; saíram na v86 (estão na branch `v85-auditada`) | — |
 | `v85_chaves_test.py` (v85) | as chaves antigas do treino (perfil, HUD, som, campo, modo) indo para as novas no aparelho, nas gavetas das contas e na cópia antiga da conta; a chave nova que já existe fica | ver o RELATORIO_DE_TESTES |
@@ -1098,6 +1121,9 @@ no RELATORIO_DE_TESTES da auditoria.
 
 ## Limitações conhecidas (e o porquê)
 
+* **O presente de teste está LIGADO no pacote (v87.2)**: o `presente: true` do `app/public/game/config.js` dá 50.000 moedas
+  e 5.000 gemas a quem abre o jogo, inclusive no site com as contas e no GitHub Pages. É para testar a loja; **no lançamento,
+  apague a linha** — os jogadores que já ganharam ficam com o que ganharam (o saldo mora no progresso de cada um).
 * **A força do chute (v86, v87.1) foi medida, não jogada por pessoas**: a velocidade da bola depois do PASSE e do CHUTE, o
   teto e os números iguais no jogo e no servidor foram testados no Chromium; se 15% abaixo da antiga ficou bom, o equilíbrio e a
   sensação no celular dependem de jogar. Os bots usam as mesmas constantes (a previsão do chute deles acompanha); o jeito

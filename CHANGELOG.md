@@ -2,6 +2,30 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v87.2 — 17/10/2026 · moedas e gemas para testar o jogo
+
+A pedido: moedas e gemas para testar no jogo (no site com as contas também, não só na demonstração).
+
+- **O presente de teste vale na produção** quando o `app/public/game/config.js` pede — e o do pacote pede:
+  `presente: true` dá **50.000 moedas e 5.000 gemas**, uma vez em cada aparelho e em cada conta (o id `teste-v87`: quem já
+  tinha ganho o presente antigo da demonstração, o `v32`, também recebe). `presente: {id, moedas, gemas}` dá outro valor, e
+  cada id novo dá de novo (até 10 milhões de moedas e 1 milhão de gemas). **No lançamento, apague a linha** (ou
+  `presente: false`): o jogo volta a começar com 500 moedas e 25 gemas. A demonstração continua igual (o `v32`, e o
+  `presente: false` tira).
+- A janela PRESENTE, fora da demonstração, diz que é um presente de teste (o texto da demonstração fala que ele não existe no
+  lançamento).
+- As moedas e as gemas só compram cosméticos (as peças da tampinha): a física e os números do jogo são os mesmos para
+  todos. Elas moram no progresso do jogador (o aparelho e a cópia do progresso na conta), como sempre; a carteira do servidor
+  (`app/api/racha/economia.ts`) continua sem uso.
+- Arquivos: `tools/v87/v87.py` (o `presenteTeste()` e a condição do presente), `tools/v87/site.js` (o texto da janela) e
+  `app/public/game/config.js`.
+- Testes: `tests/v872_presente_test.py` (novo: o presente na produção com o `config.js` do pacote, uma vez só, a loja com o
+  presente, o `presente: false`, o presente com outro valor e o teto, a demonstração igual) e o `tests/v87_site_test.py` (a
+  conta que entra pelo jogo ganha o presente uma vez, e a janela). O `tests/comum.py` abre os outros testes como o
+  lançamento (`presente: false`, a não ser que o teste diga outra coisa). A plataforma de mentira
+  (`tests/v87_plataforma_falsa.mjs`) passou a entregar os arquivos ao lado da cópia de teste (o `config.js`, o `rua.js`, o
+  `lobby.js`…), que antes faltavam nela.
+
 ## v87.1 — 17/10/2026 · o chute 15% abaixo da versão antiga
 
 A pedido, depois de jogar: o PASSE, o CHUTE e o teto da bola ficaram **15% abaixo dos da versão antiga** (a v84).

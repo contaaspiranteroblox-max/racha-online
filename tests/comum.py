@@ -42,14 +42,20 @@ class Placar:
         return 0 if not self.falhas else 1
 
 
-async def abre(pw, w=1280, h=720, toque=True, dsf=1.0, pagina=None, armazenamento=None, config=None, sem_onb=True, movimento=None, offline=True):
+async def abre(pw, w=1280, h=720, toque=True, dsf=1.0, pagina=None, armazenamento=None, config=None, sem_onb=True, movimento=None, offline=True, config_do_build=False):
     """Abre o jogo num navegador novo. Devolve (navegador, página, erros). armazenamento: dict para o localStorage antes de abrir.
     config: dict para window.RACHA_CONFIG (ex.: {'modo': 'demo'}) · sem_onb=False deixa a primeira vez aparecer ·
-    movimento='reduce' imita o sistema com "reduzir movimento" ligado (prefers-reduced-motion)."""
+    movimento='reduce' imita o sistema com "reduzir movimento" ligado (prefers-reduced-motion).
+    v87.2: o config.js do build liga o presente de TESTE na produção (presente: true, para testar a loja); os testes abrem
+    como o lançamento — presente: false, a não ser que o config do teste diga o presente ou seja a demonstração.
+    config_do_build=True abre com o config.js do build como ele está (nada por cima)."""
     b = await pw.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--autoplay-policy=no-user-gesture-required'])
     ctx = await b.new_context(viewport={'width': w, 'height': h}, device_scale_factor=dsf, has_touch=toque)
     await ctx.add_init_script("document.addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent=%s;document.head.prepend(s);});" % json.dumps(FONTES))
-    if config:
+    if not config_do_build:
+        config = dict(config or {})
+        if 'presente' not in config and config.get('modo') != 'demo':
+            config['presente'] = False
         await ctx.add_init_script('window.RACHA_CONFIG = %s;' % json.dumps(config))
     if armazenamento:
         await ctx.add_init_script("try{const o=%s;for(const k in o)localStorage.setItem(k,o[k]);}catch(e){}" % json.dumps(armazenamento))

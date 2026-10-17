@@ -116,3 +116,9 @@ v84Entrou = function(res){
   } catch (_) {}
   return r;
 };
+// v87.2: o presente de teste na produção (o texto da demonstração diz que ele não existe no lançamento)
+const popPresenteAntes87 = popPresente;
+popPresente = function(p){
+  popPresenteAntes87(p);
+  if (window.RACHA_MODO !== 'demo'){ const t = LB.popCaixa && LB.popCaixa.querySelector('.pop-txt'); if (t) t.textContent = 'Presente de teste: moedas e gemas para experimentar a loja à vontade.'; }
+};

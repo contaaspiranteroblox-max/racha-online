@@ -4,7 +4,9 @@ O jogo de futebol de rua com tampinhas, na versão **v87**: **tudo dentro do jog
 tela cheia, sem a barra de cima e sem as abas; o login é o do jogo (com a cara dele) e as coisas da conta ficam nos botões
 do jogo (o que só existe no site abre por cima do jogo, com o VOLTAR AO JOGO). A **mecânica clássica** da v86 continua (a
 da v84; desde a v87.1, com o PASSE, o CHUTE e o teto da bola 15% abaixo da versão antiga), e o resto da v85 também: os textos
-próprios, as fontes no pacote, as chaves salvas sem a marca e o site de teste. O que mudou está no [`CHANGELOG.md`](CHANGELOG.md); de onde vem cada parte
+próprios, as fontes no pacote, as chaves salvas sem a marca e o site de teste. Desde a **v87.2**, o jogo dá **moedas e
+gemas de teste** (50.000 moedas e 5.000 gemas, uma vez em cada aparelho e em cada conta) para testar a loja à vontade — ver
+[Moedas e gemas de teste](#moedas-e-gemas-de-teste). O que mudou está no [`CHANGELOG.md`](CHANGELOG.md); de onde vem cada parte
 (inclusive a mecânica), no [`PROVENIENCIA.md`](PROVENIENCIA.md).
 
 > Outras versões guardadas aqui: a branch **`v85-auditada`** (a v85 da auditoria, com a física FR-85 e o `SHA256SUMS.txt`
@@ -62,6 +64,23 @@ Os números ficam em dois lugares, que precisam ser iguais:
 
 Depois: `python3 tools/aplicar_rua.py` (gera o jogo) e `python3 tests/v86_chute_test.py` (confere que o jogo e o servidor
 estão iguais e mede a bola depois do PASSE e do CHUTE).
+
+## Moedas e gemas de teste
+
+Quem abre o jogo ganha um **presente de teste**: **50.000 moedas e 5.000 gemas**, uma vez em cada aparelho e em cada conta
+(a janela PRESENTE aparece no lobby). Dá para comprar as peças da tampinha (comum 300 moedas, raro 800, épico 40 gemas,
+lendário 100 gemas) e testar a loja inteira. As moedas e as gemas só compram cosméticos: ninguém joga melhor com elas.
+
+Quem liga é a linha `presente: true` do [`app/public/game/config.js`](app/public/game/config.js):
+
+- **No lançamento:** apague essa linha (ou troque por `presente: false`). O jogo volta a começar com 500 moedas e 25 gemas.
+- **Dar de novo, com outro valor:** `presente: { id: 'loja2', moedas: 100000, gemas: 10000 }` — cada `id` novo dá o presente
+  mais uma vez em cada aparelho e conta (até 10 milhões de moedas e 1 milhão de gemas por presente).
+
+O `config.js` não passa pelo build do jogo (`tools/aplicar_rua.py`). Na plataforma, ele vai para o `app/dist` no
+`npm run build`: mudou, rode o `npm run build` de novo e reinicie. No Render (o `server.js`) e no GitHub Pages, basta
+publicar o arquivo. As moedas e as gemas moram no progresso do jogador (no aparelho e, com a conta, na cópia do progresso na
+conta), como as de sempre; a carteira no servidor (`app/api/racha/economia.ts`) existe, mas o jogo ainda não usa.
 
 ## O que tem aqui
 

@@ -38,6 +38,10 @@ coisas da conta ficam nos botões dele (as páginas `/perfil`, `/amigos`, `/carr
 site, com a barra e as abas, ficou em `/jogo-no-site`; o painel administrativo continua em `/admin`. Para atualizar um
 servidor que já está no ar: `git pull`, `npm install`, `npm run build` e reiniciar o `npm start`.
 
+**v87.2 — moedas e gemas de teste.** O `public/game/config.js` vem com `presente: true`: o jogo dá 50.000 moedas e 5.000
+gemas uma vez em cada aparelho e em cada conta, para testar a loja. No lançamento, apague a linha (ou `presente: false`) e
+rode o `npm run build` de novo — o `config.js` vai para o `dist/public/game` no build.
+
 ## Variáveis de ambiente
 
 | Variável | Uso |

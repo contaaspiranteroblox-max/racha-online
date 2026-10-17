@@ -4,7 +4,8 @@ Sobe a plataforma de mentira da v87 (tests/v87_plataforma_falsa.mjs: a raiz leva
 as páginas da conta) e abre o JOGO DE VERDADE do build (app/public/game/racha.html) no Chromium. Confere:
   1. a raiz do site abre o jogo sozinho, na página inteira (nada da plataforma por cima), e o login é o do jogo — com a
      cara do jogo (o amarelo dos botões, o cinza das janelas);
-  2. entrar pelo formulário do jogo: a conta aparece no jogo; o SAIR DA CONTA fica em Ajustes › Conta;
+  2. entrar pelo formulário do jogo: a conta aparece no jogo; o SAIR DA CONTA fica em Ajustes › Conta; v87.2: com o
+     presente: true do config.js, a conta ganha as moedas e gemas de teste uma vez (e a janela diz que é de teste);
   3. o botão AMIGOS do lobby abre os amigos da conta POR CIMA do jogo (a página do site num painel, com a sessão), e o
      VOLTAR AO JOGO, o "JOGAR" da página e o Esc fecham o painel sem recarregar o jogo; o ABRIR O PERFIL DA CONTA também;
   4. o SAIR DA CONTA encerra a sessão (no servidor) e volta ao login do jogo;
@@ -60,11 +61,15 @@ async def principal():
                 await ctx.add_init_script(CARGAS)
                 pg = await ctx.new_page()
                 pg.on('pageerror', lambda e: erros.append(str(e)[:300]))
-                pg.on('console', lambda m: erros.append('console: ' + m.text[:200]) if m.type == 'error' and 'Failed to load resource' not in m.text else None)
+                # (a plataforma de mentira não tem o servidor das salas: depois da primeira vez o jogo tenta o WebSocket do mesmo
+                # endereço — o Chat do Brasil — e segue sem ele; o navegador avisa no console, e isso não é erro do jogo)
+                pg.on('console', lambda m: erros.append('console: ' + m.text[:200]) if m.type == 'error' and 'Failed to load resource' not in m.text and not m.text.startswith('WebSocket connection to') else None)
                 return ctx, pg
 
             async def sem_onb(pg):
                 await pg.evaluate("(() => { const o = document.getElementById('onb'); if (o) o.hidden = true; })()")
+                # (as janelas do lobby — o presente de teste do config.js, as novidades — saem da frente dos botões)
+                await rt(pg, "(() => { filaPop.length = 0; if (!LB.pop.hidden) fechaPop(); return 1; })()")
 
             # ------------------------------------------------ 1) a raiz abre o jogo, e o login é o do jogo
             print('\n1) a raiz do site abre o jogo, com o login do jogo')
@@ -92,10 +97,26 @@ async def principal():
             await pg.click('#v84auth .v84-go')
             await pg.wait_for_function(LOGADO, timeout=20000)
             await pg.wait_for_timeout(600)
-            await sem_onb(pg)
             c = await rt(pg, "({nome:C82.conta.nome, token:!!RACHA84.token, cookie:RACHA84.cookie, xp:RACHA84.eu && RACHA84.eu.xp, cargas:+sessionStorage.getItem('v87_cargas')})")
             P.confere(c['nome'] == 'CROY' and c['token'], 'entrou: a conta aparece no jogo (CROY) e a sessão fica no aparelho', c)
             P.confere(c['xp'] == 120, 'depois do login o jogo busca a conta completa (o XP vem do auth.eu)', c)
+            pr = await rt(pg, "({m:CONTA.moedas, g:CONTA.gemas, ids:CONTA.presentes.slice(), cfg:window.RACHA_CONFIG && window.RACHA_CONFIG.presente})")
+            P.confere(pr['cfg'] is True and pr['ids'].count('teste-v87') == 1 and pr['m'] == 50500 and pr['g'] == 5025,
+                      'v87.2: com presente: true no config.js, a conta ganha o presente de teste uma vez (%d moedas e %d gemas)' % (pr['m'], pr['g']), pr)
+            # a janela do presente: a fila do lobby (a mesma que o jogo segue quando a apresentação da primeira vez acaba)
+            jp = await rt(pg, """(() => {
+              if (typeof ONB !== 'undefined' && (ONB.aberto || ONB.aquece)) onbFim();
+              for (let i = 0; i < 6; i++){
+                if (LB.pop.hidden) filaPops();
+                if (LB.pop.hidden) break;
+                const tag = LB.popCaixa.querySelector('.pop-tag');
+                if (tag && tag.textContent === 'PRESENTE') return LB.popCaixa.querySelector('.pop-txt').textContent;
+                fechaPop();
+              }
+              return null;
+            })()""")
+            P.confere(bool(jp) and jp.startswith('Presente de teste: moedas e gemas') and 'DEMONSTRAÇÃO' not in jp, 'a janela do presente diz que é de teste (sem falar em demonstração)', jp)
+            await sem_onb(pg)
             await rt(pg, "ajxAbre('conta')")
             await pg.wait_for_timeout(300)
             aj = await pg.evaluate("() => ({sair:!!document.querySelector('.c82-card .v84-sair'), admin:!!document.querySelector('.c82-card .v87-admin')})")
