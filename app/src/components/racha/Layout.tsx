@@ -1,7 +1,10 @@
 // ============================================================================
 // RACHA 2.0 — Layout: barra superior com o chip do jogador + navegação
+// v87: o jogo abre sozinho, em tela cheia — nada da plataforma aparece por cima dele. Dentro do painel da conta que o jogo
+// abre (estas páginas num iframe por cima do jogo) ficam só as abas da conta; a barra de cima é só para quem abre o site
+// por um endereço de página (/perfil, /admin…).
 // ============================================================================
-import { Link, NavLink, useNavigate } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth, SelosLinha } from "@/lib/racha";
 import { AvatarComMoldura } from "./Cartao";
 import { progressoNivel } from "@contracts/racha";
@@ -17,10 +20,41 @@ const NAV = [
   { para: "/ranking", rotulo: "🏆 Ranking" },
 ];
 
+// v87: as abas do painel da conta dentro do jogo (o VOLTAR AO JOGO é do jogo)
+const NAV_PAINEL = NAV.filter((n) => n.para !== "/");
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { conta, carregando, sair } = useAuth();
   const navigate = useNavigate();
+  const local = useLocation();
   const prog = conta ? progressoNivel(conta.xp) : null;
+
+  // v87: a raiz só leva ao jogo — sem barra, sem abas, sem rodapé
+  if (local.pathname === "/") return <>{children}</>;
+
+  // v87: dentro do jogo (o painel da conta): só as abas da conta e a página
+  if (window.self !== window.top) {
+    return (
+      <div className="fundo-quadra flex min-h-full flex-col">
+        <nav className="flex flex-none gap-1 overflow-x-auto border-b-2 border-[#241b56] bg-[#0d0b1e]/92 px-2 py-1.5">
+          {NAV_PAINEL.map((n) => (
+            <NavLink
+              key={n.para}
+              to={n.para}
+              className={({ isActive }) =>
+                `flex-none rounded-xl px-3 py-1.5 text-sm transition ${
+                  isActive ? "bg-[#ffd23f] text-[#3a2000] shadow-[0_3px_0_#14161a]" : "text-[#b0a6e8] hover:bg-white/5 hover:text-white"
+                }`
+              }
+            >
+              {n.rotulo}
+            </NavLink>
+          ))}
+        </nav>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-4">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="fundo-quadra flex min-h-full flex-col">

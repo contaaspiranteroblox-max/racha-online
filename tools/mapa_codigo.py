@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """RACHA · o mapa das redefinições: que funções do jogo foram trocadas por versões posteriores e QUAL está valendo.
 
-O racha.html é montado em camadas (o jogo-base, as versões v67–v69, as etapas da v70, a v71, a v73–v82 e a v84): muitas funções são declaradas
+O racha.html é montado em camadas (o jogo-base, as versões v67–v69, as etapas da v70, a v71, a v73–v82, a v84 e a v87): muitas funções são declaradas
 uma vez e depois trocadas por uma versão nova que chama a anterior (const xAntes70 = x; x = function(){ ... }).
 Este script lê o jogo gerado (app/public/game/racha.html) e lista, para cada função trocada, quantas vezes ela foi
 definida e de qual arquivo vem a versão ATIVA (a última). Serve para confirmar qual implementação vale antes de mexer
@@ -13,7 +13,8 @@ import re, pathlib, collections
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 JOGO = RAIZ / 'app' / 'public' / 'game' / 'racha.html'
-FONTES = [('tools/v84/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v84').glob('*.js'))] + \
+FONTES = [('tools/v87/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v87').glob('*.js'))] + \
+         [('tools/v84/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v84').glob('*.js'))] + \
          [('tools/v82/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v82').glob('*.js'))] + \
          [('tools/v81/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v81').glob('*.js'))] + \
          [('tools/v80/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v80').glob('*.js'))] + \
@@ -27,6 +28,7 @@ FONTES = [('tools/v84/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v84').gl
          [('tools/v71/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v71').glob('*.js'))] + \
          [('tools/v70/' + p.name, p) for p in sorted((RAIZ / 'tools' / 'v70').glob('*.js'))] + \
          [('tools/' + n, RAIZ / 'tools' / n) for n in ('clubes_rua.js', 'editor_rua.js', 'tampa_rua.js', 'salas_rua.js', 'partida_rua.js')] + \
+         [('tools/v87/' + p.name + ' (troca)', p) for p in sorted((RAIZ / 'tools' / 'v87').glob('*.py'))] + \
          [('tools/v84/' + p.name + ' (troca)', p) for p in sorted((RAIZ / 'tools' / 'v84').glob('*.py'))] + \
          [('tools/v82/' + p.name + ' (troca)', p) for p in sorted((RAIZ / 'tools' / 'v82').glob('*.py'))] + \
          [('tools/v80/' + p.name + ' (troca)', p) for p in sorted((RAIZ / 'tools' / 'v80').glob('*.py'))] + \

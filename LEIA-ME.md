@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v86
+# RACHA · Futebol de Rua — v87
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -58,7 +58,8 @@ proveniência**: a física, as quadras, os controles e os textos que vinham de o
 implementação própria (a física FR-85, num núcleo só para o jogo e o servidor), e as fontes passaram a vir no pacote.
 A **v86** voltou, a pedido, à **mecânica da v84** (a física, as quadras, o analógico de 32 direções e os botões) com o
 **chute mais forte** — PASSE e CHUTE 10% mais fortes e o teto da bola de 55 para 60 u/s —, e o resto da v85 continua
-(textos, chaves, fontes, login) — logo abaixo.
+(textos, chaves, fontes, login). A **v87** leva tudo para **dentro do jogo**: a plataforma abre o jogo direto, em tela
+cheia, com o login do jogo e as coisas da conta nos botões dele — logo abaixo.
 
 ---
 
@@ -91,7 +92,9 @@ cd app && npm install && npm run db:push && npx tsx db/seed.ts && npm run build 
 ```
 
 Em produção a plataforma entrega o jogo em `/game/racha.html` e monta o servidor das salas no mesmo endereço (quem está
-logado entra nas salas com a conta). Detalhes e variáveis em [`app/DEPLOY.md`](app/DEPLOY.md).
+logado entra nas salas com a conta). Desde a v87 **a raiz do site abre o jogo direto**, em tela cheia: o login é o do jogo
+e as páginas da conta (`/perfil`, `/amigos`…) abrem por cima dele; o jogo dentro do site, com a barra e as abas, ficou em
+`/jogo-no-site`. Detalhes e variáveis em [`app/DEPLOY.md`](app/DEPLOY.md).
 
 **Demonstração × lançamento.** O arquivo `app/public/game/config.js` diz o modo. O padrão é `producao` (sem presente de
 teste, salas online ligadas). Para mostrar o jogo sem servidor: `modo: 'demo'` (presente de 50.000 moedas e 5.000 gemas,
@@ -117,6 +120,32 @@ OFL) vêm em `app/public/game/fontes/` (os `.ttf` originais, com a licença ao l
 desenhar as letras. Ver `app/public/game/fontes/LEIA-ME.txt`.
 
 ---
+
+## v87 · tudo dentro do jogo: o site abre o jogo direto, em tela cheia
+
+No site com a plataforma, a barra de cima (a conta, o SAIR, o RACHA CONTROL) e as abas (Perfil, Carreira, Estatísticas,
+Conquistas, Inventário, Amigos, Ranking) ficavam por cima do jogo e espremiam a tela — no celular deitado, quase metade dela.
+A v87 tira tudo isso de cima do jogo:
+
+* **A raiz do site abre o jogo direto**, na página inteira (`/game/racha.html`): o servidor da plataforma redireciona
+  (`app/api/lib/vite.ts`), o `app/src/main.tsx` faz o mesmo no modo de desenvolvimento e o `App.tsx` leva a raiz e os
+  endereços desconhecidos ao jogo. O jogo dentro do site (o jeito de antes) continua em `/jogo-no-site`.
+* **O login é o do jogo** (ENTRAR, CRIAR CONTA, RECUPERAR, SÓ TREINAR OFFLINE — o da v84), agora com a cara do jogo e
+  compacto no celular deitado. **Quem já entrou pelo site entra direto**: sem a sessão no aparelho, o jogo pergunta pela
+  sessão do site no mesmo endereço (o cookie) antes de mostrar o formulário — e não guarda senha nem token nesse caso.
+* **As coisas da conta pelos botões do jogo.** O perfil, o ranking, a tampinha, o clube e os Ajustes já estavam no jogo.
+  O que só existe no site abre **por cima do jogo**, num painel com o **VOLTAR AO JOGO** — o jogo continua aberto embaixo,
+  do jeito que estava —, pelos botões que já existiam: o **AMIGOS** do lobby e o ABRIR AMIGOS da tela AMIGOS (os amigos da
+  conta), o **ABRIR O PERFIL DA CONTA** (o nome do cartão) e o **VER PERFIL** do chat. Dentro do painel, a página do site
+  mostra só as abas da conta (Perfil, Carreira, Estatísticas, Conquistas, Inventário, Amigos, Ranking); o "Jogar" de lá e o
+  Esc fecham o painel.
+* **SAIR DA CONTA** fica em Ajustes › Conta e, para a equipe, o **RACHA CONTROL** ao lado (abre o painel `/admin`).
+* Arquivos: `tools/v87/v87.py` e `tools/v87/site.js` (a etapa do build depois da v84) e, na plataforma, `app/api/lib/vite.ts`,
+  `app/src/main.tsx`, `app/src/App.tsx` e `app/src/components/racha/Layout.tsx`. Teste: `tests/v87_site_test.py`, com a
+  plataforma de mentira `tests/v87_plataforma_falsa.mjs`.
+
+**Para o seu servidor da plataforma pegar a v87:** `git pull`, depois `cd app && npm install && npm run build` e reiniciar o
+`npm start` (o jogo vem junto no build, de `app/public/game`).
 
 ## v86 · a mecânica clássica de volta, com o chute mais forte
 
@@ -954,6 +983,7 @@ no RELATORIO_DE_TESTES da auditoria.
 | `servidor_test.js` | regras do servidor (memória) e duas sessões pela rede (HTTP, origem, reconexão); só os 2 modos e os 2 mapas nas salas; v80: a partida normal (a regra e o relógio no start, a cada segundo e parado na pausa; 1 × 1 antes do tempo recusado e no fim empate guardado; gol depois do tempo, depois do gol de ouro, depois do 3º gol e depois da prorrogação recusados; 2 × 1 no fim; o gol de ouro; 0 × 0 até o fim; o relógio do anfitrião longe do servidor recusado; a hora do gol (goal.el); o servidor encerrando sozinho 10 s depois da hora, nos 3:00 e na prorrogação; o tempo encurtado por opção; a sala personalizada sem a regra nova); v79: a fila da ranqueada (juntar, misturar com bots depois de 8 s, os times pelos pontos, fila_nada depois de 20 s, sair, cair, recusar quem está numa sala), a sala ranqueada (no Estádio, fora da lista, sem entrar pelo código, sem trocar de time nem de regra, sem revanche, `ranked` no resultado), o Estádio como o mapa padrão e o selo da conta (só o assinado pela plataforma; no hello, nos cartões, na lista e no Chat do Brasil); v81: o filtro com telefone, CPF e e-mail nos dois chats, o `mid` de cada mensagem da sala, a repetida, 1 denúncia sem esconder, a do autor ignorada, 2 pessoas diferentes escondendo (`say_hide` para todos, `escondida` no histórico), o autor silenciado (`codigo:'silenciado'`) e os outros falando; v82: o selo diz se a partida era da ranqueada (`k`) e o tamanho (`n`) — a sala personalizada `k:0`, a fila da ranqueada com duas contas `k:1` e o placar de cada lado —, os IDs de visitante com 7 dígitos (9000000+, nunca o de uma conta) | 189/189 |
 | `plataforma_salas_test.mjs` | o servidor montado na plataforma (sessão do site, selo conferido, origem); v79: o selo V vindo do banco (`selosDe`) só para quem está logado, no hello e no cartão da sala | 10/10 |
 | `v86_chute_test.py` (v86) | a mecânica clássica e o chute mais forte: PASSE 275, CHUTE 440 e o teto de 60 u/s iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (27,5 e 44 u/s) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
+| `v87_site_test.py` (v87) | tudo dentro do jogo, com a plataforma de mentira (`v87_plataforma_falsa.mjs`): a raiz leva ao jogo; o login é o do jogo, com a cara dele; entrar; o AMIGOS e o ABRIR O PERFIL DA CONTA abrem as páginas da conta por cima do jogo (VOLTAR AO JOGO, o "Jogar" da página e o Esc fecham, sem recarregar); o SAIR DA CONTA; quem entrou pelo site entra direto (pelo cookie, sem ficar recarregando); o RACHA CONTROL da equipe; o SÓ TREINAR OFFLINE enquanto confere; o jogo sem a plataforma | 22/22 |
 | `v85_online_test.py` (v85, v86) | duas sessões do jogo numa sala hospedada no servidor: a tampinha correndo e parando no servidor; na v86 (mecânica clássica) os comandos com `button` e o analógico em 1/32 de volta, o PASSE e o CHUTE saindo com a força do jogo (na v85: `acao` e 1/256, com a FR-85) | 14/14 |
 | (`v85_fisica_test.mjs` e `v85_sincronia_test.py`) | testavam o núcleo FR-85; saíram na v86 (estão na branch `v85-auditada`) | — |
 | `v85_chaves_test.py` (v85) | as chaves antigas do treino (perfil, HUD, som, campo, modo) indo para as novas no aparelho, nas gavetas das contas e na cópia antiga da conta; a chave nova que já existe fica | ver o RELATORIO_DE_TESTES |
@@ -1068,6 +1098,10 @@ no RELATORIO_DE_TESTES da auditoria.
   teto e os números iguais no jogo e no servidor foram testados no Chromium; se 10% a mais ficou bom, o equilíbrio e a
   sensação no celular dependem de jogar. Os bots usam as mesmas constantes (a previsão do chute deles acompanha); o jeito
   deles jogarem foi conferido pelos testes dos bots (v78), não por partidas contra pessoas.
+* **A plataforma da v87 não foi construída aqui**: o `npm install` e o `npm run build` do `app/` não rodam neste ambiente (o
+  registro do npm não responde daqui). O `App.tsx`, o `Layout.tsx` e o `main.tsx` foram compilados com o esbuild e testados
+  no Chromium com stubs no lugar do react-router e do tRPC; o lado do jogo foi testado com uma plataforma de mentira. O
+  build de verdade acontece no seu servidor (`npm run build`).
 * **A mecânica da v86 é a da v84** (a pedido): os números e a estrutura dela vieram da análise de outro jogo (ver
   `PROVENIENCIA.md`); a física própria da v85 está na branch `v85-auditada`.
 * **Jogo e servidor de versões diferentes não conversam direito**: o comando de entrada da v85 é `acao` e o da v84/v86 é

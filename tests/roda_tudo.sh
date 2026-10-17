@@ -25,6 +25,9 @@
 # aceitando quem não tem conta: o padrão da v84 exige a conta). Para guardar a saída inteira de cada teste: bash tests/roda_lista.sh.
 # v86: o v86_chute confere a mecânica clássica de volta e o chute mais forte — os mesmos números no jogo e no servidor, a
 # velocidade da bola depois do PASSE e do CHUTE no jogo de verdade e na sala do servidor.
+# v87: o v87_site sobe a plataforma de mentira da v87 (tests/v87_plataforma_falsa.mjs: a raiz leva ao jogo, a API tRPC com
+# token ou cookie, as páginas da conta) e confere tudo dentro do jogo: o login do jogo, a sessão do site valendo, as páginas
+# da conta por cima do jogo, o SAIR, o RACHA CONTROL e o jogo sem a plataforma.
 cd "$(dirname "$0")/.." || exit 1
 python3 tools/aplicar_rua.py | head -1 || exit 1
 falhou=0
@@ -50,7 +53,7 @@ printf '%-12s ' "v83_salas_ws"
 if out=$(python3 tests/v83_salas_ws_test.py 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU|Error' | head -4; echo "$out" | tail -1; fi
 printf '%-12s ' "guard"
 if out=$(node tests/compila_guard.cjs >/dev/null 2>&1 && node tests/guard_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
-for t in v85_online v85_chaves v86_chute; do
+for t in v85_online v85_chaves v86_chute v87_site; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

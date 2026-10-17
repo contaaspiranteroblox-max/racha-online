@@ -38,6 +38,9 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  18. v83/v84 (tools/v84/v84.py + login_cedo.js + login.js, aplicados por último): os textos das salas hospedadas no servidor
      (o criador é o admin) e o login obrigatório sem o site. Antes da auditoria de 17/10/2026 essas mudanças estavam só no
      racha.html gerado (o build não as reproduzia); agora o build gera o mesmo arquivo entregue na v84.
+ 19. v87 (tools/v87/v87.py + site.js, aplicados depois da v84): tudo dentro do jogo — o site abre o jogo direto (a raiz da
+     plataforma leva a /game/racha.html), o login do jogo com a cara do jogo, a sessão do site valendo no jogo, as páginas
+     da conta abrindo por cima do jogo pelos botões que já existiam e o RACHA CONTROL em Ajustes › Conta (a equipe).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -61,7 +64,8 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v71/times',                                                                # v71: preto × branco (as etapas da v71 moram em tools/v71/)
               'v80/times',                                                                # v80: Time A laranja × Time B roxo e a tampinha Listras
               'v82/conta',                                                                # v82: as contas (o script de entrada, a exportação, o XP das missões)
-              'v84/v84']                                                                  # v83/v84: os textos das salas no servidor e o login obrigatório (eram editados direto no gerado)
+              'v84/v84',                                                                  # v83/v84: os textos das salas no servidor e o login obrigatório (eram editados direto no gerado)
+              'v87/v87']                                                                  # v87: tudo dentro do jogo (o login com a cara do jogo, a sessão do site, as páginas da conta por cima do jogo)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

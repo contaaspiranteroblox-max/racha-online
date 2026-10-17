@@ -2,6 +2,35 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v87 — 17/10/2026 · tudo dentro do jogo: o site abre o jogo direto, em tela cheia
+
+A pedido, depois de jogar no site com a plataforma: a barra de cima (a conta, o SAIR) e as abas (Perfil, Carreira,
+Estatísticas, Conquistas, Inventário, Amigos, Ranking) ficavam por cima do jogo e espremiam a tela.
+
+- **A plataforma abre o jogo direto** (`/game/racha.html`, na página inteira): `app/api/lib/vite.ts` redireciona a raiz no
+  servidor; `app/src/main.tsx` faz o mesmo no modo de desenvolvimento; no `app/src/App.tsx` a raiz e os endereços
+  desconhecidos levam ao jogo (`IrParaOJogo`, sem laço se o jogo não estiver no build). O jogo dentro do site, com a barra
+  e as abas (o jeito de antes), continua em `/jogo-no-site`. As páginas da conta continuam no site (`/perfil`, `/amigos`…).
+- **O login é o do jogo** (o da v84, com ENTRAR, CRIAR CONTA, RECUPERAR e SÓ TREINAR OFFLINE), agora **com a cara do jogo**
+  (o cinza-carvão das janelas, o amarelo dos botões, o contorno de tinta, a Lilita One) e compacto no celular deitado.
+- **Quem já entrou pelo site entra direto no jogo:** sem a sessão no aparelho, o jogo pergunta ao `auth.eu` pela sessão do
+  site no mesmo endereço (o cookie `racha_sessao`) antes de mostrar o formulário (`RACHA84.cookie`; o jogo não guarda senha
+  nem token nesse caso). O SÓ TREINAR OFFLINE já aparece enquanto ele confere e, escolhido, vale.
+- **As coisas da conta pelos botões do jogo:** o que o jogo já tem (perfil, ranking, tampinha, clube, Ajustes) continua lá;
+  o que só existe no site abre **por cima do jogo**, num painel com o VOLTAR AO JOGO (o jogo continua aberto embaixo, sem
+  recarregar), pelos botões que já existiam: o AMIGOS do lobby e o ABRIR AMIGOS da tela AMIGOS (os amigos da conta), o ABRIR
+  O PERFIL DA CONTA (o nome do cartão) e o VER PERFIL do chat. Dentro do painel, a página do site mostra só as abas da conta
+  (`Layout.tsx`); o "Jogar" de lá e o Esc fecham o painel. Antes, sem o site por fora, esses botões não faziam nada.
+- **SAIR DA CONTA** em Ajustes › Conta (o da v84) e, para a equipe, o **RACHA CONTROL** ao lado (abre o `/admin`).
+- Depois do login pelo jogo, a conta completa vem do `auth.eu` (o XP, a patente e o cargo).
+- Arquivos: `tools/v87/v87.py` e `tools/v87/site.js` (a etapa nova do build, depois da v84), `tools/aplicar_rua.py`,
+  `tools/mapa_codigo.py`, `app/api/lib/vite.ts`, `app/src/main.tsx`, `app/src/App.tsx`, `app/src/components/racha/Layout.tsx`.
+- Testes: `tests/v87_site_test.py` (novo, com a plataforma de mentira `tests/v87_plataforma_falsa.mjs`: a raiz leva ao jogo,
+  a API tRPC com token ou cookie, as páginas da conta) — o login do jogo, entrar, as páginas por cima do jogo, o SAIR, a
+  sessão do site, o RACHA CONTROL, o offline enquanto confere e o jogo sem a plataforma. O `npm run build` da plataforma não
+  rodou neste ambiente (o registro do npm não responde daqui): o `App.tsx`, o `Layout.tsx` e o `main.tsx` de verdade foram
+  compilados com o esbuild e testados no Chromium com stubs no lugar do react-router e do tRPC.
+
 ## v86 — 17/10/2026 · a mecânica clássica de volta, com o chute mais forte
 
 A pedido, depois do teste da v85 no site: a mecânica da v84 de volta e só a força do chute mudada.

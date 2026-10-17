@@ -5,14 +5,14 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 
 | função | definições | a que vale vem de | linha no script |
 |---|---:|---|---:|
-| `net49Message` | 13 | tools/v81/chat.js | 25981 |
+| `net49Message` | 13 | tools/v81/chat.js | 25980 |
 | `net49Begin` | 9 | tools/v80/partida.js | 25136 |
 | `renderRanqueada` | 7 | tools/v79/ranqueada.js | 24551 |
-| `rqMostraFim` | 7 | tools/v82/conta.js | 26179 |
+| `rqMostraFim` | 7 | tools/v82/conta.js | 26178 |
 | `net49Result` | 6 | tools/v80/partida.js | 25341 |
 | `x49GameUI` | 6 | tools/v79/ranqueada.js | 24531 |
 | `net49Send` | 5 | tools/v79/ranqueada.js | 24808 |
-| `renderPerfil` | 5 | tools/v82/conta.js | 26418 |
+| `renderPerfil` | 5 | tools/v82/conta.js | 26417 |
 | `rqPlacar70` | 5 | tools/v80/partida.js | 25293 |
 | `abreTela` | 4 | tools/editor_rua.js | 17089 |
 | `net49Skin` | 4 | tools/v71/times.js | 20930 |
@@ -27,8 +27,9 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `aroDe` | 3 | tools/v80/partida.js | 25360 |
 | `botaoPronto` | 3 | tools/tampa_rua.js | 16387 |
 | `brasilEstado` | 3 | tools/v70/comunidade.js | 19993 |
-| `brasilMsg` | 3 | tools/v81/chat.js | 25991 |
+| `brasilMsg` | 3 | tools/v81/chat.js | 25990 |
 | `buildStatic` | 3 | tools/v77/quadra.js | 23325 |
+| `c82PintaConta` | 3 | tools/v87/site.js | 26965 |
 | `campoPlano` | 3 | tools/v74/campo.js | 21783 |
 | `cbPintaPainel` | 3 | tools/v81/chat.js | 25815 |
 | `clubesRender` | 3 | tools/clubes_rua.js | 17279 |
@@ -40,7 +41,7 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `drawDirecao` | 3 | tools/v70/polimento.js | 20059 |
 | `ecoGol` | 3 | tools/v70/perfil.js | 18665 |
 | `ecoMissoes` | 3 | tools/v79/ranqueada.js | 24627 |
-| `filaPops` | 3 | tools/v82/conta.js | 26254 |
+| `filaPops` | 3 | tools/v82/conta.js | 26253 |
 | `galeraConecta` | 3 | tools/salas_rua.js | 15321 |
 | `lbRender` | 3 | tools/v77/lobby.js | 22693 |
 | `montaAbas` | 3 | tools/v77/telas.js | 22735 |
@@ -49,9 +50,9 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `pausaRotulo` | 3 | tools/v79/ranqueada.js | 24519 |
 | `pintaPalcoPerfil` | 3 | tools/v78/perfil.js | 24174 |
 | `placarFundo` | 3 | tools/v71/times.js | 20963 |
-| `premioNos` | 3 | tools/v82/conta.js | 26216 |
+| `premioNos` | 3 | tools/v82/conta.js | 26215 |
 | `renderLoja` | 3 | tools/v71/telas.js | 21215 |
-| `renderRanking` | 3 | tools/v82/conta.js | 26517 |
+| `renderRanking` | 3 | tools/v82/conta.js | 26516 |
 | `renderTreino` | 3 | tools/v70/tutorial.js | 19384 |
 | `rpSkinDe` | 3 | tools/v71/times.js | 20935 |
 | `rpSkinEnt` | 3 | tools/v71/times.js | 20940 |
@@ -77,7 +78,7 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `abreJogar` | 2 | tools/v79/ranqueada.js | 24549 |
 | `abrirLobby` | 2 | tools/v70/tutorial.js | 19333 |
 | `ajxAba` | 2 | tools/v70/celular.js | 20546 |
-| `ajxSync` | 2 | tools/v82/conta.js | 26415 |
+| `ajxSync` | 2 | tools/v82/conta.js | 26414 |
 | `amigosRender` | 2 | tools/salas_rua.js | 15517 |
 | `arbEu` | 2 | tools/v79/ranqueada.js | 24544 |
 | `arbEuPrincipal` | 2 | tools/v79/ranqueada.js | 24545 |
@@ -85,7 +86,6 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `b78NaApresentacao` | 2 | tools/v79/ranqueada.js | 24496 |
 | `brasilCorNome` | 2 | tools/tampa_rua.js | 16404 |
 | `brasilRenderLista` | 2 | tools/v79/selo.js | 25011 |
-| `c82PintaConta` | 2 | tools/v84/login.js | 26839 |
 | `cbAbre` | 2 | tools/v81/chat.js | 25842 |
 | `cbBalaoDesenha` | 2 | tools/v81/chat.js | 25905 |
 | `cbContexto` | 2 | tools/v81/chat.js | 25713 |
@@ -99,7 +99,7 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `cbPinta` | 2 | tools/v81/chat.js | 25777 |
 | `cmRender` | 2 | tools/v77/telas.js | 22799 |
 | `confirmaNome` | 2 | backup/racha.html (jogo-base) | 13966 |
-| `contaCarregar` | 2 | tools/v82/conta.js | 26089 |
+| `contaCarregar` | 2 | tools/v82/conta.js | 26088 |
 | `desenhaForaDaTela` | 2 | tools/v80/partida.js | 25366 |
 | `desenhaRespingos` | 2 | tools/v70/enxuto.js | 20881 |
 | `desenhaSaidaArco` | 2 | tools/v71/times.js | 20985 |
@@ -132,10 +132,10 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `net49Draw` | 2 | backup/racha.html (jogo-base) | 14455 |
 | `net49Publish` | 2 | backup/racha.html (jogo-base) | 14374 |
 | `net49RemoteFrame` | 2 | backup/racha.html (jogo-base) | 14469 |
-| `nivelInfo` | 2 | tools/v82/conta.js | 26093 |
+| `nivelInfo` | 2 | tools/v82/conta.js | 26092 |
 | `novoCampo` | 2 | tools/v70/enxuto.js | 20631 |
 | `onbFim` | 2 | backup/racha.html (jogo-base) | 14027 |
-| `onbPrecisa` | 2 | tools/v82/conta.js | 26293 |
+| `onbPrecisa` | 2 | tools/v82/conta.js | 26292 |
 | `pausaAbre` | 2 | tools/salas_rua.js | 15695 |
 | `pintaBrilho` | 2 | tools/v77/lobby.js | 22599 |
 | `pintaPreview` | 2 | tools/v76/skins.js | 22472 |
@@ -143,8 +143,8 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `popModosNovos` | 2 | tools/v70/enxuto.js | 20669 |
 | `popPresente` | 2 | tools/v70/economia.js | 18201 |
 | `pxEstRender` | 2 | tools/v70/enxuto.js | 20659 |
-| `pxZerar` | 2 | tools/v82/conta.js | 26446 |
-| `pxZerarPop` | 2 | tools/v82/conta.js | 26433 |
+| `pxZerar` | 2 | tools/v82/conta.js | 26445 |
+| `pxZerarPop` | 2 | tools/v82/conta.js | 26432 |
 | `rapidoTexto` | 2 | tools/v79/ranqueada.js | 24467 |
 | `renderPartidas` | 2 | tools/v70/perfil.js | 18716 |
 | `rpDecodifica` | 2 | tools/tampa_rua.js | 16413 |
@@ -203,16 +203,17 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `tuIntroAbre` | 2 | tools/v70/celular.js | 20496 |
 | `v61Btn` | 2 | tools/v70/tutorial.js | 19481 |
 | `v70Contorno` | 2 | tools/v73/sensor.js | 21306 |
-| `v70EvFim` | 2 | tools/v82/conta.js | 26204 |
-| `v70EvInicio` | 2 | tools/v82/conta.js | 26192 |
+| `v70EvFim` | 2 | tools/v82/conta.js | 26203 |
+| `v70EvInicio` | 2 | tools/v82/conta.js | 26191 |
+| `v84Entrou` | 2 | tools/v87/site.js | 26979 |
 | `x49Toast` | 2 | tools/salas_rua.js | 15323 |
 | `zerarPerfil` | 2 | tools/v70/perfil.js | 18963 |
 
 ## Resumo
 
-* funções declaradas no script principal: 1707
-* funções trocadas pelo menos uma vez: 202 (12%)
-* definições a mais (camadas): 316
+* funções declaradas no script principal: 1711
+* funções trocadas pelo menos uma vez: 203 (12%)
+* definições a mais (camadas): 318
 
 A versão que vale, por arquivo:
 
@@ -243,6 +244,7 @@ A versão que vale, por arquivo:
 * tools/v73/sensor.js: 3
 * tools/editor_rua.js: 2
 * tools/v77/quadra.js: 2
+* tools/v87/site.js: 2
 * tools/v74/campo.js: 2
 * tools/clubes_rua.js: 2
 * tools/v77/lobby.js: 2
@@ -251,4 +253,3 @@ A versão que vale, por arquivo:
 * tools/v71/telas.js: 1
 * tools/v70/ajustes.js: 1
 * tools/v70/interface.js: 1
-* tools/v84/login.js: 1

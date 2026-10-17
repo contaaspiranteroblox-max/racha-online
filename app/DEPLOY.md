@@ -32,6 +32,12 @@ npm start            # sobe em http://localhost:3000
 
 Desenvolvimento: `npm run dev` (HMR na porta 3000).
 
+**v87 — o site abre o jogo direto.** A raiz (`/`) leva ao jogo em tela cheia (`/game/racha.html`): o login é o do jogo e as
+coisas da conta ficam nos botões dele (as páginas `/perfil`, `/amigos`, `/carreira`, `/estatisticas`, `/conquistas`,
+`/inventario`, `/ranking` e `/jogador/:id` continuam aqui e o jogo as abre por cima dele, num painel). O jogo dentro do
+site, com a barra e as abas, ficou em `/jogo-no-site`; o painel administrativo continua em `/admin`. Para atualizar um
+servidor que já está no ar: `git pull`, `npm install`, `npm run build` e reiniciar o `npm start`.
+
 ## Variáveis de ambiente
 
 | Variável | Uso |

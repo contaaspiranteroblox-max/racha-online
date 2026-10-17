@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router";
 import { AuthProvider, FestaProvider, useAuth } from "@/lib/racha";
 import Layout from "@/components/racha/Layout";
@@ -30,13 +31,43 @@ function ExigeConta({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// v87 — o site abre o JOGO direto, em tela cheia (/game/racha.html): o login é o do jogo e as coisas da conta ficam nos
+// botões do jogo (as páginas da conta abrem por cima dele, num painel). A raiz e os endereços desconhecidos levam ao jogo.
+// Dentro do painel do jogo (esta página num iframe por cima do jogo), "ir para o jogo" é fechar o painel.
+function IrParaOJogo() {
+  const noPainel = window.self !== window.top;
+  const semJogo = window.location.pathname.startsWith("/game/"); // (o arquivo do jogo não veio no build: sem laço de volta)
+  useEffect(() => {
+    if (noPainel) {
+      try {
+        window.parent.postMessage({ racha: "site_fechar" }, window.location.origin);
+      } catch {
+        // (o painel fecha pelo VOLTAR AO JOGO)
+      }
+      return;
+    }
+    if (!semJogo) window.location.replace("/game/racha.html" + window.location.search + window.location.hash);
+  }, [noPainel, semJogo]);
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center px-4 text-center text-sm text-zinc-400">
+      {semJogo
+        ? "O jogo não está em /game/racha.html neste servidor (confira o build da plataforma)."
+        : noPainel
+          ? "Voltando ao jogo…"
+          : "Abrindo o jogo…"}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <FestaProvider>
         <Layout>
           <Routes>
-            <Route path="/" element={<ExigeConta><LobbyPage /></ExigeConta>} />
+            <Route path="/" element={<IrParaOJogo />} />
+            {/* v87: o jogo dentro do site (o jeito de antes, com a barra e as abas) continua neste endereço */}
+            <Route path="/jogo-no-site" element={<ExigeConta><LobbyPage /></ExigeConta>} />
             <Route path="/entrar" element={<EntrarPage />} />
             <Route path="/redefinir" element={<RedefinirPage />} />
             <Route path="/perfil" element={<ExigeConta><PerfilPage /></ExigeConta>} />
@@ -48,7 +79,7 @@ export default function App() {
             <Route path="/amigos" element={<ExigeConta><AmigosPage /></ExigeConta>} />
             <Route path="/ranking" element={<ExigeConta><RankingPage /></ExigeConta>} />
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="*" element={<ExigeConta><LobbyPage /></ExigeConta>} />
+            <Route path="*" element={<IrParaOJogo />} />
           </Routes>
         </Layout>
       </FestaProvider>

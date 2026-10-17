@@ -1,13 +1,26 @@
-# RACHA · Futebol de Rua — v86
+# RACHA · Futebol de Rua — v87
 
-O jogo de futebol de rua com tampinhas, na versão **v86**: a **mecânica clássica** de volta (a da v84: o jeito de correr e
-chutar, os botões, o analógico e o tamanho das quadras) com o **chute mais forte** — PASSE e CHUTE 10% mais fortes e o teto
-da bola de 55 para 60 u/s. O resto da v85 continua: os textos próprios, as fontes no pacote, o SÓ TREINAR OFFLINE no login,
-as chaves salvas sem a marca e o site de teste. O que mudou está no [`CHANGELOG.md`](CHANGELOG.md); de onde vem cada parte
+O jogo de futebol de rua com tampinhas, na versão **v87**: **tudo dentro do jogo** — a plataforma abre o jogo direto, em
+tela cheia, sem a barra de cima e sem as abas; o login é o do jogo (com a cara dele) e as coisas da conta ficam nos botões
+do jogo (o que só existe no site abre por cima do jogo, com o VOLTAR AO JOGO). A **mecânica clássica** da v86 continua (a
+da v84, com o PASSE e o CHUTE 10% mais fortes e o teto da bola de 55 para 60 u/s), e o resto da v85 também: os textos
+próprios, as fontes no pacote, as chaves salvas sem a marca e o site de teste. O que mudou está no [`CHANGELOG.md`](CHANGELOG.md); de onde vem cada parte
 (inclusive a mecânica), no [`PROVENIENCIA.md`](PROVENIENCIA.md).
 
 > Outras versões guardadas aqui: a branch **`v85-auditada`** (a v85 da auditoria, com a física FR-85 e o `SHA256SUMS.txt`
 > do pacote) e a **`versao-anterior`** (as salas online da v62, o que estava aqui antes).
+
+## Na sua plataforma (o servidor com as contas e o MySQL)
+
+Desde a v87 a raiz do site abre o jogo em tela cheia: o login é o do jogo, e quem já estava logado no site entra direto.
+O jogo dentro do site, com a barra e as abas (o jeito de antes), ficou em `/jogo-no-site`; o painel da equipe continua em
+`/admin` (e no jogo, em Ajustes › Conta › RACHA CONTROL). Para o servidor pegar a versão nova:
+
+```bash
+git pull
+cd app && npm install && npm run build
+# e reinicie o "npm start" (o jogo vem junto no build, de app/public/game)
+```
 
 ## Testar num site
 
