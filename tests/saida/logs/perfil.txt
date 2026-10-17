@@ -68,4 +68,4 @@
   OK      importar recusa arquivo que não é do RACHA
   OK      nenhum erro de JavaScript
 
-Etapa 4 · perfil, estatísticas, inventário e economia: 53/53 verificações ok em 17.0 s
+Etapa 4 · perfil, estatísticas, inventário e economia: 53/53 verificações ok em 16.3 s

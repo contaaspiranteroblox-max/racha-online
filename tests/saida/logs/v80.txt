@@ -82,7 +82,7 @@
 
 7) online de verdade: o relógio do servidor (a partida normal encurtada para 14 s + 8 s), o gol de ouro, o empate e a troca de time na sala
   OK      a ranqueada online é a partida normal: a regra e o tempo vêm do servidor
-  FALHOU  os dois veem o mesmo relógio (o do servidor; quem roda a partida também usa ele)  ·  [3.593249999999767, 3.593950000000186, 0]
+  FALHOU  os dois veem o mesmo relógio (o do servidor; quem roda a partida também usa ele)  ·  [3.581550000000745, 3.581750000000466, 0]
   OK      o placar de quem joga de fora mostra o relógio do servidor descendo (00:11 com 3.6 s de jogo)
   OK      0 × 0 no fim dos 14 s: a prorrogação nos dois (o relógio negativo, em vermelho)
   FALHOU  o gol de ouro de quem roda a partida acaba o jogo e o servidor confere (vitória de um, derrota do outro)  ·  [None, {'tit': 'EMPATE', 'd': 0, 'gol': {'time': 0, 'palavra': 'GOOOL!', 'nome': 'ANA', 'sub': '', 'nosso': True, 'at': 0}}]
@@ -92,7 +92,7 @@
   OK      nenhum erro de JavaScript na sessão de Ana
   OK      nenhum erro de JavaScript na sessão de Beto
 
-v80 · laranja × roxo, a tampinha Listras, o placar com 3:00, a prorrogação, o GOOOL! e o treino: 75/79 verificações ok em 86.1 s
+v80 · laranja × roxo, a tampinha Listras, o placar com 3:00, a prorrogação, o GOOOL! e o treino: 75/79 verificações ok em 85.7 s
   - falhou: os dois veem o mesmo relógio (o do servidor; quem roda a partida também usa ele)
   - falhou: o gol de ouro de quem roda a partida acaba o jogo e o servidor confere (vitória de um, derrota do outro)
   - falhou: quem joga de fora viu o GOOOL! na cor do time de quem marcou, com o nome dele

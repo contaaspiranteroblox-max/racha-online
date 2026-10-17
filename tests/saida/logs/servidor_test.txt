@@ -7,7 +7,7 @@
 1) A SALA: criar, entrar, times, árbitro
   ok   hello devolve id, token e o ID da turma (v82: 7 números para quem não tem conta; as contas têm 6)
   ok   depois do hello vem a lista de salas
-  FALHOU criar: código de 6, dono no Time A, as regras pedidas (COM CURVA no ESTÁDIO)  → {"code":"Q37RWD","name":"Racha da Laje","host":"srv","admin":"uqv4pur47r","servidor":true,"n":1,"map":4,"jogo":"curva","tempo":0,"bots":false,"pub":true,"state":"waiting","ranked":false,"round":0,"roster":["uqv4pur47r",null],"members":[{"id":"uqv4pur47r","name":"Ana","selo":"","flag":"BR","skin":"T.
+  FALHOU criar: código de 6, dono no Time A, as regras pedidas (COM CURVA no ESTÁDIO)  → {"code":"3KH3TN","name":"Racha da Laje","host":"srv","admin":"uw0bix54q8","servidor":true,"n":1,"map":4,"jogo":"curva","tempo":0,"bots":false,"pub":true,"state":"waiting","ranked":false,"round":0,"roster":["uw0bix54q8",null],"members":[{"id":"uw0bix54q8","name":"Ana","selo":"","flag":"BR","skin":"T.
   ok   v70.2: sala pedida no Escadão e no vôlei abre no futebol e no mapa padrão (v79: o Estádio)
   ok   criar: histórico do chat e a mensagem de entrada
   ok   o árbitro vai para os espectadores (seat slot -1)
@@ -55,13 +55,13 @@
 3) QUEM CAI E VOLTA, QUEM SAI, REMOVER, PASSAR O DONO, JOGAR AGORA
   ok   o convidado caiu no meio: a vaga fica livre (o anfitrião põe um bot) e a sala avisa
   ok   voltou com o token: o mesmo id
-  FALHOU voltou para o mesmo lugar no meio da partida, com o placar (resume)  → {"type":"start","room":{"code":"Q37RWD","name":"Racha novo","host":"srv","admin":"uqv4pur47r","servidor":true,"n":1,"map":0,"jogo":"futebol","tempo":0,"bots":false,"pub":true,"state":"playing","ranked":false,"round":1,"roster":["uqv4pur47r","uxrwuarhta"],"members":[{"id":"uqv4pur47r","name":"Ana","s
+  FALHOU voltou para o mesmo lugar no meio da partida, com o placar (resume)  → {"type":"start","room":{"code":"3KH3TN","name":"Racha novo","host":"srv","admin":"uw0bix54q8","servidor":true,"n":1,"map":0,"jogo":"futebol","tempo":0,"bots":false,"pub":true,"state":"playing","ranked":false,"round":1,"roster":["uw0bix54q8","uifebegw8u"],"members":[{"id":"uw0bix54q8","name":"Ana","s
   FALHOU o anfitrião caiu: a partida para (interrupted) e a sala passa para quem está há mais tempo  → [null,"srv","playing"]
   FALHOU a Ana voltou como convidada (o dono continua o novo)
   ok   remover da sala: quem sai recebe left e o aviso
   ok   removido não volta na hora (30 s)
   FALHOU passar o dono
-  FALHOU JOGAR AGORA (rapido): entra com lugar num time  → [null,"uxrwuarhta"]
+  FALHOU JOGAR AGORA (rapido): entra com lugar num time  → [null,"uifebegw8u"]
   ok   o dono saiu: left para ele e a sala passa para outro
   ok   trocou o nome e a tampinha: o cartão da sala atualiza para todos
 
@@ -69,8 +69,8 @@
   ok   a copa precisa de 4 ou 8 pessoas
   ok   só o dono sorteia
   ok   sorteio: 2 duelos, 1v1 sem bots, o primeiro duelo nos times
-  FALHOU o primeiro duelo tem vencedor  → {"a":"uyshr7efql","b":"umtmb3fwah"}
-  FALHOU a final: os dois vencedores  → {"name":"Copa da Laje","rounds":[],"matches":[{"a":"uyshr7efql","b":"umtmb3fwah"},{"a":"ulpjwacbw9","b":"ua7pra5kaf"}],"champion":null}
+  FALHOU o primeiro duelo tem vencedor  → {"a":"up9bv922ab","b":"uxizdtokac"}
+  FALHOU a final: os dois vencedores  → {"name":"Copa da Laje","rounds":[],"matches":[{"a":"up9bv922ab","b":"uxizdtokac"},{"a":"u6ezzzbmir","b":"uhu0t5ycjg"}],"champion":null}
   FALHOU campeão e a galeria de campeões  → [null,[]]
   FALHOU encerrar a copa volta às regras da sala
   FALHOU social: a galeria de campeões
@@ -130,9 +130,9 @@
   ok   bilhete adulterado não vale (entra como visitante)
   ok   bilhete vencido não vale
   FALHOU (erro) TypeError: Cannot read properties of null (reading 'selo')
-    at regras (/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/servidor_test.js:364:54)
-    at /tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/servidor_test.js:669:18
-    at Object.<anonymous> (/tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/servidor_test.js:673:3)
+    at regras (/home/claude/racha-online/tests/servidor_test.js:364:54)
+    at /home/claude/racha-online/tests/servidor_test.js:669:18
+    at Object.<anonymous> (/home/claude/racha-online/tests/servidor_test.js:673:3)
     at Module._compile (node:internal/modules/cjs/loader:1706:14)
     at Object..js (node:internal/modules/cjs/loader:1839:10)
     at Module.load (node:internal/modules/cjs/loader:1441:32)

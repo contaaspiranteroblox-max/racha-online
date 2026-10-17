@@ -22,7 +22,7 @@
     4v4 dificil placar [2, 1] em 180 s · gols [[0, 'gol'], [1, 'gol'], [0, 'gol']] · presa no máximo 0.8 s
   OK      partidas inteiras com o sorteio fixo (1v1 a 4v4): todas acabam (alguém chega a 3) em até 8 min de jogo
   OK      nenhuma bola presa por mais de 6 s; gol contra sem ninguém do outro time por perto: no máximo 2 em 6 partidas
-    custo por passo da física (4v4, com os bots pensando): novo 0.067 ms · antigo 0.142 ms
+    custo por passo da física (4v4, com os bots pensando): novo 0.035 ms · antigo 0.111 ms
   OK      o custo por quadro dos bots novos no 4v4 (menos de 1,5 ms por passo neste computador)
   OK      nenhum erro de JavaScript nas partidas
   OK      PERFIL › VISÃO GERAL: 4 números grandes com o nome inteiro (PARTIDAS, VITÓRIAS, GOLS, ASSISTÊNCIAS) e os números de verdade
@@ -44,4 +44,4 @@
   OK      700x900: a tampinha do lobby 1,4× maior (raio 118), sem encostar no letreiro nem nos botões
   OK      na partida a tampinha tem o tamanho de sempre (o raio da física: 38 px)
 
-v78 · nada em cima da cabeça, os bots novos, o perfil mais claro e a tampinha maior no lobby: 38/38 verificações ok em 40.3 s
+v78 · nada em cima da cabeça, os bots novos, o perfil mais claro e a tampinha maior no lobby: 38/38 verificações ok em 39.6 s

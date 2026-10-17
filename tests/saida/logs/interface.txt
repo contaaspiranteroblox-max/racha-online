@@ -107,7 +107,7 @@
 
 · 390x844
   OK      lobby    toques ≥ 44 px (19 alvos)
-  OK      lobby    texto ≥ 12 px (menor: 12.5)
+  OK      lobby    texto ≥ 12 px (menor: 12.4)
   OK      perfil   toques ≥ 44 px (11 alvos)
   OK      perfil   texto ≥ 12 px (menor: 12.5)
   OK      clube    toques ≥ 44 px (7 alvos)
@@ -145,4 +145,4 @@
   OK      em 130% o HUD da partida cresce também
   OK      fica guardado
 
-Etapa 3 · interface em tamanho real: 133/133 verificações ok em 72.5 s
+Etapa 3 · interface em tamanho real: 133/133 verificações ok em 68.8 s

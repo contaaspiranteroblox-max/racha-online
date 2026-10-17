@@ -6,21 +6,21 @@ O servidor da turma montado na plataforma (o mesmo endereço do site)
   ok   v84: sem login não entra (o hello é recusado: sem_conta)
   ok   a segunda conta também entra pela sessão do site
   ok   v79: o selo da conta vem do banco (selosDe), só para quem está logado: o hello traz o V (verificado vem antes de parceiro)
-2026-10-17 19:10:14 sala TT6CWX criada por Craque (aberta)
+2026-10-17 19:53:47 sala JB75R3 criada por Craque (aberta)
   ok   o nome na sala é o da conta (não o do aparelho)
   ok   v79: no cartão da sala, o selo da conta (o V na frente do nome)
-2026-10-17 19:10:14 sala TT6CWX: partida hospedada começou (1v1, futebol, até 3)
+2026-10-17 19:53:47 sala JB75R3: partida hospedada começou (1v1, futebol, até 3)
   (esperando 11 s de partida de verdade: o servidor confere o tempo)
-2026-10-17 19:10:14 suspeito na sala TT6CWX: c123 mandou snapshot com a partida no servidor
-2026-10-17 19:10:25 suspeito na sala TT6CWX: c123 mandou snapshot com a partida no servidor
-2026-10-17 19:10:25 suspeito na sala TT6CWX: c123 mandou finish com a partida no servidor
+2026-10-17 19:53:47 suspeito na sala JB75R3: c123 mandou snapshot com a partida no servidor
+2026-10-17 19:53:58 suspeito na sala JB75R3: c123 mandou snapshot com a partida no servidor
+2026-10-17 19:53:58 suspeito na sala JB75R3: c123 mandou finish com a partida no servidor
   FALHOU resultado conferido: cada conta recebe o seu selo  → [null,null]
   FALHOU o selo da segunda conta é dela e do lado dela  → null
-file:///tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/plataforma_salas_test.mjs:76
+file:///home/claude/racha-online/tests/plataforma_salas_test.mjs:76
 const s = confereSelo(rA.selo);
                          ^
 
 TypeError: Cannot read properties of null (reading 'selo')
-    at file:///tmp/claude-0/-home-claude/5459b302-6d33-5725-98c2-ecdc23c1f8ab/scratchpad/v86/W/tests/plataforma_salas_test.mjs:76:26
+    at file:///home/claude/racha-online/tests/plataforma_salas_test.mjs:76:26
 
 Node.js v22.22.0

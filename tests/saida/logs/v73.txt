@@ -17,4 +17,4 @@
   OK      844x390: o halo transparente e o contorno leve também no celular
   OK      844x390: nenhum erro de JavaScript
 
-v73 · o TESTE saiu e o sensor ficou mais transparente: 16/16 verificações ok em 9.8 s
+v73 · o TESTE saiu e o sensor ficou mais transparente: 16/16 verificações ok em 9.4 s

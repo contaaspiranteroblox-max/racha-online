@@ -7,14 +7,14 @@
   OK      na direção apontada, arredondada a 1/32 de volta (-1.374 rad; esperado -1.374)
   OK      soltou o analógico: a tampinha para
   OK      os comandos do jogo levam os botões no button (1/2/3), o da mecânica clássica
-  OK      o analógico vai na rede como direção de 1/32 de volta, com força 1 (35 comandos andando)
+  OK      o analógico vai na rede como direção de 1/32 de volta, com força 1 (34 comandos andando)
 
 2) os botões na sala hospedada: PASSE e CHUTE
   OK      quem dá a saída vai até a bola e o PASSE (Espaço) sai no servidor
-  OK      o passe sai com a força do jogo (457 px/s; Δv = 522 px/s, mais o embalo até 790)
+  OK      o passe sai com a força do jogo (466 px/s; Δv = 522 px/s, mais o embalo até 790)
   OK      o outro vai atrás da bola e o CHUTE (K) sai no servidor
-  OK      o chute sai com a força do jogo (779 px/s; Δv = 836 px/s, mais o embalo, no teto de 1140)
+  OK      o chute sai com a força do jogo (809 px/s; Δv = 836 px/s, mais o embalo, no teto de 1140)
   OK      na rede: o PASSE vai como button 2 e o CHUTE como button 3
   OK      nenhum erro de JavaScript nas duas sessões
 
-v85 · o online de ponta a ponta com o jogo de verdade (v86: a mecânica clássica): 14/14 verificações ok em 14.9 s
+v85 · o online de ponta a ponta com o jogo de verdade (v86: a mecânica clássica): 14/14 verificações ok em 14.4 s

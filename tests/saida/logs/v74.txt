@@ -33,4 +33,4 @@
   OK      844x390: o Estádio abre seguindo o jogador, com a imagem do cenário dentro do limite (4096 px) e a de fora pequena
   OK      844x390: nenhum erro de JavaScript
 
-v74 · o Estádio virou o society da imagem (no tamanho e com os gols do jogo): 33/33 verificações ok em 13.1 s
+v74 · o Estádio virou o society da imagem (no tamanho e com os gols do jogo): 33/33 verificações ok em 12.6 s

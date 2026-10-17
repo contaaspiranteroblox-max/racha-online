@@ -1,0 +1,40 @@
+
+1) a raiz do site abre o jogo, com o login do jogo
+  OK      a raiz do site leva ao jogo, aberto na página inteira (não dentro do site)
+  OK      o login é o do jogo: ENTRAR, CRIAR CONTA, RECUPERAR e o SÓ TREINAR OFFLINE
+  OK      o login tem a cara do jogo (o amarelo dos botões, o cinza-carvão das janelas)
+  OK      sem sessão no aparelho, o jogo pergunta a sessão do site antes de mostrar o formulário
+
+2) entrar pelo formulário do jogo
+  OK      entrou: a conta aparece no jogo (CROY) e a sessão fica no aparelho
+  OK      depois do login o jogo busca a conta completa (o XP vem do auth.eu)
+  OK      Ajustes › Conta: o SAIR DA CONTA está lá (e o RACHA CONTROL não, para quem não é da equipe)
+
+3) as páginas da conta abrem por cima do jogo
+  OK      o AMIGOS do lobby abre os amigos da conta num painel por cima do jogo, já com a sessão (AMIGOS DA CONTA)
+  OK      o VOLTAR AO JOGO fecha o painel e o jogo continua do jeito que estava (sem recarregar)
+  OK      o "JOGAR" de dentro da página do site também fecha o painel
+  OK      o Esc fecha o painel (como as outras janelas do jogo)
+  OK      o ABRIR O PERFIL DA CONTA (o nome do cartão) abre o perfil da conta no painel
+  OK      só as páginas da conta abrem no painel (o resto não)
+
+4) SAIR DA CONTA
+  OK      o SAIR DA CONTA encerra a sessão no servidor e volta para o login do jogo
+
+5) a sessão do site vale no jogo
+  OK      quem entrou pelo site cai direto no jogo, já com a conta (sem a senha de novo)
+  OK      o jogo abre no máximo 2 vezes para trocar o dono do progresso (sem ficar recarregando: 2)
+  OK      as chamadas da conta vão pelo cookie do site (o jogo não guarda senha nem token)
+
+6) RACHA CONTROL para a equipe
+  OK      quem é da equipe tem o RACHA CONTROL em Ajustes › Conta, e ele abre o painel (/admin)
+
+7) o SÓ TREINAR OFFLINE enquanto o jogo confere a sessão
+  OK      escolheu treinar offline: o jogo segue sem a conta (não entra nem recarrega quando a resposta chega)
+
+8) sem a plataforma (/api responde 404)
+  OK      sem a plataforma: o login de sempre, com o SÓ TREINAR OFFLINE (o servidor das salas e o GitHub Pages ficam como antes)
+  OK      e o SÓ TREINAR OFFLINE abre o jogo
+  OK      nenhum erro de JavaScript
+
+v87 · tudo dentro do jogo (o site abre o jogo direto): 22/22 verificações ok em 15.4 s
