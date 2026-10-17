@@ -2,6 +2,16 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v85.1 — 17/10/2026 · o site de teste (Render e GitHub Pages)
+
+- `server/servidor.js`: `--visitantes` (`RACHA_VISITANTES=1`) aceita nas salas quem joga sem conta — opcional; o padrão
+  continua o da v84 (só com a conta da plataforma). `/health` responde como o `/saude`.
+- Raiz do repositório: `server.js` (atalho que sobe o `server/servidor.js` com o modo visitantes, para o site de teste sem
+  a plataforma de contas), `package.json`, `render.yaml` (Render: `node server.js`, `/health`, modo visitantes, o GitHub
+  Pages como origem permitida), `Dockerfile`, `INICIAR-NO-WINDOWS.bat`, `README.md`, `.gitignore`.
+- Branch `gh-pages`: só o jogo (`app/public`), para o GitHub Pages.
+- O jogo, a física e os testes são os da v85 (nada mudou neles).
+
 ## v85 — 17/10/2026 · auditoria de proveniência e reimplementação própria
 
 Feita a partir da v84 entregue (o pacote "OKComputer", `RACHA_v84`, com o `app/public/game/racha.html` de SHA-256

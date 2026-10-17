@@ -1,0 +1,15 @@
+{
+  "name": "racha",
+  "version": "85.1.0",
+  "description": "RACHA · Futebol de Rua — o jogo (app/public/game), o servidor da turma (server/) e a plataforma (app/)",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "python3 tools/aplicar_rua.py",
+    "test": "bash tests/roda_tudo.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

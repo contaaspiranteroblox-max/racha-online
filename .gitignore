@@ -1,0 +1,7 @@
+node_modules/
+server/dados/
+data/
+tests/build/
+tests/saida/*.png
+__pycache__/
+*.pyc

@@ -43,8 +43,11 @@ raiz). Para o servidor, isso quer dizer:
 | `--memoria` | — | não grava nada (testes) | — |
 | `--tempo-normal SEG` | `RACHA_TEMPO_NORMAL` | v80: os segundos da partida normal (a ranqueada); para testes e demonstrações | 180 (3:00) |
 | `--prorrogacao SEG` | `RACHA_PRORROGACAO` | v80: os segundos da prorrogação do 0 × 0 | 120 (até -2:00) |
+| `--visitantes` | `RACHA_VISITANTES=1` | v85.1: aceita nas salas quem joga sem conta (rede local, site de teste, demonstração). Com a plataforma no ar, deixe desligado | desligado (exige a conta, v84) |
 
-`/saude` responde um JSON com o número de salas e de gente conectada.
+`/saude` (e `/health`, o caminho que o Render confere) responde um JSON com o número de salas e de gente conectada.
+O `server.js` da raiz é o atalho do site de teste: sobe este servidor com o modo visitantes ligado (`RACHA_VISITANTES=0`
+desliga).
 
 ### Jogo e servidor em endereços diferentes
 

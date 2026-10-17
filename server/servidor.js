@@ -19,6 +19,9 @@
      --memoria                               não grava nada em arquivo (testes)
      --tempo-normal S (RACHA_TEMPO_NORMAL)   v80: os segundos da partida normal (a ranqueada) · padrão 180 (3:00); para testes e demonstrações
      --prorrogacao S  (RACHA_PRORROGACAO)    v80: os segundos da prorrogação do 0 × 0 · padrão 120 (até -2:00)
+     --visitantes     (RACHA_VISITANTES=1)   v85.1: aceita quem joga sem conta (rede local, site de teste, demonstração). O padrão
+                                             (desde a v84) é exigir a conta da plataforma; com a plataforma no ar, deixe desligado.
+   A saúde do servidor responde em /saude e em /health (o caminho que o Render confere).
    ===================================================================================================================== */
 const http = require('http');
 const fs = require('fs');
@@ -47,7 +50,8 @@ const CFG = {
   nome: String(A.nome || process.env.RACHA_SALAS_NOME || 'Servidor da turma'),
   segredo: String(A.segredo || process.env.RACHA_SEGREDO_SALAS || ''),
   p2p: !(A['sem-p2p'] || process.env.RACHA_P2P === '0'),
-  regra80: {seg:Number(A['tempo-normal'] || process.env.RACHA_TEMPO_NORMAL || 0), prorrog:Number(A.prorrogacao || process.env.RACHA_PRORROGACAO || 0)}   // (0 = o padrão)
+  regra80: {seg:Number(A['tempo-normal'] || process.env.RACHA_TEMPO_NORMAL || 0), prorrog:Number(A.prorrogacao || process.env.RACHA_PRORROGACAO || 0)},   // (0 = o padrão)
+  visitantes: !!A.visitantes || /^(1|sim|true)$/i.test(String(process.env.RACHA_VISITANTES || ''))   // v85.1: sem conta também entra (opcional)
 };
 
 const TIPOS = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8',
@@ -56,7 +60,7 @@ const TIPOS = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; chars
 
 function entrega(req, res){
   const u = new URL(req.url, 'http://x');
-  if (u.pathname === '/saude'){ res.writeHead(200, {'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store'}); return res.end(JSON.stringify(turma.status())); }
+  if (u.pathname === '/saude' || u.pathname === '/health'){ res.writeHead(200, {'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store'}); return res.end(JSON.stringify(turma.status())); }   // (v85.1: /health é o que o Render confere)
   if (u.pathname === '/' || u.pathname === '/index.html' && !fs.existsSync(path.join(CFG.estaticos, 'index.html'))){
     res.writeHead(302, {Location:'/game/racha.html' + u.search}); return res.end();
   }
@@ -77,7 +81,7 @@ function entrega(req, res){
   });
 }
 
-const turma = new Turma({arquivo:CFG.dados, nome:CFG.nome, segredo:CFG.segredo, p2p:CFG.p2p, regra80:CFG.regra80});
+const turma = new Turma({arquivo:CFG.dados, nome:CFG.nome, segredo:CFG.segredo, p2p:CFG.p2p, regra80:CFG.regra80, exigeConta:!CFG.visitantes});
 const servidor = http.createServer(entrega);
 servidor.on('upgrade', (req, sock, cabeca) => {
   const origem = req.headers.origin;
@@ -92,7 +96,7 @@ servidor.on('clientError', (e, sock) => { try { sock.end('HTTP/1.1 400 Bad Reque
 servidor.listen(CFG.porta, CFG.host, () => {
   const ende = (CFG.host === '0.0.0.0' ? 'localhost' : CFG.host) + ':' + servidor.address().port;
   turma.log('RACHA · ' + CFG.nome + ' no ar: http://' + ende + '/game/racha.html (salas em ws://' + ende + '/)');
-  turma.log('arquivos: ' + CFG.estaticos + ' · dados: ' + (CFG.dados || 'só na memória') + (CFG.segredo ? ' · com o segredo da plataforma' : '') + (CFG.p2p ? '' : ' · sem conexão direta'));
+  turma.log('arquivos: ' + CFG.estaticos + ' · dados: ' + (CFG.dados || 'só na memória') + (CFG.segredo ? ' · com o segredo da plataforma' : '') + (CFG.p2p ? '' : ' · sem conexão direta') + (CFG.visitantes ? ' · modo visitantes: entra quem não tem conta' : ' · só com a conta da plataforma'));
   if (process.send) process.send({pronto:true, porta:servidor.address().port});
 });
 function desliga(){ turma.log('desligando…'); turma.fecha(); servidor.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); }

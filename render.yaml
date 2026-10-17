@@ -1,0 +1,20 @@
+# Render (render.com) — New › Blueprint › escolha este repositório. O servidor não tem dependências (o npm install não
+# instala nada). Virginia (Leste dos EUA) é a região do Render mais perto do Brasil.
+services:
+  - type: web
+    name: racha-online
+    runtime: node
+    plan: free
+    region: virginia
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: RACHA_SALAS_NOME
+        value: Servidor de teste
+      # site de teste: entra nas salas quem não tem conta (a plataforma de contas não está no ar). Com a plataforma: "0".
+      - key: RACHA_VISITANTES
+        value: "1"
+      # o jogo aberto pelo GitHub Pages também pode conectar neste servidor
+      - key: RACHA_ORIGENS
+        value: https://contaaspiranteroblox-max.github.io
