@@ -9,7 +9,7 @@
   que pediam outro mapa/modo viram as da ranqueada; o Estádio é o campo padrão de quem nunca escolheu.
 · ONLINE DE VERDADE (o servidor da turma e sessões no navegador): dois na fila do 1v1 jogam juntos (sala ranqueada, fora da
   lista); o resultado conferido dá os pontos da ranqueada (sem o bônus dos bots); JOGAR DE NOVO procura outra; quem sai no
-  meio perde 25 e o outro vê A PARTIDA PAROU sem perder nada; dois no 2v2 jogam com 2 bots depois de 8 s; sozinho, depois de
+  meio perde 25 e (v83) a partida do outro segue no servidor contra um bot; dois no 2v2 jogam com 2 bots depois de 8 s; sozinho, depois de
   20 s, a partida é contra bots; CANCELAR e JOGAR CONTRA BOTS AGORA.
 · O SELO V: o seu (da conta) no lobby, no perfil e na partida; o dos outros (do servidor) nos cartões da sala, na lista das
   salas e nos chats; selo inválido não aparece; o hello do servidor traz o seu selo (vazio sem conta).
@@ -234,7 +234,7 @@ async def online(pw, P):
         ja = await espera(A, JOGA, 8000)
         jb = await espera(B, JOGA, 8000)
         ea = await rt(A, ESTADO); eb = await rt(B, ESTADO)
-        P.confere(bool(ja and jb) and ea['sala'] == eb['sala'] and ea['map'] == 4 and ea['n'] == 1 and ea['host'] != eb['host'], 'os dois da fila jogam juntos: a sala ranqueada 1v1 no Estádio (um roda a partida)', [ea, eb])
+        P.confere(bool(ja and jb) and ea['sala'] == eb['sala'] and ea['map'] == 4 and ea['n'] == 1 and not ea['host'] and not eb['host'], 'os dois da fila jogam juntos: a sala ranqueada 1v1 no Estádio (v83: a partida roda no servidor, ninguém roda no aparelho)', [ea, eb])
         P.confere(not ea['busca'] and not eb['busca'] and not ea['lobby'] and ea['mm'] == 'ranked' and ea['nome'] == 'RANQUEADA ONLINE' and ea['aviso'] == 'RANQUEADA ONLINE',
                   'a busca fecha, o lobby sai e a faixa diz RANQUEADA ONLINE', ea)
         tela = await rt(A, "lobby.tela")
@@ -245,14 +245,17 @@ async def online(pw, P):
         await C.wait_for_timeout(700)
         lista = await rt(C, "(SL.lista || []).map(s => s.name)")
         P.confere('Ranqueada' not in lista, 'a sala da ranqueada não aparece na lista das salas', lista)
-        host, conv = (A, B) if ea['host'] else (B, A)
+        host, conv = A, B                                       # (v83: ninguém é anfitrião; a Ana vai ganhar)
         pausa = await rt(conv, "pausaRotulo()")
         P.confere('RANQUEADA ONLINE' in pausa and 'SALA' not in pausa, 'a pausa da ranqueada online (sem o código da sala)', pausa)
-        # o fim: o anfitrião ganha por 3 (depois de 11 s, para o servidor validar)
+        # o fim: a Ana ganha por 3 (depois de 11 s, para o servidor validar). v83: os gols são do MOTOR do servidor — o teste
+        # pede cada gol pelo gancho de teste (tests/ganchos_teste.cjs) e o motor faz o resto (a meta de 3, o apito, o resultado)
         mi = "(() => { const M = ecoMissoes(); M.l[0] = {id:'liga', alvo:1, arg:null, p:0, ok:false}; return 1; })()"
         await rt(A, mi); await rt(B, mi)
         await asyncio.sleep(11.5)
-        await rt(host, "(() => { RQ.placar = [P.time === 0 ? 3 : 0, P.time === 0 ? 0 : 3]; RQ.estado = 'jogo'; rqFim(); return 1; })()")
+        for _ in range(3):
+            await rt(host, "(() => { net49Send({type:'__teste_gol', time:Math.floor(NET49.localSlot / NET49.room.n)}); return 1; })()")
+            await asyncio.sleep(2.4)
         fh = await espera(host, "fimAberto() && RQ.resultado && RQ.resultado.pr && fimEl('fim-info').textContent", 8000)
         fc = await espera(conv, "fimAberto() && RQ.resultado && RQ.resultado.pr && fimEl('fim-info').textContent", 8000)
         rh = await rt(host, "({pts:CONTA.rq.pts, d:RQ.resultado.pr.delta, nivel:RQ.resultado.nivel, tit:fimEl('fim-titulo').textContent, bt:fimEl('fim-denovo').textContent, liga:ecoMissoes().l[0].p})")
@@ -267,26 +270,34 @@ async def online(pw, P):
         dh = await espera(host, "(() => { const b = RachaRanqueada79.busca(); return lobby.aberto && !NET49.room && b && b.fase === 'fila' ? b : null; })()", 6000)
         dc = await espera(conv, "lobby.aberto && !NET49.room && !RachaRanqueada79.busca() && !lobby.tela", 6000)
         P.confere(bool(dh) and bool(dc), 'JOGAR DE NOVO sai da sala e já procura outra; LOBBY volta para o lobby', [dh, dc])
-        # outra partida; quem roda a partida sai no meio: ele perde 25 e o outro não perde nada
+        # outra partida; quem sai no meio perde 25 — e a partida do outro SEGUE no servidor (v83: um bot assume)
         await asyncio.sleep(0.4)
         await rt(conv, "LB.jogar.click()")
         await espera(host, JOGA, 8000)
         await espera(conv, JOGA, 8000)
-        quem = await rt(host, "NET49.host")
-        dono, outro = (host, conv) if quem else (conv, host)
+        dono, outro = host, conv
         p_dono = await rt(dono, "CONTA.rq.pts"); p_outro = await rt(outro, "CONTA.rq.pts")
         barra = await rt(dono, "(() => { x49GameUI(); return {txt:X49UI.netText.textContent, bt:X49UI.onlinebar.querySelector('button').textContent}; })()")
         await rt(dono, "(() => { salaJogoAbre(); window.__arb = !!SJ.caixa.querySelector('.sj-arb'); window.__tag = (SJ.caixa.querySelector('.sj-tag') || {}).textContent; const b = Array.from(SJ.caixa.querySelectorAll('.sj-acoes button')).find(x => /DESISTIR/.test(x.textContent)); window.__btDes = b ? b.textContent : ''; if (b) b.click(); return 1; })()")
         btd = await rt(dono, "window.__btDes")
         sj = await rt(dono, "({arb:window.__arb, tag:window.__tag})")
-        P.confere(barra == {'txt': 'RANQUEADA ONLINE · você roda a partida', 'bt': 'MENU'} and sj == {'arb': False, 'tag': 'RANQUEADA ONLINE'},
+        P.confere(barra['txt'].startswith('RANQUEADA ONLINE') and 'SALA' not in barra['txt'] and barra['bt'] == 'MENU' and sj == {'arb': False, 'tag': 'RANQUEADA ONLINE'},
                   'na partida: a barrinha diz RANQUEADA ONLINE (sem código de sala) e o MENU não tem o apito do árbitro (ninguém pausa para todos nem encerra)', [barra, sj])
         pd = await espera(dono, "!NET49.room && lobby.aberto && CONTA.rq.pts", 6000)
-        po = await espera(outro, "!LB.pop.hidden && LB.popCaixa.textContent.indexOf('A PARTIDA PAROU') >= 0", 6000)
-        p_outro2 = await rt(outro, "CONTA.rq.pts")
+        t_saiu = time.time()
         P.confere(btd == 'DESISTIR (−25 PONTOS)' and pd == p_dono - 25, 'no meio, o SAIR da sala da ranqueada é DESISTIR (−25 PONTOS): quem sai perde 25', [btd, p_dono, pd])
-        P.confere(bool(po) and p_outro2 == p_outro and await rt(outro, "!NET49.room && lobby.aberto"), 'o outro vê A PARTIDA PAROU e não perde nem ganha pontos', [p_outro, p_outro2])
-        await rt(outro, "fechaPop()")
+        await asyncio.sleep(1.5)
+        segue = await rt(outro, "NET49.playing && NET49.room && NET49.room.state === 'playing' && LB.popCaixa.textContent.indexOf('A PARTIDA PAROU') < 0")
+        P.confere(bool(segue), 'v83: para o outro a partida SEGUE no servidor (um bot assume a tampinha de quem saiu)', await rt(outro, ESTADO))
+        await asyncio.sleep(max(0, 11.5 - (time.time() - t_saiu)))
+        for _ in range(3):
+            await rt(outro, "(() => { net49Send({type:'__teste_gol', time:Math.floor(NET49.localSlot / NET49.room.n)}); return 1; })()")
+            await asyncio.sleep(2.4)
+        fo = await espera(outro, "fimAberto() && RQ.resultado && RQ.resultado.pr && RQ.resultado.pr.delta", 8000)
+        p_outro2 = await rt(outro, "CONTA.rq.pts")
+        P.confere(bool(fo) and p_outro2 == p_outro + 31, 'quem ficou termina a partida contra o bot e ganha os pontos da vitória (+31)', [p_outro, p_outro2, fo])
+        await rt(outro, "(() => { fimEl('fim-lobby').click(); return 1; })()")
+        await espera(outro, "!NET49.room && lobby.aberto", 6000)
         # 2v2: dois na fila, depois de 8 s jogam com 2 bots
         for pg in (A, B):
             await rt(pg, "(() => { CONTA.rq.n = 2; contaSalvar(); lbRender(); filaPop.length = 0; if (!LB.pop.hidden) fechaPop(); return 1; })()")

@@ -35,7 +35,7 @@ console.log('\nO servidor da turma montado na plataforma (o mesmo endereço do s
 delete process.env.RACHA_SEGREDO_SALAS;
 const srv = http.createServer((q, r) => { r.writeHead(200); r.end('site'); });
 let pediuSelos = [];
-ligaSalas(srv, {selosDe:async id => { pediuSelos.push(id); return id === 7 ? ['parceiro', 'verificado'] : []; }});   // v79: os selos vêm do banco (aqui, de mentira)
+const turma = ligaSalas(srv, {selosDe:async id => { pediuSelos.push(id); return id === 7 ? ['parceiro', 'verificado'] : []; }});   // v79: os selos vêm do banco (aqui, de mentira)
 await new Promise(r => srv.listen(0, '127.0.0.1', r));
 const porta = srv.address().port;
 confira(segredoSalas().length > 20, 'sem RACHA_SEGREDO_SALAS, um segredo é sorteado (os dois lados estão no mesmo processo)');
@@ -64,11 +64,17 @@ confira(sala.members[0].selo === 'verificado', 'v79: no cartão da sala, o selo 
 B.manda({type:'join', code:sala.code, slot:1});
 await A.espera('room', x => x.room.roster[1] === hB.id);
 A.manda({type:'start'}); await B.espera('start');
-A.manda({type:'snapshot', round:1, data:{tick:1, elapsed:0, state:'jogo', score:[0, 0], ball:[0, 0, 0, 0, 0], players:[]}});
-console.log('  (esperando 11 s de partida de verdade: o servidor confere o tempo)');
+// v83: a partida é HOSPEDADA (o motor do servidor joga). O teste não espera 3 gols de verdade: depois de 11 s de partida real
+// no servidor, o apito final sai pelo mesmo caminho do motor (onFim). O quadro e o fim mandados pelo aparelho são ignorados.
+const snap = await B.espera('snapshot', null, 3000);
+confira(snap && snap.data && Array.isArray(snap.data.score), 'v83: os quadros vêm do motor do servidor (montado na plataforma)', snap && snap.data && snap.data.score);
+A.manda({type:'snapshot', round:1, data:{tick:1, elapsed:0, state:'jogo', score:[3, 0], ball:[0, 0, 0, 0, 0], players:[]}});
+console.log('  (esperando 11 s de partida de verdade no servidor: a turma confere o tempo)');
 await espera(11000);
-A.manda({type:'snapshot', round:1, data:{tick:600, elapsed:9.5, state:'fim', score:[3, 1], ball:[0, 0, 0, 0, 0], players:[]}});
 A.manda({type:'finish', round:1, score:[3, 1]});
+await espera(300);
+confira(!A.caixa.some(x => x.type === 'result') && turma.salas.get(sala.code).state === 'playing', 'o fim mandado pelo aparelho é ignorado: a partida segue no servidor');
+{ const rs = turma.salas.get(sala.code); rs.partida.placar = [3, 1]; rs.partida.onFim({placar:[3, 1], vencedor:0, duracao:11, jogo:'futebol'}); }
 const rA = await A.espera('result'), rB = await B.espera('result');
 confira(rA && rA.valida && typeof rA.selo === 'string' && rB && rB.valida && typeof rB.selo === 'string', 'resultado conferido: cada conta recebe o seu selo', [rA && !!rA.selo, rB && !!rB.selo]);
 const sB = rB && rB.selo ? confereSelo(rB.selo) : null;

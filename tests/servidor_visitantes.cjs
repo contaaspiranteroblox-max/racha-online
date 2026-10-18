@@ -9,4 +9,5 @@ const Original = turma.Turma;
 turma.Turma = class TurmaComVisitantes extends Original {
   constructor(o){ super(Object.assign({}, o, {exigeConta:false})); }
 };
+require('./ganchos_teste.cjs').liga(turma.Turma);   // v88: o teste pede gols ao motor de verdade (só nos testes; ver o arquivo)
 require('../server/servidor.js');

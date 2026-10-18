@@ -39,6 +39,27 @@ function cliente(t, nome, ip){
   return k;
 }
 function entra(t, nome, token){ const k = cliente(t, nome); k.manda({type:'hello', name:nome, skin:'T.AAAA' + nome.toLowerCase().padEnd(4, 'x'), flag:'BR', token}); k.id = k.ult('hello').id; k.token = k.ult('hello').token; return k; }
+// v83: as salas são HOSPEDADAS — o motor do servidor (server/partida/sala.js) joga a partida, manda os quadros e apita o fim.
+// Estes testes (na memória, com o relógio na mão) não rodam minutos de física: fazem o que o motor faria, pelos MESMOS caminhos
+// que ele usa na turma (onSnapshot, onGol e onFim). O motor em si (a física, os gols, o relógio, o fim no tempo) é testado no
+// tests/v83_sala_test.mjs, e a partida inteira pela rede no tests/v83_salas_ws_test.py.
+function salaT(t, k){ return t.salaDe(k.c); }      // (a sala em que a conexão está, do lado do servidor)
+function quadroMotor(t, k, score, extra){                // o quadro que o motor manda (a turma anota o placar e repassa a todos)
+  const r = salaT(t, k), e = extra || {};
+  r.partida.placar = score.slice();
+  r.partida.onSnapshot({tick:Math.floor(Math.random()*1e6), elapsed:e.elapsed || 0, state:'jogo', kickoff:0, score:score.slice(), ball:[0, 0, 0, 0, 0], players:[], goal:e.goal || null});
+}
+function golMotor(t, k, score, autor, el){               // o gol que o motor marcou: o autor e a hora no relógio do jogo
+  const r = salaT(t, k);
+  r.partida.placar = score.slice();
+  r.partida.onGol({author:autor || null, placar:score.slice(), el:el || 0});
+  quadroMotor(t, k, score, {elapsed:el || 0, goal:autor ? {author:autor} : null});
+}
+function fimMotor(t, k, score){                          // o apito final do motor: a turma confere e manda o result (com o selo, se valer)
+  const r = salaT(t, k);
+  r.partida.placar = score.slice();
+  r.partida.onFim({placar:score.slice(), vencedor:score[0] > score[1] ? 0 : score[1] > score[0] ? 1 : -1, duracao:0, jogo:r.jogo});
+}
 function quadro(host, round, score, extra){ host.manda({type:'snapshot', round, data:Object.assign({tick:Math.floor(Math.random()*1e6), elapsed:0, state:'jogo', score, ball:[0, 0, 0, 0, 0], players:[]}, extra || {})}); }
 
 function login(){
@@ -63,7 +84,7 @@ function regras(){
   confira(A.ult('rooms') && Array.isArray(A.ult('rooms').list), 'depois do hello vem a lista de salas');
   A.manda({type:'create', n:1, map:4, jogo:'curva', tempo:0, bots:false, pub:true, name:'Racha da Laje'});
   let s = A.sala();
-  confira(s && s.code.length === 6 && s.host === A.id && s.roster[0] === A.id && s.jogo === 'curva' && s.map === 4 && !s.bots && s.pub, 'criar: código de 6, dono no Time A, as regras pedidas (COM CURVA no ESTÁDIO)', s);
+  confira(s && s.code.length === 6 && s.host === 'srv' && s.admin === A.id && s.roster[0] === A.id && s.jogo === 'curva' && s.map === 4 && !s.bots && s.pub, 'criar: código de 6, quem criou é o admin (v83: a partida é do servidor, host srv) e fica no Time A, as regras pedidas (COM CURVA no ESTÁDIO)', s);
   const Z = entra(t, 'Zeca'); Z.manda({type:'create', n:1, map:2, jogo:'volei', tempo:0, bots:true, pub:false});
   confira(Z.sala() && Z.sala().map === 4 && Z.sala().jogo === 'futebol', 'v70.2: sala pedida no Escadão e no vôlei abre no futebol e no mapa padrão (v79: o Estádio)', Z.sala());
   Z.manda({type:'leave'});
@@ -90,124 +111,121 @@ function regras(){
   A.manda({type:'config', n:1, bots:false, tempo:0, jogo:'futebol'});
   confira(A.sala().roster.join() === [A.id, B.id].join(), 'de volta ao 1v1: Ana × Beto');
 
-  console.log('\n2) A PARTIDA: começar, comandos, quadros, o resultado conferido');
+  console.log('\n2) A PARTIDA (v83: hospedada — o motor do servidor joga, manda os quadros e apita o fim; a turma confere o resultado)');
   const C = entra(t, 'Caio');
   A.manda({type:'start'});
   s = A.sala();
-  confira(s.state === 'playing' && s.round === 1 && A.ult('start') && B.ult('start'), 'começar: os dois recebem start (rodada 1)', s && s.state);
+  confira(s.state === 'playing' && s.round === 1 && A.ult('start') && B.ult('start') && s.host === 'srv' && s.servidor === true && s.admin === A.id, 'começar: os dois recebem start (rodada 1); a partida é do servidor (host srv) e quem criou é o admin', s && [s.state, s.host, s.admin]);
+  let motor = salaT(t, A).partida;
+  confira(motor && motor.jog.map(q => q.netId).join() === [A.id, B.id].join(), 'o motor da sala tem a Ana e o Beto nos lugares do roster', motor && motor.jog.map(q => q.netId));
   B.manda({type:'input', seq:7, x:.6, y:-2, button:2, k:5});
-  const inp = A.ult('input');
-  confira(inp && inp.id === B.id && inp.seq === 7 && inp.x === .6 && inp.y === -1 && inp.button === 2 && inp.k === 5, 'o comando do convidado chega ao anfitrião, com a curva/finta/drible (k) e o analógico limitado', inp);
-  A.limpa(); A.manda({type:'input', seq:1, x:1, y:0, button:1});
-  confira(!A.ult('input') && !B.ult('input'), 'o anfitrião não manda comando (ele simula)');
-  quadro(A, 1, [0, 0]);
-  confira(B.ult('snapshot') && B.ult('snapshot').round === 1, 'o quadro do anfitrião chega ao convidado');
-  B.limpa(); quadro(B, 1, [5, 0]);
-  confira(!A.ult('snapshot'), 'quadro de quem não é o anfitrião é ignorado');
+  const cmd = motor.jog[1].fila.fila.slice(-1)[0];
+  confira(cmd && cmd.seq === 7 && cmd.x === .6 && cmd.y === -1 && cmd.button === 2 && cmd.k === 5, 'o comando do Beto vai para o motor do servidor (o analógico limitado, o botão e o k)', cmd);
+  A.limpa(); B.limpa(); A.manda({type:'input', seq:1, x:1, y:0, button:1});
+  confira(motor.jog[0].fila.fila.some(x => x.seq === 1) && !A.ult('input') && !B.ult('input'), 'quem criou a sala também manda o comando para o servidor (ninguém simula no aparelho; nada é repassado)');
+  motor.rodar(4);
+  confira(B.ult('snapshot') && B.ult('snapshot').round === 1 && A.ult('snapshot'), 'os quadros saem do motor do servidor para todos (Ana e Beto)', B.ult('snapshot'));
+  B.limpa(); quadro(A, 1, [5, 0]);
+  confira(!B.ult('snapshot') && salaT(t, A).ultimo.score.join() === '0,0', 'quadro mandado por um aparelho é ignorado (a partida é do servidor)', salaT(t, A).ultimo);
   C.manda({type:'join', code:s.code});
   confira(C.ult('start') && C.ult('start').resume && C.sala().members.find(m => m.id === C.id).slot === -1, 'quem entra no meio assiste: recebe start com o placar atual (resume)', C.ult('start'));
-  relogio += 5000; quadro(A, 1, [3, 0], {elapsed:4});
+  relogio += 5000; golMotor(t, A, [1, 0], A.id, 4);
   A.manda({type:'finish', round:1, score:[3, 0]});
+  confira(salaT(t, A).state === 'playing' && !B.ult('result'), 'o fim mandado por um aparelho é ignorado: só o motor encerra');
+  fimMotor(t, A, [3, 0]);
   let res = B.ult('result');
-  confira(res && res.valida === false && /curta/.test(res.motivo), 'fim depressa demais: o resultado não vale (motivo curta)', res);
+  confira(res && res.valida === false && /curta/.test(res.motivo) && res.servidor === true, 'o motor apitou depressa demais: o resultado não vale (motivo curta)', res);
   confira(t.b.d.gente[A.id].st.jogos === 0, 'resultado que não vale não conta partida');
-  confira(A.sala().state === 'ended', 'a sala fica em ended (revanche)');
+  confira(A.sala().state === 'ended' && !salaT(t, A).partida, 'a sala fica em ended (revanche) e o motor desliga', A.sala().state);
   B.manda({type:'rematch'});
   confira(A.sala().members.find(m => m.id === B.id).rematch === true, 'convidado pede revanche (sem "on" = sim)');
   A.manda({type:'rematch'});
   s = A.sala();
-  confira(s.state === 'playing' && s.round === 2, 'o dono pedindo revanche começa a rodada 2', s && [s.state, s.round]);
-  quadro(A, 2, [0, 0]); relogio += 15000; quadro(A, 2, [1, 0], {goal:{author:A.id}}); relogio += 15000; quadro(A, 2, [2, 0], {goal:{author:A.id}}); relogio += 10000;
-  quadro(A, 2, [2, 1], {goal:{author:B.id}}); quadro(A, 2, [3, 1], {goal:{author:A.id}, elapsed:33});
-  A.manda({type:'finish', round:1, score:[3, 1]});
-  confira(A.sala().state === 'playing', 'fim de rodada velha é ignorado');
-  A.manda({type:'finish', round:2, score:[3, 1]});
+  confira(s.state === 'playing' && s.round === 2 && !!salaT(t, A).partida, 'o admin pedindo revanche começa a rodada 2 (com um motor novo)', s && [s.state, s.round]);
+  quadroMotor(t, A, [0, 0]); relogio += 15000; golMotor(t, A, [1, 0], A.id, 14); relogio += 15000; golMotor(t, A, [2, 0], A.id, 28); relogio += 10000;
+  golMotor(t, A, [2, 1], B.id, 37); golMotor(t, A, [3, 1], A.id, 38);
+  fimMotor(t, A, [3, 1]);
   res = B.ult('result');
   const gA = t.b.d.gente[A.id], gB = t.b.d.gente[B.id];
   confira(res && res.valida === true && res.winner === 0, 'partida inteira: o resultado vale (vitória do Time A)', res);
-  confira(gA.st.vit === 1 && gA.st.jogos === 1 && gA.st.gols === 3 && gB.st.der === 1 && gB.st.gols === 1, 'vale: vitória (troféu), derrota e os gols de cada um pelos quadros', [gA.st, gB.st]);
+  confira(gA.st.vit === 1 && gA.st.jogos === 1 && gA.st.gols === 3 && gB.st.der === 1 && gB.st.gols === 1, 'vale: vitória (troféu), derrota e os gols de cada um (pelos gols do motor)', [gA.st, gB.st]);
   confira(Object.values(t.b.d.duelos).some(d => d.jogos === 1 && (d.va + d.vb) === 1), 'o duelo 1v1 Ana × Beto fica guardado');
-  // placar diferente dos quadros
-  A.manda({type:'start'}); quadro(A, 3, [0, 0]); relogio += 40000; quadro(A, 3, [3, 2], {elapsed:35});
-  A.manda({type:'finish', round:3, score:[3, 0]});
-  confira((B.ult('result') || {}).valida === false && /diferente/.test(B.ult('result').motivo), 'placar do fim diferente do que os quadros mostraram: não vale', B.ult('result'));
-  // placar impossível para o modo
-  A.manda({type:'start'}); quadro(A, 4, [0, 0]); relogio += 40000; quadro(A, 4, [4, 1], {elapsed:35});
-  A.manda({type:'finish', round:4, score:[4, 1]});
-  confira((B.ult('result') || {}).valida === false && /impossível/.test(B.ult('result').motivo), 'futebol vai a 3: 4 × 1 não vale', B.ult('result'));
-  // v70.2: a sala não vira basquete nem ginga (saíram do jogo): placar de basquete ou de ginga não vale; o COM CURVA vale
+  // a conferência vale também para o fim do servidor: um placar fora das regras do modo não conta
+  const rodadaMotor = (score, seg, el) => { A.manda({type:'start'}); quadroMotor(t, A, [0, 0]); relogio += seg*1000; golMotor(t, A, score, A.id, el); fimMotor(t, A, score); return B.ult('result') || {}; };
+  res = rodadaMotor([4, 1], 40, 35);
+  confira(res.valida === false && /impossível/.test(res.motivo), 'futebol vai a 3: 4 × 1 não vale', res);
   A.manda({type:'config', jogo:'basquete'}); confira(A.sala().jogo === 'futebol', 'a sala não vira basquete');
-  A.manda({type:'start'}); quadro(A, 5, [0, 0]); relogio += 90000; quadro(A, 5, [13, 10], {elapsed:80});
-  A.manda({type:'finish', round:5, score:[13, 10]});
-  confira((B.ult('result') || {}).valida === false && /impossível/.test(B.ult('result').motivo), 'placar de basquete (13 × 10) numa sala de futebol não vale', B.ult('result'));
-  A.manda({type:'config', jogo:'curva'}); A.manda({type:'start'}); quadro(A, 6, [0, 0]); relogio += 60000; quadro(A, 6, [3, 1], {elapsed:50});
-  A.manda({type:'finish', round:6, score:[3, 1]});
-  confira((B.ult('result') || {}).valida === true, 'COM CURVA: 3 × 1 vale', B.ult('result'));
+  res = rodadaMotor([13, 10], 90, 80);
+  confira(res.valida === false && /impossível/.test(res.motivo), 'placar de basquete (13 × 10) numa sala de futebol não vale', res);
+  A.manda({type:'config', jogo:'curva'});
+  res = rodadaMotor([3, 1], 60, 50);
+  confira(res.valida === true, 'COM CURVA: 3 × 1 vale', res);
   A.manda({type:'config', jogo:'ginga'}); confira(A.sala().jogo === 'curva', 'a sala não vira ginga');
-  A.manda({type:'start'}); quadro(A, 7, [0, 0]); relogio += 60000; quadro(A, 7, [6, 4], {elapsed:50});
-  A.manda({type:'finish', round:7, score:[6, 4]});
-  confira((B.ult('result') || {}).valida === false, 'placar de ginga (6 × 4) numa sala com curva não vale (vai a 3)', B.ult('result'));
-  // com tempo
-  A.manda({type:'config', jogo:'futebol', tempo:2}); A.manda({type:'start'}); quadro(A, 8, [0, 0]); relogio += 70000; quadro(A, 8, [2, 1], {elapsed:62});
-  A.manda({type:'finish', round:8, score:[2, 1]});
-  confira((B.ult('result') || {}).valida === false && /antes do tempo/.test(B.ult('result').motivo), 'com 2 minutos: acabar com 1 minuto não vale', B.ult('result'));
-  A.manda({type:'start'}); quadro(A, 9, [0, 0]); relogio += 140000; quadro(A, 9, [1, 1], {elapsed:121});
-  A.manda({type:'finish', round:9, score:[1, 1]});
-  confira((B.ult('result') || {}).valida === false && /empatada/.test(B.ult('result').motivo), 'com tempo, empate não termina (gol de ouro): não vale');
-  A.manda({type:'start'}); quadro(A, 10, [0, 0]); relogio += 150000; quadro(A, 10, [4, 2], {elapsed:128});
-  A.manda({type:'finish', round:10, score:[4, 2]});
-  confira((B.ult('result') || {}).valida === true, 'com tempo: 4 × 2 depois dos 2 minutos vale');
-  // a pausa não conta como tempo de jogo
-  A.manda({type:'config', tempo:0}); A.manda({type:'start'}); quadro(A, 11, [0, 0]);
+  res = rodadaMotor([6, 4], 60, 50);
+  confira(res.valida === false, 'placar de ginga (6 × 4) numa sala com curva não vale (vai a 3)', res);
+  A.manda({type:'config', jogo:'futebol', tempo:2});
+  res = rodadaMotor([2, 1], 70, 62);
+  confira(res.valida === false && /antes do tempo/.test(res.motivo), 'com 2 minutos: acabar com 1 minuto não vale', res);
+  res = rodadaMotor([1, 1], 140, 121);
+  confira(res.valida === false && /empatada/.test(res.motivo), 'com tempo, empate não termina (gol de ouro): não vale', res);
+  res = rodadaMotor([4, 2], 150, 128);
+  confira(res.valida === true, 'com tempo: 4 × 2 depois dos 2 minutos vale', res);
+  // a pausa do admin para o motor e não conta como tempo de jogo
+  A.manda({type:'config', tempo:0}); A.manda({type:'start'}); quadroMotor(t, A, [0, 0]);
   A.manda({type:'pause', paused:true});
-  confira((B.ult('pause') || {}).paused === true, 'a pausa do anfitrião chega a todos');
-  relogio += 120000; A.manda({type:'pause', paused:false}); relogio += 8000; quadro(A, 11, [3, 0], {elapsed:7});
-  A.manda({type:'finish', round:11, score:[3, 0]});
+  confira((B.ult('pause') || {}).paused === true && salaT(t, A).partida.pausado === true, 'a pausa do admin chega a todos e para o motor do servidor');
+  relogio += 120000; A.manda({type:'pause', paused:false}); relogio += 8000; golMotor(t, A, [3, 0], A.id, 7); fimMotor(t, A, [3, 0]);
   confira((B.ult('result') || {}).valida === false && /curta/.test(B.ult('result').motivo), 'o tempo pausado não conta: 8 s de jogo é curto demais', B.ult('result'));
-  // encerrada pelo árbitro
-  A.manda({type:'start'}); quadro(A, 12, [0, 0]); relogio += 60000; quadro(A, 12, [3, 1], {elapsed:50});
-  A.manda({type:'say', text:'⁣ARB:e|12'});
-  A.manda({type:'finish', round:12, score:[3, 1]});
+  // encerrada pelo árbitro (a mensagem escondida e|rodada): o fim que vier depois não vale
+  A.manda({type:'start'}); quadroMotor(t, A, [0, 0]); relogio += 60000; golMotor(t, A, [3, 1], A.id, 50);
+  A.manda({type:'say', text:'⁣ARB:e|' + A.sala().round});
+  fimMotor(t, A, [3, 1]);
   confira((B.ult('result') || {}).valida === false && /árbitro/.test(B.ult('result').motivo), 'encerrada pelo árbitro (mensagem escondida e|rodada): não vale', B.ult('result'));
   confira(!B.todas('say').some(m => /ARB:e/.test(m.text || '') && !m.id), 'a mensagem escondida do árbitro passa pelo chat da sala (o jogo esconde)');
 
-  console.log('\n3) QUEM CAI E VOLTA, QUEM SAI, REMOVER, PASSAR O DONO, JOGAR AGORA');
-  A.manda({type:'start'}); quadro(A, 13, [1, 0], {elapsed:10});
+  console.log('\n3) QUEM CAI E VOLTA, QUEM SAI, REMOVER, PASSAR O ADMIN, JOGAR AGORA (v83: a partida não para por ninguém)');
+  A.manda({type:'start'}); quadroMotor(t, A, [1, 0], {elapsed:10});
+  motor = salaT(t, A).partida;
   B.ws.close();
   s = A.sala();
-  confira(s.roster[1] === null && !s.members.some(m => m.id === B.id) && A.todas('say').some(m => /caiu/.test(m.text || '')), 'o convidado caiu no meio: a vaga fica livre (o anfitrião põe um bot) e a sala avisa', s.roster);
+  confira(s.roster[1] === null && !s.members.some(m => m.id === B.id) && A.todas('say').some(m => /caiu/.test(m.text || '')) && motor.jog[1].bot && motor.jog[1].reserva === B.id,
+    'o Beto caiu no meio: um bot do servidor assume a tampinha na hora (o lugar fica guardado) e a sala avisa', [s.roster, motor.jog[1].bot, motor.jog[1].reserva]);
+  confira(s.state === 'playing', 'a partida segue (ninguém roda a partida no aparelho)');
   const B2 = entra(t, 'Beto', B.token);
   confira(B2.id === B.id, 'voltou com o token: o mesmo id', [B2.id, B.id]);
   B2.manda({type:'join', code:s.code, slot:1});
-  confira(A.sala().roster[1] === B.id && B2.ult('start') && B2.ult('start').resume.score.join() === '1,0', 'voltou para o mesmo lugar no meio da partida, com o placar (resume)', B2.ult('start'));
+  confira(A.sala().roster[1] === B.id && B2.ult('start') && B2.ult('start').resume.score.join() === '1,0' && motor.jog[1].netId === B.id && !motor.jog[1].bot,
+    'voltou para o mesmo lugar no meio da partida, com o placar (resume), e reassumiu a tampinha', B2.ult('start'));
   A.ws.close();
   s = B2.sala();
-  confira(B2.ult('interrupted') && C.ult('interrupted') && [B.id, C.id].includes(s.host) && s.state === 'waiting', 'o anfitrião caiu: a partida para (interrupted) e a sala passa para quem está há mais tempo', [B2.ult('interrupted'), s.host, s.state]);
-  const dono = s.host === B.id ? B2 : C, outro = dono === B2 ? C : B2;
+  confira(!B2.ult('interrupted') && s.state === 'playing' && [B.id, C.id].includes(s.admin) && salaT(t, B2).partida === motor,
+    'quem criou a sala caiu: a partida SEGUE no servidor e o admin passa para quem está há mais tempo', [s.state, s.admin, !!B2.ult('interrupted')]);
+  const dono = s.admin === B.id ? B2 : C, outro = dono === B2 ? C : B2;
   const A2 = entra(t, 'Ana', A.token);
   A2.manda({type:'join', code:s.code, spectate:true});
-  confira(B2.sala().members.some(m => m.id === A.id) && B2.sala().host === dono.id, 'a Ana voltou como convidada (o dono continua o novo)');
+  confira(B2.sala().members.some(m => m.id === A.id) && B2.sala().admin === dono.id, 'a Ana voltou (o admin continua o novo)');
   dono.manda({type:'kick', id:A.id});
   confira(A2.ult('left') && /removido/.test((A2.ult('error') || {}).message), 'remover da sala: quem sai recebe left e o aviso');
   A2.manda({type:'join', code:s.code});
   confira(/removido/.test((A2.ult('error') || {}).message) && !B2.sala().members.some(m => m.id === A.id), 'removido não volta na hora (30 s)');
   dono.manda({type:'promote', id:C.id === dono.id ? B.id : C.id});
   const C0 = C;
-  confira(B2.sala().host === outro.id, 'passar o dono');
+  confira(B2.sala().admin === outro.id, 'passar o admin (mesmo com a partida rolando)');
   const Cx = outro;
+  fimMotor(t, Cx, [1, 0]);                             // (o motor apita; com a sala parada o admin muda as regras)
   const D = entra(t, 'Duda');
   Cx.manda({type:'config', n:2, bots:true});
   D.manda({type:'join', code:s.code, rapido:true});
   const eD = Cx.sala().members.find(m => m.id === D.id);
   confira(eD && eD.slot >= 0, 'JOGAR AGORA (rapido): entra com lugar num time', Cx.sala().roster);
   Cx.manda({type:'leave'});
-  confira(Cx.ult('left') && D.sala().host !== Cx.id, 'o dono saiu: left para ele e a sala passa para outro');
+  confira(Cx.ult('left') && D.sala().admin !== Cx.id, 'o admin saiu: left para ele e a sala passa para outro');
   const B2v = Cx === B2 ? C0 : B2;
   D.manda({type:'profile', name:'Dudinha', skin:'T.NOVA1234'});
   const eD2 = B2v.sala().members.find(m => m.id === D.id);
   confira(eD2 && eD2.name === 'Dudinha' && eD2.skin === 'T.NOVA1234', 'trocou o nome e a tampinha: o cartão da sala atualiza para todos', eD2);
 
-  console.log('\n4) A COPA DOS AMIGOS (1v1 com 4)');
+  console.log('\n4) A COPA DOS AMIGOS (1v1 com 4; cada duelo hospedado no servidor)');
   const t2 = novaTurma();
   const J = ['Ana', 'Beto', 'Caio', 'Duda'].map(n => entra(t2, n));
   J[0].manda({type:'create', n:2, map:0, jogo:'futebol', tempo:0, bots:true, pub:true});
@@ -216,16 +234,16 @@ function regras(){
   confira(/4 ou 8/.test((J[0].ult('error') || {}).message), 'a copa precisa de 4 ou 8 pessoas');
   for (const j of J.slice(1)) j.manda({type:'join', code:cod, spectate:true});
   J[1].manda({type:'cupCreate', name:'Copa'});
-  confira(!J[1].sala().tournament, 'só o dono sorteia');
+  confira(!J[1].sala().tournament, 'só o admin sorteia');
   J[0].manda({type:'cupCreate', name:'Copa da Laje'});
   let s2 = J[0].sala();
   confira(s2.tournament && s2.tournament.matches.length === 2 && s2.n === 1 && !s2.bots && s2.roster[0] && s2.roster[1], 'sorteio: 2 duelos, 1v1 sem bots, o primeiro duelo nos times', s2.tournament);
   const pega = id => J.find(j => j.id === id);
-  let rodada = 0;
   const duelo = () => {
-    const r = J[0].sala(); rodada = r.round + 1;
-    J[0].manda({type:'start'}); quadro(J[0], rodada, [0, 0]); relogio += 40000; quadro(J[0], rodada, [3, 1], {elapsed:35});
-    J[0].manda({type:'finish', round:rodada, score:[3, 1]});
+    const r = J[0].sala();
+    J[0].manda({type:'start'}); quadroMotor(t2, J[0], [0, 0]); relogio += 40000;
+    golMotor(t2, J[0], [1, 0], r.roster[0], 10); golMotor(t2, J[0], [2, 0], r.roster[0], 20); golMotor(t2, J[0], [2, 1], r.roster[1], 30); golMotor(t2, J[0], [3, 1], r.roster[0], 35);
+    fimMotor(t2, J[0], [3, 1]);
     return r.roster[0];
   };
   const v1 = duelo();
@@ -359,9 +377,8 @@ function regras(){
   const Xv = cliente(t5, 'V'); Xv.manda({type:'hello', name:'V', conta:assina(SEG, {p:'124', n:'V', e:Date.now() - 1})});
   confira(Xv.ult('hello').conta === false, 'bilhete vencido não vale');
   X.manda({type:'create', n:1, map:0, jogo:'futebol', tempo:0, bots:true, pub:true});
-  X.manda({type:'start'}); quadro(X, 1, [0, 0]); relogio += 45000; quadro(X, 1, [3, 2], {elapsed:40});
-  X.manda({type:'finish', round:1, score:[3, 2]});
-  const rx = X.ult('result'), selo = confere(SEG, rx.selo);
+  X.manda({type:'start'}); quadroMotor(t5, X, [0, 0]); relogio += 45000; golMotor(t5, X, [3, 2], X.ult('hello').id, 40); fimMotor(t5, X, [3, 2]);
+  const rx = X.ult('result') || {}, selo = confere(SEG, rx.selo);
   confira(rx.valida && selo && selo.j === '000123' && selo.l === 0 && selo.p.join() === '3,2' && selo.m === 'futebol' && selo.s === X.sala().code && selo.r === 1, 'o resultado que vale vem com o selo da conta (a plataforma confere)', selo);
   const i5 = rx.selo.indexOf('.') + 5, troca5 = rx.selo.slice(0, i5) + (rx.selo[i5] === 'A' ? 'B' : 'A') + rx.selo.slice(i5 + 1);   // (v79: troca um caractere do meio da assinatura; o último pode ser só bits de enchimento)
   confira(confere(SEG + 'x', rx.selo) === null && confere(SEG, troca5) === null, 'o selo não confere com outro segredo nem adulterado');
@@ -373,8 +390,9 @@ function regras(){
   Ra.manda({type:'fila', n:1, pts:900}); relogio += 1000; Rb.manda({type:'fila', n:1, pts:880});
   const sr = Ra.sala();
   confira(sr && sr.ranked && sr.state === 'playing', 'v82: as duas contas caem na sala ranqueada', sr);
-  quadro(Ra, 1, [0, 0]); relogio += 20000; quadro(Ra, 1, [1, 0], {elapsed:20}); relogio += 20000; quadro(Ra, 1, [2, 0], {elapsed:40}); relogio += 20000; quadro(Ra, 1, [3, 0], {elapsed:60});
-  Ra.manda({type:'finish', round:1, score:[3, 0]});
+  const ra0 = sr && sr.roster.indexOf('c125') < 1 ? [1, 0] : [0, 1];   // (o placar do motor é do Time A × Time B)
+  quadroMotor(t5, Ra, [0, 0]); relogio += 20000; golMotor(t5, Ra, ra0[0] ? [1, 0] : [0, 1], 'c125', 20); relogio += 20000; golMotor(t5, Ra, ra0[0] ? [2, 0] : [0, 2], 'c125', 40); relogio += 20000; golMotor(t5, Ra, ra0[0] ? [3, 0] : [0, 3], 'c125', 60);
+  fimMotor(t5, Ra, ra0[0] ? [3, 0] : [0, 3]);
   const sra = confere(SEG, (Ra.ult('result') || {}).selo), srb = confere(SEG, (Rb.ult('result') || {}).selo);
   confira(sra && srb && sra.k === 1 && srb.k === 1 && sra.n === 1 && sra.j === '000125' && srb.j === '000124' && sra.p.join() === '3,0' && srb.p.join() === '0,3',
     'v82: o selo da ranqueada leva k:1 e n:1 (cada um com o placar do lado dele)', [sra, srb]);
@@ -406,7 +424,7 @@ function ranqueada(){
   let s = A.sala(), sb = B.sala();
   confira(s && sb && s.code === sb.code && s.ranked && s.map === 4 && s.jogo === 'futebol' && s.n === 1 && s.bots && !s.pub && s.tempo === 3 && s.regra === 'v80',
     'dois no 1v1: a sala ranqueada no Estádio, futebol (v80: 3:00 no relógio do servidor, até 3 gols), fechada (fora da lista)', s);
-  confira(s.roster.includes(A.id) && s.roster.includes(B.id) && s.host === A.id && s.state === 'playing' && s.round === 1, 'um em cada time; quem esperava há mais tempo roda a partida; já começou', s);
+  confira(s.roster.includes(A.id) && s.roster.includes(B.id) && s.host === 'srv' && s.admin === null && s.state === 'playing' && s.round === 1, 'um em cada time; a partida é do servidor (host srv, sem admin na ranqueada); já começou', s);
   confira(!!A.ult('start') && !!B.ult('start') && A.ult('start').room.ranked, 'os dois recebem o start (a partida começa sem ninguém apertar nada)');
   confira(!t.listaMsg().list.some(x => x.code === s.code), 'a sala ranqueada não aparece na lista de salas');
   confira(t.filaEsp.size === 0, 'quem foi para a sala sai da fila');
@@ -415,11 +433,12 @@ function ranqueada(){
   A.manda({type:'config', n:3}); confira(A.sala().n === 1, 'config não muda a ranqueada');
   const Z = entra(t, 'Zeca'); Z.manda({type:'join', code:s.code}); confira(/ranqueada/.test((Z.ult('error') || {}).message || ''), 'quem é de fora não entra pelo código', Z.ult('error'));
   // o resultado conferido sai marcado como ranqueado
-  quadro(A, 1, [0, 0]);                                 // (v80: cada gol no relógio de verdade; o anfitrião manda o relógio do servidor)
-  relogio += 20000; quadro(A, 1, [1, 0], {elapsed:20}); relogio += 20000; quadro(A, 1, [2, 1], {elapsed:40}); relogio += 20000; quadro(A, 1, [3, 1], {elapsed:60});
-  A.manda({type:'finish', round:1, score:[3, 1]});
+  const lA = Math.floor(s.roster.indexOf(A.id)/s.n), pl = (a, b) => (lA === 0 ? [a, b] : [b, a]);   // (o placar do motor é Time A × Time B)
+  quadroMotor(t, A, [0, 0]);                            // (v80: cada gol no relógio de verdade do servidor)
+  relogio += 20000; golMotor(t, A, pl(1, 0), A.id, 20); relogio += 20000; golMotor(t, A, pl(2, 1), B.id, 40); relogio += 20000; golMotor(t, A, pl(3, 1), A.id, 60);
+  fimMotor(t, A, pl(3, 1));
   const ra = A.ult('result'), rb = B.ult('result');
-  confira(ra && rb && ra.valida && ra.ranked && rb.ranked && ra.winner === 0, 'o fim conferido sai com ranked:true para os dois', [ra, rb]);
+  confira(ra && rb && ra.valida && ra.ranked && rb.ranked && ra.winner === lA && ra.servidor, 'o fim conferido (apitado pelo motor) sai com ranked:true para os dois', [ra, rb]);
   B.limpa(); B.manda({type:'rematch', on:true}); confira(/revanche/.test((B.ult('error') || {}).message || ''), 'na ranqueada não tem revanche (procura de novo)', B.ult('error'));
   A.manda({type:'leave'}); B.manda({type:'leave'});
   confira(!t.salas.has(s.code), 'todo mundo saiu: a sala ranqueada fecha');
@@ -474,7 +493,7 @@ function regra80(){
   console.log('\n11) v80 · A PARTIDA NORMAL: 3:00 no relógio do servidor, prorrogação só no 0 × 0, até 3 gols, empate e o fim conferido pela linha do tempo');
   const t = novaTurma({segredo:'segredo-de-teste-80'});
   let nPar = 0;
-  const par = () => {                                    // dois na fila do 1v1: a sala ranqueada (Ana roda a partida)
+  const par = () => {                                    // dois na fila do 1v1: a sala ranqueada (hospedada no servidor)
     nPar++;
     const A = entra(t, 'Ana' + nPar), B = entra(t, 'Beto' + nPar);
     A.manda({type:'fila', n:1, pts:500}); B.manda({type:'fila', n:1, pts:500});
@@ -482,7 +501,7 @@ function regra80(){
     return {A, B, s};
   };
   const anda = seg => { relogio += Math.round(seg*1000); };
-  const fim = (k, score) => { k.A.manda({type:'finish', round:1, score}); return {a:k.A.ult('result'), b:k.B.ult('result')}; };
+  const fim = (k, score) => { fimMotor(t, k.A, score); return {a:k.A.ult('result'), b:k.B.ult('result')}; };   // (v83: o apito final é do motor)
   const sai = k => { k.A.manda({type:'leave'}); k.B.manda({type:'leave'}); };
 
   // o relógio: no start, a cada segundo, na pausa
@@ -494,17 +513,17 @@ function regra80(){
   confira(ra && rb && ra.round === 1 && ra.ms === 5000 && rb.ms === 5000 && !ra.pausado, 'a cada segundo, o relógio do servidor chega para os dois (5 s de jogo)', [ra, rb]);
   k.A.manda({type:'pause', paused:true}); anda(10); t.relogios();
   rb = k.B.ult('relogio');
-  confira(rb && rb.pausado && rb.ms === 5000, 'pausado (o anfitrião saiu da tela): o relógio para no servidor também', rb);
+  confira(rb && !rb.pausado && rb.ms === 15000, 'v83: na ranqueada hospedada ninguém pausa (nem quem saiu da tela): o relógio do servidor segue', rb);
   k.A.manda({type:'pause', paused:false}); anda(2); t.relogios();
   rb = k.B.ult('relogio');
-  confira(rb && !rb.pausado && rb.ms === 7000, 'voltou: o relógio segue de onde parou (as pausas não contam)', rb);
-  // 1 × 1 no fim dos 3:00: empate (sem prorrogação)
-  anda(23); quadro(k.A, 1, [1, 0], {elapsed:30}); anda(30); quadro(k.A, 1, [1, 1], {elapsed:60});
+  confira(rb && !rb.pausado && rb.ms === 17000, 'o relógio da ranqueada é só do servidor (17 s)', rb);
+  // 1 × 1 aos 2:10: ainda não pode acabar
+  anda(23); golMotor(t, k.A, [1, 0], null, 40); anda(30); golMotor(t, k.A, [1, 1], null, 70);
   anda(60); let f = fim(k, [1, 1]);
-  confira(f.a && f.a.valida === false && /antes do tempo/.test(f.a.motivo || ''), '1 × 1 aos 2:00: não pode acabar ainda (acabou antes do tempo)', f.a);
+  confira(f.a && f.a.valida === false && /antes do tempo/.test(f.a.motivo || ''), '1 × 1 aos 2:10: não pode acabar ainda (acabou antes do tempo)', f.a);
   sai(k);
 
-  k = par(); anda(30); quadro(k.A, 1, [1, 0], {elapsed:30}); anda(30); quadro(k.A, 1, [1, 1], {elapsed:60}); anda(121);
+  k = par(); anda(30); golMotor(t, k.A, [1, 0], null, 30); anda(30); golMotor(t, k.A, [1, 1], null, 60); anda(121);
   f = fim(k, [1, 1]);
   confira(f.a && f.b && f.a.valida && f.a.winner === -1 && f.b.winner === -1 && f.a.ranked, '1 × 1 no fim dos 3:00: EMPATE que vale (sem prorrogação)', f.a);
   const g1 = t.b.d.gente[k.A.id].st;
@@ -512,69 +531,67 @@ function regra80(){
   sai(k);
 
   // gol depois do tempo (de 1 × 1 para 2 × 1 aos 3:05) não vale
-  k = par(); anda(30); quadro(k.A, 1, [1, 0], {elapsed:30}); anda(30); quadro(k.A, 1, [1, 1], {elapsed:60}); anda(125); quadro(k.A, 1, [2, 1], {elapsed:185});
+  k = par(); anda(30); golMotor(t, k.A, [1, 0], null, 30); anda(30); golMotor(t, k.A, [1, 1], null, 60); anda(125); golMotor(t, k.A, [2, 1], null, 185);
   f = fim(k, [2, 1]);
   confira(f.a && !f.a.valida && /depois do tempo/.test(f.a.motivo || ''), 'gol aos 3:05 com 1 × 1: não vale (gol depois do tempo)', f.a);
   sai(k);
 
   // 2 × 1 no fim: vence quem tem mais gols
-  k = par(); anda(40); quadro(k.A, 1, [1, 0], {elapsed:40}); anda(40); quadro(k.A, 1, [1, 1], {elapsed:80}); anda(40); quadro(k.A, 1, [2, 1], {elapsed:120}); anda(61);
+  k = par(); anda(40); golMotor(t, k.A, [1, 0], null, 40); anda(40); golMotor(t, k.A, [1, 1], null, 80); anda(40); golMotor(t, k.A, [2, 1], null, 120); anda(61);
   f = fim(k, [2, 1]);
   confira(f.a && f.a.valida && f.a.winner === 0, '2 × 1 no fim dos 3:00: vence quem tem mais gols', f.a);
   sai(k);
 
   // 0 × 0: prorrogação; o gol de ouro vence na hora; 0 × 0 até −2:00 é empate; antes disso, não acaba
-  k = par(); anda(200); quadro(k.A, 1, [0, 1], {elapsed:200}); anda(2);
+  k = par(); anda(200); golMotor(t, k.A, [0, 1], null, 200); anda(2);
   f = fim(k, [0, 1]);
   confira(f.a && f.a.valida && f.a.winner === 1, '0 × 0 nos 3:00 → prorrogação: o gol aos −0:20 é GOL DE OURO e vence na hora', f.a);
   sai(k);
-  k = par(); quadro(k.A, 1, [0, 0], {elapsed:0}); anda(200); f = fim(k, [0, 0]);
+  k = par(); quadroMotor(t, k.A, [0, 0]); anda(200); f = fim(k, [0, 0]);
   confira(f.a && !f.a.valida && /antes do tempo/.test(f.a.motivo || ''), '0 × 0 aos −0:20: a prorrogação ainda não acabou', f.a);
   sai(k);
-  k = par(); quadro(k.A, 1, [0, 0], {elapsed:0}); anda(301); f = fim(k, [0, 0]);
+  k = par(); quadroMotor(t, k.A, [0, 0]); anda(301); f = fim(k, [0, 0]);
   confira(f.a && f.a.valida && f.a.winner === -1, '0 × 0 até −2:00: EMPATE que vale', f.a);
   sai(k);
-  k = par(); anda(200); quadro(k.A, 1, [1, 0], {elapsed:200}); anda(10); quadro(k.A, 1, [1, 1], {elapsed:210}); anda(2);
+  k = par(); anda(200); golMotor(t, k.A, [1, 0], null, 200); anda(10); golMotor(t, k.A, [1, 1], null, 210); anda(2);
   f = fim(k, [1, 1]);
   confira(f.a && !f.a.valida && /depois do fim/.test(f.a.motivo || ''), 'depois do gol de ouro a partida acabou: outro gol não vale', f.a);
   sai(k);
-  k = par(); anda(305); quadro(k.A, 1, [1, 0], {elapsed:305}); anda(1); f = fim(k, [1, 0]);
+  k = par(); anda(305); golMotor(t, k.A, [1, 0], null, 305); anda(1); f = fim(k, [1, 0]);
   confira(f.a && !f.a.valida && /prorrogação/.test(f.a.motivo || ''), 'gol depois de −2:00 não vale', f.a);
   sai(k);
 
   // 3 gols acabam na hora; gol depois disso não vale
-  k = par(); anda(20); quadro(k.A, 1, [1, 0], {elapsed:20}); anda(20); quadro(k.A, 1, [2, 0], {elapsed:40}); anda(20); quadro(k.A, 1, [3, 0], {elapsed:60}); anda(2);
+  k = par(); anda(20); golMotor(t, k.A, [1, 0], null, 20); anda(20); golMotor(t, k.A, [2, 0], null, 40); anda(20); golMotor(t, k.A, [3, 0], null, 60); anda(2);
   f = fim(k, [3, 0]);
   confira(f.a && f.a.valida && f.a.winner === 0, '3 × 0 aos 1:00: o 3º gol acaba a partida na hora (vale)', f.a);
   sai(k);
-  k = par(); anda(20); quadro(k.A, 1, [3, 0], {elapsed:20}); anda(5); quadro(k.A, 1, [3, 1], {elapsed:25}); anda(1);
+  k = par(); anda(20); golMotor(t, k.A, [3, 0], null, 20); anda(5); golMotor(t, k.A, [3, 1], null, 25); anda(1);
   f = fim(k, [3, 1]);
   confira(f.a && !f.a.valida && /depois do fim/.test(f.a.motivo || ''), 'gol depois do 3º gol: não vale (a partida já tinha acabado)', f.a);
   sai(k);
 
   // o relógio do anfitrião longe do servidor; o placar que volta
-  k = par(); anda(40); quadro(k.A, 1, [1, 0], {elapsed:20}); anda(141); f = fim(k, [1, 0]);
-  confira(f.a && !f.a.valida && /relógio/.test(f.a.motivo || ''), 'o anfitrião diz que o gol foi aos 0:20, mas o servidor recebeu aos 0:40: não vale (relógio diferente)', f.a);
+  k = par(); anda(40); golMotor(t, k.A, [1, 0], null, 20); anda(141); f = fim(k, [1, 0]);
+  confira(f.a && !f.a.valida && /relógio/.test(f.a.motivo || ''), 'um gol com a hora do jogo (0:20) longe do relógio do servidor (0:40): não vale (relógio diferente)', f.a);
   sai(k);
-  k = par(); anda(30); quadro(k.A, 1, [1, 0], {elapsed:30}); anda(5); quadro(k.A, 1, [2, 0], {elapsed:35, goal:{time:0, el:33.2}}); anda(150);
-  confira(t.salas.get(k.s.code).linha[1].el === 33.2, 'o gol leva a hora certa dele (goal.el), não a do quadro');
+  k = par(); anda(30); golMotor(t, k.A, [1, 0], null, 30); anda(5); golMotor(t, k.A, [2, 0], null, 33.2); anda(150);
+  confira(t.salas.get(k.s.code).linha[1].el === 33.2, 'o gol leva a hora certa dele (a do motor) na linha do tempo');
   f = fim(k, [2, 0]);
   confira(f.a && f.a.valida && f.a.winner === 0, '2 × 0 conferido pela linha do tempo', f.a);
   sai(k);
 
-  // o servidor encerra sozinho a partida que passou do fim (o anfitrião não mandou o resultado)
-  k = par(); anda(30); quadro(k.A, 1, [0, 1], {elapsed:30}); anda(30); quadro(k.A, 1, [1, 1], {elapsed:60}); anda(30); quadro(k.A, 1, [1, 2], {elapsed:90});
-  anda(95); t.relogios();
-  confira(!k.A.ult('result'), 'aos 3:05 o servidor ainda espera o resultado do anfitrião');
-  anda(6); t.relogios();
-  ra = k.A.ult('result'); rb = k.B.ult('result');
-  confira(ra && rb && ra.servidor && ra.valida && ra.winner === 1 && ra.score.join() === '1,2', 'aos 3:11 sem o fim: o servidor encerra pelo relógio dele (1 × 2, vale, servidor:true)', ra);
+  // v83: na sala hospedada quem apita o fim no tempo é o MOTOR (o relógio da turma só manda as horas; o caminho antigo, de
+  // encerrar pelo relógio quando o anfitrião não mandava o fim, ficou só para a sala de aparelho, que não existe mais)
+  k = par(); anda(30); golMotor(t, k.A, [0, 1], null, 30); anda(30); golMotor(t, k.A, [1, 1], null, 60); anda(30); golMotor(t, k.A, [1, 2], null, 90);
+  anda(101); t.relogios();
+  confira(!k.A.ult('result') && t.salas.get(k.s.code).state === 'playing', 'aos 3:11 o relógio da turma não encerra a sala hospedada (quem apita é o motor)');
+  f = fim(k, [1, 2]);
+  confira(f.a && f.b && f.a.servidor && f.a.valida && f.a.winner === 1 && f.a.score.join() === '1,2', 'o apito do motor no fim dos 3:00: 1 × 2, vale, servidor:true', f.a);
   confira(t.salas.get(k.s.code).state === 'ended', 'a sala sai do jogo (state ended)');
   sai(k);
-  k = par(); quadro(k.A, 1, [0, 0], {elapsed:0}); anda(305); t.relogios();
-  confira(!k.A.ult('result'), '0 × 0 aos −2:05: ainda dentro da folga');
-  anda(6); t.relogios(); ra = k.A.ult('result');
-  confira(ra && ra.servidor && ra.valida && ra.winner === -1, '0 × 0 sem fim do anfitrião: o servidor encerra em empate depois da prorrogação', ra);
+  k = par(); quadroMotor(t, k.A, [0, 0]); anda(311); f = fim(k, [0, 0]);
+  confira(f.a && f.a.servidor && f.a.valida && f.a.winner === -1, '0 × 0 até o fim da prorrogação: o motor apita o empate (vale)', f.a);
   sai(k);
 
   // o tempo da partida normal é do servidor: encurtado (--tempo-normal / --prorrogacao, para testes e demonstrações) vale para todos
@@ -583,8 +600,8 @@ function regra80(){
   A2.manda({type:'fila', n:1, pts:500}); B2.manda({type:'fila', n:1, pts:500});
   const s2 = A2.sala();
   confira(s2 && s2.regra === 'v80' && s2.relogio.seg === 20 && s2.relogio.prorrog === 10, 'o servidor diz quanto dura (20 s + 10 s neste teste): o jogo usa o que vem na sala', s2 && s2.relogio);
-  quadro(A2, 1, [0, 0]); anda(5); quadro(A2, 1, [1, 0], {elapsed:5}); anda(5); quadro(A2, 1, [1, 1], {elapsed:10}); anda(11);
-  A2.manda({type:'finish', round:1, score:[1, 1]});
+  quadroMotor(t2, A2, [0, 0]); anda(5); golMotor(t2, A2, [1, 0], null, 5); anda(5); golMotor(t2, A2, [1, 1], null, 10); anda(11);
+  fimMotor(t2, A2, [1, 1]);
   confira(A2.ult('result') && A2.ult('result').valida && A2.ult('result').winner === -1, 'com o tempo encurtado: 1 × 1 no fim dos 20 s é empate que vale', A2.ult('result'));
 
   // a sala personalizada continua como era (sem a regra v80 nem o relógio do servidor)
@@ -644,14 +661,12 @@ async function rede(){
     const st = await B.espera('start');
     confira(st && st.room.round === 1, 'começou: start nas duas sessões');
     B.manda({type:'input', seq:1, x:1, y:0, button:3, k:1});
-    const ic = await A.espera('input');
-    confira(ic && ic.id === hB.id && ic.button === 3 && ic.k === 1, 'o comando (com a curva) chega ao anfitrião pela rede', ic);
+    const snB = await B.espera('snapshot', x => x.round === 1, 3000), snA = await A.espera('snapshot', x => x.round === 1, 3000);
+    confira(snB && snA && Array.isArray(snB.data.score) && !A.ult('input'), 'v83: o comando vai para o motor do servidor (nada é repassado) e os quadros do servidor chegam às duas sessões pela rede', snB && snB.data.score);
     A.manda({type:'snapshot', round:1, data:{tick:3, elapsed:.1, state:'jogo', score:[0, 1], ball:[1, 2, 0, 0, 0], players:[]}});
-    const sn = await B.espera('snapshot');
-    confira(sn && sn.data.score.join() === '0,1', 'o quadro chega ao convidado pela rede');
     A.manda({type:'finish', round:1, score:[0, 1]});
-    const fr = await B.espera('result');
-    confira(fr && fr.valida === false && fr.motivo, 'o fim chega (e o servidor diz que não valeu: curto demais)', fr);
+    await espera(400);
+    confira(!B.ult('result') && !B.caixa.some(x => x.type === 'snapshot' && x.data && x.data.tick === 3) && /suspeito/.test(S.log()), 'o quadro e o fim mandados por um aparelho são ignorados (e anotados como suspeitos)', S.log().slice(-240));
     // reconexão: o Beto cai e volta com o token (mesmo id)
     B.ws.close(); await espera(200);
     const B2 = await socket(S.porta, 'http://localhost:9999');

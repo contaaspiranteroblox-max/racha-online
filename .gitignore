@@ -5,3 +5,4 @@ tests/build/
 tests/saida/*.png
 __pycache__/
 *.pyc
+tests/saida/plataforma.mjs

@@ -294,8 +294,9 @@ async def treino(pw, P):
 
 ESTADO = """(() => { const r = NET49.room; return {sala:r ? r.code : null, regra:r ? r.regra : null, ranked:!!(r && r.ranked), host:NET49.host, slot:NET49.localSlot, jogando:NET49.playing,
   est:RQ.on ? RQ.estado : null, placar:RQ.placar.slice(), srv:RachaPartida80.servidor(), tela:RachaPartida80.tela(), prorrog:RQ.prorrog, v80:RachaPartida80.regra()}; })()"""
-GOL_HOST = "(() => { RQ.estado = 'jogo'; RQ.toques.length = 0; RQ.toques.push({p:P, t0:RQ.tick - 3, tick:RQ.tick - 1, chute:RQ.tick - 1}); rqGol(P.time === 0 ? 1 : -1); return RQ.placar.slice(); })()"
-GOL_OUTRO = "(() => { RQ.estado = 'jogo'; const q = RQ.jog.find(o => o.time !== P.time); RQ.toques.length = 0; RQ.toques.push({p:q, t0:RQ.tick - 3, tick:RQ.tick - 1, chute:RQ.tick - 1}); rqGol(P.time === 0 ? -1 : 1); return RQ.placar.slice(); })()"
+# v83: a partida online roda no SERVIDOR — o gol é pedido ao motor de verdade pelo gancho de teste (tests/ganchos_teste.cjs): o
+# próprio motor marca o gol (autor = quem pediu), faz o gol de ouro, a saída de bola, o apito e o resultado conferido.
+GOL_MEU = "(() => { net49Send({type:'__teste_gol', time:Math.floor(NET49.localSlot / NET49.room.n)}); return 1; })()"
 
 
 async def online(pw, P):
@@ -317,35 +318,34 @@ async def online(pw, P):
         await espera(A, JOGA, 8000); await espera(B, JOGA, 8000)
         ea = await rt(A, ESTADO); eb = await rt(B, ESTADO)
         P.confere(ea['regra'] == 'v80' and ea['v80'] == {'seg': 14, 'ot': 8} and eb['v80'] == {'seg': 14, 'ot': 8}, 'a ranqueada online é a partida normal: a regra e o tempo vêm do servidor', [ea['v80'], eb['v80']])
-        host, conv = (A, B) if ea['host'] else (B, A)
+        host, conv = A, B                                       # (v83: ninguém roda a partida no aparelho; a Ana é quem marca)
+        P.confere(not ea['host'] and not eb['host'], 'v83: a partida roda no servidor (ninguém é anfitrião)', [ea['host'], eb['host']])
         await asyncio.sleep(3)
         sa, sb = await asyncio.gather(rt(A, "RachaPartida80.servidor()"), rt(B, "RachaPartida80.servidor()"))
-        ta = await rt(host, "RQ.t")
-        P.confere(sa is not None and sb is not None and abs(sa - sb) < .6 and abs(ta - sa) < .8 and 2 <= sa <= 6, 'os dois veem o mesmo relógio (o do servidor; quem roda a partida também usa ele)', [sa, sb, ta])
+        P.confere(sa is not None and sb is not None and abs(sa - sb) < .6 and 2 <= sa <= 6, 'os dois veem o mesmo relógio (o do servidor)', [sa, sb])
         tl = await rt(conv, "(() => { const t = RachaPartida80.tela(); return {s:RachaPartida80.servidor(), txt:t.s, ot:t.ot}; })()")
         esp = '%02d:%02d' % divmod(max(0, math.ceil(14 - tl['s'] - 1e-6)), 60)
         P.confere(tl['txt'] == esp and not tl['ot'] and tl['s'] > 1, 'o placar de quem joga de fora mostra o relógio do servidor descendo (%s com %.1f s de jogo)' % (tl['txt'], tl['s']), tl)
         ot = await espera(conv, "(() => { const t = RachaPartida80.tela(); return t.ot && t.s.indexOf('-') === 0 ? t : null; })()", 16000, 100)
         oh = await espera(host, "RQ.prorrog && RQ.estado !== 'fim' ? RachaPartida80.tela() : null", 4000)
         P.confere(bool(ot) and bool(oh) and ot['cor'] == '#ff5a4f', '0 × 0 no fim dos 14 s: a prorrogação nos dois (o relógio negativo, em vermelho)', [ot, oh])
-        await rt(host, GOL_HOST)
+        await rt(host, GOL_MEU)
         fh = await espera(host, "fimAberto() && RQ.resultado && RQ.resultado.pr ? {tit:fimEl('fim-titulo').textContent, d:RQ.resultado.pr.delta} : null", 9000)
         fc = await espera(conv, "fimAberto() && RQ.resultado && RQ.resultado.pr ? {tit:fimEl('fim-titulo').textContent, d:RQ.resultado.pr.delta, gol:RachaGol80.dados()} : null", 9000)
         P.confere(bool(fh) and bool(fc) and fh['tit'] == 'VITÓRIA!' and fh['d'] > 0 and fc['tit'] == 'DERROTA' and fc['d'] < 0,
-                  'o gol de ouro de quem roda a partida acaba o jogo e o servidor confere (vitória de um, derrota do outro)', [fh, fc])
+                  'o gol de ouro (o motor do servidor) acaba o jogo e o servidor confere (vitória de um, derrota do outro)', [fh, fc])
         nh = await rt(host, "({t:P.time, nome:String(perfil.nome).toUpperCase()})")
         P.confere(bool(fc) and fc['gol']['time'] == nh['t'] and fc['gol']['nome'] == nh['nome'] and fc['gol']['palavra'] == 'GOOOL!' and not fc['gol']['nosso'],
                   'quem joga de fora viu o GOOOL! na cor do time de quem marcou, com o nome dele', [fc and fc['gol'], nh])
         # partida 2: 1 × 1 no fim → empate conferido
         await rt(host, "fimEl('fim-denovo').click()"); await asyncio.sleep(0.5); await rt(conv, "fimEl('fim-denovo').click()")
         await espera(A, JOGA, 10000); await espera(B, JOGA, 10000)
-        ea = await rt(A, ESTADO)
-        host, conv = (A, B) if ea['host'] else (B, A)
+        host, conv = A, B
         await espera(host, "RQ.estado === 'jogo' || RQ.estado === 'saida'", 3000)
-        await rt(host, GOL_HOST)
-        await espera(host, "RQ.estado === 'saida' || RQ.estado === 'jogo'", 4000, 50)
-        await asyncio.sleep(0.2)
-        await rt(host, GOL_OUTRO)
+        await rt(host, GOL_MEU)
+        await espera(conv, "RQ.placar[0] + RQ.placar[1] === 1", 4000, 50)
+        await asyncio.sleep(2.4)                                # (a comemoração do gol no motor: depois, a saída de bola)
+        await rt(conv, GOL_MEU)
         pl = await espera(conv, "RQ.placar[0] === 1 && RQ.placar[1] === 1 ? RQ.placar.slice() : null", 4000)
         fh = await espera(host, "fimAberto() && RQ.resultado && RQ.resultado.pr ? {tit:fimEl('fim-titulo').textContent, d:RQ.resultado.pr.delta, cls:fimEl('fim').className} : null", 20000)
         fc = await espera(conv, "fimAberto() && RQ.resultado && RQ.resultado.pr ? {tit:fimEl('fim-titulo').textContent, d:RQ.resultado.pr.delta, cls:fimEl('fim').className} : null", 9000)

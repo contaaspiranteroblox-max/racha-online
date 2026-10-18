@@ -2002,6 +2002,7 @@
 <link rel="stylesheet" href="./v80.css">
 <link rel="stylesheet" href="./v81.css">
 <link rel="stylesheet" href="./v82.css">
+<link rel="stylesheet" href="./v88.css">
 <script src="./rua.js"></script>
 <script src="./arena.js"></script>
 <script src="./lobby.js"></script>
@@ -18043,7 +18044,7 @@ function arbBane(id){
 function arbPausa(on, quem){
   const r = NET49.room; if (!r || !arbAtivo(r) || !NET49.playing || !RQ.on || RQ.estado === 'fim') return;
   if (arbEuPrincipal(r)){
-    if (!NET49.host) return x49Toast('Esta partida está rodando no servidor: daqui não dá para pausar.');
+    if (!NET49.host && !(r.servidor && !r.ranked && !r.local)) return x49Toast('Esta partida está rodando no servidor: daqui não dá para pausar.');   // v88: na sala hospedada o admin pausa pelo servidor
     if (ARB.pausado === !!on) return;
     ARB.pausado = ARB.pausaVista = !!on;
     if (!r.local){ net49Send({type:'pause', paused:!!on}); arbMsg('p|' + (on ? 1 : 0)); }
