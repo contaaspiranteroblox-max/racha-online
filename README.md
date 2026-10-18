@@ -1,6 +1,7 @@
 # RACHA · Futebol de Rua — o jogo no GitHub Pages
 
-Esta branch tem só o jogo (os arquivos de `app/public` da branch `main`, **v88**: a atualização completa dos menus —
+Esta branch tem só o jogo (os arquivos de `app/public` da branch `main`, **v88.1**: as contas pelo Dono — com a plataforma, o
+cadastro fechado (só o Dono cria contas, no RACHA CONTROL) e o ZERAR CONTAS — em cima da **v88**, a atualização completa dos menus —
 amigos, mensagens, correio, loja por categorias, clube, treino com posicionamento, defesa, goleiro e com bots, missões,
 eventos, Passe RACHA, chat por canais, denúncias, modo e campo, estatísticas, espectador, ajustes e controle Bluetooth —,
 com a mecânica clássica de sempre e as moedas e gemas de teste — 50.000 moedas e 5.000 gemas uma vez em cada aparelho, pelo
