@@ -1,1 +1,86 @@
-PATCH_PLACEHOLDER
+diff --git a/app/api/lib/vite.ts b/app/api/lib/vite.ts
+index 1ea823f..9a22b63 100644
+--- a/app/api/lib/vite.ts
++++ b/app/api/lib/vite.ts
+@@ -16,7 +16,7 @@ export function serveStaticFiles(app: App) {
+   app.get("/", (c) => {
+     c.header("Cache-Control", "no-cache");
+     const q = new URL(c.req.url).search;
+-    return c.redirect("/game/racha.html?v=88.1-site" + (q ? "&" + q.slice(1) : ""), 302);
++    return c.redirect("/game/racha.html?v=88.2-site" + (q ? "&" + q.slice(1) : ""), 302);
+   });
+ 
+   // html sempre fresco — o celular não pode ficar preso numa versão velha do jogo por cache do navegador
+diff --git a/app/public/game/racha.html b/app/public/game/racha.html
+index e2bdd42..67882c9 100644
+--- a/app/public/game/racha.html
++++ b/app/public/game/racha.html
+@@ -2885,12 +2885,12 @@
+ <script>
+ (function(){
+ 'use strict';
+-/* ---------- v88.1-site: versão visível + anti-cache + fullscreen do navegador ----------
++/* ---------- v88.2-site: versão visível + anti-cache + fullscreen do navegador ----------
+    O Chrome do celular "congela" a aba e volta com a versão VELHA sem baixar nada (bfcache):
+    ao voltar pra aba congelada, recarrega de verdade. A versão aparece no título da aba e na
+    URL (?v=), pra conferir num relance. No 1º toque pede fullscreen: a barra do Chrome some e
+    o celular ultra-largo (Redmi 13 e cia) fica tela cheia sem distorcer. */
+-const VERSAO_JOGO = '88.1-site';
++const VERSAO_JOGO = '88.2-site';
+ document.title = 'RACHA · v' + VERSAO_JOGO;
+ window.addEventListener('pageshow', function(e){ if (e.persisted) location.reload(); });
+ let _fsPedido = false;
+@@ -13815,7 +13815,7 @@ const TROCAS = [{g:30, m:600}, {g:80, m:1800}, {g:200, m:5000}];   // trocar gem
+ const xpPara = n => 80 + 20*n;                         // XP para passar do nível n ao n + 1
+ function nivelInfo(xp){ let n = 1, r = Math.max(0, xp); while (r >= xpPara(n) && n < 999){ r -= xpPara(n); n++; } return {n, atual:r, prox:xpPara(n)}; }
+ const contaPadrao = () => ({moedas:500, gemas:25, xp:0, skins:[], tres:[], semana:{id:-1, gols:0}, livre:{dia:-1, n:0}, semPend:null, niveis:[], musica:true, faixa:0, presentes:[], presPend:null,
+-  missaoPagas:0, pecas:[], cap:null, missoes:null, vistos:[], chatBrasil:true, menosAnim:false, vibrar:true, onb:false,   // v70: pecas · cap (o dia) · missoes · vistos
++  missaoPagas:0, pecas:[], cap:null, missoes:null, vistos:[], chatBrasil:true, menosAnim:false, vibrar:true, esticaTela:false, onb:false,   // v88.2-site: a tela esticada fica salva na conta   // v70: pecas · cap (o dia) · missoes · vistos
+                       // v57: missões já pagas (a cada 5 partidas), Chat do Brasil ligado, reduzir animações
+   rq:{pts:0, melhor:0, jogos:0, vit:0, seq:0, n:2, mapa:0, mapaId:'estadio'}});   // v35: ranqueada (pontos, melhor, partidas, vitórias, vitórias seguidas, o último time e mapa)
+ const CONTA = contaPadrao();
+@@ -13850,6 +13850,7 @@ function contaCarregar(){
+     if (typeof o.chatBrasil === 'boolean') CONTA.chatBrasil = o.chatBrasil;
+     if (typeof o.menosAnim === 'boolean') CONTA.menosAnim = o.menosAnim;
+     if (typeof o.vibrar === 'boolean') CONTA.vibrar = o.vibrar;
++    if (typeof o.esticaTela === 'boolean') CONTA.esticaTela = o.esticaTela;   // v88.2-site
+     contaCarregaV70(o);                              // v70: as peças, os ganhos do dia, as missões e o que já foi visto
+     CONTA.onb = typeof o.onb === 'boolean' ? o.onb : !(perfil.st.partidas === 0 && perfil.st.treinos === 0 && perfil.nome === 'Jogador');   // quem já jogava não vê a primeira vez
+   } else {                                             // primeira vez nesta versão: quem já jogava começa com o que já fez
+@@ -15063,13 +15064,14 @@ function resize(){
+   const s = Math.min(Math.max(200, r.width)/W, Math.max(120, r.height)/H);
+   const dpr = G().dpr(window.devicePixelRatio || 1);   // v25: depende da qualidade (Suave desenha menos pixels, Max mais)
+   const cw = Math.max(1, Math.floor(W*s*dpr)), ch = Math.max(1, Math.floor(H*s*dpr));
+-  // v88.1-site: tela cheia de verdade — quando a barrinha cinza é pequena, o CSS estica até 15% por eixo
+-  // (distorção leve; o toque já converte por eixo em vpos). Barra grande demais: letterbox fica.
+-  // (15% cobre celular ultra-largo com a barra do navegador visível — proporção até ~2,49:1)
++  // v88.2-site: "Esticar a tela" nos AJUSTES (padrão: DESLIGADO, tela normal com as barrinhas).
++  // Ligado: a barrinha cinza pequena some — o CSS estica até 15% por eixo (distorção leve;
++  // o toque já converte por eixo em vpos). Barra grande demais: letterbox fica mesmo esticando.
+   const fw = Math.max(200, r.width), fh = Math.max(120, r.height);
+   let cssW = Math.floor(W*s), cssH = Math.floor(H*s);
+-  if (fw/cssW > 1 && fw/cssW <= 1.15) cssW = Math.floor(fw);
+-  if (fh/cssH > 1 && fh/cssH <= 1.15) cssH = Math.floor(fh);
++  const esticaTela = !!CONTA.esticaTela;
++  if (esticaTela && fw/cssW > 1 && fw/cssW <= 1.15) cssW = Math.floor(fw);
++  if (esticaTela && fh/cssH > 1 && fh/cssH <= 1.15) cssH = Math.floor(fh);
+   HUDX.cssX = cssW/W; HUDX.cssY = cssH/H;
+   const key = cw + 'x' + ch + '@' + cssW + 'x' + cssH;
+   if (key === tamKey) return;                          // nada mudou: não refaz o cenário à toa
+@@ -20580,6 +20582,8 @@ function ajxMonta(){
+   poe('visual', ['aj-graf', 'aj-fps', 'aj-verfps', 'aj-efx', 'aj-torc', 'aj-replay']);
+   const dir = ajxChave('aj-dir', 'Seta da direção', 'A setinha para onde você vai'); S.visual.appendChild(dir);
+   dir.querySelector('button').addEventListener('click', () => { opc.dir = !opc.dir; salvar(); ajxSync(); som.clique(); });
++  const est = ajxChave('aj-estica', 'Esticar a tela', 'Preenche as bordas cinzas: o jogo estica um pouco para cobrir a tela toda'); S.visual.appendChild(est);
++  est.querySelector('button').addEventListener('click', () => { CONTA.esticaTela = !CONTA.esticaTela; contaSalvar(); ajxSync(); tamKey = ''; resize(); som.clique(); });   // v88.2-site
+   poe('controles', ['aj-vibra']);
+   poe('acess', ['aj-anim']);
+   poe('conta', ['aj-chat']);
+@@ -20715,6 +20719,7 @@ function abreTreinoLivreParaEditar(){                   // o treino livre (sem p
+ }
+ function ajxSync(){
+   try { ligado($('aj-dir'), opc.dir); } catch (_) {}
++  try { ligado($('aj-estica'), !!CONTA.esticaTela); } catch (_) {}   // v88.2-site
+   try { ajxSyncCam(); } catch (_) {}
+   try { uiSyncTamanho(); } catch (_) {}                // (interface.js: o Tamanho da interface)
+   if (AJC.editar) AJC.editar.textContent = lobby.aberto ? 'EDITAR CONTROLES (NO TREINO LIVRE)' : 'EDITAR CONTROLES DA TELA';
