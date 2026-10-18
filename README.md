@@ -1,6 +1,8 @@
-# RACHA · Futebol de Rua — v88
+# RACHA · Futebol de Rua — v88.1
 
-O jogo de futebol de rua com tampinhas, na versão **v88**: a **atualização completa dos menus** — amigos, mensagens,
+O jogo de futebol de rua com tampinhas, na versão **v88.1**: **as contas pelo Dono** — o cadastro fechado (só o Dono cria
+contas, no RACHA CONTROL › 👤 Contas), o ZERAR CONTAS (os IDs voltam a contar do 000002) e o login do Dono pela variável
+`RACHA_OWNER_PASSWORD` ([abaixo](#as-contas-pelo-dono-v881)) — em cima da **v88**, a **atualização completa dos menus** — amigos, mensagens,
 correio, loja por categorias, clube completo, treino (posicionamento, defesa, goleiro e com bots), missões, eventos, Passe
 RACHA, chat por canais, denúncias, a escolha do modo e do campo, estatísticas da conta, espectador, ajustes que faltavam e o
 controle Bluetooth — no lobby de sempre, ligados às contas e ao servidor. A física, a movimentação, os chutes e as colisões
@@ -18,6 +20,18 @@ suba a plataforma ([`app/DEPLOY.md`](app/DEPLOY.md)) ou teste no seu computador 
 
 > Outras versões guardadas aqui: a branch **`v85-auditada`** (a v85 da auditoria, com a física FR-85 e o `SHA256SUMS.txt`
 > do pacote) e a **`versao-anterior`** (as salas online da v62, o que estava aqui antes).
+
+## As contas pelo Dono (v88.1)
+
+1. Nas variáveis de ambiente do servidor da plataforma, defina **`RACHA_OWNER_PASSWORD`** com a sua senha e reinicie
+   (`npm start`). O usuário do Dono é **`dono`** (a conta **000001**). A senha antiga do manual (`Racha@Dono1`) não entra mais.
+2. Abra **`/admin`** (o RACHA CONTROL), entre com `dono` e a senha e configure o 2FA (a chave aparece em grupos de 4: no
+   Google Authenticator ou no Authy, **+** › **Inserir chave de configuração**).
+3. Aba **👤 Contas**: **CRIAR CONTA** para cada jogador (o usuário e a senha aparecem uma vez, com COPIAR PARA MANDAR),
+   **SENHA NOVA**, **ABRIR/FECHAR O CADASTRO** (fechado é o padrão: no jogo, o CRIAR CONTA some) e **ZERAR CONTAS** (faça
+   um backup do banco antes: apaga todas as outras contas e a próxima volta a ser a 000002).
+
+Detalhes em [`app/DEPLOY.md`](app/DEPLOY.md#v881--as-contas-pelo-dono-racha-control--contas) e no [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Na sua plataforma (o servidor com as contas e o MySQL)
 
@@ -68,8 +82,9 @@ montado junto) em cima de um arquivo SQLite. Precisa do Node.js **22.13 ou mais 
 
 ```bash
 cd app && npm install && cd ..                                  # uma vez (traz o esbuild e o zod)
-node tests/plataforma/servidor.mjs --porta 8099 --banco racha88.db
+RACHA_OWNER_PASSWORD='uma-senha-sua' RACHA_CADASTRO=aberto node tests/plataforma/servidor.mjs --porta 8099 --banco racha88.db
 # abra http://localhost:8099 — o jogo abre com o login: CRIAR CONTA (faça duas, em dois navegadores, para testar os amigos)
+# (v88.1: sem RACHA_CADASTRO=aberto o cadastro fica fechado, como na plataforma: crie as contas em /admin › Contas)
 ```
 
 Com o mesmo `--banco`, desligar e ligar de novo mantém as contas, os amigos, o correio e as compras. Para ter moedas e gemas

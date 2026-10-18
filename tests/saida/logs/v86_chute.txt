@@ -26,4 +26,4 @@
   OK      a quadra do 1v1 é a da v84 (56 × 40 u, gol de 12,8 u)
   OK      nenhum erro de JavaScript
 
-v86 · a mecânica clássica e a força do chute (v87.1): 18/18 verificações ok em 2.7 s
+v86 · a mecânica clássica e a força do chute (v87.1): 18/18 verificações ok em 2.6 s

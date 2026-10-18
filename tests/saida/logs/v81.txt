@@ -71,4 +71,4 @@
   OK      nenhum erro de JavaScript na sessão de Beto
   OK      nenhum erro de JavaScript na sessão de Caio
 
-v81 · o chat: a barra, o painel, os três pontinhos e a moderação: 64/64 verificações ok em 52.1 s
+v81 · o chat: a barra, o painel, os três pontinhos e a moderação: 64/64 verificações ok em 48.0 s

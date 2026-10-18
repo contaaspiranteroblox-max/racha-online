@@ -4,7 +4,8 @@
 // teste (tests/plataforma/*_lite.mjs). Nada daqui vai para a produção.
 export { appRouter } from "../../app/api/router";
 export { createContext } from "../../app/api/context";
-export { ligaSalas } from "../../app/api/lib/salas";
+export { ligaSalas, marcaContasZeradas } from "../../app/api/lib/salas";
+export { garanteDono, contasZeradasEm } from "../../app/api/racha/contas";   // v88.1: a conta do Dono no boot e o ZERAR CONTAS
 export { relacoesPorPub, denunciaDoChat } from "../../app/api/racha/v88/comum";
 export { getDb } from "../../app/api/queries/connection";
 export * as schema from "../../app/db/schema";

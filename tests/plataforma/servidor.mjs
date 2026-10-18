@@ -59,6 +59,8 @@ async function semeia() {
   await db.insert(S.selos).values([{ usuarioId: donoId, selo: 'criador', concedidoPor: donoId }, { usuarioId: donoId, selo: 'verificado', concedidoPor: donoId }]);
 }
 await semeia();
+// v88.1: o mesmo que o boot da plataforma faz (app/api/boot.ts): a conta do Dono com a senha de RACHA_OWNER_PASSWORD
+await P.garanteDono(TESTE ? () => {} : (t) => console.log(t));
 
 // ---------------------------------------------------------------- HTTP
 const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -128,6 +130,7 @@ const servidor = http.createServer((r, res) => {
 const { eq } = P;
 const turma = P.ligaSalas(servidor, { selosDe: async (usuarioId) => (await db.query.selos.findMany({ where: eq(S.selos.usuarioId, usuarioId) })).map((x) => x.selo), relacoesDe: P.relacoesPorPub, denuncia: P.denunciaDoChat });
 if (TESTE) req('../ganchos_teste.cjs').liga(turma);   // (só nos testes: o gol pedido ao motor)
+P.marcaContasZeradas(await P.contasZeradasEm());          // v88.1: o bilhete de antes do ZERAR CONTAS não vale (nem depois de reiniciar)
 globalThis.__turma = turma;
 servidor.listen(PORTA, ARG.host && ARG.host !== true ? String(ARG.host) : '127.0.0.1', () => {
   const porta = servidor.address().port;

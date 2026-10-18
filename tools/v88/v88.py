@@ -39,9 +39,38 @@ SUBS.append(("    get volume(){ return Math.round(vol*100); },\n",
              "      try { localStorage.setItem('racha88-som', JSON.stringify({mus:Math.round(mus88*100), efx:Math.round(efx88*100)})); } catch (_) {}\n"
              "    },\n"))
 
+# ---- v88.1: O MESMO NÚMERO, OUTRA CONTA. Depois do ZERAR CONTAS (RACHA CONTROL › Contas) os números voltam a ser usados
+# (000002…): o que o aparelho guardava para a conta APAGADA com o número de quem chegou não pode virar dela. O começo do jogo
+# (tools/v82/inicio.js, antes de o jogo ler as chaves) confere a hora em que a conta nasceu (guardada aqui na primeira vez;
+# diferente = outra conta) e, para o que ficou de antes desta versão, a hora do zerar (a conta nasceu depois dela) — e tira a
+# gaveta, a cópia da conta e o que ia entrar daquele número. A ponte do login (tools/v84/login_cedo.js) passa a hora em que
+# a conta nasceu e o que o SERVIDOR diz: se ela nasceu depois do último zerar (sem comparar relógios — o do banco, o do servidor
+# e o do aparelho podem não bater; o zerar apaga todas as contas menos a 000001, então qualquer outra nasceu depois dele).
+SUBS.append(("  // 2) de quem é o progresso que está nas chaves\n",
+             "  // v88.1: o mesmo número, outra conta (depois do ZERAR CONTAS do dono do RACHA): o que era da conta apagada sai antes de o jogo ler\n"
+             "  if (R.dono && R.conta){\n"
+             "    var nasc881 = +R.conta.nasc || 0, depois881 = !!R.conta.depois, kN881 = 'racha-82-nasc:' + R.dono, antes881 = +le(kN881) || 0;\n"
+             "    if (nasc881 > 0){\n"
+             "      var tem881 = le('racha-dono') === R.dono || le('racha-guarda:' + R.dono) !== null || le('racha-nuvem:' + R.dono) !== null || le('racha-82-entra:' + R.dono) !== null;\n"
+             "      if (tem881 && (antes881 ? antes881 !== nasc881 : depois881)){\n"
+             "        grava('racha-guarda:' + R.dono, null); grava('racha-nuvem:' + R.dono, null); grava('racha-82-entra:' + R.dono, null);\n"
+             "        if (le('racha-dono') === R.dono) poe({});\n"
+             "        R.apagouVelha = true;\n"
+             "      }\n"
+             "      grava(kN881, String(nasc881));\n"
+             "    }\n"
+             "  }\n"
+             "  // 2) de quem é o progresso que está nas chaves\n"))
+SUBS.append(("        rq: c.rq ? c.rq : null\n      };\n    },\n",
+             "        rq: c.rq ? c.rq : null,\n"
+             "        nasc: c.criadoEm ? (Date.parse(c.criadoEm) || 0) : 0,   // v88.1: quando a conta nasceu e se nasceu depois do último ZERAR CONTAS\n"
+             "        depois: !!c.depoisDoZerar                                 // (o servidor diz: o mesmo número pode ter sido de uma conta apagada)\n"
+             "      };\n    },\n"))
+
 # ---- o código novo, depois do site.js da v87 (o fim dele: o texto do presente de teste)
 ARQUIVOS = [n for n in ('base.js', 'lobby.js', 'amigos.js', 'mensagens.js', 'loja.js', 'cosmeticos.js', 'progressao.js', 'clube.js',
-                        'chat.js', 'estatisticas.js', 'espectador.js', 'treino.js', 'modos.js', 'ajustes.js', 'controle.js', 'resultado.js') if (AQUI / n).exists()]
+                        'chat.js', 'estatisticas.js', 'espectador.js', 'treino.js', 'modos.js', 'ajustes.js', 'controle.js', 'resultado.js',
+                        'contas.js') if (AQUI / n).exists()]   # v88.1: o cadastro fechado e o mesmo número de outra conta (tools/v88/contas.js)
 CODIGO = '\n'.join((AQUI / n).read_text(encoding='utf-8') for n in ARQUIVOS)
 # o catálogo da loja (app/contracts/catalogo88.json: o MESMO arquivo que a plataforma usa para conferir preço e item)
 CAT = RAIZ / 'app' / 'contracts' / 'catalogo88.json'

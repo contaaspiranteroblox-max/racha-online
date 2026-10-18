@@ -36,6 +36,7 @@ import {
 } from "./guard";
 import { verificarSenha, novoToken, sha256, gerarSegredoTotp, verificarTotp, urlTotp } from "./security";
 import { ajustaPatente, estadoRanqueada, infoPatente } from "./ranqueada"; // v82: a patente na conta
+import { ehSenhaDoManual, AVISO_SENHA_DO_MANUAL } from "./contas"; // v88.1: a senha do manual não abre o painel
 import {
   PERMISSOES_PADRAO,
   CARGO_PESO,
@@ -127,6 +128,11 @@ export const adminRouter = createRouter({
         await auditar({ operadorId: u.id, cargo: "nenhum", acao: "login_painel", resultado: "negado", ip });
         throw new TRPCError({ code: "FORBIDDEN", message: "Essa conta não faz parte da equipe do RACHA." });
       }
+      // v88.1: a senha do manual (Racha@Dono1) está escrita no repositório — com ela, qualquer um chegaria antes no 2FA
+      if (ehSenhaDoManual(input.senha)) {
+        await auditar({ operadorId: u.id, cargo: papel.cargo, acao: "login_painel", resultado: "negado", detalhes: { motivo: "senha do manual" }, ip });
+        throw new TRPCError({ code: "FORBIDDEN", message: AVISO_SENHA_DO_MANUAL });
+      }
 
       // Cria sessão de PAINEL (curta) — ainda sem 2FA
       const token = novoToken();
@@ -191,22 +197,22 @@ export const adminRouter = createRouter({
 
   // Estado do painel (quem sou eu, o que posso)
   estadoPainel: publicQuery.query(async ({ ctx }) => {
-    const s = await sessaoDaRequisicao(ctx.req);
+    const s = await sessaoDaRequisicao(ctx.req, { painel: true }); // v88.1: o cookie do painel (racha_admin)
     if (!s || !s.sessao.painelAdmin) return { logado: false as const };
     const papel = await cargoDo(s.usuario.id);
     if (!papel) return { logado: false as const };
     return {
       logado: true as const,
       totpVerificado: s.sessao.totpVerificado,
-      usuario: { nome: s.usuario.nomeExibicao, username: s.usuario.username, avatarEmoji: s.usuario.avatarEmoji },
+      usuario: { nome: s.usuario.nomeExibicao, username: s.usuario.username, avatarEmoji: s.usuario.avatarEmoji, idPublico: formatarIdPublico(Number(s.usuario.idPublico)) }, // v88.1: + o ID (a aba Contas é só da 000001)
       cargo: papel.cargo,
       permissoes: papel.permissoes,
     };
   }),
 
   sairPainel: publicQuery.mutation(async ({ ctx }) => {
-    const s = await sessaoDaRequisicao(ctx.req);
-    if (s) {
+    const s = await sessaoDaRequisicao(ctx.req, { painel: true }); // v88.1: encerra a sessão do PAINEL (não a do jogo)
+    if (s && s.sessao.painelAdmin) {
       await getDb().update(sessoes).set({ revogadaEm: new Date() }).where(eq(sessoes.id, s.sessao.id));
     }
     ctx.resHeaders.append("set-cookie", "racha_admin=; Path=/; HttpOnly; Max-Age=0");

@@ -128,7 +128,7 @@ function aplica(Turma){
     if (!c.conta) return;
     if (!this.balde(c, 'relacoes', .2, 5)) return this.manda(c, {type:'relacoes_ok', ok:false});
     const o = confere(this.segredo, m.conta);
-    if (!o || pub6(o.p) !== c.conta.idPublico) return this.manda(c, {type:'relacoes_ok', ok:false});
+    if (!o || pub6(o.p) !== c.conta.idPublico || this.v881BilheteVelho(o)) return this.manda(c, {type:'relacoes_ok', ok:false});   // v88.1: + o bilhete de antes do zerar
     const antes = c.rel ? [...c.rel.amigos] : [];
     c.rel = relDe(relDoBilhete(o));
     for (const x of this.clientes) if (x.brasil && x.brasilConta === c.id) x.rel = c.rel;
@@ -141,6 +141,84 @@ function aplica(Turma){
     return this.manda(c, Object.assign({}, msg, {type:'conta_aviso'}));
   };
   P.amigos_status = function(c){ if (c.conta && c.rel && this.balde(c, 'amigos88', .5, 4)) this.v88Lista(c); };
+
+  /* ---------------------------------------------------------------- v88.1: o Dono ZEROU AS CONTAS (RACHA CONTROL › Contas)
+     Os números das contas apagadas voltam a ser usados pelas contas novas (000002, 000003…): nada da conta velha pode passar
+     para a nova. As conexões delas caem (a sessão foi apagada: para voltar, só entrando com uma conta que existe) e saem daqui
+     os troféus da turma, os duelos, os convites, o histórico dos chats (amigos, clube, Brasil, salas), os lugares guardados
+     nas salas e nas partidas, a fila e o silêncio do chat. O bilhete assinado ANTES do zerar não vale mais (o número dele
+     pode ser de outra pessoa agora). `manter`: os números que continuam (o Dono). */
+  P.v88ZeraContas = function(manter, em){
+    const fica = new Set((Array.isArray(manter) ? manter : []).filter(p => /^\d{1,9}$/.test(String(p))).map(p => 'c' + Number(p)));
+    const sai = id => typeof id === 'string' && /^c\d{1,9}$/.test(id) && !fica.has(id);
+    const saiPub = p => PUB_RE.test(String(p)) && sai('c' + Number(p));
+    const d = this.b.d;
+    let caiu = 0;
+    d.zeradoEm = Math.max(d.zeradoEm || 0, Number(em) || Date.now());
+    // 1) as conexões das contas apagadas: saem da sala e da partida (sem guardar o lugar), dos amigos e caem
+    for (const c of [...this.clientes]){
+      const conta = c.id || (c.contaSessao ? 'c' + Number(c.contaSessao.idPublico) : null);
+      if (!sai(conta) && !sai(c.brasilConta)) continue;
+      try { if (c.sala) this.sai(c, 'saiu'); } catch (_) {}
+      try { this.auto.sair(c, false); } catch (_) {}
+      try { if (c.id && this.filaEsp.get(c.id) && this.filaEsp.get(c.id).c === c) this.filaEsp.delete(c.id); } catch (_) {}
+      this.erro(c, 'Esta conta não existe mais no RACHA. Entre com a sua conta nova.', 'conta_apagada');
+      try { this.fechou(c); } catch (_) {}
+      try { c.ws.close(4003, 'conta apagada'); } catch (_) {}
+      caiu++;
+    }
+    // 2) o que fica guardado (o arquivo da turma)
+    for (const id of Object.keys(d.gente)) if (sai(id)) delete d.gente[id];
+    for (const [h, id] of Object.entries(d.tokens)) if (sai(id)) delete d.tokens[h];
+    for (const [k, du] of Object.entries(d.duelos)) if (sai(du && du.a) || sai(du && du.b)) delete d.duelos[k];
+    d.convites = d.convites.filter(v => !sai(v.para) && !sai(v.de));
+    for (const cl of Object.values(d.clubes)){
+      cl.membros = (cl.membros || []).filter(m => !sai(m.id));
+      if (!cl.membros.length){ delete d.clubes[cl.id]; d.convites = d.convites.filter(v => v.clube !== cl.id); continue; }
+      if (sai(cl.dono)){ cl.dono = cl.membros[0].id; cl.membros[0].papel = 'dono'; }
+    }
+    for (const g of Object.values(d.gente)) if (g.clube && !d.clubes[g.clube]) g.clube = null;
+    for (const k of Object.keys(d.dms)) if (k.split('|').some(saiPub)) delete d.dms[k];
+    for (const [k, h] of Object.entries(d.clubeChat)){
+      const resto = (Array.isArray(h) ? h : []).filter(x => !(x && saiPub(x.de)) && !(x && sai(x.de)));
+      if (resto.length) d.clubeChat[k] = resto; else delete d.clubeChat[k];
+    }
+    // 3) o que vive na memória: as salas (reservas, banidos, o histórico), o Chat do Brasil, as partidas, os convites, a fila
+    for (const r of this.salas.values()){
+      for (const id of [...r.reservas.keys()]) if (sai(id)) r.reservas.delete(id);
+      for (const id of [...r.removidos.keys()]) if (sai(id)) r.removidos.delete(id);
+      r.hist = (r.hist || []).filter(x => !(x && sai(x.id)));
+    }
+    this.chat.msgs = this.chat.msgs.filter(x => !(x && sai(x.from)));
+    for (const id of [...this.chat.silencio.keys()]) if (sai(id)) this.chat.silencio.delete(id);
+    for (const id of [...this.auto.porJogador.keys()]) if (sai(id)) { try { this.auto.sair({id}, false); } catch (_) {} this.auto.porJogador.delete(id); }
+    for (const id of [...this.filaEsp.keys()]) if (sai(id)) this.filaEsp.delete(id);
+    for (const [id, cv] of this.v88.convites) if (sai(cv.de) || saiPub(cv.para)) this.v88.convites.delete(id);
+    if (this.clubes && this.clubes.limites) for (const k of [...this.clubes.limites.keys()]) if (sai(String(k).split(':').pop())) this.clubes.limites.delete(k);
+    // 4) quem fica (o Dono) deixa de ter amigos e bloqueios apagados na lista
+    for (const c of this.clientes) if (c.rel){
+      for (const p of [...c.rel.amigos]) if (saiPub(p)) c.rel.amigos.delete(p);
+      for (const p of [...c.rel.bloq]) if (saiPub(p)) c.rel.bloq.delete(p);
+      if (c.conta && this.porId.get(c.id) === c){ try { this.v88Lista(c); } catch (_) {} }
+    }
+    this.b.marca(); this.b.salvaJa();
+    this.listaMudou();
+    this.log('as contas foram zeradas: ' + caiu + ' conexão(ões) fechada(s); ficaram ' + fica.size + ' conta(s)');
+    return {caiu};
+  };
+  // o bilhete foi assinado antes do ZERAR CONTAS? (o "t" é quando a plataforma assinou; os antigos vencem 30 min depois)
+  P.v881BilheteVelho = function(o){
+    const z = this.b && this.b.d && this.b.d.zeradoEm || 0;
+    if (!z || !o) return false;
+    const emitido = typeof o.t === 'number' ? o.t : typeof o.e === 'number' ? o.e - 30*60e3 : 0;
+    return emitido <= z;
+  };
+  const bilheteAntes881 = P.bilhete;
+  P.bilhete = function(txt){
+    const b = bilheteAntes881.call(this, txt);
+    if (!b || !(this.b && this.b.d && this.b.d.zeradoEm)) return b;
+    return this.v881BilheteVelho(confere(this.segredo, txt)) ? null : b;
+  };
 
   /* ---------------------------------------------------------------- o status (online, sala, buscando, partida) */
   P.v88StatusDe = function(c){

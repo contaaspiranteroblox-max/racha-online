@@ -81,13 +81,13 @@ var publicQuery = { use: (fn) => ({ use: (fn2) => fn2, fn }) };
 // app/api/racha/guard.ts
 var SESSAO_DIAS = 30;
 var SESSAO_ADMIN_HORAS = 8;
-async function sessaoDaRequisicao(req) {
+async function sessaoDaRequisicao(req, opcoes = {}) {
   const auth = req.headers.get("authorization");
   const cookie = req.headers.get("cookie") || "";
   let token = "";
   if (auth?.startsWith("Bearer ")) token = auth.slice(7).trim();
   if (!token) {
-    const m = cookie.match(/(?:^|;\s*)racha_sessao=([^;]+)/);
+    const m = opcoes.painel ? cookie.match(/(?:^|;\s*)racha_admin=([^;]+)/) : cookie.match(/(?:^|;\s*)racha_sessao=([^;]+)/);
     if (m) token = decodeURIComponent(m[1]);
   }
   if (!token) return null;
@@ -163,7 +163,7 @@ var autenticado = publicQuery.use(async ({ ctx, next }) => {
   return next({ ctx: { ...ctx, usuario: s.usuario, sessao: s.sessao } });
 });
 var adminAutenticado = publicQuery.use(async ({ ctx, next }) => {
-  const s = await sessaoDaRequisicao(ctx.req);
+  const s = await sessaoDaRequisicao(ctx.req, { painel: true });
   if (!s) throw new TRPCError({ code: "UNAUTHORIZED", message: "Acesso restrito \xE0 equipe do RACHA." });
   if (!s.sessao.painelAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Use o login do RACHA CONTROL." });
   const papel = await cargoDo(s.usuario.id);

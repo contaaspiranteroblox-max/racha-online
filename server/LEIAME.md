@@ -12,6 +12,21 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
+## v88.1 · o Dono zerou as contas (`v88ZeraContas` em `social88.js`)
+
+Na plataforma, o RACHA CONTROL › Contas › ZERAR CONTAS apaga todas as contas menos a do Dono, e os números voltam a ser
+usados pelas contas novas (000002, 000003…). Montado na plataforma, este servidor fica sabendo na hora
+(`contasZeradas(manter, em)` do `app/api/lib/salas.ts`): as conexões das contas apagadas recebem `error {codigo:
+'conta_apagada'}` e caem com o código **4003**; saem os troféus da turma (`gente`), os tokens, os duelos, os convites, os
+membros dos clubes da turma (o clube que fica vazio some; o dono que saiu passa o clube adiante), o histórico curto das
+mensagens diretas e do clube, as mensagens do Chat do Brasil e do histórico das salas, os lugares guardados (as reservas
+das salas e das partidas autoritativas), os banidos das salas, o silêncio do chat, a fila e os limites dos clubes. A hora do
+zerar fica em `zeradoEm` (no arquivo de `RACHA_DADOS` e, montado na plataforma, também no banco dela — vale depois de
+reiniciar): o **bilhete** assinado antes disso não vale mais (o bilhete passou a levar `t`, a hora em que a plataforma
+assinou; os de antes valem 30 min, então a hora deles é `e − 30 min`). **Rodando separado** (`node server/servidor.js`),
+este servidor não fica sabendo do zerar: desligue, apague o arquivo de `RACHA_DADOS` e ligue de novo.
+Teste: `node tests/v881_contas_test.mjs` (montado na plataforma de teste, com WebSockets de verdade).
+
 ## v88 · o social ao vivo (`social88.js`)
 
 A v88 (a atualização completa dos menus) põe aqui o lado **ao vivo** do social — as contas, os amigos, os bloqueios e a

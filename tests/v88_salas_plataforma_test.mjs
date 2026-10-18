@@ -23,7 +23,7 @@ const banco = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'racha88s-')), 'pl
 
 function sobe() {
   return new Promise((res, rej) => {
-    const p = fork(path.join(RAIZ, 'tests', 'plataforma', 'servidor.mjs'), ['--porta', '0', '--teste', '--banco', banco, '--sem-compilar'], { silent: true, env: { ...process.env } });
+    const p = fork(path.join(RAIZ, 'tests', 'plataforma', 'servidor.mjs'), ['--porta', '0', '--teste', '--banco', banco, '--sem-compilar'], { silent: true, env: { ...process.env, RACHA_CADASTRO: 'aberto' } });   // v88.1: o cadastro aberto (as contas pelo jogo)
     let log = '';
     p.stdout.on('data', (d) => { log += d; }); p.stderr.on('data', (d) => { log += d; });
     p.on('message', (m) => { if (m && m.pronto) res({ p, porta: m.porta, log: () => log }); });

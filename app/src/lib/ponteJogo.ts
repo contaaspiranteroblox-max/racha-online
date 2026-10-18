@@ -41,6 +41,10 @@ type ContaJogo = {
   xp: number;
   nivelInfo: { n: number; atual: number; prox: number };
   rq: { pts: number; melhor: number; jogos: number; vit: number; der: number; emp: number; seq: number; desist: number; importado: boolean } | null;
+  // v88.1: quando a conta nasceu (ms) e se ela nasceu depois do último ZERAR CONTAS (o mesmo número pode ter sido de uma
+  // conta apagada): o jogo (tools/v82/inicio.js) tira do aparelho o que era da conta apagada com esse número
+  nasc: number;
+  depois: boolean;
 };
 type CopiaNuvem = { versao: number; dados: unknown; bytes: number; aparelho: string | null; salvoEm: number };
 // o que a plataforma conta ao jogo: a conta mudou (nível, XP, patente) · o que o servidor fez com a partida · a ranqueada
@@ -95,6 +99,8 @@ function contaJogo(c: ContaEu | null): ContaJogo | null {
     xp: Number(c.xp) || 0,
     nivelInfo: { n: pr.nivel, atual: pr.atual, prox: pr.necessario },
     rq: c.rq ? { ...c.rq } : null,
+    nasc: new Date(c.criadoEm).getTime() || 0,
+    depois: !!c.depoisDoZerar,
   };
 }
 

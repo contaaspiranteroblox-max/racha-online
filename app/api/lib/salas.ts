@@ -35,12 +35,32 @@ export type OpcoesSalas = {
 };
 // v88: a turma montada aqui (a plataforma avisa na hora: pedido de amizade, convite de clube, carta nova, amizade desfeita…)
 let turmaAtual: Turma | null = null;
-type TurmaV88 = Turma & { avisaConta?: (pub: string, m: Record<string, unknown>) => boolean; atualizaRelacoes?: (pub: string, r: RelacoesConta | null) => void };
+type TurmaV88 = Turma & {
+  avisaConta?: (pub: string, m: Record<string, unknown>) => boolean;
+  atualizaRelacoes?: (pub: string, r: RelacoesConta | null) => void;
+  v88ZeraContas?: (manter: string[], em: number) => { caiu: number }; // v88.1
+  b?: { d?: { zeradoEm?: number } };
+};
 export function avisaConta(idPublico: number | string, msg: Record<string, unknown>): boolean {
   try { return !!(turmaAtual as TurmaV88 | null)?.avisaConta?.(String(idPublico).padStart(6, "0"), msg); } catch (_) { return false; }
 }
 export function relacoesMudaram(idPublico: number | string, r: RelacoesConta | null): void {
   try { (turmaAtual as TurmaV88 | null)?.atualizaRelacoes?.(String(idPublico).padStart(6, "0"), r); } catch (_) { /* sem a turma aqui */ }
+}
+// v88.1: o Dono zerou as contas (RACHA CONTROL › Contas): o servidor das salas montado aqui esquece as contas apagadas (os
+// números voltam a ser usados) e passa a recusar o bilhete assinado antes disso. `manter`: os números que continuam.
+export function contasZeradas(manter: string[], em: number): number {
+  try { return (turmaAtual as TurmaV88 | null)?.v88ZeraContas?.(manter, em)?.caiu ?? 0; } catch (_) { return 0; }
+}
+// v88.1: no boot, quando as contas foram zeradas (do banco). Se este servidor das salas não viu o zerar (estava desligado,
+// ou é outro processo com o arquivo de RACHA_DADOS), ele esquece agora o que era das contas apagadas — e o bilhete de antes
+// não vale nem depois de reiniciar.
+export function marcaContasZeradas(em: number | null, manter: string[] = ["000001"]): void {
+  const t = turmaAtual as TurmaV88 | null;
+  const d = t?.b?.d;
+  if (!t || !d || !em || em <= (d.zeradoEm || 0)) return;
+  if (t.v88ZeraContas) { try { t.v88ZeraContas(manter, em); return; } catch (_) { /* (segue para só marcar a hora) */ } }
+  d.zeradoEm = em;
 }
 export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
   const turma = new Turma({

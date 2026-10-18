@@ -83,4 +83,4 @@
   OK      de fora, o jogo só pede as fontes (Google Fonts)
   OK      sem internet o jogo abre e a partida roda (as letras caem nas fontes do sistema)
 
-Etapa 6 · polimento e acessibilidade: 64/64 verificações ok em 38.2 s
+Etapa 6 · polimento e acessibilidade: 64/64 verificações ok em 37.7 s

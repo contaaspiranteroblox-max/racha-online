@@ -46,4 +46,4 @@
   OK      nenhum erro de JavaScript na sessão de Beto
   OK      nenhum erro de JavaScript na sessão de Caio
 
-Etapa 5 · online de verdade (servidor + sessões no navegador) · com P2P: 31/31 verificações ok em 26.5 s
+Etapa 5 · online de verdade (servidor + sessões no navegador) · com P2P: 31/31 verificações ok em 25.2 s

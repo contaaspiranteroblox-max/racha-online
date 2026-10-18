@@ -1,0 +1,88 @@
+1) o cadastro fechado por padrão
+  ok   auth.cadastro: fechado (sem nada no banco e sem RACHA_CADASTRO)
+  ok   o CRIAR CONTA de fora é recusado com a explicação
+  ok   e nenhuma conta foi criada (só o Dono)
+
+2) a senha do manual (pública no repositório) não abre nada
+  ok   o RACHA CONTROL recusa a senha do manual (e diz o que fazer)
+  ok   e o login do jogo também (a conta do Dono)
+  ok   o 2FA não chegou a ser gerado (ninguém chega antes do Dono na chave)
+  ok   a tentativa fica na auditoria
+
+3) o boot aplica a senha da variável na conta do Dono
+  ok   o Dono entra com a senha da variável (000001; nunca zerado)
+  ok   a senha do manual não serve mais
+  ok   o painel pede para configurar o 2FA (é a primeira vez com a senha nova)
+  ok   com a variável definida, a senha do Dono não muda pelo site (o aviso diz onde trocar)
+
+4) RACHA CONTROL › Contas: criar as contas (só o Dono)
+  ok   o resumo: cadastro fechado (padrão), 1 conta, a próxima é a 000002
+  ok   conta criada: 000002, o usuário em minúsculas, a senha gerada (fácil de ditar) e o código de recuperação
+  ok   a segunda (000003) com a senha escolhida e o e-mail
+  ok   as duas entram no jogo com o usuário (ou o e-mail) e a senha que o Dono mandou
+  ok   auth.eu: a conta comum, sem cargo (e nunca houve zerar)
+  ok   usuário ou e-mail repetido: recusado
+  ok   os erros chegam com a mensagem limpa (usuário com espaço/acento, senha curta, a senha do manual, sem o aceite dos termos)
+  ok   nenhuma conta a mais foi criada pelos pedidos recusados
+  ok   a sessão de jogo não cria conta
+  ok   o administrador da equipe não cria, não lista e não zera contas
+  ok   a tentativa do administrador fica na auditoria
+  ok   a lista das contas (o Dono marcado) e a busca por nome e por ID
+
+5) a senha nova de uma conta
+  ok   a senha nova vale, a velha não e a sessão de antes caiu
+  ok   e o código de recuperação também é trocado (o antigo, se alguém mais tiver, não troca a senha de novo)
+  ok   a senha do Dono não muda por aqui (vem da variável)
+
+6) abrir e fechar o cadastro público
+  ok   aberto pelo painel: o CRIAR CONTA do jogo volta a funcionar (000004)
+  ok   fechado de novo: recusado outra vez
+
+7) a vida das contas antes do zerar (amigos, clube, mensagens, carta, denúncia, partida, as salas)
+  ok   o 000002 coletou a carta (+100 moedas na carteira da conta)
+  ok   as duas contas entram nas salas (WebSocket com a sessão)
+  ok   a mensagem direta entre os dois chega (e fica no histórico da turma)
+  ok   e um clube da turma (no servidor das salas) do 000002
+  ok   antes do zerar: 3 contas além do Dono, com amizades, mensagens, 2 clubes, cartas e uma denúncia
+
+8) ZERAR CONTAS: a senha, a palavra e só o 000001
+  ok   senha errada e a palavra errada: recusados (nada apagado)
+  ok   as 4 contas continuam lá
+  ok   outro com o cargo de Dono: as contas são só da conta 000001 (criar, listar, senha nova e zerar recusados)
+  ok   zerado: 3 contas apagadas, o Dono é o 000001 e a próxima conta é a 000002
+  ok   a marca de uso único dos resultados online ficou (o mesmo resultado não vale duas vezes)
+
+9) depois do zerar: nada das contas apagadas sobrou
+  ok   as salas: as conexões das contas apagadas recebem o aviso e caem (4003)
+  ok   as sessões das contas apagadas não valem mais
+  ok   sobrou só a conta do Dono (000001)
+  ok   nenhuma das 41 tabelas aponta para uma conta apagada (amizades, pedidos, bloqueios, denúncias, clubes, cartas, mensagens, carteira, partidas…)
+  ok   o clube do Dono ficou (só com ele); o clube da conta apagada saiu
+  ok   a partida do Dono ficou, sem a lista de quem jogou junto (os números voltam a ser usados)
+  ok   o contador voltou para 1 e a hora do zerar ficou guardada
+  ok   o zerar fica na auditoria (com quantas e quais)
+  ok   o painel do Dono continua aberto: 1 conta, a próxima é a 000002
+  ok   o Dono continua logado no jogo (a conta mostra quando as contas foram zeradas; a dele não nasceu depois)
+  ok   o bilhete de antes do zerar é recusado nas salas (o número pode ser de outra pessoa agora)
+
+10) as contas novas com os números de volta não herdam nada
+  ok   as primeiras contas depois do zerar são a 000002 e a 000003 (o mesmo usuário pode voltar; o servidor diz que nasceram depois do zerar)
+  ok   sem amigos, sem pedidos, sem clube e sem a carta da conta velha
+  ok   sem as mensagens da conta velha
+  ok   a carteira começa como a de qualquer conta nova (as 100 moedas da conta velha não passaram)
+  ok   nas salas: o 000002 novo, amigo do 000003 novo, não vê as mensagens diretas dos velhos
+  ok   e não herda o clube da turma nem os troféus da conta velha
+  ok   o clube da turma da conta apagada sumiu (era o único membro)
+
+11) o contador atrás de um número em uso: o servidor pula
+  ok   com o contador em 1 e a 000002 e a 000003 em uso, a próxima é a 000004 (nunca dois com o mesmo número)
+
+12) reiniciando com outra senha na variável
+  ok   a senha nova da variável vale; a anterior não
+  ok   as sessões antigas do Dono caíram (a senha mudou)
+  ok   e o 2FA do painel foi zerado: configura de novo com a senha nova
+  ok   as contas continuam (000001 a 000004)
+  ok   depois de reiniciar, o bilhete de antes do zerar continua recusado
+  ok   o cadastro continua fechado depois de reiniciar (vale o que o Dono escolheu)
+
+v88.1 · as contas pelo Dono (plataforma de teste): 63 ok, 0 falharam

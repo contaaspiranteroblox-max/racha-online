@@ -91,4 +91,4 @@
   OK      844x390: a PAUSA cabe na tela com os 4 botões ≥ 44 px
   OK      844x390: nenhum erro de JavaScript (telas de dentro)
 
-v71 · preto × branco e o lobby novo: 78/78 verificações ok em 86.3 s
+v71 · preto × branco e o lobby novo: 78/78 verificações ok em 83.5 s

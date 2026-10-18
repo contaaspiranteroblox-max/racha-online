@@ -114,4 +114,4 @@
   OK      COMO JOGA: o BORA! fica à vista
   OK      nenhum erro de JavaScript
 
-Etapa 4 · as telas novas em tamanho real: 105/105 verificações ok em 60.4 s
+Etapa 4 · as telas novas em tamanho real: 105/105 verificações ok em 57.3 s

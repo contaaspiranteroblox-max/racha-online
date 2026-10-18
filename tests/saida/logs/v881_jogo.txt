@@ -1,0 +1,26 @@
+1) o login do jogo com o cadastro fechado (o padrão)
+  OK      só ENTRAR e RECUPERAR, com o aviso de que as contas saem do dono
+  OK      pedir o CRIAR CONTA (os botões do jogo) leva ao ENTRAR, com o aviso
+  OK      Ajustes › Conta (sem conta): fica o ENTRAR; o CRIAR CONTA some
+  OK      com o cadastro aberto pelo Dono, o CRIAR CONTA volta
+
+2) duas contas jogam no mesmo aparelho (uma nas chaves, outra na gaveta)
+  OK      a 000003 entrou neste aparelho (e o jogo anotou quando ela nasceu)
+  OK      a 000002 entrou depois: o progresso da 000003 foi para a gaveta dela e as chaves são da 000002
+  OK      e o Dono por último: a 000002 também na gaveta
+
+3) o Dono zera as contas e cria contas novas com os mesmos números
+  OK      zerado: as contas novas são de novo a 000002 e a 000003
+  OK      a 000002 nova entrou e NÃO herdou o progresso da 000002 apagada (a gaveta dela saiu do aparelho)
+  OK      o progresso do Dono continua na gaveta dele (o Dono não foi apagado)
+  OK      o aparelho anotou a hora em que a conta nova nasceu (para este número)
+
+4) a outra conta apagada (a 000003, guardada na gaveta)
+  OK      a 000003 nova também começa limpa (sem o progresso da 000003 apagada)
+
+5) a conta apagada era a última a jogar (nas chaves): o jogo abre com ela guardada e a sessão já não vale
+  OK      a conta apagada estava nas chaves (a última a jogar), sem a anotação de versão de antes: a 000004 nova entra e as chaves velhas saem
+  OK      o Dono sem a anotação da hora: o progresso dele continua (só as contas nascidas depois do zerar passam pela faxina)
+  OK      nenhum erro de JavaScript
+
+v88.1 · o jogo com as contas pelo Dono (cadastro fechado e o mesmo número de outra conta): 15/15 verificações ok em 41.4 s

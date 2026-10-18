@@ -18,4 +18,4 @@
   OK      segurar a CURVA no comando carrega igual ao botão do anfitrião (30 passos)
   OK      nenhum erro de JavaScript
 
-Etapa 5 · eventos uma vez por partida e a paridade da curva: 13/13 verificações ok em 5.3 s
+Etapa 5 · eventos uma vez por partida e a paridade da curva: 13/13 verificações ok em 5.1 s

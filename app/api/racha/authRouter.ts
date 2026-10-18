@@ -3,10 +3,10 @@
 // ============================================================================
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { eq, and, isNull, gt, desc, sql } from "drizzle-orm";
+import { eq, and, isNull, gt, desc } from "drizzle-orm";
 import { createRouter, publicQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { usuarios, sessoes, contadores, estatisticas, itensUsuario, cargos, selos, recuperacaoTokens } from "@db/schema";
+import { usuarios, sessoes, estatisticas, itensUsuario, cargos, selos, recuperacaoTokens } from "@db/schema";
 import { enviarEmail } from "../lib/email";
 import {
   hashSenha,
@@ -26,6 +26,15 @@ import {
 } from "./guard";
 import { formatarIdPublico, tituloPorNivel } from "@contracts/racha";
 import { estadoRanqueada } from "./ranqueada"; // v82: a patente da conta
+import {
+  cadastroAberto, MSG_CADASTRO_FECHADO, proximoIdPublico, contasZeradasEm, ehSenhaDoManual, ehContaDoDono, AVISO_SENHA_DO_MANUAL,
+  senhaDoDonoNoAmbiente, AVISO_SENHA_DO_AMBIENTE, nasceuDepoisDoZerar,
+} from "./contas";
+// v88.1: quando as contas foram zeradas e se esta conta nasceu depois disso (o jogo confere o que o aparelho guardava)
+async function marcaZerar(u: { idPublico: number | string }) {
+  const zeradoEm = await contasZeradasEm();
+  return { zeradoEm, depoisDoZerar: nasceuDepoisDoZerar(u, zeradoEm) };
+} // v88.1: o cadastro fechado (só o Dono cria contas), o número das contas e a senha do Dono
 
 const usernameSchema = z
   .string()
@@ -93,6 +102,8 @@ export const authRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const ip = ipDaRequisicao(ctx.req);
+      // v88.1: com o cadastro fechado (o padrão), as contas novas só saem do RACHA CONTROL › Contas (o Dono)
+      if (!(await cadastroAberto()).aberto) throw new TRPCError({ code: "FORBIDDEN", message: MSG_CADASTRO_FECHADO });
       await exigeLimite(`registro:${ip}`, 5, 60 * 60 * 1000, "Muitos registros. Tente mais tarde.");
 
       const existe = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username) });
@@ -100,14 +111,9 @@ export const authRouter = createRouter({
       const em = await db.query.usuarios.findFirst({ where: eq(usuarios.email, input.email.toLowerCase()) });
       if (em) throw new TRPCError({ code: "CONFLICT", message: "Esse email já está em uso." });
 
-      // ID público: gerado SÓ pelo servidor, atômico (LAST_INSERT_ID), nunca reutilizado
-      await db
-        .insert(contadores)
-        .values({ nome: "id_publico", valor: 1 })
-        .onDuplicateKeyUpdate({ set: { nome: "id_publico" } });
-      await db.execute(sql`UPDATE contadores SET valor = LAST_INSERT_ID(valor + 1) WHERE nome = 'id_publico'`);
-      const [contRows] = await db.execute(sql`SELECT LAST_INSERT_ID() AS v`);
-      const idPublico = Number((contRows as unknown as { v: number | string }[])[0]?.v ?? 1);
+      // ID público: gerado SÓ pelo servidor, atômico (LAST_INSERT_ID numa transação: a mesma conexão do pool). v88.1: os
+      // números só voltam a ser usados depois do ZERAR CONTAS do Dono (RACHA CONTROL › Contas)
+      const idPublico = await proximoIdPublico();
 
       const codigoRecuperacao = novoCodigoRecuperacao();
       let novoId = 0;
@@ -142,7 +148,7 @@ export const authRouter = createRouter({
       const u = await db.query.usuarios.findFirst({ where: eq(usuarios.id, novoId) });
       return {
         token,
-        conta: paraPublico(u!),
+        conta: { ...paraPublico(u!), ...(await marcaZerar(u!)) },
         // Código de recuperação: mostrado UMA vez, guardado só como hash
         codigoRecuperacao,
       };
@@ -171,6 +177,10 @@ export const authRouter = createRouter({
       if (!u || !verificarSenha(input.senha, u.senhaHash)) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "E-mail/usuário ou senha incorretos." });
       }
+      // v88.1: a senha do manual (pública no repositório) não abre a conta do Dono — nem no jogo, nem no RACHA CONTROL
+      if (ehSenhaDoManual(input.senha) && (ehContaDoDono(u) || (await db.query.cargos.findFirst({ where: eq(cargos.usuarioId, u.id) }))?.cargo === "dono")) {
+        throw new TRPCError({ code: "FORBIDDEN", message: AVISO_SENHA_DO_MANUAL });
+      }
       if (u.estado === "banido") throw new TRPCError({ code: "FORBIDDEN", message: "Conta banida do RACHA." });
       if (u.estado === "suspenso" && u.suspensoAte && u.suspensoAte.getTime() > Date.now()) {
         throw new TRPCError({
@@ -182,8 +192,12 @@ export const authRouter = createRouter({
       const token = await criarSessao(u.id, ctx.req);
       await db.update(usuarios).set({ ultimoLoginEm: new Date() }).where(eq(usuarios.id, u.id));
       ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600));
-      return { token, conta: paraPublico(u) };
+      // v88.1: + quando as contas foram zeradas (o jogo confere o que o aparelho guardava para este número)
+      return { token, conta: { ...paraPublico(u), ...(await marcaZerar(u)) } };
     }),
+
+  // ---------- v88.1: o cadastro está aberto? (o jogo e o site escondem o CRIAR CONTA quando está fechado) ----------
+  cadastro: publicQuery.query(async () => ({ aberto: (await cadastroAberto()).aberto })),
 
   // ---------- Sessão atual ----------
   eu: publicQuery.query(async ({ ctx }) => {
@@ -203,6 +217,7 @@ export const authRouter = createRouter({
         perfilPublico: s.usuario.perfilPublico,
         aceitaPedidos: s.usuario.aceitaPedidos,
         cargo: papel?.cargo ?? null,
+        ...(await marcaZerar(s.usuario)), // v88.1: quando as contas foram zeradas (null = nunca) e se esta conta nasceu depois
       },
     };
   }),
@@ -249,6 +264,7 @@ export const authRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const c = ctx as unknown as CtxAutenticado;
       const db = getDb();
+      if (ehContaDoDono(c.usuario) && senhaDoDonoNoAmbiente()) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_SENHA_DO_AMBIENTE }); // v88.1
       if (!verificarSenha(input.senhaAtual, c.usuario.senhaHash)) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Senha atual incorreta." });
       }
@@ -278,6 +294,7 @@ export const authRouter = createRouter({
       if (!u || !u.codigoRecuperacaoHash || !verificarSenha(input.codigo.toUpperCase(), u.codigoRecuperacaoHash)) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Usuário ou código de recuperação inválidos." });
       }
+      if (ehContaDoDono(u) && senhaDoDonoNoAmbiente()) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_SENHA_DO_AMBIENTE }); // v88.1
       const novoCodigo = novoCodigoRecuperacao();
       await db
         .update(usuarios)
@@ -343,6 +360,8 @@ export const authRouter = createRouter({
         ),
       });
       if (!t) throw new TRPCError({ code: "UNAUTHORIZED", message: "Link inválido ou vencido. Peça outro." });
+      const dono = await db.query.usuarios.findFirst({ where: eq(usuarios.id, t.usuarioId), columns: { idPublico: true } });
+      if (dono && ehContaDoDono(dono) && senhaDoDonoNoAmbiente()) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_SENHA_DO_AMBIENTE }); // v88.1
 
       // Marca como usado ANTES de trocar a senha (o link serve uma vez só)
       await db.update(recuperacaoTokens).set({ usadoEm: new Date() }).where(eq(recuperacaoTokens.id, t.id));

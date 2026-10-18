@@ -80,5 +80,6 @@ export function bilheteDaConta(idPublico: number, nome: string, selos: string[] 
   if (extra.c === 0) x.c = 0;
   if (extra.k) x.k = extra.k;
   if (extra.q && Object.keys(extra.q).length) x.q = extra.q;
-  return assina(seg, { p: String(idPublico), n: nome, ...(s.length ? { s } : {}), ...x, e: Date.now() + 30 * 60 * 1000 });
+  const agora = Date.now(); // v88.1: + quando foi assinado (t): o servidor das salas recusa o bilhete de antes do ZERAR CONTAS
+  return assina(seg, { p: String(idPublico), n: nome, ...(s.length ? { s } : {}), ...x, t: agora, e: agora + 30 * 60 * 1000 });
 }

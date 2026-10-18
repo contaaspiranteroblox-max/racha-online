@@ -1,6 +1,6 @@
 {
   "name": "racha",
-  "version": "88.0.0",
+  "version": "88.1.0",
   "description": "RACHA · Futebol de Rua — o jogo (app/public/game), o servidor da turma (server/) e a plataforma (app/)",
   "private": true,
   "main": "server.js",

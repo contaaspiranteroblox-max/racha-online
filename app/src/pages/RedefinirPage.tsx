@@ -1,7 +1,8 @@
 // RedefinirPage v84 — aterrissagem do link de recuperação enviado por e-mail.
+// (v88.1: os imports certos — antes apontavam para arquivos que não existem e o build do site parava aqui)
 import { useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { trpc } from "../trpc";
+import { useNavigate, useSearchParams, Link } from "react-router";
+import { trpc } from "@/providers/trpc";
 
 export default function RedefinirPage() {
   const nav = useNavigate();

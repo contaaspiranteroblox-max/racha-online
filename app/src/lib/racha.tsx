@@ -23,6 +23,8 @@ export type ContaEu = {
   // v82: a patente da ranqueada guardada na conta
   rq?: { pts: number; melhor: number; jogos: number; vit: number; der: number; emp: number; seq: number; desist: number; importado: boolean } | null;
   criadoEm: Date;
+  zeradoEm?: number | null; // v88.1: quando o Dono zerou as contas (null = nunca) — o jogo confere o que o aparelho guardava
+  depoisDoZerar?: boolean; // v88.1: esta conta nasceu depois do último zerar (o número pode ter sido de uma conta apagada)
   email: string | null;
   perfilPublico: boolean;
   aceitaPedidos: boolean;

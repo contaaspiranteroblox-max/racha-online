@@ -1,17 +1,31 @@
 // EntrarPage v84 — entrada obrigatória: login, cadastro completo e recuperação
 // (código de 12 dígitos OU link de e-mail).
+// v88.1: os imports certos (o cliente tRPC e a sessão da plataforma: antes apontavam para arquivos que não existem e o
+// build do site parava aqui); a sessão nova chega pelo cookie (o servidor grava) e o recarregar() traz a conta; com o
+// cadastro FECHADO (o padrão: só o Dono cria contas, no RACHA CONTROL) a aba "Criar conta" some e fica o aviso.
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { useAuth } from "../auth";
-import { trpc } from "../trpc";
+import { useNavigate, useSearchParams, Link } from "react-router";
+import { useAuth } from "@/lib/racha";
+import { trpc } from "@/providers/trpc";
 
 type Aba = "entrar" | "criar" | "recuperar";
 
 export default function EntrarPage() {
   const nav = useNavigate();
   const [busca] = useSearchParams();
-  const { conta, entrarNaSessao } = useAuth();
-  const [aba, definirAba] = useState<Aba>("entrar");
+  const { conta, recarregar } = useAuth();
+  // (sem resposta do servidor, a aba aparece: se o cadastro estiver fechado, o servidor recusa com a explicação)
+  const cadastro = trpc.auth.cadastro.useQuery(undefined, { retry: false, staleTime: 60_000 });
+  const fechado = cadastro.data?.aberto === false;
+  const pedida = busca.get("aba");
+  const [aba, definirAba] = useState<Aba>(pedida === "criar" ? "criar" : pedida === "recuperar" ? "recuperar" : "entrar");
+  const abaAgora: Aba = fechado && aba === "criar" ? "entrar" : aba;
+  const destino = busca.get("destino") || "/";
+  const entrou = async () => {
+    await recarregar();
+    nav(destino);
+  };
+  const abas = ([["entrar", "Entrar"], ["criar", "Criar conta"], ["recuperar", "Recuperar"]] as [Aba, string][]).filter(([v]) => !(fechado && v === "criar"));
 
   if (conta) {
     const destino = busca.get("destino") || "/";
@@ -33,21 +47,26 @@ export default function EntrarPage() {
         <p className="mt-1 text-sm text-zinc-400">Entre para jogar online, participar das salas e salvar seu progresso.</p>
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl border border-racha-borda bg-racha-carta p-1 text-sm font-bold">
-        {([["entrar", "Entrar"], ["criar", "Criar conta"], ["recuperar", "Recuperar"]] as [Aba, string][]).map(([v, rotulo]) => (
+      <div className={`mb-5 grid ${abas.length === 3 ? "grid-cols-3" : "grid-cols-2"} gap-1 rounded-xl border border-racha-borda bg-racha-carta p-1 text-sm font-bold`}>
+        {abas.map(([v, rotulo]) => (
           <button
             key={v}
             onClick={() => definirAba(v)}
-            className={`rounded-lg px-3 py-2 ${aba === v ? "bg-racha-laranja text-black" : "text-zinc-300 hover:bg-zinc-800"}`}
+            className={`rounded-lg px-3 py-2 ${abaAgora === v ? "bg-racha-laranja text-black" : "text-zinc-300 hover:bg-zinc-800"}`}
           >
             {rotulo}
           </button>
         ))}
       </div>
 
-      {aba === "entrar" && <FormEntrar onFeito={() => nav(busca.get("destino") || "/")} onEsqueci={() => definirAba("recuperar")} />}
-      {aba === "criar" && <FormCriar onFeito={(c) => { entrarNaSessao(c); nav(busca.get("destino") || "/"); }} />}
-      {aba === "recuperar" && <FormRecuperar onFeito={(c) => { entrarNaSessao(c); nav(busca.get("destino") || "/"); }} />}
+      {fechado && abaAgora === "entrar" && (
+        <p data-testid="aviso-cadastro-fechado" className="mb-4 rounded-xl border border-racha-borda bg-zinc-900/70 px-3 py-2.5 text-center text-xs text-zinc-300">
+          <b className="text-racha-laranja">Contas novas:</b> quem cria é o dono do RACHA. Peça a sua — depois é só entrar aqui com o usuário e a senha que ele mandar.
+        </p>
+      )}
+      {abaAgora === "entrar" && <FormEntrar onFeito={entrou} onEsqueci={() => definirAba("recuperar")} />}
+      {abaAgora === "criar" && <FormCriar onFeito={entrou} />}
+      {abaAgora === "recuperar" && <FormRecuperar onFeito={() => definirAba("entrar")} />}
     </div>
   );
 }
@@ -81,28 +100,20 @@ function CampoSenha({ rotulo, valor, onChange, dica }: { rotulo: string; valor: 
 
 function FormEntrar({ onFeito, onEsqueci }: { onFeito: () => void; onEsqueci: () => void }) {
   const entrar = trpc.auth.entrar.useMutation();
-  const { entrarNaSessao } = useAuth();
   const [identificador, definirIdentificador] = useState("");
   const [senha, definirSenha] = useState("");
   const [erro, definirErro] = useState("");
-  const [codigo, definirCodigo] = useState("");
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     definirErro("");
     try {
       const res = await entrar.mutateAsync({ identificador: identificador.trim(), senha });
-      if (res.conta) {
-        entrarNaSessao(res.conta);
-        if (res.codigoRecuperacao) definirCodigo(res.codigoRecuperacao);
-        else onFeito();
-      }
+      if (res.conta) onFeito(); // (a sessão já veio no cookie: o onFeito busca a conta e segue)
     } catch (err) {
       definirErro(err instanceof Error ? err.message : "Falha ao entrar.");
     }
   }
-
-  if (codigo) return <CartaoCodigo codigo={codigo} onFechar={onFeito} />;
 
   return (
     <form onSubmit={enviar} className="space-y-4 rounded-2xl border border-racha-borda bg-racha-carta p-5">
@@ -134,7 +145,7 @@ function FormEntrar({ onFeito, onEsqueci }: { onFeito: () => void; onEsqueci: ()
   );
 }
 
-function FormCriar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof useAuth>["entrarNaSessao"]>[0]) => void }) {
+function FormCriar({ onFeito }: { onFeito: () => void }) {
   const registrar = trpc.auth.registrar.useMutation();
   const [username, definirUsername] = useState("");
   const [nomeExibicao, definirNome] = useState("");
@@ -144,7 +155,6 @@ function FormCriar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof useA
   const [aceite, definirAceite] = useState(false);
   const [erro, definirErro] = useState("");
   const [codigo, definirCodigo] = useState("");
-  const [contaNova, definirContaNova] = useState<Parameters<typeof onFeito>[0] | null>(null);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -161,15 +171,15 @@ function FormCriar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof useA
         aceiteTermos: true,
       });
       if (res.conta) {
-        if (res.codigoRecuperacao) { definirCodigo(res.codigoRecuperacao); definirContaNova(res.conta); }
-        else onFeito(res.conta);
+        if (res.codigoRecuperacao) definirCodigo(res.codigoRecuperacao);
+        else onFeito();
       }
     } catch (err) {
       definirErro(err instanceof Error ? err.message : "Falha ao criar a conta.");
     }
   }
 
-  if (codigo && contaNova) return <CartaoCodigo codigo={codigo} onFechar={() => onFeito(contaNova)} />;
+  if (codigo) return <CartaoCodigo codigo={codigo} onFechar={onFeito} />;
 
   return (
     <form onSubmit={enviar} className="space-y-4 rounded-2xl border border-racha-borda bg-racha-carta p-5">
@@ -182,7 +192,7 @@ function FormCriar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof useA
           autoComplete="off"
           required
         />
-        <span className="mt-1 block text-[11px] text-zinc-500">3 a 20 caracteres: letras minúsculas, números e _</span>
+        <span className="mt-1 block text-[11px] text-zinc-500">3 a 24 caracteres: letras minúsculas, números, _ e .</span>
       </label>
       <label className="block text-left">
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-400">Nome de exibição</span>
@@ -226,7 +236,8 @@ function FormCriar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof useA
   );
 }
 
-function FormRecuperar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof useAuth>["entrarNaSessao"]>[0]) => void }) {
+// (pelo código: o servidor troca a senha, encerra as sessões e dá um código novo — depois é entrar com a senha nova)
+function FormRecuperar({ onFeito }: { onFeito: () => void }) {
   const recuperar = trpc.auth.recuperar.useMutation();
   const pedirEmail = trpc.auth.pedirRecuperacaoEmail.useMutation();
   const [modo, definirModo] = useState<"email" | "codigo">("email");
@@ -238,9 +249,9 @@ function FormRecuperar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof 
   const [senha2, definirSenha2] = useState("");
   const [erro, definirErro] = useState("");
   const [codigo, definirCodigo] = useState("");
-  const [contaNova, definirContaNova] = useState<Parameters<typeof onFeito>[0] | null>(null);
 
-  const codigoValido = useMemo(() => /^RACHA-[0-9]{4}-[0-9]{4}-[0-9]{4}$/i.test(codigoRec.trim()), [codigoRec]);
+  // (o código é RACHA- e três grupos de 4 letras/números de 0 a F: security.ts → novoCodigoRecuperacao)
+  const codigoValido = useMemo(() => /^RACHA-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/i.test(codigoRec.trim()), [codigoRec]);
 
   async function pedirPorEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -259,20 +270,18 @@ function FormRecuperar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof 
     if (senha !== senha2) { definirErro("As senhas não são iguais."); return; }
     try {
       const res = await recuperar.mutateAsync({
-        identificador: identificador.trim(),
-        codigoRecuperacao: codigoRec.trim().toUpperCase(),
+        username: identificador.trim(),
+        codigo: codigoRec.trim().toUpperCase(),
         novaSenha: senha,
       });
-      if (res.conta) {
-        if (res.codigoRecuperacao) { definirCodigo(res.codigoRecuperacao); definirContaNova(res.conta); }
-        else onFeito(res.conta);
-      }
+      if (res.ok && res.novoCodigoRecuperacao) definirCodigo(res.novoCodigoRecuperacao);
+      else if (res.ok) onFeito();
     } catch (err) {
       definirErro(err instanceof Error ? err.message : "Falha ao recuperar.");
     }
   }
 
-  if (codigo && contaNova) return <CartaoCodigo codigo={codigo} onFechar={() => onFeito(contaNova)} />;
+  if (codigo) return <CartaoCodigo codigo={codigo} onFechar={onFeito} textoBotao="JÁ ANOTEI — ENTRAR COM A SENHA NOVA" />;
 
   return (
     <div className="space-y-4 rounded-2xl border border-racha-borda bg-racha-carta p-5">
@@ -314,7 +323,7 @@ function FormRecuperar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof 
           <input
             value={identificador}
             onChange={(e) => definirIdentificador(e.target.value)}
-            placeholder="E-mail ou usuário"
+            placeholder="Seu usuário (login)"
             className="w-full rounded-lg border border-racha-borda bg-zinc-900 px-3 py-2.5 outline-none focus:border-racha-laranja"
             required
           />
@@ -341,7 +350,7 @@ function FormRecuperar({ onFeito }: { onFeito: (c: Parameters<ReturnType<typeof 
   );
 }
 
-function CartaoCodigo({ codigo, onFechar }: { codigo: string; onFechar: () => void }) {
+function CartaoCodigo({ codigo, onFechar, textoBotao = "JÁ ANOTEI — CONTINUAR" }: { codigo: string; onFechar: () => void; textoBotao?: string }) {
   const [copiado, definirCopiado] = useState(false);
   return (
     <div className="space-y-4 rounded-2xl border border-racha-laranja/50 bg-racha-carta p-5 text-center">
@@ -358,7 +367,7 @@ function CartaoCodigo({ codigo, onFechar }: { codigo: string; onFechar: () => vo
         {copiado ? "Copiado ✓" : "Copiar código"}
       </button>
       <button onClick={onFechar} className="w-full rounded-lg bg-racha-laranja py-3 font-extrabold text-black">
-        JÁ ANOTEI — CONTINUAR
+        {textoBotao}
       </button>
     </div>
   );

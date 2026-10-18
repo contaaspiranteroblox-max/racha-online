@@ -18,13 +18,16 @@ export const SESSAO_DIAS = 30;
 export const SESSAO_ADMIN_HORAS = 8;
 
 // ---------- Sessão ----------
-export async function sessaoDaRequisicao(req: Request): Promise<{ usuario: UsuarioSessao; sessao: Sessao } | null> {
+// v88.1: `painel` — as rotas do RACHA CONTROL leem o cookie do painel (racha_admin, gravado no verificar2fa). Antes elas
+// liam só o do jogo (racha_sessao): no navegador, o painel voltava para o login depois do 2FA e o SAIR DO PAINEL encerrava
+// a sessão do JOGO. O Bearer (o jogo sem o site e os testes) continua valendo para as duas.
+export async function sessaoDaRequisicao(req: Request, opcoes: { painel?: boolean } = {}): Promise<{ usuario: UsuarioSessao; sessao: Sessao } | null> {
   const auth = req.headers.get("authorization");
   const cookie = req.headers.get("cookie") || "";
   let token = "";
   if (auth?.startsWith("Bearer ")) token = auth.slice(7).trim();
   if (!token) {
-    const m = cookie.match(/(?:^|;\s*)racha_sessao=([^;]+)/);
+    const m = opcoes.painel ? cookie.match(/(?:^|;\s*)racha_admin=([^;]+)/) : cookie.match(/(?:^|;\s*)racha_sessao=([^;]+)/);
     if (m) token = decodeURIComponent(m[1]);
   }
   if (!token) return null;
@@ -142,7 +145,7 @@ export type CtxAutenticado = TrpcContext & { usuario: UsuarioSessao; sessao: Ses
 
 // Membro da equipe com sessão do RACHA CONTROL + 2FA verificado
 export const adminAutenticado = publicQuery.use(async ({ ctx, next }) => {
-  const s = await sessaoDaRequisicao(ctx.req);
+  const s = await sessaoDaRequisicao(ctx.req, { painel: true }); // v88.1: o cookie do painel
   if (!s) throw new TRPCError({ code: "UNAUTHORIZED", message: "Acesso restrito à equipe do RACHA." });
   if (!s.sessao.painelAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Use o login do RACHA CONTROL." });
   const papel = await cargoDo(s.usuario.id);

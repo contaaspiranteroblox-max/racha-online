@@ -41,6 +41,13 @@
 # privacidade, treino) e reinicia a plataforma para conferir que tudo ficou; ~1 min. O v88_controle confere o controle
 # Bluetooth com um controle simulado no navegador (a API Gamepad de mentira: menus, 32 direções, velocidade e força iguais às
 # do teclado, A/B trocados, START, desconectar).
+# v88.1: as contas pelo Dono. O v881_contas (Node) roda a plataforma de teste em três boots com o mesmo banco: o cadastro
+# fechado, a senha do manual recusada, a senha do Dono pela variável, o RACHA CONTROL › Contas (criar, só o Dono, senha nova,
+# abrir/fechar o cadastro) e o ZERAR CONTAS (todas as tabelas sem as contas apagadas, o servidor das salas derrubando e
+# esquecendo, o bilhete velho recusado, a conta nova com o número de volta sem herdar nada); o v881_painel (Python) abre o
+# RACHA CONTROL e o login do site num navegador de verdade (as páginas do app/src juntadas pelo tests/ui_site com o React
+# desta máquina e um cliente de teste no lugar do @trpc/react-query) e usa os botões; o v881_jogo (Python) confere o login do
+# jogo com o cadastro fechado e o aparelho tirando o que era das contas apagadas quando o mesmo número volta.
 cd "$(dirname "$0")/.." || exit 1
 python3 tools/aplicar_rua.py | head -1 || exit 1
 falhou=0
@@ -74,7 +81,9 @@ for t in v88_plataforma_test.mjs v88_social_test.js v88_salas_plataforma_test.mj
   printf '%-12s ' "${t%%_test*}"
   if out=$(node "tests/$t" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 done
-for t in v88_cliente v88_controle; do
+printf '%-12s ' "v881_contas"
+if out=$(node tests/v881_contas_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+for t in v88_cliente v88_controle v881_painel v881_jogo; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

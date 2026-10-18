@@ -16,7 +16,7 @@ export default function LobbyPage() {
     <div className="relative -mx-3 -my-4" style={{ height: "calc(100vh - 118px)", minHeight: 480 }}>
       {prontoParaJogo && conta ? (
         <iframe
-          key={"c" + conta.idPublico}
+          key={"c" + conta.idPublico + ":" + new Date(conta.criadoEm).getTime()} // v88.1: o mesmo número, outra conta (depois do ZERAR CONTAS) também abre de novo
           src="/game/racha.html"
           title="RACHA — jogo"
           className="h-full w-full border-0"

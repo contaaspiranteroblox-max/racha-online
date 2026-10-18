@@ -24,7 +24,7 @@ const banco = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'racha88-')), 'pla
 
 function sobe() {
   return new Promise((res, rej) => {
-    const p = fork(path.join(RAIZ, 'tests', 'plataforma', 'servidor.mjs'), ['--porta', '0', '--teste', '--banco', banco, '--sem-compilar'], { silent: true, env: { ...process.env, RACHA_PRESENTE_TESTE: '1' } });
+    const p = fork(path.join(RAIZ, 'tests', 'plataforma', 'servidor.mjs'), ['--porta', '0', '--teste', '--banco', banco, '--sem-compilar'], { silent: true, env: { ...process.env, RACHA_PRESENTE_TESTE: '1', RACHA_CADASTRO: 'aberto', RACHA_OWNER_PASSWORD: 'Dono-Teste-88v' } });   // v88.1: o cadastro aberto (as contas pelo jogo) e a senha do Dono pela variável
     let log = '';
     p.stdout.on('data', (d) => { log += d; }); p.stderr.on('data', (d) => { log += d; });
     p.on('message', (m) => { if (m && m.pronto) res({ p, porta: m.porta, log: () => log }); });
@@ -245,7 +245,7 @@ async function principal() {
     confere(ce.membros === 2 && ce.partidas === 3 && ce.gols === 3 && ch.length === 3 && ch[0].jogador === 'kauazin7' && cr[0].nome === 'Racha FC', 'as estatísticas coletivas, o histórico das partidas dos membros e o ranking', [ce, ch.length, cr.length]);
 
     console.log('\n11) RACHA CONTROL (painel com 2FA): carta para uma conta e evento novo');
-    const lp = await m('admin.loginPainel', { username: 'dono', senha: 'Racha@Dono1' });
+    const lp = await m('admin.loginPainel', { username: 'dono', senha: 'Dono-Teste-88v' });   // (v88.1: a senha do manual não abre mais o painel)
     const seg = (await sqlT('SELECT segredo FROM totp LIMIT 1'))[0].segredo;
     await m('admin.verificar2fa', { token: lp.token, codigo: totp(seg) });
     const env = await m('admin88.correioEnviar', { para: B.pub, tipo: 'compensacao', titulo: 'Compensação oficial', corpo: 'Desculpe pela queda do servidor.', anexos: [{ tipo: 'gemas', qtd: 50 }, { tipo: 'item', codigo: 'av_coroa', qtd: 1 }] }, lp.token);

@@ -25,7 +25,7 @@ Sistema completo de contas, perfis, carreira, níveis, IDs, verificados e painel
 cd app
 npm install
 npm run db:push      # cria as tabelas (MySQL/TiDB via DATABASE_URL do .env)
-npx tsx db/seed.ts   # catálogo + conta do Dono (ID 000001)
+npx tsx db/seed.ts   # catálogo + conta do Dono (ID 000001) — v88.1: sem RACHA_OWNER_PASSWORD, sorteia a senha e mostra uma vez
 npm run build        # gera dist/
 npm start            # sobe em http://localhost:3000
 ```
@@ -47,15 +47,36 @@ rode o `npm run build` de novo — o `config.js` vai para o `dist/public/game` n
 | Variável | Uso |
 |---|---|
 | `DATABASE_URL` | gerada pelo init — **não alterar** |
-| `RACHA_OWNER_USERNAME` | usuário do Dono (padrão dev: `dono`) |
-| `RACHA_OWNER_PASSWORD` | senha do Dono (padrão dev: `Racha@Dono1`) — **defina em produção!** |
+| `RACHA_OWNER_USERNAME` | usuário do Dono quando a conta 000001 é criada (padrão: `dono`) |
+| `RACHA_OWNER_PASSWORD` | **v88.1:** a senha do Dono (a conta 000001). A cada início da plataforma, a senha do Dono passa a ser esta (8 a 100 caracteres; se mudou, as sessões antigas do Dono caem e o 2FA do painel é zerado). A senha do manual de antes (`Racha@Dono1`) **não abre mais** o painel nem a conta do Dono |
+| `RACHA_CADASTRO` | **v88.1:** `aberto` ou `fechado` — só vale enquanto o Dono não escolheu no painel (RACHA CONTROL › Contas). Sem ela: **fechado** (só o Dono cria contas) |
 
 ## Primeiro acesso do Dono
 
-1. Rode o seed (cria o Dono com ID 000001, selos Criador + Verificado e itens Fundador).
-2. Entre no painel em `/admin` com as credenciais do Dono.
-3. No primeiro login, o painel mostra a chave TOTP — cadastre no app autenticador (Google Authenticator, Authy). A partir daí, todo login de painel exige o código.
+1. Defina `RACHA_OWNER_PASSWORD` (a senha que você quer) nas variáveis de ambiente do servidor e (re)inicie a plataforma.
+   O usuário é `dono` (ou o `RACHA_OWNER_USERNAME` com que a conta foi criada). Sem a conta 000001 no banco, a plataforma
+   cria; com ela, a senha passa a ser a da variável. (O seed também cria o Dono com o ID 000001, selos Criador + Verificado
+   e itens Fundador.)
+2. Entre no painel em `/admin` com o usuário e essa senha.
+3. No primeiro login, o painel mostra a chave do 2FA em grupos de 4 — no app autenticador (Google Authenticator, Authy):
+   **+** › **Inserir chave de configuração**, nome `RACHA`, cole a chave, **Baseada no horário**; digite o código de 6
+   números. A partir daí, todo login de painel pede o código.
 4. Cadastre a equipe em **Equipe** (cada novo membro configura o próprio 2FA no primeiro login).
+
+## v88.1 — as contas pelo Dono (RACHA CONTROL › 👤 Contas)
+
+* **O cadastro fica fechado**: no jogo e no site, o CRIAR CONTA some (fica o aviso de que as contas saem do dono). Para
+  abrir de novo (qualquer um cria a conta pelo jogo, como antes): **ABRIR O CADASTRO** na aba Contas.
+* **Criar a conta de um jogador**: aba **👤 Contas** (só a conta do Dono, a 000001, vê) › CRIAR CONTA (usuário, nome no jogo, e-mail opcional, senha
+  opcional — em branco, o servidor gera). O usuário e a senha aparecem **uma vez**: toque em COPIAR PARA MANDAR e envie
+  para o jogador. Esqueceu? **SENHA NOVA** na lista (a conta sai de todos os aparelhos e ganha um código de recuperação novo).
+* **Zerar as contas e os IDs**: só a conta 000001. Antes, faça um **backup do banco** (o zerar não tem volta). Na aba
+  Contas › ZERAR CONTAS: a sua senha + a palavra `ZERAR`. Apaga todas as outras contas e o que era delas; você continua
+  000001 e **a próxima conta criada é a 000002**. Quem estiver jogando com uma conta apagada cai das salas na hora.
+  Se o servidor das salas roda **separado** da plataforma (`node server/servidor.js` com `RACHA_DADOS`), ele não fica
+  sabendo do zerar: desligue-o, apague o arquivo de `RACHA_DADOS` e ligue de novo (montado na plataforma, o padrão, ele
+  já esquece sozinho).
+* Nada de migração: o cadastro, o contador e a hora do zerar ficam na tabela `contadores` que já existe.
 
 ## Segurança implementada (seção 15 do design)
 

@@ -20,7 +20,8 @@ class Banco {
   }
   static vazio(){
     return {versao:VERSAO, tokens:{}, gente:{}, clubes:{}, convites:[], duelos:{}, campeoes:[], seq:{pub:0, clube:0, convite:0},
-      dms:{}, clubeChat:{}};                         // v88: o histórico curto do chat dos amigos e do clube (7 dias; as últimas 40/60)
+      dms:{}, clubeChat:{},                          // v88: o histórico curto do chat dos amigos e do clube (7 dias; as últimas 40/60)
+      zeradoEm:0};                                   // v88.1: quando o Dono zerou as contas (o bilhete assinado antes não vale)
   }
   carrega(){
     if (!this.arquivo) return;

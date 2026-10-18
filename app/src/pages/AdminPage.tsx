@@ -8,6 +8,7 @@ import { trpc } from "@/providers/trpc";
 import { CATALOGO_ITENS, SELO_INFO, type Selo } from "@contracts/racha";
 import { SeloV } from "@/lib/racha";
 import { AbaEventos, AbaCorreio } from "./AdminV88"; // v88: os eventos, o correio e os avisos do jogo
+import { AbaContas } from "./AdminContas"; // v88.1: as contas (só o Dono): criar, senha nova, o cadastro e o ZERAR CONTAS
 
 const NOME_CARGO: Record<string, string> = {
   dono: "Dono",
@@ -19,7 +20,7 @@ const NOME_CARGO: Record<string, string> = {
 type EstadoPainel = {
   logado: boolean;
   totpVerificado?: boolean;
-  usuario?: { nome: string; username: string; avatarEmoji: string };
+  usuario?: { nome: string; username: string; avatarEmoji: string; idPublico?: string };
   cargo?: string;
   permissoes?: string[];
 };
@@ -74,8 +75,14 @@ function LoginPainel() {
           <form className="space-y-3 p-6" onSubmit={(e) => { e.preventDefault(); setErro(""); verificar.mutate({ token: pendente.token, codigo: codigo.trim() }); }}>
             {pendente.url2fa && (
               <div className="rounded-xl border-2 border-[#ffd23f] bg-[#ffd23f]/10 p-3 text-sm">
-                <b>Configure seu 2FA:</b> adicione esta chave no seu app autenticador (Google Authenticator, Authy...):
-                <div className="mt-2 select-all break-all rounded-lg bg-black/50 p-2 font-mono text-xs text-[#ffd23f]">{pendente.url2fa}</div>
+                <b>Configure seu 2FA:</b> no app autenticador (Google Authenticator, Authy...), toque em <b>+</b> → <b>Inserir chave de configuração</b>,
+                dê o nome <b>RACHA</b>, cole a chave abaixo e deixe <b>Baseada no horário</b>. Depois digite aqui o código de 6 números que o app mostrar.
+                {/* v88.1: a chave em grupos de 4 (fácil de digitar no celular); o endereço completo continua embaixo */}
+                <div className="mt-2 select-all rounded-lg bg-black/50 p-2 text-center font-mono text-base tracking-wider text-[#ffd23f]" data-testid="chave-2fa">{chave2fa(pendente.url2fa)}</div>
+                <details className="mt-2 text-xs text-[#b0a6e8]">
+                  <summary className="cursor-pointer">Endereço completo (para apps que aceitam colar o link)</summary>
+                  <div className="mt-1 select-all break-all rounded-lg bg-black/50 p-2 font-mono text-[11px] text-[#ffd23f]">{pendente.url2fa}</div>
+                </details>
               </div>
             )}
             <label className="block text-xs tracking-widest text-[#b0a6e8]">CÓDIGO DO APP AUTENTICADOR</label>
@@ -89,6 +96,17 @@ function LoginPainel() {
       </div>
     </div>
   );
+}
+
+// v88.1: a chave (o secret do otpauth://) em grupos de 4
+function chave2fa(url: string): string {
+  try {
+    const s = new URL(url).searchParams.get("secret") || "";
+    return (s.match(/.{1,4}/g) || []).join(" ");
+  } catch {
+    const m = /secret=([A-Z2-7]+)/i.exec(url);
+    return m ? (m[1].match(/.{1,4}/g) || []).join(" ") : url;
+  }
 }
 
 function Tela2FA() {
@@ -116,6 +134,7 @@ function BotaoSairPainel() {
 // ============================================================================
 const ABAS_PAINEL = [
   { id: "jogadores", rotulo: "👥 Jogadores", perm: "consultar_jogadores" },
+  { id: "contas", rotulo: "👤 Contas", perm: "dono" }, // v88.1: só a conta do Dono, a 000001 (o servidor confere de novo)
   { id: "recompensas", rotulo: "🎁 Recompensas", perm: "enviar_itens" },
   { id: "denuncias", rotulo: "🚩 Denúncias", perm: "analisar_denuncias" },
   { id: "eventos", rotulo: "📅 Eventos", perm: "gerenciar_eventos" }, // v88
@@ -124,9 +143,10 @@ const ABAS_PAINEL = [
   { id: "registros", rotulo: "📜 Registros", perm: "consultar_registros" },
 ] as const;
 
-function Painel({ cargo, permissoes, usuario }: { cargo: string; permissoes: string[]; usuario: { nome: string; username: string; avatarEmoji: string } }) {
+function Painel({ cargo, permissoes, usuario }: { cargo: string; permissoes: string[]; usuario: { nome: string; username: string; avatarEmoji: string; idPublico?: string } }) {
   const tem = (p: string) => permissoes.includes(p);
-  const abasVisiveis = ABAS_PAINEL.filter((a) => tem(a.perm) || (a.id === "denuncias" && tem("ver_denuncias_atribuidas")));
+  const dono01 = cargo === "dono" && usuario.idPublico === "000001"; // v88.1: as contas são só da conta do Dono
+  const abasVisiveis = ABAS_PAINEL.filter((a) => (a.perm === "dono" ? dono01 : tem(a.perm) || (a.id === "denuncias" && tem("ver_denuncias_atribuidas"))));
   const [aba, setAba] = useState<string>(abasVisiveis[0]?.id ?? "jogadores");
   const dash = trpc.admin.dashboard.useQuery(undefined, { enabled: tem("consultar_jogadores") });
 
@@ -164,6 +184,7 @@ function Painel({ cargo, permissoes, usuario }: { cargo: string; permissoes: str
       </div>
 
       {aba === "jogadores" && <AbaJogadores tem={tem} />}
+      {aba === "contas" && dono01 && <AbaContas />}
       {aba === "recompensas" && <AbaRecompensas tem={tem} />}
       {aba === "denuncias" && <AbaDenuncias />}
       {aba === "eventos" && <AbaEventos />}

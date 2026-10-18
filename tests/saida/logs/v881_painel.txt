@@ -1,0 +1,43 @@
+1) o login do SITE com o cadastro fechado (o padrão)
+  OK      sem o "Criar conta" e com o aviso: as contas novas saem do Dono
+  OK      o Dono entra pelo login do site (a página antes nem compilava: os imports apontavam para arquivos que não existem)
+  OK      a sessão do jogo fica no cookie (HttpOnly)
+
+2) o login do RACHA CONTROL com o 2FA
+  OK      a senha do manual não entra no painel
+  OK      a chave do 2FA aparece em grupos de 4 (fácil de digitar no app autenticador)
+  OK      o painel abre depois do 2FA, com a aba 👤 Contas (o Dono)
+  OK      recarregando a página o painel continua aberto (o cookie do painel agora vale nas rotas do painel)
+
+3) a aba CONTAS: criar uma conta
+  OK      o resumo: 1 conta, a próxima é a 000002, cadastro fechado
+  OK      o usuário com espaço e acento é recusado antes de ir para o servidor
+  OK      a conta 000002 criada: o usuário e a senha gerada aparecem uma vez (com o COPIAR PARA MANDAR)
+  OK      o jogador entra no jogo com o usuário e a senha mostrados
+  OK      fechado o cartão, a senha não aparece mais e a lista tem 2 contas
+  OK      o usuário repetido: o servidor recusa e a mensagem aparece limpa
+
+4) a senha nova
+  OK      a senha nova vale e a de antes não
+
+5) a aba CONTAS é só do Dono
+  OK      o administrador da equipe entra no painel, mas sem a aba Contas
+  OK      nem um segundo Dono (o cargo dado pelo painel): a aba Contas é só da conta 000001
+
+6) abrir e fechar o cadastro: o site mostra e esconde o "Criar conta"
+  OK      aberto pelo botão (e o servidor diz aberto)
+  OK      com o cadastro aberto, o site mostra o "Criar conta" de novo
+  OK      e fechado de novo
+  OK      o site volta a esconder o "Criar conta"
+
+7) ZERAR CONTAS
+  OK      com a palavra errada (minúscula) o botão nem acende
+  OK      zerado: 1 conta apagada, você é a 000001 e a próxima vai ser a 000002
+  OK      o resumo volta para 1 conta
+  OK      no banco, sobrou só a conta do Dono
+
+8) SAIR DO PAINEL não derruba a sessão do jogo
+  OK      saiu do painel (a sessão do painel acabou) e o jogo continua logado
+  OK      nenhum erro de JavaScript nas páginas
+
+v88.1 · o RACHA CONTROL e o login do site no navegador: 26/26 verificações ok em 17.3 s

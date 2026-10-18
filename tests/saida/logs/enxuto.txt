@@ -55,4 +55,4 @@
   OK      depois disso vale o que a pessoa escolher: ligou de novo, continua ligado ao reabrir
   OK      nenhum erro de JavaScript (salvo antigo)
 
-v70.2 · enxuto: 2 modos, a Arena e o Estádio, a bola sem efeitos, o indicador desligado: 37/37 verificações ok em 11.6 s
+v70.2 · enxuto: 2 modos, a Arena e o Estádio, a bola sem efeitos, o indicador desligado: 37/37 verificações ok em 11.1 s

@@ -23,7 +23,7 @@ class Plataforma:
 
     def sobe(self):
         self.porta = porta_livre()
-        env = dict(os.environ, RACHA_PRESENTE_TESTE='1')
+        env = dict(os.environ, RACHA_PRESENTE_TESTE='1', RACHA_CADASTRO='aberto')   # v88.1: o cadastro aberto (as contas pelo CRIAR CONTA do jogo)
         self.p = subprocess.Popen(['node', str(RAIZ / 'tests' / 'plataforma' / 'servidor.mjs'), '--porta', str(self.porta), '--teste', '--banco', self.banco, '--sem-compilar'],
                                   cwd=str(RAIZ), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         t0 = time.time()

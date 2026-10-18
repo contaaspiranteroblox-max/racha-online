@@ -15,12 +15,12 @@
   OK      o analógico do controle (10°) entra no setor de 11,25° (as 32 direções do toque), com a força inteira
   OK      abaixo da zona morta do controle (0,28 do eixo): parado
   OK      a mesma velocidade do teclado: em 0,6 s o controle anda 126 u e a seta 126 u
-  OK      A sai como PASSE e B como CHUTE (mais forte): a bola sai do pé a 18.8 e 29.8 u/s
-  OK      a mesma força do teclado: PASSE 18.8 × 18.5 u/s (Espaço) e CHUTE 29.8 × 29.5 u/s (K)
+  OK      A sai como PASSE e B como CHUTE (mais forte): a bola sai do pé a 18.8 e 30.1 u/s
+  OK      a mesma força do teclado: PASSE 18.8 × 18.5 u/s (Espaço) e CHUTE 30.1 × 29.8 u/s (K)
   OK      TROCAR A E B ligado: o A sai como CHUTE (29.8 u/s)
   OK      START abre a pausa e, de novo, volta para a partida
   OK      com o controle conectado e parado, o teclado anda normal (123 u)
   OK      desconectou: o controle sai e nada fica apertado
   OK      nenhum erro de JavaScript
 
-v88 · o controle Bluetooth (API Gamepad, com um controle simulado no navegador): 18/18 verificações ok em 14.7 s
+v88 · o controle Bluetooth (API Gamepad, com um controle simulado no navegador): 18/18 verificações ok em 14.6 s

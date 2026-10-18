@@ -26,6 +26,14 @@ if (env.isProduction) {
   const { serveStaticFiles } = await import("./lib/vite");
   serveStaticFiles(app);
 
+  // v88.1: a conta do Dono (000001) com a senha da configuração (RACHA_OWNER_PASSWORD) — e o aviso, se ainda for a do manual
+  try {
+    const { garanteDono } = await import("./racha/contas");
+    await garanteDono();
+  } catch (e) {
+    console.error("Não deu para conferir a conta do Dono:", e);
+  }
+
   const port = parseInt(process.env.PORT || "3000");
   const servidor = serve({ fetch: app.fetch, port }, () => {
     console.log(`Server running on http://localhost:${port}/`);
@@ -45,5 +53,9 @@ if (env.isProduction) {
       denuncia: denunciaDoChat,
     });
     console.log("Servidor da turma (salas online) no mesmo endereço: ws(s)://<este endereço>/");
+    // v88.1: se as contas já foram zeradas, o bilhete assinado antes disso continua sem valer (mesmo depois de reiniciar)
+    const { contasZeradasEm } = await import("./racha/contas");
+    const { marcaContasZeradas } = await import("./lib/salas");
+    marcaContasZeradas(await contasZeradasEm().catch(() => null));
   }
 }

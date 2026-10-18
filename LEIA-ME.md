@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v88
+# RACHA · Futebol de Rua — v88.1
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -64,7 +64,10 @@ cheia, com o login do jogo e as coisas da conta nos botões dele — logo abaixo
 **atualização completa dos menus**: amigos, mensagens, correio, loja por categorias, clube completo, treino (posicionamento,
 defesa, goleiro e com bots), missões, eventos, Passe RACHA, chat por canais, denúncias, a escolha do modo e do campo,
 estatísticas da conta, espectador, ajustes que faltavam e o controle Bluetooth — no lobby de sempre, ligados às contas e ao
-servidor (a carteira, o inventário e o progresso da conta conferidos nele) — logo abaixo, com o relatório da entrega.
+servidor (a carteira, o inventário e o progresso da conta conferidos nele) — logo abaixo, com o relatório da entrega. A
+**v88.1** põe **as contas nas mãos do Dono**: o cadastro fica fechado (só o Dono cria contas, no RACHA CONTROL › 👤 Contas),
+o **ZERAR CONTAS** faz os IDs voltarem a contar do 000002 e a senha do Dono vem da variável `RACHA_OWNER_PASSWORD` — com o
+painel voltando a abrir no navegador depois do 2FA (não abria) e o site voltando a compilar.
 
 ---
 
@@ -129,6 +132,118 @@ OFL) vêm em `app/public/game/fontes/` (os `.ttf` originais, com a licença ao l
 desenhar as letras. Ver `app/public/game/fontes/LEIA-ME.txt`.
 
 ---
+
+## v88.1 · as contas pelo Dono
+
+O pedido: "no painel Admin, um sistema em que só eu adiciono contas novas para jogar", "me manda o login de Admin do RACHA
+CONTROL" e "zera os IDs e me manda o 01". A física não mudou (sha256 do bloco: `ad9f1d2216409b0e`) e o banco não precisa de
+migração (o cadastro, o contador e a hora do zerar ficam na tabela `contadores`, que já existe).
+
+**Como usar (na plataforma com o MySQL).**
+
+1. Defina `RACHA_OWNER_PASSWORD` (a senha do Dono, 8 a 100 caracteres) nas variáveis do servidor e reinicie. O usuário é
+   `dono` — a conta **000001**. A cada início a plataforma confere a conta do Dono: a senha passa a ser a da variável (se
+   mudou, as sessões antigas do Dono caem e o 2FA do painel é zerado); sem a conta 000001 no banco, ela é criada.
+2. Entre em `/admin` (no jogo: Ajustes › Conta › RACHA CONTROL) com `dono` e a senha. Na primeira vez, o painel mostra a
+   chave do 2FA em grupos de 4: no app autenticador, **+** › **Inserir chave de configuração** › nome `RACHA` › a chave ›
+   **Baseada no horário**, e digite o código de 6 números.
+3. Aba **👤 Contas** (só a conta do Dono, a 000001, vê — nem um segundo "Dono" dado pelo painel): o resumo (contas, o número da próxima, o cadastro), **CRIAR CONTA** (usuário,
+   nome no jogo, e-mail opcional, senha opcional — em branco, o servidor gera uma fácil de ditar; o usuário, a senha e o
+   código de recuperação aparecem **uma vez**, com COPIAR PARA MANDAR), a lista com busca e **SENHA NOVA** (troca também o código de recuperação), **ABRIR / FECHAR
+   O CADASTRO** e **ZERAR CONTAS** (só a conta 000001; a sua senha + a palavra `ZERAR`).
+
+**O que cada parte faz.**
+
+* **Cadastro fechado (o padrão).** O servidor recusa o `auth.registrar` com a explicação; o jogo (o login sem o site) mostra
+  só ENTRAR e RECUPERAR, com o aviso "Contas novas: quem cria é o dono do RACHA"; o CRIAR CONTA do Ajustes › Conta some e os
+  outros CRIAR CONTA do jogo levam ao ENTRAR com o aviso; a página `/entrar` do site esconde a aba "Criar conta". O Dono abre
+  e fecha no painel (vale o que ficou no banco). Sem nada no banco, vale `RACHA_CADASTRO=aberto|fechado` (para os testes e o
+  computador de quem desenvolve); sem a variável, fechado. Sem resposta da plataforma (uma plataforma antiga, sem rede), o
+  jogo mostra o CRIAR CONTA como antes — e a plataforma recusa, se estiver fechado.
+* **ZERAR CONTAS.** Numa transação: apaga todas as contas menos a do Dono e tudo o que era delas, em todas as tabelas
+  (sessões, cargos, 2FA, selos, progresso, carteira e movimentações, itens, conquistas, partidas, patente, missões, passe,
+  eventos, cartas, mensagens, amigos, pedidos, bloqueios, denúncias, punições, os clubes delas e os pedidos/convites de
+  clube). O Dono fica com o progresso, a carteira, os itens, as estatísticas e os clubes dele (só
+  com ele; as partidas dele ficam sem a lista de quem jogou junto, porque os números voltam a ser usados). Ficam também a
+  auditoria (com o zerar registrado: quantas e quais), os eventos, as cartas para todos, o registro das distribuições e os
+  limites de tentativa (é onde fica a marca de uso único de cada resultado online: apagar deixaria usar o mesmo resultado de
+  novo). O
+  contador volta: **a próxima conta é a 000002**. O **servidor das salas** montado na plataforma derruba na hora as conexões
+  das contas apagadas (código 4003) e esquece o que era delas (os troféus da turma, os duelos, os convites, o histórico dos
+  chats dos amigos, do clube, do Brasil e das salas, os lugares guardados nas salas e nas partidas, a fila) e recusa o
+  **bilhete** assinado antes do zerar (o bilhete passou a levar a hora em que foi assinado, `t`; a hora do zerar fica no
+  banco — tomada depois do commit — e vale também depois de reiniciar; se o servidor das salas não viu o zerar, ele esquece
+  as contas apagadas ao ligar). No **aparelho**, o começo do jogo confere a conta que entrou: a hora em que ela nasceu
+  (anotada no aparelho na primeira vez que ela entra; diferente = outra conta) e, para o que ficou de antes desta versão, o
+  que o **servidor** diz — se ela nasceu depois do último zerar (sem comparar relógios: fora a 000001, toda conta que existe
+  nasceu depois do zerar). Se o número é de uma conta apagada, o progresso guardado para aquele número sai antes de o jogo
+  ler — e, se a conta nova entrou no lugar da apagada sem o jogo abrir de novo, ele abre. Nada passa da conta apagada para a
+  nova; o do Dono continua. (O que fica de fora: uma conta nascida depois do zerar que jogou neste aparelho com uma versão
+  antiga do jogo, sem a anotação, perde na primeira abertura da versão nova o que ainda não tinha ido para a conta — o que
+  já foi volta pela cópia da conta.)
+* **O login do Dono.** A senha do manual (`Racha@Dono1`, escrita no repositório desde a RACHA 2.0) não abre mais o RACHA
+  CONTROL nem a conta do Dono no jogo — com ela, qualquer pessoa podia chegar antes do Dono na chave do 2FA. O `db/seed.ts`
+  sorteia uma senha forte quando a variável não existe (e mostra uma vez). Com a variável definida, a senha do Dono não muda
+  pelo site nem pela recuperação (o aviso diz para trocar a variável); a SENHA NOVA do painel também não mexe no Dono.
+
+**Correções que já existiam antes e apareceram no caminho.**
+
+1. **O RACHA CONTROL não abria no navegador.** Depois do código do 2FA o painel ficava parado na tela do 2FA: o
+   `verificar2fa` grava o cookie `racha_admin`, mas as rotas do painel liam só o cookie do jogo (`racha_sessao`). Conferido
+   rodando o commit anterior num navegador (não abriu) e o novo (abre e continua aberto depois de recarregar). E o SAIR DO
+   PAINEL encerrava a sessão do **jogo**: agora encerra a do painel (o `sessaoDaRequisicao(req, { painel: true })` do
+   `app/api/racha/guard.ts`; o Bearer continua valendo para as duas, como no jogo sem o site e nos testes).
+2. **O site não compilava.** O `EntrarPage.tsx` e o `RedefinirPage.tsx` importavam `../auth`, `../trpc` e
+   `react-router-dom`, que não existem no projeto: o `npm run build` parava ali. Agora usam `@/providers/trpc`,
+   `@/lib/racha` e `react-router` (como as outras páginas). A recuperação por código do site mandava os campos errados
+   (`identificador`/`codigoRecuperacao` em vez de `username`/`codigo`) e recusava os códigos com letras (o código é `RACHA-`
+   e três grupos de 0–9 e A–F).
+3. **O número da conta** saía de duas consultas soltas num pool de conexões do MySQL (`UPDATE … LAST_INSERT_ID(valor + 1)` e
+   `SELECT LAST_INSERT_ID()`; o `LAST_INSERT_ID` é da conexão). Agora as duas vão numa transação (a mesma conexão) e, se o
+   contador ficar atrás de um número em uso, o servidor pula para o próximo livre.
+
+**A revisão independente.** Um segundo agente leu o código (sem ver como ele foi feito) procurando furos de permissão,
+erros no zerar, no número das contas, no boot, no servidor das salas e na faxina do aparelho. Não achou furo grave; o que ele
+apontou entrou nesta versão: as contas são da conta 000001 (antes, qualquer conta com o cargo Dono criava contas, via os
+e-mails e trocava a senha dos outros), a SENHA NOVA troca também o código de recuperação, o zerar não apaga mais os limites
+de tentativa (o `selo:…` de lá é a marca de uso único do resultado online), a hora do zerar é tomada depois do commit (o
+bilhete assinado durante o zerar também cai), o servidor das salas esquece as contas apagadas também ao ligar, a decisão do
+aparelho vem do servidor (os relógios do banco, do servidor e do aparelho podem não bater) e o `db/seed.ts` não dá o cargo
+de Dono para uma conta com o usuário do Dono e outro ID. Ficaram como estão, de propósito: trocar a senha do Dono pela
+variável zera o 2FA (é o que tira um 2FA configurado por quem usou a senha do manual; entre no painel logo depois de
+reiniciar) e o mínimo de 8 caracteres da senha.
+
+**Os arquivos.** `app/api/racha/contas.ts` (o cadastro, o número da conta, a conta do Dono no boot e o zerar),
+`app/api/racha/v88/donoContas.ts` (as rotas `donoContas.*`), `app/src/pages/AdminContas.tsx` (a aba), `tools/v88/contas.js`
+(o jogo) e as trocas da v88.1 no `tools/v88/v88.py` (o começo do jogo e a ponte do login); o servidor das salas em
+`server/social88.js` (`v88ZeraContas`, o bilhete de antes do zerar) e `server/banco.js` (`zeradoEm`).
+
+**Testado aqui (execução real).** `node tests/v881_contas_test.mjs` (a plataforma de teste em três boots com o mesmo banco:
+o cadastro fechado, a senha do manual recusada, a senha da variável, criar conta e os erros, só o Dono, a senha nova, abrir
+e fechar o cadastro, o zerar com a senha e a palavra, só a 000001, nenhuma das 41 tabelas apontando para uma conta apagada,
+o clube do Dono ficando, o servidor das salas derrubando e esquecendo, o bilhete velho recusado — também depois de
+reiniciar —, as contas novas com os números de volta sem herdar amigos, mensagens, carta, carteira, clube da turma nem
+histórico, e o contador atrasado pulando o número em uso); `python3 tests/v881_painel_test.py` (o RACHA CONTROL e o login do
+site num Chromium, pelos botões: as páginas de verdade do `app/src` juntadas pelo `tests/ui_site/` com o React desta máquina
+e um cliente de teste no lugar do `@trpc/react-query`); `python3 tests/v881_jogo_test.py` (o login do jogo com o cadastro
+fechado e o aparelho com duas contas — uma nas chaves, outra na gaveta — e as contas novas com os mesmos números entrando
+limpas; com a proteção desligada, o mesmo teste mostra as contas novas herdando o progresso das apagadas). E a bateria
+inteira de novo, já com as correções da revisão: **47 suítes, 2.213 verificações, nenhuma falha** (`tests/saida/logs/`;
+os números de cada uma na tabela dos testes).
+
+**O que não deu para fazer daqui (depende de você ou do servidor).**
+
+* **Zerar as contas da sua plataforma**: eu não tenho acesso ao seu servidor nem ao seu banco. O zerar é o botão da aba
+  Contas, feito por você (com um backup do banco antes). Até lá, as contas que já existem continuam lá.
+* **A senha do Dono na sua plataforma** só muda quando `RACHA_OWNER_PASSWORD` for definida no servidor e a plataforma
+  reiniciar. A senha não foi escrita em nenhum arquivo do repositório.
+* **O build de verdade do site** (`npm run build`, com o Vite e os pacotes do npm) não roda neste ambiente. O site inteiro foi
+  conferido com o esbuild (todos os imports resolvem e compila) e as páginas novas foram testadas no navegador com os
+  substitutos de teste do tRPC e do roteador; o typecheck completo (`npm run check`) e o build acontecem no seu servidor.
+* **O servidor das salas separado** (`node server/servidor.js` com `RACHA_DADOS`) não fica sabendo do zerar: desligue, apague
+  o arquivo de `RACHA_DADOS` e ligue de novo. Montado na plataforma (o padrão), ele esquece sozinho.
+* **O aceite dos termos** de quem ganhou a conta do Dono é a caixinha que o Dono marca no painel ("o jogador aceitou os
+  termos"); o jogo não pede o aceite de novo no primeiro login.
 
 ## v88 · a atualização completa dos menus
 
@@ -302,8 +417,10 @@ com 2FA); o GitHub Pages e o site de teste do Render.
   `app/db/migrations/v88_social.sql`, `npm run build`, reiniciar). `RACHA_PRESENTE_TESTE=1` (opcional) põe no correio de cada
   conta, uma vez, a carta "Presente de teste" com 50.000 moedas e 5.000 gemas.
 * **As contas no seu computador, sem MySQL** (Node 22.13+; uma vez `cd app && npm install` para o esbuild e o zod):
-  `node tests/plataforma/servidor.mjs --porta 8099 --banco racha88.db` e abra `http://localhost:8099` — crie duas contas em
-  dois navegadores para testar amigos, convites e chat. Com o mesmo `--banco`, reiniciar mantém tudo.
+  `RACHA_CADASTRO=aberto node tests/plataforma/servidor.mjs --porta 8099 --banco racha88.db` e abra `http://localhost:8099` —
+  crie duas contas em dois navegadores para testar amigos, convites e chat. Com o mesmo `--banco`, reiniciar mantém tudo.
+  (v88.1: sem `RACHA_CADASTRO=aberto` o cadastro fica fechado, como na plataforma — as contas saem do `/admin` › Contas, com
+  `RACHA_OWNER_PASSWORD` definida para o Dono entrar.)
 * **Os testes** (Python 3 + Playwright + Chromium, Node 22+): `bash tests/roda_tudo.sh` roda tudo (≈ 30 min); a saída inteira
   de cada um fica em `tests/saida/logs/` (`bash tests/roda_lista.sh …`). Os da v88: `node tests/v88_plataforma_test.mjs`,
   `node tests/v88_social_test.js`, `node tests/v88_salas_plataforma_test.mjs` e `python3 tests/v88_cliente_test.py`.
@@ -1225,6 +1342,9 @@ no RELATORIO_DE_TESTES da auditoria.
 | `v88_salas_plataforma_test.mjs` (v88) | o mesmo social com o servidor das salas montado na plataforma de teste: as relações vindas do banco, a denúncia de mensagem indo para a tabela do RACHA CONTROL, os avisos da plataforma na hora | 23 ok |
 | `v88_cliente_test.py` (v88) | **o jogo de verdade logado em dois e três navegadores, pelos botões**, na plataforma de teste: o login do jogo, a carteira do servidor, o correio (COLETAR uma vez), a loja (comprar, equipar, preço errado recusado), a amizade entre duas contas (buscar, pedir, aceitar), o status online no painel do lobby, a mensagem direta, o convite para a sala (CRIAR E CHAMAR → ENTRAR), a partida com o amigo, o terceiro assistindo (SAIR, CÂMERA com o CAMPO INTEIRO, o placar), a denúncia pelo perfil (conta nova recusada; depois, no banco) e pela ficha do Chat do Brasil (um VER PERFIL só; o motivo na ficha; no banco com o texto), as partidas rendendo missões (COLETAR), passe (COLETAR), eventos e estatísticas DA CONTA (com o filtro), a privacidade no servidor, o treino pago pelo servidor, o treino com bots sem valer nada e o reinício do servidor com tudo lá | 39/39 |
 | `v88_controle_test.py` (v88) | o controle Bluetooth com um controle simulado no navegador (a API Gamepad de mentira): conectar (os Ajustes › Controles), os menus (andar, confirmar, voltar), as 32 direções, a zona morta, a mesma velocidade do teclado, PASSE e CHUTE com a mesma força do teclado, TROCAR A E B, START (a pausa), o teclado valendo junto e desconectar sem nada preso | 18/18 |
+| `v881_contas_test.mjs` (v88.1) | as contas pelo Dono na plataforma de teste, em três boots com o mesmo banco: o cadastro fechado por padrão, a senha do manual recusada (painel e jogo), a senha do Dono pela variável (sessões e 2FA zerados quando muda), RACHA CONTROL › Contas (criar com a senha gerada ou escolhida, os erros, só o Dono — o administrador e a sessão de jogo recusados —, a senha nova, abrir e fechar o cadastro), o ZERAR CONTAS (a senha e a palavra, só a 000001, nenhuma tabela apontando para conta apagada, o clube do Dono ficando, as salas derrubando e esquecendo, o bilhete de antes recusado mesmo depois de reiniciar), as contas novas com os números de volta sem herdar nada e o contador atrasado pulando o número em uso | 63 ok |
+| `v881_painel_test.py` (v88.1) | **o RACHA CONTROL e o login do site num navegador de verdade, pelos botões** (as páginas do `app/src` com o React desta máquina e um cliente de teste no lugar do `@trpc/react-query`): o login do site com o cadastro fechado, o painel com o 2FA (a chave em grupos de 4) e continuando aberto depois de recarregar, a aba Contas só para o Dono, criar conta (a senha aparece uma vez), os erros, a senha nova, abrir e fechar o cadastro (o site mostra e esconde o "Criar conta"), o ZERAR CONTAS e o SAIR DO PAINEL sem derrubar a sessão do jogo | 26/26 |
+| `v881_jogo_test.py` (v88.1) | o jogo de verdade na plataforma de teste: o login do jogo com o cadastro fechado (só ENTRAR e RECUPERAR, o aviso, o CRIAR CONTA do Ajustes › Conta escondido) e aberto; o aparelho com duas contas (uma nas chaves, outra na gaveta) e o Dono — depois do zerar, as contas novas com os mesmos números entram limpas e o progresso do Dono continua (com a proteção desligada, o teste falha: as contas novas herdavam o das apagadas) | 15/15 |
 
 `dificuldade_medida.py` (Etapa 4) mede Fácil × Difícil com partidas simuladas IA × IA (`tests/saida/dificuldade.txt`).
 
@@ -1331,6 +1451,10 @@ no RELATORIO_DE_TESTES da auditoria.
 
 ## Limitações conhecidas (e o porquê)
 
+* **v88.1 — o zerar e a senha do Dono são no seu servidor**: o ZERAR CONTAS é o botão do RACHA CONTROL › Contas (faça um
+  backup do banco antes; não tem volta) e a senha do Dono muda quando `RACHA_OWNER_PASSWORD` é definida e a plataforma
+  reinicia. Nada disso foi feito no seu banco daqui (não há acesso a ele). O servidor das salas separado da plataforma
+  (`server/servidor.js` com `RACHA_DADOS`) precisa ter o arquivo de dados apagado depois do zerar.
 * **O presente de teste está LIGADO no pacote (v87.2)**: o `presente: true` do `app/public/game/config.js` dá 50.000 moedas
   e 5.000 gemas a quem abre o jogo sem conta (o site de teste e o GitHub Pages). É para testar a loja; **no lançamento,
   apague a linha** — os jogadores que já ganharam ficam com o que ganharam (o saldo mora no progresso de cada um). **Com a
