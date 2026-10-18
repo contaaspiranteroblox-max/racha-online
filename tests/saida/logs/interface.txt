@@ -1,6 +1,6 @@
 
 · 1440x900
-  OK      lobby    toques ≥ 44 px (19 alvos)
+  OK      lobby    toques ≥ 44 px (25 alvos)
   OK      lobby    texto ≥ 12 px (menor: 14.9)
   OK      perfil   toques ≥ 44 px (16 alvos)
   OK      perfil   texto ≥ 12 px (menor: 13.5)
@@ -10,10 +10,10 @@
   OK      clube-criar texto ≥ 12 px (menor: 19.2)
   OK      skins    toques ≥ 44 px (34 alvos)
   OK      skins    texto ≥ 12 px (menor: 15.3)
-  OK      treino   toques ≥ 44 px (14 alvos)
-  OK      treino   texto ≥ 12 px (menor: 18.2)
-  OK      loja     toques ≥ 44 px (11 alvos)
-  OK      loja     texto ≥ 12 px (menor: 15.4)
+  OK      treino   toques ≥ 44 px (28 alvos)
+  OK      treino   texto ≥ 12 px (menor: 17.3)
+  OK      loja     toques ≥ 44 px (23 alvos)
+  OK      loja     texto ≥ 12 px (menor: 14.4)
   OK      amigos   toques ≥ 44 px (14 alvos)
   OK      amigos   texto ≥ 12 px (menor: 19.1)
   OK      copa     toques ≥ 44 px (7 alvos)
@@ -24,14 +24,14 @@
   OK      ranking  texto ≥ 12 px (menor: 16.5)
   OK      replays  toques ≥ 44 px (8 alvos)
   OK      replays  texto ≥ 12 px (menor: 19.2)
-  OK      trocar   toques ≥ 44 px (8 alvos)
-  OK      trocar   texto ≥ 12 px (menor: 14.4)
-  OK      ajustes  toques ≥ 44 px (22 alvos)
+  OK      trocar   toques ≥ 44 px (12 alvos)
+  OK      trocar   texto ≥ 12 px (menor: 13.4)
+  OK      ajustes  toques ≥ 44 px (23 alvos)
   OK      ajustes  texto ≥ 12 px (menor: 12.9)
   OK      nenhum erro de JavaScript
 
 · 1280x720
-  OK      lobby    toques ≥ 44 px (19 alvos)
+  OK      lobby    toques ≥ 44 px (25 alvos)
   OK      lobby    texto ≥ 12 px (menor: 12.6)
   OK      perfil   toques ≥ 44 px (16 alvos)
   OK      perfil   texto ≥ 12 px (menor: 12.5)
@@ -41,10 +41,10 @@
   OK      clube-criar texto ≥ 12 px (menor: 16.2)
   OK      skins    toques ≥ 44 px (35 alvos)
   OK      skins    texto ≥ 12 px (menor: 12.9)
-  OK      treino   toques ≥ 44 px (14 alvos)
-  OK      treino   texto ≥ 12 px (menor: 15.4)
-  OK      loja     toques ≥ 44 px (11 alvos)
-  OK      loja     texto ≥ 12 px (menor: 13)
+  OK      treino   toques ≥ 44 px (28 alvos)
+  OK      treino   texto ≥ 12 px (menor: 14.6)
+  OK      loja     toques ≥ 44 px (23 alvos)
+  OK      loja     texto ≥ 12 px (menor: 12.5)
   OK      amigos   toques ≥ 44 px (14 alvos)
   OK      amigos   texto ≥ 12 px (menor: 16.2)
   OK      copa     toques ≥ 44 px (7 alvos)
@@ -55,9 +55,9 @@
   OK      ranking  texto ≥ 12 px (menor: 13.9)
   OK      replays  toques ≥ 44 px (8 alvos)
   OK      replays  texto ≥ 12 px (menor: 16.2)
-  OK      trocar   toques ≥ 44 px (8 alvos)
+  OK      trocar   toques ≥ 44 px (12 alvos)
   OK      trocar   texto ≥ 12 px (menor: 12.5)
-  OK      ajustes  toques ≥ 44 px (20 alvos)
+  OK      ajustes  toques ≥ 44 px (21 alvos)
   OK      ajustes  texto ≥ 12 px (menor: 12.9)
   OK      nenhum erro de JavaScript
 
@@ -67,8 +67,8 @@
   OK      clube        celular deitado: cabe sem rolar
   OK      clube-criar  celular deitado: cabe sem rolar
   OK      skins        celular deitado: cabe sem rolar
-  OK      treino       celular deitado: cabe sem rolar
-  OK      loja         celular deitado: cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
+  OK      treino       celular deitado: cabe sem rolar (encolheu: div.tl-corpo.tr-corpo 0.81)
+  OK      loja         celular deitado: cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.92)
   OK      amigos       celular deitado: cabe sem rolar
   OK      copa         celular deitado: cabe sem rolar
   OK      chat         celular deitado: cabe sem rolar
@@ -89,8 +89,8 @@
   OK      clube        celular deitado: cabe sem rolar
   OK      clube-criar  celular deitado: cabe sem rolar
   OK      skins        celular deitado: cabe sem rolar
-  OK      treino       celular deitado: cabe sem rolar
-  OK      loja         celular deitado: cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
+  OK      treino       celular deitado: cabe sem rolar (encolheu: div.tl-corpo.tr-corpo 0.81)
+  OK      loja         celular deitado: cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.75)
   OK      amigos       celular deitado: cabe sem rolar
   OK      copa         celular deitado: cabe sem rolar
   OK      chat         celular deitado: cabe sem rolar
@@ -106,7 +106,7 @@
   OK      nenhum erro de JavaScript
 
 · 390x844
-  OK      lobby    toques ≥ 44 px (19 alvos)
+  OK      lobby    toques ≥ 44 px (21 alvos)
   OK      lobby    texto ≥ 12 px (menor: 12.4)
   OK      perfil   toques ≥ 44 px (11 alvos)
   OK      perfil   texto ≥ 12 px (menor: 12.5)
@@ -116,9 +116,9 @@
   OK      clube-criar texto ≥ 12 px (menor: 12.5)
   OK      skins    toques ≥ 44 px (26 alvos)
   OK      skins    texto ≥ 12 px (menor: 12.5)
-  OK      treino   toques ≥ 44 px (9 alvos)
+  OK      treino   toques ≥ 44 px (19 alvos)
   OK      treino   texto ≥ 12 px (menor: 12.5)
-  OK      loja     toques ≥ 44 px (7 alvos)
+  OK      loja     toques ≥ 44 px (17 alvos)
   OK      loja     texto ≥ 12 px (menor: 12.5)
   OK      amigos   toques ≥ 44 px (10 alvos)
   OK      amigos   texto ≥ 12 px (menor: 12.5)
@@ -130,10 +130,10 @@
   OK      ranking  texto ≥ 12 px (menor: 12.4)
   OK      replays  toques ≥ 44 px (4 alvos)
   OK      replays  texto ≥ 12 px (menor: 12.5)
-  OK      trocar   toques ≥ 44 px (8 alvos)
+  OK      trocar   toques ≥ 44 px (12 alvos)
   OK      trocar   texto ≥ 12 px (menor: 12.5)
-  OK      ajustes  toques ≥ 44 px (17 alvos)
-  OK      ajustes  texto ≥ 12 px (menor: 12.9)
+  OK      ajustes  toques ≥ 44 px (16 alvos)
+  OK      ajustes  texto ≥ 12 px (menor: 13)
   OK      pausa: toques ≥ 44 px e texto ≥ 12 px
   OK      editor dos controles: toques ≥ 44 px e texto ≥ 12 px
   OK      editor: Salvar e Cancelar ficam à vista sem rolar
@@ -145,4 +145,4 @@
   OK      em 130% o HUD da partida cresce também
   OK      fica guardado
 
-Etapa 3 · interface em tamanho real: 133/133 verificações ok em 71.0 s
+Etapa 3 · interface em tamanho real: 133/133 verificações ok em 72.6 s

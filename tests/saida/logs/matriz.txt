@@ -1,14 +1,14 @@
 
 · futebol
-   mapa 0: 1v1: andou 9.9u, bots 11.7u, jogo · 2v2: andou 10.1u, bots 15.6u, jogo · 3v3: andou 10.1u, bots 20.1u, jogo · 4v4: andou 9.9u, bots 23.6u, jogo
+   mapa 0: 1v1: andou 10.1u, bots 10.9u, jogo · 2v2: andou 10.1u, bots 24.5u, jogo · 3v3: andou 9.9u, bots 21.6u, jogo · 4v4: andou 9.9u, bots 23.2u, jogo
   OK      futebol   Arena    1v1 a 4v4: abre certo, a tampinha anda, os bots jogam, você na tela
-   mapa 4: 1v1: andou 10.1u, bots 19.0u, gol · 2v2: andou 9.9u, bots 23.5u, jogo · 3v3: andou 10.1u, bots 19.0u, jogo · 4v4: andou 9.9u, bots 24.6u, jogo
+   mapa 4: 1v1: andou 9.9u, bots 18.6u, jogo · 2v2: andou 7.5u, bots 16.8u, jogo · 3v3: andou 9.9u, bots 20.2u, jogo · 4v4: andou 9.9u, bots 25.1u, jogo
   OK      futebol   Estádio  1v1 a 4v4: abre certo, a tampinha anda, os bots jogam, você na tela
 
 · curva
-   mapa 0: 1v1: andou 10.1u, bots 17.0u, gol · 2v2: andou 9.9u, bots 24.9u, jogo · 3v3: andou 9.9u, bots 23.2u, jogo · 4v4: andou 9.9u, bots 23.3u, jogo
+   mapa 0: 1v1: andou 9.9u, bots 19.5u, gol · 2v2: andou 10.1u, bots 24.6u, jogo · 3v3: andou 9.9u, bots 21.0u, jogo · 4v4: andou 10.1u, bots 25.4u, jogo
   OK      curva     Arena    1v1 a 4v4: abre certo, a tampinha anda, os bots jogam, você na tela
-   mapa 4: 1v1: andou 9.9u, bots 15.4u, jogo · 2v2: andou 9.9u, bots 15.8u, jogo · 3v3: andou 10.1u, bots 20.1u, jogo · 4v4: andou 9.9u, bots 25.5u, jogo
+   mapa 4: 1v1: andou 10.1u, bots 16.5u, jogo · 2v2: andou 7.5u, bots 25.4u, jogo · 3v3: andou 10.1u, bots 22.4u, jogo · 4v4: andou 10.1u, bots 23.7u, jogo
   OK      curva     Estádio  1v1 a 4v4: abre certo, a tampinha anda, os bots jogam, você na tela
 
 · os sete treinos
@@ -18,7 +18,7 @@
   OK      treino passe   abre, passa da abertura (jogo) e a tampinha anda (8.5 u)
   OK      treino tabela  abre, passa da abertura (jogo) e a tampinha anda (8.5 u)
   OK      treino final   abre, passa da abertura (prep) e a tampinha anda (8.5 u)
-  OK      treino cond    abre, passa da abertura (jogo) e a tampinha anda (8.5 u)
+  OK      treino cond    abre, passa da abertura (jogo) e a tampinha anda (8.2 u)
   OK      nenhum erro de JavaScript em toda a matriz
 
-Etapa 6 · matriz: 2 modos × 2 mapas × 1v1–4v4 e os 7 treinos: 12/12 verificações ok em 72.5 s
+Etapa 6 · matriz: 2 modos × 2 mapas × 1v1–4v4 e os 7 treinos: 12/12 verificações ok em 73.3 s

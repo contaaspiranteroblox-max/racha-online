@@ -185,3 +185,48 @@ simultâneas nem milhares de conexões; antes de prometer capacidade alta, repit
 ajuste" e o dono continua com o conjunto cheio. Testada em `tests/guard_test.mjs` (compila o guard.ts de verdade com o banco
 fingido: rode `node tests/compila_guard.cjs` antes). Se você já tinha "ajustado" permissões de alguém no painel e estranhar
 a pessoa perder acessos, é a correção fazendo efeito — revise os ajustes salvos.
+
+## v88 — A atualização completa dos menus (amigos, mensagens, correio, loja, missões, passe, eventos, estatísticas, clube, denúncias, conta)
+
+**Banco (obrigatório).** Faça o backup e rode `npm run db:push` (o `db/schema.ts` descreve tudo) **ou** aplique à mão
+`db/migrations/v88_social.sql` (precisa da `v84_economia.sql` antes; o arquivo traz o backup, o aplicar e o rollback).
+Entram as tabelas `mensagens`, `correio`, `correio_global`, `missoes_progresso`, `eventos`, `eventos_progresso`,
+`passe_temporada` e `clube_pedidos`, e as colunas da privacidade (`mostra_online`, `aceita_convites`), dos cosméticos
+equipados, da bio, da exclusão de conta, do melhor da partida e de quem jogou junto (`partidas`), do contexto das denúncias
+e o papel `admin` no clube. Nada antigo é apagado.
+
+**A carteira passou a ser a da conta.** Logado, as moedas, as gemas e os itens moram no servidor (`carteiras`,
+`transacoes`, `itens_usuario`): o jogo só mostra — ganhar e gastar passam pela plataforma (as partidas, o treino, as
+missões, o passe, o correio, a loja, a troca de gemas e as peças da tampinha), sempre numa transação e sem confiar em valor
+mandado pelo aparelho. Na primeira vez de cada conta, o saldo da cópia do progresso (a da v82) entra uma vez, até 50.000
+moedas, 5.000 gemas e 200 peças (`MIGRACAO_TETO` em `api/racha/economia.ts`). Tetos do dia: 4.000 moedas de partidas e
+1.500 do treino (`app/contracts/v88.ts`). Sem conta (SÓ TREINAR OFFLINE), a economia do aparelho continua a de sempre.
+
+**O catálogo** (`contracts/catalogo88.json`) é o mesmo arquivo para o jogo e para o servidor: o build do jogo
+(`python3 tools/aplicar_rua.py`) cola ele no `racha.html`. Mudou um preço ou um item: rode o build do jogo **e** o
+`npm run build`, e publique os dois juntos.
+
+**Variável nova** (opcional, só para teste): `RACHA_PRESENTE_TESTE=1` põe no correio de cada conta, uma vez, a carta
+"Presente de teste" com 50.000 moedas e 5.000 gemas (`RACHA_PRESENTE_TESTE=100000,10000` para outro valor). No lançamento,
+não defina. (O `presente` do `public/game/config.js`, da v87.2, só vale para a economia do aparelho, sem conta.)
+
+**O servidor das salas montado aqui** (`api/lib/salas.ts`) já recebe o que o social ao vivo precisa (as relações da conta
+vindas do banco e a denúncia de mensagem indo para a tabela `denuncias`): nada para configurar. Se você roda o servidor
+das salas separado (`node server/servidor.js --segredo …`), as relações vêm assinadas no bilhete da conta e as denúncias de
+mensagem ficam só no registro daquele servidor.
+
+**RACHA CONTROL** (`/admin`, o mesmo login com 2FA): as abas novas **📅 Eventos** (criar, editar, ligar/desligar; os
+padrões — login diário, desafio da favela, copa dos amigos, temporada — entram sozinhos) e **✉️ Correio** (carta para uma
+conta ou para todos, com moedas, gemas, um item e XP do passe; aviso do sistema; as cartas para todos). Permissões:
+`gerenciar_eventos`, `enviar_itens` e `distribuir_global`; cada ação vai para a auditoria. As denúncias novas (pelo perfil,
+pelo resultado e pelas mensagens do chat, com o motivo e o texto da mensagem) caem na aba **🚩 Denúncias** de sempre.
+As abas novas foram conferidas só pela sintaxe (o site não compila nesta máquina); as rotas por trás delas (`admin88.*`)
+foram testadas na plataforma de teste (`tests/v88_plataforma_test.mjs`).
+
+**Atualizar um servidor no ar:** backup do banco → `git pull` → `npm install` → `npm run db:push` (ou o SQL) →
+`npm run build` → reiniciar o `npm start`. O jogo e a plataforma vão juntos na mesma versão (o jogo da v88 chama as rotas
+novas; um jogo antigo continua funcionando com a plataforma nova, sem as telas novas).
+
+**Testar sem MySQL** (o código de verdade da plataforma num SQLite, sem `npm install`): `node tests/plataforma/servidor.mjs
+--porta 8099 --teste --banco /tmp/racha88.db` sobe a plataforma de teste com o servidor das salas montado e o jogo em
+`http://localhost:8099/game/racha.html`; `node tests/v88_plataforma_test.mjs` e `python3 tests/v88_cliente_test.py` usam ela.

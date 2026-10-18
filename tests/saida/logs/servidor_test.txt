@@ -7,7 +7,7 @@
 1) A SALA: criar, entrar, times, árbitro
   ok   hello devolve id, token e o ID da turma (v82: 7 números para quem não tem conta; as contas têm 6)
   ok   depois do hello vem a lista de salas
-  FALHOU criar: código de 6, dono no Time A, as regras pedidas (COM CURVA no ESTÁDIO)  → {"code":"UD3HJ9","name":"Racha da Laje","host":"srv","admin":"uicefh6rrk","servidor":true,"n":1,"map":4,"jogo":"curva","tempo":0,"bots":false,"pub":true,"state":"waiting","ranked":false,"round":0,"roster":["uicefh6rrk",null],"members":[{"id":"uicefh6rrk","name":"Ana","selo":"","flag":"BR","skin":"T.
+  ok   criar: código de 6, quem criou é o admin (v83: a partida é do servidor, host srv) e fica no Time A, as regras pedidas (COM CURVA no ESTÁDIO)
   ok   v70.2: sala pedida no Escadão e no vôlei abre no futebol e no mapa padrão (v79: o Estádio)
   ok   criar: histórico do chat e a mensagem de entrada
   ok   o árbitro vai para os espectadores (seat slot -1)
@@ -21,59 +21,60 @@
   ok   só o dono muda as regras
   ok   de volta ao 1v1: Ana × Beto
 
-2) A PARTIDA: começar, comandos, quadros, o resultado conferido
-  ok   começar: os dois recebem start (rodada 1)
-  FALHOU o comando do convidado chega ao anfitrião, com a curva/finta/drible (k) e o analógico limitado  → null
-  ok   o anfitrião não manda comando (ele simula)
-  FALHOU o quadro do anfitrião chega ao convidado
-  ok   quadro de quem não é o anfitrião é ignorado
+2) A PARTIDA (v83: hospedada — o motor do servidor joga, manda os quadros e apita o fim; a turma confere o resultado)
+  ok   começar: os dois recebem start (rodada 1); a partida é do servidor (host srv) e quem criou é o admin
+  ok   o motor da sala tem a Ana e o Beto nos lugares do roster
+  ok   o comando do Beto vai para o motor do servidor (o analógico limitado, o botão e o k)
+  ok   quem criou a sala também manda o comando para o servidor (ninguém simula no aparelho; nada é repassado)
+  ok   os quadros saem do motor do servidor para todos (Ana e Beto)
+  ok   quadro mandado por um aparelho é ignorado (a partida é do servidor)
   ok   quem entra no meio assiste: recebe start com o placar atual (resume)
-  FALHOU fim depressa demais: o resultado não vale (motivo curta)  → null
+  ok   o fim mandado por um aparelho é ignorado: só o motor encerra
+  ok   o motor apitou depressa demais: o resultado não vale (motivo curta)
   ok   resultado que não vale não conta partida
-  FALHOU a sala fica em ended (revanche)
+  ok   a sala fica em ended (revanche) e o motor desliga
   ok   convidado pede revanche (sem "on" = sim)
-  FALHOU o dono pedindo revanche começa a rodada 2  → ["playing",1]
-  ok   fim de rodada velha é ignorado
-  FALHOU partida inteira: o resultado vale (vitória do Time A)  → null
-  FALHOU vale: vitória (troféu), derrota e os gols de cada um pelos quadros  → [{"jogos":0,"vit":0,"der":0,"emp":0,"gols":0},{"jogos":0,"vit":0,"der":0,"emp":0,"gols":0}]
-  FALHOU o duelo 1v1 Ana × Beto fica guardado
-  FALHOU placar do fim diferente do que os quadros mostraram: não vale  → null
-  FALHOU futebol vai a 3: 4 × 1 não vale  → null
+  ok   o admin pedindo revanche começa a rodada 2 (com um motor novo)
+  ok   partida inteira: o resultado vale (vitória do Time A)
+  ok   vale: vitória (troféu), derrota e os gols de cada um (pelos gols do motor)
+  ok   o duelo 1v1 Ana × Beto fica guardado
+  ok   futebol vai a 3: 4 × 1 não vale
   ok   a sala não vira basquete
-  FALHOU placar de basquete (13 × 10) numa sala de futebol não vale  → null
-  FALHOU COM CURVA: 3 × 1 vale  → null
-  FALHOU a sala não vira ginga
-  FALHOU placar de ginga (6 × 4) numa sala com curva não vale (vai a 3)  → null
-  FALHOU com 2 minutos: acabar com 1 minuto não vale  → null
-  FALHOU com tempo, empate não termina (gol de ouro): não vale
-  FALHOU com tempo: 4 × 2 depois dos 2 minutos vale
-  ok   a pausa do anfitrião chega a todos
-  FALHOU o tempo pausado não conta: 8 s de jogo é curto demais  → null
-  FALHOU encerrada pelo árbitro (mensagem escondida e|rodada): não vale  → null
+  ok   placar de basquete (13 × 10) numa sala de futebol não vale
+  ok   COM CURVA: 3 × 1 vale
+  ok   a sala não vira ginga
+  ok   placar de ginga (6 × 4) numa sala com curva não vale (vai a 3)
+  ok   com 2 minutos: acabar com 1 minuto não vale
+  ok   com tempo, empate não termina (gol de ouro): não vale
+  ok   com tempo: 4 × 2 depois dos 2 minutos vale
+  ok   a pausa do admin chega a todos e para o motor do servidor
+  ok   o tempo pausado não conta: 8 s de jogo é curto demais
+  ok   encerrada pelo árbitro (mensagem escondida e|rodada): não vale
   ok   a mensagem escondida do árbitro passa pelo chat da sala (o jogo esconde)
 
-3) QUEM CAI E VOLTA, QUEM SAI, REMOVER, PASSAR O DONO, JOGAR AGORA
-  ok   o convidado caiu no meio: a vaga fica livre (o anfitrião põe um bot) e a sala avisa
+3) QUEM CAI E VOLTA, QUEM SAI, REMOVER, PASSAR O ADMIN, JOGAR AGORA (v83: a partida não para por ninguém)
+  ok   o Beto caiu no meio: um bot do servidor assume a tampinha na hora (o lugar fica guardado) e a sala avisa
+  ok   a partida segue (ninguém roda a partida no aparelho)
   ok   voltou com o token: o mesmo id
-  FALHOU voltou para o mesmo lugar no meio da partida, com o placar (resume)  → {"type":"start","room":{"code":"UD3HJ9","name":"Racha novo","host":"srv","admin":"uicefh6rrk","servidor":true,"n":1,"map":0,"jogo":"futebol","tempo":0,"bots":false,"pub":true,"state":"playing","ranked":false,"round":1,"roster":["uicefh6rrk","udnwuu2m37"],"members":[{"id":"uicefh6rrk","name":"Ana","s
-  FALHOU o anfitrião caiu: a partida para (interrupted) e a sala passa para quem está há mais tempo  → [null,"srv","playing"]
-  FALHOU a Ana voltou como convidada (o dono continua o novo)
+  ok   voltou para o mesmo lugar no meio da partida, com o placar (resume), e reassumiu a tampinha
+  ok   quem criou a sala caiu: a partida SEGUE no servidor e o admin passa para quem está há mais tempo
+  ok   a Ana voltou (o admin continua o novo)
   ok   remover da sala: quem sai recebe left e o aviso
   ok   removido não volta na hora (30 s)
-  FALHOU passar o dono
-  FALHOU JOGAR AGORA (rapido): entra com lugar num time  → [null,"udnwuu2m37"]
-  ok   o dono saiu: left para ele e a sala passa para outro
+  ok   passar o admin (mesmo com a partida rolando)
+  ok   JOGAR AGORA (rapido): entra com lugar num time
+  ok   o admin saiu: left para ele e a sala passa para outro
   ok   trocou o nome e a tampinha: o cartão da sala atualiza para todos
 
-4) A COPA DOS AMIGOS (1v1 com 4)
+4) A COPA DOS AMIGOS (1v1 com 4; cada duelo hospedado no servidor)
   ok   a copa precisa de 4 ou 8 pessoas
-  ok   só o dono sorteia
+  ok   só o admin sorteia
   ok   sorteio: 2 duelos, 1v1 sem bots, o primeiro duelo nos times
-  FALHOU o primeiro duelo tem vencedor  → {"a":"ump4fknnka","b":"ucewxik1qk"}
-  FALHOU a final: os dois vencedores  → {"name":"Copa da Laje","rounds":[],"matches":[{"a":"ump4fknnka","b":"ucewxik1qk"},{"a":"uaskvlgvb5","b":"ugwsvhuagn"}],"champion":null}
-  FALHOU campeão e a galeria de campeões  → [null,[]]
-  FALHOU encerrar a copa volta às regras da sala
-  FALHOU social: a galeria de campeões
+  ok   o primeiro duelo tem vencedor
+  ok   a final: os dois vencedores
+  ok   campeão e a galeria de campeões
+  ok   encerrar a copa volta às regras da sala
+  ok   social: a galeria de campeões
 
 5) OS CLUBES (as mesmas regras da plataforma)
   ok   nome curto não vale
@@ -129,16 +130,90 @@
   ok   com o bilhete da plataforma: o id e o ID público da conta
   ok   bilhete adulterado não vale (entra como visitante)
   ok   bilhete vencido não vale
-  FALHOU (erro) TypeError: Cannot read properties of null (reading 'selo')
-    at regras (/home/claude/racha-online/tests/servidor_test.js:364:54)
-    at /home/claude/racha-online/tests/servidor_test.js:669:18
-    at Object.<anonymous> (/home/claude/racha-online/tests/servidor_test.js:673:3)
-    at Module._compile (node:internal/modules/cjs/loader:1706:14)
-    at Object..js (node:internal/modules/cjs/loader:1839:10)
-    at Module.load (node:internal/modules/cjs/loader:1441:32)
-    at Function._load (node:internal/modules/cjs/loader:1263:12)
-    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+  ok   o resultado que vale vem com o selo da conta (a plataforma confere)
+  ok   o selo não confere com outro segredo nem adulterado
+  ok   v82: o selo de uma sala personalizada diz que não é ranqueada (k:0) e o tamanho (n:1)
+  ok   v82: as duas contas caem na sala ranqueada
+  ok   v82: o selo da ranqueada leva k:1 e n:1 (cada um com o placar do lado dele)
+  ok   v82: visitante tem ID de 7 dígitos (não bate com o de uma conta)
 
-servidor da turma: 83 ok, 31 falharam
+8) A ORIGEM
+  ok   sem Origin (programa): pode
+  ok   o mesmo endereço do servidor: pode
+  ok   localhost: pode
+  ok   outra página: não pode
+  ok   outra página na lista: pode
+  ok   arquivo aberto direto (null): só se estiver na lista
+
+10) v79 · A RANQUEADA ONLINE: a fila, a sala ranqueada e o selo da conta
+  ok   fila: o servidor confirma a procura (1v1, até 20 s)
+  ok   sozinho na fila: ainda nada
+  ok   dois no 1v1: a sala ranqueada no Estádio, futebol (v80: 3:00 no relógio do servidor, até 3 gols), fechada (fora da lista)
+  ok   um em cada time; a partida é do servidor (host srv, sem admin na ranqueada); já começou
+  ok   os dois recebem o start (a partida começa sem ninguém apertar nada)
+  ok   a sala ranqueada não aparece na lista de salas
+  ok   quem foi para a sala sai da fila
+  ok   na ranqueada os times são do sorteio (seat recusado)
+  ok   config não muda a ranqueada
+  ok   quem é de fora não entra pelo código
+  ok   o fim conferido (apitado pelo motor) sai com ranked:true para os dois
+  ok   na ranqueada não tem revanche (procura de novo)
+  ok   todo mundo saiu: a sala ranqueada fecha
+  ok   2v2 com duas pessoas: antes de 8 s, ninguém começa (ainda pode chegar gente)
+  ok   depois de 8 s: as duas pessoas na mesma sala e os bots nas outras vagas
+  ok   os times pelos pontos: o mais forte de um lado, o outro do outro
+  ok   sozinho: aos 12 s ainda procurando
+  ok   sozinho: aos 20 s vem fila_nada e ele sai da fila
+  ok   fila_sai: desistiu, saiu da fila
+  ok   caiu procurando: sai da fila
+  ok   estando numa sala, a fila é recusada (saia da sala antes)
+  ok   o bilhete da conta vale (hello com conta e com o seu selo: o V do lobby)
+  ok   no cartão da sala vai o selo da conta (verificado vem antes de parceiro)
+  ok   na lista de salas, o selo do dono
+  ok   bilhete com outra assinatura (ou o selo mandado pelo jogo) não vale: sem selo (nem no hello)
+  ok   no Chat do Brasil a mensagem leva o selo
+
+11) v80 · A PARTIDA NORMAL: 3:00 no relógio do servidor, prorrogação só no 0 × 0, até 3 gols, empate e o fim conferido pela linha do tempo
+  ok   a sala da partida normal: regra v80, 3 minutos, o relógio do servidor já no start (0 ms, 180 s + 120 s de prorrogação)
+  ok   a cada segundo, o relógio do servidor chega para os dois (5 s de jogo)
+  ok   v83: na ranqueada hospedada ninguém pausa (nem quem saiu da tela): o relógio do servidor segue
+  ok   o relógio da ranqueada é só do servidor (17 s)
+  ok   1 × 1 aos 2:10: não pode acabar ainda (acabou antes do tempo)
+  ok   1 × 1 no fim dos 3:00: EMPATE que vale (sem prorrogação)
+  ok   o empate fica guardado como empate
+  ok   gol aos 3:05 com 1 × 1: não vale (gol depois do tempo)
+  ok   2 × 1 no fim dos 3:00: vence quem tem mais gols
+  ok   0 × 0 nos 3:00 → prorrogação: o gol aos −0:20 é GOL DE OURO e vence na hora
+  ok   0 × 0 aos −0:20: a prorrogação ainda não acabou
+  ok   0 × 0 até −2:00: EMPATE que vale
+  ok   depois do gol de ouro a partida acabou: outro gol não vale
+  ok   gol depois de −2:00 não vale
+  ok   3 × 0 aos 1:00: o 3º gol acaba a partida na hora (vale)
+  ok   gol depois do 3º gol: não vale (a partida já tinha acabado)
+  ok   um gol com a hora do jogo (0:20) longe do relógio do servidor (0:40): não vale (relógio diferente)
+  ok   o gol leva a hora certa dele (a do motor) na linha do tempo
+  ok   2 × 0 conferido pela linha do tempo
+  ok   aos 3:11 o relógio da turma não encerra a sala hospedada (quem apita é o motor)
+  ok   o apito do motor no fim dos 3:00: 1 × 2, vale, servidor:true
+  ok   a sala sai do jogo (state ended)
+  ok   0 × 0 até o fim da prorrogação: o motor apita o empate (vale)
+  ok   o servidor diz quanto dura (20 s + 10 s neste teste): o jogo usa o que vem na sala
+  ok   com o tempo encurtado: 1 × 1 no fim dos 20 s é empate que vale
+  ok   a sala personalizada (3 minutos) fica com as regras dela: sem a regra v80 e sem o relógio do servidor
+
+9) PELA REDE: HTTP, origem e duas sessões independentes
+  ok   a raiz leva ao jogo
+  ok   o jogo é entregue pelo mesmo endereço (com o config.js)
+  ok   o config.js da publicação diz PRODUÇÃO
+  ok   /saude responde
+  ok   nada fora da pasta pública
+  ok   conexão de uma página de fora (Origin estranho) é recusada
+  ok   duas sessões: dois ids
+  ok   a sala aberta aparece na lista da outra sessão
+  ok   começou: start nas duas sessões
+  ok   v83: o comando vai para o motor do servidor (nada é repassado) e os quadros do servidor chegam às duas sessões pela rede
+  ok   o quadro e o fim mandados por um aparelho são ignorados (e anotados como suspeitos)
+  ok   reconectou pela rede com o token: o mesmo id
+  ok   e voltou para a sala
+
+servidor da turma: 191 ok, 0 falharam

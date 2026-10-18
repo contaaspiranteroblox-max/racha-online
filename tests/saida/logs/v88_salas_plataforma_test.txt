@@ -1,0 +1,35 @@
+1) três contas, duas delas amigas (pela API), e os WebSockets com a sessão do site
+  ok   as três contas entram nas salas pela sessão do site (sem bilhete)
+  ok   as relações vêm do banco já na entrada: a Bruna vê o Rafa online
+  ok   e o Rafa recebe na hora que a Bruna entrou
+  ok   o Caio (que não é amigo de ninguém) não recebe status de ninguém
+
+2) o aviso na hora e a amizade/bloqueio refletindo nos WebSockets
+  ok   o Caio pediu amizade: o aviso chega na hora pelo WebSocket do Rafa (conta_aviso)
+  ok   o Rafa aceitou: os dois passam a se ver online na hora (sem reconectar)
+  ok   o Rafa bloqueou o Caio: para o Caio, o Rafa fica offline na hora
+  ok   e o Caio não consegue mandar mensagem para o Rafa
+
+3) o convite para a sala, o chat dos amigos e o chat da sala
+  ok   a Bruna recebe o convite do Rafa na hora
+  ok   ela aceitou e já entrou no time que faltava
+  ok   o chat dos amigos: a mensagem do Rafa chega à Bruna
+  ok   o chat da sala chega (com o número para denunciar)
+
+4) a denúncia de uma mensagem do chat vai para o banco (a fila do RACHA CONTROL)
+  ok   a denúncia está na tabela denuncias, com o motivo, a origem (chat da sala), a sala e a mensagem
+  ok   a mesma denúncia não entra duas vezes
+
+5) a partida online (no servidor), alguém assistindo pela lista, e o resultado com quem jogou junto
+  ok   começou (a partida roda no servidor)
+  ok   quem está de fora vê a sala em jogo na lista, com o placar e "assistir"
+  ok   o Caio entra para ASSISTIR: recebe a partida e os quadros do servidor
+  (esperando o tempo mínimo de partida de verdade no servidor)
+  ok   o servidor encerrou 3 × 0: o resultado vale e o Rafa é o melhor da partida
+  ok   a conta do Rafa: a partida online vale, com o melhor da partida e "jogou com um amigo" (do selo, não do aparelho)
+  ok   e a missão "jogar com um amigo" completou
+  ok   a conta da Bruna: derrota, sem o melhor da partida, mas com o amigo
+  ok   no banco: a partida guarda quem jogou junto e o melhor da partida
+  ok   as estatísticas da conta (filtro online) mostram a partida e o melhor da partida
+
+v88 · o social ao vivo com a plataforma: 23 ok, 0 falharam

@@ -77,4 +77,4 @@
   OK      demonstração sem servidor: SALAS ONLINE DESLIGADAS, sem tentar conectar
   OK      o bloqueio de rede só existe na demonstração; presente:false tira o presente de teste
 
-Etapa 5 · as telas do clube e do online em tamanho real: 68/68 verificações ok em 41.5 s
+Etapa 5 · as telas do clube e do online em tamanho real: 68/68 verificações ok em 42.2 s

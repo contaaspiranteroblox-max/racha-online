@@ -162,7 +162,8 @@ async def principal():
                 P.confere([t['t'] for t in l['tiles']] == ['LOJA', 'TAMPINHA', 'CLUBE', 'TREINO', 'SALAS', 'AMIGOS', 'RANKING', 'EVENTOS']
                           and [t['ic'] for t in l['tiles']] == ['loja', 'tampinha', 'clube', 'treino', 'salas', 'amigos', 'ranking', 'eventos'],
                           'os 8 botões dos lados com os desenhos da imagem (o EVENTOS entrou na coluna da direita)', l['tiles'])
-                P.confere(l['topo'][-3:] == ['lb-chat', 'tp-ic.v77-amg', 'lb-ajustes'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, o chat, os AMIGOS e os ajustes (como na imagem)', l['topo'])
+                # v88: entre os AMIGOS e os ajustes apareceu o CORREIO (o botão que já existia escondido: mensagens e correio)
+                P.confere(l['topo'][-4:] == ['lb-chat', 'tp-ic.v77-amg', 'lb-correio', 'lb-ajustes'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, o chat, os AMIGOS, (v88) o CORREIO e os ajustes', l['topo'])
                 P.confere(l['xp'] == '0 / 100' and l['modo'] == ['2 VS 2', 'RANQUEADA · ESTÁDIO'] and l['premio'] and l['estrela'],
                           'você com o XP em números; o MODO com o tamanho grande (2 VS 2) e embaixo o que vai ser jogado (v79: RANQUEADA · ESTÁDIO); os DESAFIOS com a estrela e o prêmio na pilha de moedas', l)
                 P.confere(l['carrossel'] == 0 and sorted(l['cvs']) == sorted(['lb-brilho', 'lb-eu-cv']) or l['carrossel'] == 0 and 'lb-brilho' in l['cvs'] and len(l['cvs']) <= 2,

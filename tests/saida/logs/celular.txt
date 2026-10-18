@@ -22,8 +22,8 @@
   OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
   OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.83)
   OK      replays             cabe sem rolar
-  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
-  OK      treino              cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.92)
+  OK      treino              cabe sem rolar (encolheu: div.tl-corpo.tr-corpo 0.83)
   OK      tampinha            cabe sem rolar
   OK      tampinha-modelos    cabe sem rolar
   OK      tampinha-inventario cabe sem rolar
@@ -43,7 +43,7 @@
   OK      missoes             cabe sem rolar
   OK      ajustes-audio       cabe sem rolar
   OK      ajustes-visual      cabe sem rolar
-  OK      ajustes-controles   cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar (encolheu: div.ajx-corpo 0.71)
   OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
   OK      ajustes-camera      cabe sem rolar (encolheu: div.ajx-corpo 0.93)
   OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
@@ -69,8 +69,8 @@
   OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
   OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.81)
   OK      replays             cabe sem rolar
-  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
-  OK      treino              cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.92)
+  OK      treino              cabe sem rolar (encolheu: div.tl-corpo.tr-corpo 0.81)
   OK      tampinha            cabe sem rolar
   OK      tampinha-modelos    cabe sem rolar
   OK      tampinha-inventario cabe sem rolar
@@ -90,7 +90,7 @@
   OK      missoes             cabe sem rolar
   OK      ajustes-audio       cabe sem rolar
   OK      ajustes-visual      cabe sem rolar
-  OK      ajustes-controles   cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar (encolheu: div.ajx-corpo 0.86)
   OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
   OK      ajustes-camera      cabe sem rolar
   OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
@@ -116,8 +116,8 @@
   OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
   OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.81)
   OK      replays             cabe sem rolar
-  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
-  OK      treino              cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.88)
+  OK      treino              cabe sem rolar (encolheu: div.tl-corpo.tr-corpo 0.79)
   OK      tampinha            cabe sem rolar
   OK      tampinha-modelos    cabe sem rolar
   OK      tampinha-inventario cabe sem rolar
@@ -137,7 +137,7 @@
   OK      missoes             cabe sem rolar
   OK      ajustes-audio       cabe sem rolar
   OK      ajustes-visual      cabe sem rolar
-  OK      ajustes-controles   cabe sem rolar
+  OK      ajustes-controles   cabe sem rolar (encolheu: div.ajx-corpo 0.77)
   OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
   OK      ajustes-camera      cabe sem rolar (encolheu: div.ajx-corpo 0.94)
   OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
@@ -163,8 +163,8 @@
   OK      perfil › PARTIDAS: as 30 últimas partidas à vista (três colunas)
   OK      ranking             cabe sem rolar (encolheu: div.tl-corpo.rk-corpo 0.81)
   OK      replays             cabe sem rolar
-  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.76)
-  OK      treino              cabe sem rolar
+  OK      loja                cabe sem rolar (encolheu: div.tl-corpo.lj-corpo 0.75)
+  OK      treino              cabe sem rolar (encolheu: div.tl-corpo.tr-corpo 0.81)
   OK      tampinha            cabe sem rolar
   OK      tampinha-modelos    cabe sem rolar
   OK      tampinha-inventario cabe sem rolar
@@ -184,7 +184,7 @@
   OK      missoes             cabe sem rolar
   OK      ajustes-audio       cabe sem rolar
   OK      ajustes-visual      cabe sem rolar
-  OK      ajustes-controles   cabe sem rolar (encolheu: div.ajx-corpo 1.00)
+  OK      ajustes-controles   cabe sem rolar (encolheu: div.ajx-corpo 0.76)
   OK      Ajustes › Controles: no aparelho só de toque o teclado físico sai (fica a nota)
   OK      ajustes-camera      cabe sem rolar (encolheu: div.ajx-corpo 0.92)
   OK      Ajustes: as abas, o PRONTO e o ✕ numa linha; as opções em duas colunas
@@ -208,4 +208,4 @@
   OK      no computador os Ajustes ficam como estavam (e o teclado aparece)
   OK      nenhum erro de JavaScript
 
-v70.1 · celular: só na horizontal e tudo cabe na tela: 195/195 verificações ok em 106.6 s
+v70.1 · celular: só na horizontal e tudo cabe na tela: 195/195 verificações ok em 110.9 s

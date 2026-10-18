@@ -36,11 +36,17 @@
    partida segue; ele volta para o mesmo lugar em até 90 s. Snapshot ou finish mandados por aparelho em sala hospedada
    não valem nada (viram registro de suspeito para investigação — sem banimento automático). Nas salas hospedadas a
    publicação mostra host:'srv' e o criador em admin: o jogo já entende isso como "a partida na nuvem" (v1.3 do cliente).
+   v88 · O SOCIAL AO VIVO (server/social88.js): o status dos amigos (online, na sala, procurando, em partida), os convites
+   para a sala e para o time, o chat dos amigos, do clube e da equipe, o bloqueio aplicado no servidor (chat, convites,
+   históricos), a denúncia com motivo (vai para a plataforma quando ela está montada aqui), o histórico sem o texto das
+   mensagens escondidas, o placar das salas em jogo na lista (para assistir) e o selo com quem jogou junto (g) e o melhor
+   da partida (v). A física, a fila e a conferência do resultado não mudaram.
    ===================================================================================================================== */
 const {Banco, sha, novoToken, novoId, limpa, inteiro, assina, confere} = require('./banco');
 const {Clubes, Erro} = require('./clubes');
 const {GerenteAuto} = require('./partida/gerente');   // v83: as partidas autoritativas (a física no servidor)
 const {PartidaSala} = require('./partida/sala');      // v83: as salas 100% hospedadas (a física das salas no servidor)
+const social88 = require('./social88');               // v88: amigos, convites, chats novos, bloqueio e denúncia
 
 const MODOS = ['futebol', 'curva', 'ginga', 'volei', 'americano', 'basquete'];   // (todos os que o jogo sabe conferir)
 const MODOS_SALA = ['futebol', 'curva'];             // v70.2: as salas só abrem FUTEBOL e COM CURVA (os outros modos ficaram guardados no jogo)
@@ -100,6 +106,7 @@ class Turma {
     this.log = typeof o.log === 'function' ? o.log : (t => console.log(new Date().toISOString().slice(0, 19).replace('T', ' ') + ' ' + t));
     this.b = new Banco(o.arquivo, t => this.log(t));
     this.clubes = new Clubes(this.b, {mudou:id => this.clubeMudou(id)});
+    this.v88Inicia(o);                                   // v88: relacoesDe e denuncia (a plataforma montada aqui), os convites, os chats novos
     this.clientes = new Set();
     this.porId = new Map();                              // id → a conexão das salas (a mais nova)
     this.salas = new Map();
@@ -121,7 +128,7 @@ class Turma {
   conecta(ws, req){
     const ip = (req && (String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || (req.socket && req.socket.remoteAddress))) || '';
     const r = req && req.racha;                          // (montado na plataforma: a conta da sessão do site, conferida antes do aperto de mão)
-    const contaSessao = r && /^\d{1,9}$/.test(String(r.idPublico)) ? {idPublico:String(Number(r.idPublico)).padStart(6, '0'), nome:limpa(r.nome, 20) || 'Jogador', selo:seloDe(r.selos)} : null;
+    const contaSessao = r && /^\d{1,9}$/.test(String(r.idPublico)) ? {idPublico:String(Number(r.idPublico)).padStart(6, '0'), nome:limpa(r.nome, 20) || 'Jogador', selo:seloDe(r.selos), rel:r.rel || null} : null;   // v88: + as relações da conta (amigos, bloqueios, privacidade), do banco
     const c = {ws, id:null, brasil:false, brasilId:null, nome:'Jogador', skin:'', flag:'BR', avatar:null, conta:null, contaSessao, selo:'', sala:null, p2p:false,
       ip, baldes:{}, substituido:false, ultBrasil:0, ultTextoBrasil:'', clubeAnunciado:null};
     ws.vivo = true;
@@ -168,6 +175,7 @@ class Turma {
     if (!c.id) return;
     if (this.porId.get(c.id) === c) this.porId.delete(c.id);
     if (c.substituido) return;                           // (a conexão nova do mesmo jogador ficou com a sala)
+    this.v88Saiu(c);                                     // v88: os amigos veem offline
     if (c.sala) this.sai(c, 'caiu');
     this.listaMudou();
   }
@@ -183,6 +191,7 @@ class Turma {
       if (!r.members.some(x => !x.bot) && r.vaziaAte < agora) this.fechaSala(r);
     }
     for (const [id, t] of this.chat.silencio) if (t < agora) this.chat.silencio.delete(id);
+    this.v88Poda();                                      // v88: o histórico velho dos chats novos (a cada 10 min)
   }
   status(){ return {ok:true, nome:this.nome, salas:this.salas.size, online:this.porId.size, chat:[...this.clientes].filter(c => c.brasil).length, clubes:Object.keys(this.b.d.clubes).length, auto:this.auto.resumo()}; }   // v83: + as partidas autoritativas no /saude
   fecha(){ this.auto.fecha(); clearInterval(this.relogio); clearInterval(this.cronoT); clearTimeout(this.listaT); clearTimeout(this.filaT); for (const c of this.clientes) try { c.ws.close(1001, 'servidor desligando'); } catch (_) {} this.b.salvaJa(); }
@@ -191,7 +200,7 @@ class Turma {
   bilhete(txt){                                          // o bilhete da conta do RACHA (assinado pela plataforma)
     const o = confere(this.segredo, txt);
     if (!o || !/^\d{1,9}$/.test(String(o.p)) || typeof o.n !== 'string') return null;
-    return {idPublico:String(Number(o.p)).padStart(6, '0'), nome:limpa(o.n, 20) || 'Jogador', selo:seloDe(o.s)};   // v79: o selo vem assinado (s: a lista da conta)
+    return {idPublico:String(Number(o.p)).padStart(6, '0'), nome:limpa(o.n, 20) || 'Jogador', selo:seloDe(o.s), rel:social88.relDoBilhete(o)};   // v79: o selo vem assinado (s: a lista da conta) · v88: e as relações (a, b, o, c, k, q)
   }
   gente(id){
     let g = this.b.d.gente[id];
@@ -219,7 +228,7 @@ class Turma {
     g.nome = conta ? conta.nome : limpaNome(m.name); g.skin = skinOk(m.skin) || g.skin; g.flag = flagOk(m.flag) || g.flag || 'BR';
     g.visto = Date.now(); if (conta) g.conta = conta.idPublico;
     this.b.marca();
-    Object.assign(c, {id, conta, selo:conta ? conta.selo || '' : '', nome:g.nome, skin:g.skin, flag:g.flag, avatar:avatarOk(m.avatar), clubeAnunciado:clubeAnunciado(m.clube)});
+    Object.assign(c, {id, conta:conta ? {idPublico:conta.idPublico, nome:conta.nome, selo:conta.selo} : null, selo:conta ? conta.selo || '' : '', nome:g.nome, skin:g.skin, flag:g.flag, avatar:avatarOk(m.avatar), clubeAnunciado:clubeAnunciado(m.clube)});
     const velho = this.porId.get(id);
     if (velho && velho !== c){                           // o mesmo jogador abriu de novo (voltou a internet, ou outra aba): a nova fica
       velho.substituido = true;
@@ -232,11 +241,13 @@ class Turma {
     if (this.ice) msg.ice = this.ice;
     this.manda(c, msg);
     this.manda(c, this.listaMsg());
+    const resume = c.sala ? this.salas.get(c.sala) : null;
+    if (c.sala && !(resume && resume.members.some(x => x.id === id))) c.sala = null;
+    this.v88Entrou(c, conta);                            // v88: as relações da conta, a lista dos amigos online e o status para eles
     if (c.sala){                                         // ficou com a sala da conexão antiga: a tela dela volta
-      const r = this.salas.get(c.sala), eu = r && r.members.find(x => x.id === id);
-      if (!eu){ c.sala = null; return; }
-      Object.assign(eu, {name:c.nome, selo:c.selo || '', skin:c.skin, flag:c.flag, avatar:c.avatar, club:this.cartaoClube(c)});
-      this.manda(c, {type:'sayHistory', list:r.hist.slice(-30)});
+      const r = resume, eu = r.members.find(x => x.id === id);
+      Object.assign(eu, {name:c.nome, selo:c.selo || '', skin:c.skin, flag:c.flag, avatar:c.avatar, club:this.cartaoClube(c), cos:this.v88Cos(c)});
+      this.manda(c, {type:'sayHistory', list:this.v88HistSala(c, r)});   // v88: sem o texto escondido, sem bloqueados, sem a equipe dos outros
       if (r.state === 'playing' && r.host === id && !r.servidor) this.interrompe(r, 'Quem rodava a partida reconectou: a partida parou sem resultado.');
       if (r.state === 'playing' && r.partida && r.roster.includes(id)) r.partida.entra(id, c.nome);   // v83: reassume a tampinha (o bot sai)
       this.salaMuda(r);
@@ -248,7 +259,7 @@ class Turma {
   codigo(){ let s; do { s = ''; for (let i = 0; i < 6; i++) s += ALFA[Math.floor(Math.random()*ALFA.length)]; } while (this.salas.has(s)); return s; }
   salaDe(c){ return c.sala ? this.salas.get(c.sala) || null : null; }
   cartaoClube(c){ return this.clubes.cartao(c.id) || c.clubeAnunciado || null; }
-  membro(c){ return {id:c.id, name:c.nome, selo:c.selo || '', flag:c.flag || 'BR', skin:c.skin, avatar:c.avatar, club:this.cartaoClube(c), slot:-1, ready:false, rematch:false}; }
+  membro(c){ return {id:c.id, name:c.nome, selo:c.selo || '', flag:c.flag || 'BR', skin:c.skin, avatar:c.avatar, club:this.cartaoClube(c), cos:this.v88Cos(c), slot:-1, ready:false, rematch:false}; }   // v88: + os cosméticos equipados (cos: vêm da conta, assinados; só visual)
   publica(r){
     const srv = !!r.servidor;                        // v83: sala hospedada: ninguém é anfitrião; o criador é o admin
     return {code:r.code, name:r.name, host:srv ? 'srv' : r.host, admin:srv && !r.ranked ? r.host : null, servidor:srv, n:r.n, map:r.map, jogo:r.jogo, tempo:r.tempo, bots:r.bots, pub:r.pub, state:r.state, ranked:!!r.ranked,
@@ -299,7 +310,7 @@ class Turma {
       const cl = this.porId.get(x.id); if (cl && cl.sala === r.code) this.mandaTxt(cl, txt);
     }
   }
-  salaMuda(r){ this.todos(r, {type:'room', room:this.publica(r)}); this.listaMudou(); }
+  salaMuda(r){ this.todos(r, {type:'room', room:this.publica(r)}); this.listaMudou(); this.v88MarcaSala(r); }   // v88: + o status de quem está nela para os amigos
   diz(r, msg){ r.hist.push(msg); if (r.hist.length > 40) r.hist.shift(); this.todos(r, msg); }
   livre(r, t){ for (let k = 0; k < r.n; k++){ const i = t*r.n + k; if (!r.roster[i]) return i; } return -1; }
   senta(r, m, slot){
@@ -320,8 +331,10 @@ class Turma {
       if (!r.pub || !r.members.some(x => !x.bot)) continue;
       const dono = r.members.find(x => x.id === r.host);
       if (r.ranked) continue;                            // v79: a ranqueada não aparece na lista
+      const em = r.state === 'playing';
       list.push({code:r.code, name:r.name, flag:dono ? dono.flag : 'BR', selo:dono ? dono.selo || '' : '', n:r.n, jogo:r.jogo, map:r.map, tempo:r.tempo, bots:r.bots, state:r.state,
-        cup:!!r.tournament, oficial:false, players:r.roster.filter(Boolean).length, max:2*r.n, people:r.members.length});
+        cup:!!r.tournament, oficial:false, players:r.roster.filter(Boolean).length, max:2*r.n, people:r.members.length,
+        placar:em && r.ultimo ? r.ultimo.score.slice() : null, assistir:em && r.members.length < MAX_GENTE});   // v88: o placar de quem está jogando (para ASSISTIR)
       if (list.length >= 100) break;
     }
     return {type:'rooms', list, online:this.porId.size};
@@ -343,6 +356,7 @@ class Turma {
   sai(c, motivo){                                        // saiu, caiu ou foi removido
     const r = this.salaDe(c); c.sala = null;
     if (!r) return;
+    this.v88Marca(c);                                    // v88: o status para os amigos (saiu da sala)
     const eu = r.members.find(x => x.id === c.id); if (!eu) return;
     if (eu.slot >= 0 && r.roster[eu.slot] === eu.id) r.roster[eu.slot] = null;
     r.members = r.members.filter(x => x !== eu);
@@ -404,7 +418,7 @@ class Turma {
     if (novo){
       if (r.members.length >= MAX_GENTE) return this.erro(c, 'A sala está cheia (' + MAX_GENTE + ' pessoas).');
       eu = this.membro(c); r.members.push(eu);
-    } else Object.assign(eu, {name:c.nome, selo:c.selo || '', skin:c.skin, flag:c.flag, avatar:c.avatar, club:this.cartaoClube(c)});
+    } else Object.assign(eu, {name:c.nome, selo:c.selo || '', skin:c.skin, flag:c.flag, avatar:c.avatar, club:this.cartaoClube(c), cos:this.v88Cos(c)});
     c.sala = code;
     const res = r.reservas.get(c.id); r.reservas.delete(c.id); r.vaziaAte = 0;
     if (r.state === 'playing'){
@@ -422,7 +436,7 @@ class Turma {
       } else if (Number.isInteger(m.slot) && m.slot >= 0 && m.slot < 2*r.n && !r.roster[m.slot] && !m.spectate) this.senta(r, eu, m.slot);
     }
     if (!r.members.some(x => x.id === r.host)) r.host = c.id;   // (sala que ficou vazia esperando: quem volta é o dono)
-    this.manda(c, {type:'sayHistory', list:r.hist.slice(-30)});
+    this.manda(c, {type:'sayHistory', list:this.v88HistSala(c, r)});   // v88: sem o texto escondido, sem bloqueados, sem a equipe dos outros
     if (r.state === 'playing' && r.host === c.id && !r.servidor) this.interrompe(r, 'Quem rodava a partida reconectou: a partida parou sem resultado.');
     this.salaMuda(r);
     if (novo) this.diz(r, {type:'say', sys:true, who:c.id, text:eu.name + ' chegou na sala', t:Date.now()});
@@ -480,7 +494,7 @@ class Turma {
     const r = this.salaDe(c); if (!r || r.host !== c.id || r.state === 'playing' || r.ranked) return;
     if (r.tournament && r.tournament.champion) return this.erro(c, 'A copa acabou: toque em ENCERRAR COPA.');
     const motivo = this.motivo(r); if (motivo) return this.erro(c, motivo);
-    Object.assign(r, {state:'playing', inicio:this.agora(), pausa:null, pausadoMs:0, ultimo:null, gols:{}, linha:[]});
+    Object.assign(r, {state:'playing', inicio:this.agora(), pausa:null, pausadoMs:0, ultimo:null, gols:{}, assist:{}, linha:[]});   // v88: + as assistências (o melhor da partida)
     r.round++; r.reservas.clear();
     for (const x of r.members){ x.ready = false; x.rematch = false; }
     if (r.servidor) this.ligaPartida(r);             // v83: a partida nasce no servidor, não no aparelho de ninguém
@@ -506,7 +520,9 @@ class Turma {
       },
       onGol:g => {
         if (g.author) r.gols[g.author] = (r.gols[g.author] | 0) + 1;
+        if (g.assist){ r.assist = r.assist || {}; r.assist[g.assist] = (r.assist[g.assist] | 0) + 1; }   // v88: a assistência (o melhor da partida)
         if (r.regra === 'v80') (r.linha || (r.linha = [])).push({s:g.placar.slice(), el:Math.max(0, g.el), ms:this.decorrido(r)});   // a linha do tempo (auditoria)
+        if (r.pub && !r.ranked) this.listaMudou();     // v88: o placar na lista das salas (quem quer assistir)
       },
       onAviso:txt => this.diz(r, {type:'say', sys:true, who:'', text:txt, t:Date.now()}),
       onFim:res => this.encerraServidor(r, res),
@@ -607,6 +623,7 @@ class Turma {
     if (valida) this.registra(r, winner);
     if (r.tournament) this.copaResultado(r, score, winner);
     this.log('sala ' + r.code + ' rodada ' + r.round + ': ' + score.join('×') + (peloServidor ? ' (o servidor encerrou no tempo)' : '') + (valida ? ' (valeu)' : ' (não valeu: ' + motivo + ')'));
+    const g88 = valida && this.segredo ? this.v88Jogadores(r) : null, mvp88 = valida && this.segredo ? this.v88Mvp(r, winner) : null;   // v88: quem jogou junto e o melhor da partida
     for (const x of r.members){
       if (x.bot) continue;
       const cl = this.porId.get(x.id); if (!cl || cl.sala !== r.code) continue;
@@ -617,8 +634,9 @@ class Turma {
       const i = r.roster.indexOf(x.id);
       if (valida && this.segredo && cl.conta && i >= 0){   // o selo: a plataforma confere antes de dar XP da partida online
         const t = Math.floor(i/r.n), agora = Date.now();
-        msg.selo = assina(this.segredo, {s:r.code, r:r.round, j:cl.conta.idPublico, l:t, p:[score[t], score[1 - t]], m:r.jogo, d:dur, k:r.ranked ? 1 : 0, n:r.n, t:agora, e:agora + 40*60e3});   // v82: k = ranqueada, n = o tamanho do time (a conta só conta a patente com o selo da ranqueada)
+        msg.selo = assina(this.segredo, {s:r.code, r:r.round, j:cl.conta.idPublico, l:t, p:[score[t], score[1 - t]], m:r.jogo, d:dur, k:r.ranked ? 1 : 0, n:r.n, g:g88, v:mvp88 === x.id ? 1 : 0, t:agora, e:agora + 40*60e3});   // v82: k = ranqueada, n = o tamanho do time (a conta só conta a patente com o selo da ranqueada) · v88: g = as contas que jogaram, v = o melhor da partida
       }
+      if (mvp88){ msg.melhor = {id:mvp88, nome:this.nomeNaSala(r, mvp88)}; if (mvp88 === x.id) msg.mvp = true; }   // v88: o melhor da partida (o jogo mostra; a conta confere pelo selo)
       this.manda(cl, msg);
     }
     this.salaMuda(r);
@@ -675,14 +693,25 @@ class Turma {
     const eu = r.members.find(x => x.id === c.id);
     const msg = {type:'say', id:c.id, name:eu ? eu.name : c.nome, text:arb ? t : limpa(t, 120), t:Date.now()};
     if (!arb) msg.mid = r.code + '-' + (r.chatSeq = (r.chatSeq | 0) + 1);   // v81: o número da mensagem (para denunciar)
-    this.diz(r, msg);
+    if (arb) return this.diz(r, msg);
+    if (m.canal === 'equipe'){                           // v88: o chat da EQUIPE (só o seu time vê; quem assiste não tem time)
+      if (!eu || eu.slot < 0) return this.erro(c, 'Entre num time para falar com a sua equipe.', 'sem_time');
+      msg.canal = 'equipe'; msg.equipe = Math.floor(eu.slot / r.n);
+    }
+    this.v88DizSala(r, msg, c);                          // v88: quem bloqueou (ou foi bloqueado) não recebe
   }
   report(c, m){                                          // v81: a denúncia de uma mensagem da sala: 2 pessoas diferentes escondem a mensagem e calam o autor por 5 min
     const r = this.salaDe(c); if (!r || typeof m.mid !== 'string' || !this.balde(c, 'denuncia', .5, 6)) return;
     const msg = r.hist.find(x => x && x.mid === m.mid); if (!msg || msg.id === c.id || msg.escondida) return;
+    if (typeof msg.equipe === 'number' && this.v88TimeDe(r, c.id) !== msg.equipe) return;   // v88: (a mensagem da equipe dos outros você nem viu)
     const den = r.denuncias || (r.denuncias = new Map()), s = den.get(m.mid) || new Set();
-    s.add(c.conta ? 'c' + c.conta.idPublico : c.id); den.set(m.mid, s);    // (por conta ou por navegador — não por IP: no celular, milhares dividem o mesmo IP da operadora)
+    const quem = c.conta ? 'c' + c.conta.idPublico : c.id, nova = !s.has(quem);
+    s.add(quem); den.set(m.mid, s);                      // (por conta ou por navegador — não por IP: no celular, milhares dividem o mesmo IP da operadora)
     this.log('sala ' + r.code + ': denúncia da mensagem ' + m.mid + ' (' + s.size + ')');
+    if (nova){                                           // v88: com o motivo, para a plataforma (RACHA CONTROL)
+      this.v88Denuncia(c, {autor:msg.id && msg.id[0] === 'c' ? String(Number(msg.id.slice(1))).padStart(6, '0') : null, motivo:this.motivo88(m), texto:msg.text, canal:msg.canal === 'equipe' ? 'equipe' : 'sala', mid:m.mid, sala:r.code});
+      this.manda(c, {type:'denuncia_ok', mid:m.mid, ok:true});
+    }
     if (s.size < 2) return;
     msg.escondida = true; (r.silencio || (r.silencio = new Map())).set(msg.id, Date.now() + 5*60e3);
     this.todos(r, {type:'say_hide', mid:m.mid});
@@ -698,7 +727,7 @@ class Turma {
     if (m.clube !== undefined) c.clubeAnunciado = clubeAnunciado(m.clube);
     this.b.marca();
     const r = this.salaDe(c), eu = r && r.members.find(x => x.id === c.id);
-    if (eu){ Object.assign(eu, {name:c.nome, selo:c.selo || '', skin:c.skin, flag:c.flag, avatar:c.avatar, club:this.cartaoClube(c)}); this.salaMuda(r); }
+    if (eu){ Object.assign(eu, {name:c.nome, selo:c.selo || '', skin:c.skin, flag:c.flag, avatar:c.avatar, club:this.cartaoClube(c), cos:this.v88Cos(c)}); this.salaMuda(r); }
   }
   social(c){
     const p = this.clubes.placar(), d = this.b.d, g = d.gente[c.id] || {st:{}}, meu = this.clubes.clubeDe(c.id), ct = this.clubes.cartao(c.id);
@@ -738,9 +767,10 @@ class Turma {
     const n = inteiro(m.n, 1, 4, 2), pts = inteiro(m.pts, 0, 99999, 0);
     this.filaEsp.set(c.id, {c, n, pts, t0:this.agora()});
     this.manda(c, {type:'fila', on:true, n, espera:FILA_MAX_MS, mista:FILA_MISTA_MS, online:this.porId.size});
+    this.v88Marca(c);                                    // v88: "procurando partida" para os amigos
     this.filaTenta();
   }
-  filaSai(c){ if (this.filaEsp.delete(c.id)) this.manda(c, {type:'fila', on:false}); }
+  filaSai(c){ if (this.filaEsp.delete(c.id)){ this.manda(c, {type:'fila', on:false}); this.v88Marca(c); } }
   filaTenta(){                                           // junta quem está esperando: o tamanho cheio na hora; depois de 8 s, 2 ou mais com bots; 20 s sem ninguém, fila_nada
     clearTimeout(this.filaT); this.filaT = null;
     const agora = this.agora();
@@ -749,7 +779,7 @@ class Turma {
       let L = [...this.filaEsp.values()].filter(e => e.n === n).sort((a, b) => a.t0 - b.t0);
       while (L.length >= 2*n){ const g = this.filaGrupo(L, 2*n); this.filaSala(g, n); L = L.filter(e => g.indexOf(e) < 0); }
       if (n >= 2 && L.length >= 2 && agora - L[0].t0 >= FILA_MISTA_MS){ const g = this.filaGrupo(L, Math.min(L.length, 2*n)); this.filaSala(g, n); L = L.filter(e => g.indexOf(e) < 0); }
-      for (const e of L) if (agora - e.t0 >= FILA_MAX_MS){ this.filaEsp.delete(e.c.id); this.manda(e.c, {type:'fila_nada', n}); }
+      for (const e of L) if (agora - e.t0 >= FILA_MAX_MS){ this.filaEsp.delete(e.c.id); this.manda(e.c, {type:'fila_nada', n}); this.v88Marca(e.c); }
     }
     if (this.filaEsp.size){ this.filaT = setTimeout(() => this.filaTenta(), 1000); if (this.filaT.unref) this.filaT.unref(); }
   }
@@ -761,7 +791,7 @@ class Turma {
     for (const e of g) this.filaEsp.delete(e.c.id);
     const r = {code:this.codigo(), name:'Ranqueada', host:g[0].c.id, n, map:MAPA_RANQUEADA, jogo:'futebol', tempo:Math.max(1, Math.round(this.r80.seg/60)), regra:'v80', bots:true, pub:false, ranked:true, servidor:true,
       state:'waiting', round:0, roster:new Array(2*n).fill(null), members:[], tournament:null, hist:[], reservas:new Map(), removidos:new Map(),
-      inicio:0, pausa:null, pausadoMs:0, ultimo:null, gols:{}, linha:[], encerrada:-1, interrompida:-1, vaziaAte:0, criada:Date.now()};   // v80: 3:00 no relógio do servidor
+      inicio:0, pausa:null, pausadoMs:0, ultimo:null, gols:{}, assist:{}, linha:[], encerrada:-1, interrompida:-1, vaziaAte:0, criada:Date.now()};   // v80: 3:00 no relógio do servidor
     this.salas.set(r.code, r);
     const ord = g.slice().sort((a, b) => b.pts - a.pts), poe = [0, 0];
     ord.forEach((e, i) => {
@@ -774,6 +804,7 @@ class Turma {
     for (const e of g) this.manda(e.c, {type:'sayHistory', list:[]});
     this.todos(r, {type:'room', room:this.publica(r)});
     this.todos(r, {type:'start', room:this.publica(r)});
+    this.v88MarcaSala(r);                                // v88: "em partida" para os amigos
     this.log('ranqueada ' + r.code + ' (' + n + 'v' + n + '): ' + g.length + ' de ' + 2*n + (g.length < 2*n ? ', bots completam' : ''));
     return r;
   }
@@ -851,9 +882,12 @@ class Turma {
       if (!id && typeof m.token === 'string' && m.token.length <= 80) id = this.b.d.tokens[sha(m.token)] || null;
       c.brasil = true; c.brasilId = id || c.brasilId || novoId('b', 9); c.brasilConta = id;
       c.nome = conta ? conta.nome : limpaNome(m.name); c.skin = skinOk(m.skin); c.avatar = avatarOk(m.avatar); c.selo = conta ? conta.selo || '' : '';
-      this.manda(c, {type:'brasil_hello', id:c.brasilId});
-      this.manda(c, {type:'brasil_history', messages:this.chat.msgs.slice(-50)});
-      return this.brasilOnline();
+      // v88: as relações da conta (o bloqueio vale aqui também) e o histórico sem o texto das mensagens escondidas
+      return this.v88BrasilEntrou(c, conta, () => {
+        this.manda(c, {type:'brasil_hello', id:c.brasilId});
+        this.manda(c, {type:'brasil_history', messages:this.v88HistBrasil(c)});
+        this.brasilOnline();
+      });
     }
     if (!c.brasil) return;
     if (m.type === 'brasil_say'){
@@ -869,13 +903,21 @@ class Turma {
       const msg = {id:'m' + (++this.chat.seq), from:c.brasilId, nome:c.nome, selo:c.selo || '', clube:ct ? ct.name : '', skin:c.skin, avatar:c.avatar, texto:limpa(t, 120), t:agora};
       this.chat.msgs.push(msg); if (this.chat.msgs.length > 50) this.chat.msgs.shift();
       const txt = JSON.stringify({type:'brasil_message', message:msg});
-      for (const x of this.clientes) if (x.brasil) this.mandaTxt(x, txt);
+      const eu = c.brasilConta && c.brasilConta[0] === 'c' ? String(Number(c.brasilConta.slice(1))).padStart(6, '0') : null;
+      for (const x of this.clientes) if (x.brasil && (x === c || !eu || !this.v88BloqueadoBrasil(x, eu))) this.mandaTxt(x, txt);   // v88: o bloqueio vale no Chat do Brasil
       return;
     }
     if (m.type === 'brasil_report'){                     // 3 denúncias de pessoas diferentes: some e o autor fica 10 min sem falar
       const msg = this.chat.msgs.find(x => x.id === m.id);
       if (!msg || msg.from === c.brasilId || msg.escondida) return;
-      const s = this.chat.denuncias.get(msg.id) || new Set(); s.add(c.brasilConta || c.brasilId); this.chat.denuncias.set(msg.id, s);   // v81: por conta ou por navegador (não por IP: na operadora, milhares dividem o mesmo)
+      if (!this.balde(c, 'denuncia', .5, 6)) return;
+      const s = this.chat.denuncias.get(msg.id) || new Set(), quem = c.brasilConta || c.brasilId, nova = !s.has(quem);
+      s.add(quem); this.chat.denuncias.set(msg.id, s);   // v81: por conta ou por navegador (não por IP: na operadora, milhares dividem o mesmo)
+      if (nova){                                         // v88: com o motivo, para a plataforma (RACHA CONTROL)
+        const autor = typeof msg.from === 'string' && /^c\d+$/.test(msg.from) ? String(Number(msg.from.slice(1))).padStart(6, '0') : null;
+        this.v88Denuncia(c, {autor, motivo:this.motivo88(m), texto:msg.texto, canal:'brasil', mid:msg.id});
+        this.manda(c, {type:'brasil_report_ok', id:msg.id});
+      }
       if (s.size < 3) return;
       msg.escondida = true; this.chat.silencio.set(msg.from, Date.now() + 10*60e3);
       const txt = JSON.stringify({type:'brasil_hide', id:msg.id});
@@ -894,7 +936,12 @@ class Turma {
 Turma.ACOES = {list:'list', create:'create', join:'join', leave:'leave', seat:'seat', config:'config', ready:'ready', rematch:'rematch', start:'start',
   pause:'pause', finish:'finish', kick:'kick', promote:'promote', say:'say', typing:'typing', profile:'profile', social:'social', rtc:'rtc', p2p:'p2p', report:'report',
   club_req:'club_req', clubCreate:'clubAntigo', clubJoin:'clubAntigo', clubLeave:'clubAntigo', cupCreate:'cupCreate', cupNext:'cupNext', cupEnd:'cupEnd',
-  fila:'fila', fila_sai:'filaSai'};
+  fila:'fila', fila_sai:'filaSai',
+  // v88: o social ao vivo (server/social88.js)
+  relacoes:'relacoes', amigos_status:'amigos_status', convite:'convite', convite_resposta:'convite_resposta', dm:'dm', dm_hist:'dm_hist',
+  clube_say:'clube_say', clube_hist:'clube_hist', chat_denuncia:'chat_denuncia'};
+social88.aplica(Turma);
+social88.configura({maxGente:MAX_GENTE, filtrado});
 
 /* a página que abriu o jogo pode falar com o servidor? Mesmo endereço do servidor e o próprio computador (localhost) sempre;
    outras só se estiverem na lista (RACHA_ORIGENS / --origens). Sem cabeçalho Origin (programa, não navegador): pode. */

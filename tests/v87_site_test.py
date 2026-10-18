@@ -123,42 +123,50 @@ async def principal():
             P.confere(aj['sair'] and not aj['admin'], 'Ajustes › Conta: o SAIR DA CONTA está lá (e o RACHA CONTROL não, para quem não é da equipe)', aj)
             await rt(pg, "ajxFecha()")
 
-            # ------------------------------------------------ 3) as páginas da conta por cima do jogo
-            print('\n3) as páginas da conta abrem por cima do jogo')
-            await pg.evaluate("window.__marca = 87")
+            # ------------------------------------------------ 3) os amigos no jogo e as páginas da conta por cima do jogo
+            print('\n3) os amigos da conta no jogo; as páginas do site por cima do jogo')
+            # v88: os amigos da conta ficam no próprio jogo (a tela AMIGOS da v88, com os dados da plataforma): o AMIGOS do lobby
+            # abre essa tela, sem o painel do site por cima
             await pg.click('.v77-amg')
-            await pg.wait_for_selector('#v87site .v87-frame', timeout=5000)
-            src = await pg.get_attribute('#v87site .v87-frame', 'src')
+            await pg.wait_for_timeout(400)
+            t = await rt(pg, "({tela:lobby.tela, painel:!!document.getElementById('v87site')})")
+            P.confere(t['tela'] == 'v88amigos' and not t['painel'], 'v88: com a conta, o AMIGOS do lobby abre os amigos da conta dentro do jogo (sem o painel do site)', t)
+            await rt(pg, "fechaTela()")
+            await pg.wait_for_timeout(200)
+
+            async def abre_perfil_conta():                    # o nome do cartão → ABRIR O PERFIL DA CONTA (a página do site, no painel)
+                await rt(pg, "editarNome(true)")
+                await pg.wait_for_timeout(200)
+                bt = pg.locator('#lb-pop button', has_text='ABRIR O PERFIL DA CONTA')
+                tem = await bt.count()
+                if tem:
+                    await bt.first.click()
+                    await pg.wait_for_selector('#v87site .v87-frame', timeout=5000)
+                return tem
+
+            await pg.evaluate("window.__marca = 87")
+            tem = await abre_perfil_conta()
+            src = await pg.get_attribute('#v87site .v87-frame', 'src') if tem else ''
             fr = pg.frame_locator('#v87site .v87-frame')
-            await fr.locator('#pg').wait_for(timeout=8000)
-            quem = await fr.locator('#quem').text_content()
-            tit = await pg.text_content('#v87site .v87-tit')
-            P.confere(src.endswith('/amigos') and quem == 'CROY', 'o AMIGOS do lobby abre os amigos da conta num painel por cima do jogo, já com a sessão (%s)' % tit, [src, quem])
+            quem = None
+            if tem:
+                await fr.locator('#pg').wait_for(timeout=8000)
+                quem = await fr.locator('#quem').text_content()
+            tit = await pg.text_content('#v87site .v87-tit') if tem else ''
+            P.confere(tem == 1 and src.endswith('/perfil') and quem == 'CROY', 'o ABRIR O PERFIL DA CONTA (o nome do cartão) abre o perfil da conta num painel por cima do jogo, já com a sessão (%s)' % tit, [src, quem])
             await pg.click('#v87site .v87-volta')
             await pg.wait_for_timeout(200)
             fechou = await pg.evaluate("() => ({painel:!!document.getElementById('v87site'), marca:window.__marca, cargas:+sessionStorage.getItem('v87_cargas')})")
             P.confere(not fechou['painel'] and fechou['marca'] == 87, 'o VOLTAR AO JOGO fecha o painel e o jogo continua do jeito que estava (sem recarregar)', fechou)
-            await pg.click('.v77-amg')
-            await pg.wait_for_selector('#v87site .v87-frame')
+            await abre_perfil_conta()
             await fr.locator('#jogar').click()
             await pg.wait_for_function("() => !document.getElementById('v87site')", timeout=4000)
             P.confere(True, 'o "JOGAR" de dentro da página do site também fecha o painel')
-            await pg.click('.v77-amg')
-            await pg.wait_for_selector('#v87site .v87-frame')
+            await abre_perfil_conta()
             await pg.wait_for_timeout(150)
             await pg.keyboard.press('Escape')
             await pg.wait_for_timeout(300)
             P.confere(not await pg.evaluate("!!document.getElementById('v87site')"), 'o Esc fecha o painel (como as outras janelas do jogo)')
-            await rt(pg, "editarNome(true)")
-            await pg.wait_for_timeout(200)
-            bt = pg.locator('#lb-pop button', has_text='ABRIR O PERFIL DA CONTA')
-            tem = await bt.count()
-            if tem:
-                await bt.first.click()
-                await pg.wait_for_selector('#v87site .v87-frame')
-            src2 = await pg.get_attribute('#v87site .v87-frame', 'src') if tem else None
-            P.confere(tem == 1 and src2 and src2.endswith('/perfil'), 'o ABRIR O PERFIL DA CONTA (o nome do cartão) abre o perfil da conta no painel', src2)
-            await rt(pg, "v87FechaSite()")
             P.confere(await rt(pg, "v87TemSite() && !v87Abre('/admin') && !v87Abre('https://outro.site/x')"), 'só as páginas da conta abrem no painel (o resto não)')
 
             # ------------------------------------------------ 4) sair

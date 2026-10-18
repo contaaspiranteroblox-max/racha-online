@@ -7,4 +7,4 @@
   OK      com a chave nova já gravada, ela fica e a antiga sai
   OK      sem chave antiga, nada é levado
 
-v85 · as chaves antigas do treino vão para as novas: 8/8 verificações ok em 6.5 s
+v85 · as chaves antigas do treino vão para as novas: 8/8 verificações ok em 6.8 s

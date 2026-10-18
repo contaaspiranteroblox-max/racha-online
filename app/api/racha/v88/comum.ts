@@ -189,10 +189,19 @@ export async function usuarioPorPub(pub: string | number, db: Conn = getDb()) {
 // vai para a mesma tabela do RACHA CONTROL, com o canal e o texto (a mesma conta, o mesmo alvo e o mesmo motivo: uma vez por dia)
 export async function denunciaDoChat(d: { autor: string; alvo: string; motivo: string; texto: string; canal: string; mid?: string; sala?: string }): Promise<void> {
   const { denuncias } = await import("@db/schema");
-  const { MOTIVOS_DENUNCIA, chaveDenuncia, MOTIVO_TEXTO } = await import("@contracts/v88");
+  const { MOTIVOS_DENUNCIA, chaveDenuncia, MOTIVO_TEXTO, DENUNCIA } = await import("@contracts/v88");
+  const { gt, count } = await import("drizzle-orm");
   const autor = await usuarioPorPub(d.autor), alvo = await usuarioPorPub(d.alvo);
   if (!autor || !alvo || autor.id === alvo.id) return;
   const motivo = (MOTIVOS_DENUNCIA as readonly string[]).includes(d.motivo) ? (d.motivo as (typeof MOTIVOS_DENUNCIA)[number]) : "ofensa";
+  // as mesmas travas da denúncia pelo perfil: conta nova espera, o limite do dia, e quem teve denúncias arquivadas demais
+  const db = getDb();
+  const dono = await db.query.usuarios.findFirst({ where: eq(usuarios.id, autor.id), columns: { criadoEm: true } });
+  if (!dono || Date.now() - dono.criadoEm.getTime() < DENUNCIA.minutosContaNova * 60 * 1000) return;
+  const [hoje] = await db.select({ n: count() }).from(denuncias).where(and(eq(denuncias.autorId, autor.id), gt(denuncias.criadaEm, new Date(Date.now() - 864e5))));
+  if (Number(hoje?.n || 0) >= DENUNCIA.porDia) return;
+  const [arq] = await db.select({ n: count() }).from(denuncias).where(and(eq(denuncias.autorId, autor.id), eq(denuncias.estado, "arquivada"), gt(denuncias.criadaEm, new Date(Date.now() - 30 * 864e5))));
+  if (Number(arq?.n || 0) >= DENUNCIA.arquivadasParaAbuso) return;
   try {
     await getDb().insert(denuncias).values({
       autorId: autor.id, alvoId: alvo.id, motivo, detalhes: ("Mensagem: " + d.texto).slice(0, 500),

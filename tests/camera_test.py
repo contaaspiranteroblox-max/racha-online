@@ -114,7 +114,7 @@ ESPEC = r"""(() => {
   const T = __T; T.comeca('futebol', 2, 0); T.limpa();
   const sv = {playing:NET49.playing, slot:NET49.localSlot};
   NET49.playing = true; NET49.localSlot = -1;
-  const nomes = [especTroca(), especTroca(), especTroca(), especTroca(), especTroca()];
+  const nomes = [especTroca(), especTroca(), especTroca(), especTroca(), especTroca(), especTroca()];   // (v88: depois dos 4 jogadores, o CAMPO INTEIRO e a bola)
   ESPEC.alvo = 1; const q = RQ.jog[1]; T.poe(q, LX1 - 80, LY1 - 80); T.bola(LX0 + 80, LY0 + 80);
   cam.mode = 'seguir'; cam.estilo = 'jogador'; cam.preset = 'perto'; posVisual(1); updateCamera(1/60, true);
   for (let i = 0; i < 60; i++){ posVisual(1); updateCamera(1/60, false); }
@@ -173,7 +173,7 @@ async def principal():
             P.confere(r['comVoce'] == 1 and r['semVoce'] == 0, 'com Seguir bola e você fora da tela aparece VOCÊ; no Seguir jogador não precisa', r)
             r = await rt(pg, ESPEC)
             print('    ', json.dumps(r, ensure_ascii=False))
-            P.confere(r['nomes'][0] != 'BOLA' and r['nomes'][-1] == 'BOLA', 'o espectador troca: jogadores e de volta para a bola', r['nomes'])
+            P.confere(r['nomes'][0] != 'BOLA' and r['nomes'][-2] == 'CAMPO INTEIRO' and r['nomes'][-1] == 'BOLA', 'o espectador troca: jogadores, o campo inteiro (v88) e de volta para a bola', r['nomes'])
             P.confere(r['visivel'], 'a câmera do espectador mantém o jogador escolhido inteiro na tela')
             P.confere(r['rotulos'] == ['CÂMERA: ' + r['nomeAlvo'].upper()], 'o rótulo diz quem a câmera acompanha', r['rotulos'])
 

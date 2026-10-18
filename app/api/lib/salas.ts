@@ -64,10 +64,12 @@ export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
       .then(async (s) => {
         const usuario = s?.usuario as { id?: number; idPublico: number; nomeExibicao: string } | undefined;
         const lista = usuario && typeof usuario.id === "number" && opcoes.selosDe ? await opcoes.selosDe(usuario.id).catch(() => []) : [];
+        // v88: os amigos, os bloqueios e a privacidade da conta já vão junto (o servidor das salas não precisa perguntar depois)
+        const rel = usuario && opcoes.relacoesDe ? await opcoes.relacoesDe(String(usuario.idPublico).padStart(6, "0")).catch(() => null) : null;
         const ws = aceita(req, sock, cabeca);
         if (!ws) return;
-        const r = req as IncomingMessage & { racha?: { idPublico: number; nome: string; selos: string[] } | null };
-        r.racha = usuario ? { idPublico: usuario.idPublico, nome: usuario.nomeExibicao, selos: lista } : null;
+        const r = req as IncomingMessage & { racha?: { idPublico: number; nome: string; selos: string[]; rel: RelacoesConta | null } | null };
+        r.racha = usuario ? { idPublico: usuario.idPublico, nome: usuario.nomeExibicao, selos: lista, rel } : null;
         turma.conecta(ws, r);
       });
   });

@@ -2,6 +2,78 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v88 — 18/10/2026 · a atualização completa dos menus (amigos, mensagens, correio, loja, clube, treino, missões, eventos, passe, chat, denúncias, modo e campo, estatísticas, espectador, ajustes e controle)
+
+A pedido (o "PROMPT — ATUALIZAÇÃO COMPLETA DO RACHA" e as 4 imagens de referência): os botões e menus que faltavam, no jogo
+de sempre, ligados às contas e ao servidor — sem criar outro jogo e sem mexer na física (o build confere o sha256 do bloco
+de física: `ad9f1d2216409b0e`, o mesmo da v87.1; a física, a movimentação, os chutes e as colisões são os mesmos). Cosmético
+continua sem dar vantagem. O relatório completo (o que entrou em cada parte do pedido, o que foi preservado, as pendências
+reais e como instalar e testar) está no `LEIA-ME.md`, na seção "v88".
+
+Feita em três etapas (três commits):
+
+- **Etapa 0 · a plataforma de teste** (`tests/plataforma/`): o código de verdade da plataforma (`app/api`) rodando sem
+  MySQL e sem npm (um drizzle pequeno sobre o `node:sqlite`, um tRPC pequeno no formato do jogo e o servidor das salas
+  montado no mesmo endereço). É onde as contas, o banco e o social foram testados de ponta a ponta. Os testes do online
+  ficaram em dia com as salas hospedadas da v83.
+- **Etapa 1 · a plataforma** (`app/`): as tabelas novas (`app/db/migrations/v88_social.sql`: mensagens, correio,
+  correio_global, missoes_progresso, eventos, eventos_progresso, passe_temporada, clube_pedidos e as colunas novas), o
+  catálogo único (`app/contracts/catalogo88.json`, o mesmo arquivo para o jogo e o servidor) e as regras
+  (`app/contracts/v88.ts`), e as rotas `social`, `mensagens`, `correio`, `loja`, `missoes`, `passe`, `eventos`, `estat`,
+  `conta` e `admin88` (`app/api/racha/v88/`). A carteira do servidor (`economia.ts`) passou a ser usada: logado, moedas,
+  gemas e itens são da conta (a primeira vez leva o saldo da cópia do progresso, uma vez, até 50.000 moedas, 5.000 gemas e
+  200 peças). Amigos (cancelar, pedir de novo depois de recusado, limite de 100, bloqueio dos dois lados, avisos),
+  denúncias com os 7 motivos e a proteção contra abuso, clube (admins, pedidos, estatísticas, histórico, ranking).
+- **Etapa 2 · o jogo e o servidor das salas** (este commit): os módulos do jogo em `tools/v88/*.js` (colados pelo
+  `tools/v88/v88.py`) e o estilo em `app/public/game/v88.css`; o social ao vivo no servidor das salas
+  (`server/social88.js`, ligado no `server/turma.js`): o status dos amigos, os convites em tempo real, o chat dos amigos,
+  do clube e da equipe, o bloqueio no servidor e a denúncia de mensagem com motivo (vai para a tabela do RACHA CONTROL);
+  e as abas **EVENTOS** e **CORREIO** do RACHA CONTROL (`app/src/pages/AdminV88.tsx`).
+
+O que mudou no jogo (detalhes no LEIA-ME):
+
+- **Lobby:** o mesmo da v77 (o fundo da favela com o Cristo, a tampinha equipada no meio, o perfil, as moedas, as gemas, a
+  patente, o chat, o JOGAR e os botões de antes nos mesmos lugares). Apareceram o **CORREIO** (o botão que já existia
+  escondido como "em breve": mensagens e correio) ao lado dos ajustes e o **PASSE** (o outro que estava escondido, agora um
+  quadrado no topo com o nível), e entrou a **lista dos amigos** à direita (avatar, nome, status de verdade, o botão de cada um, VER TODOS e o sinal da
+  conexão). A lista desce quando cobriria o Cristo (`v88AmgEncaixa`). Os números de não lido nos botões que já existiam.
+  Sem conta, AMIGOS, EVENTOS e DESAFIOS fazem o que sempre fizeram neste aparelho; com a conta, abrem as telas da conta.
+- **Amigos** (buscar por nome ou ID, pedidos, aceitar, recusar, cancelar, remover, perfil, online/offline/em partida,
+  chamar para a sala ou para o time, aceitar convite, bloquear, recentes, adicionar pelo perfil e pelo resultado),
+  **Mensagens** (Sistema, Amigos, Clube, Convites, Recompensas, com as não lidas), **Correio** (COLETAR conferido no
+  servidor, uma vez), **Loja** (Destaques, Tampinhas, Bolas, Efeitos, Comemorações, Gols, Banners, Avatares, Pacotes,
+  Ofertas e o Inventário; o servidor confere o preço e o saldo), **Clube** (pedir para entrar, pedidos, admins, chat do
+  clube, estatísticas, histórico, ranking), **Treino** (POSICIONAMENTO, DEFESA, GOLEIRO e TREINO COM BOTS entraram ao lado
+  dos de sempre; campo, tamanho, dificuldade e o relógio do treino livre; a mesma física; o prêmio do treino com a conta é
+  pago pelo servidor, com o teto do dia, e o treino com bots não vale nada), **Missões** (diárias, semanais, da temporada e
+  especiais), **Eventos** (login diário, desafios, a Copa dos Amigos, temporada, temporários — configuráveis no servidor e
+  no RACHA CONTROL), **Passe RACHA** (temporada, 30 níveis, trilha grátis e premium — com 9 tampinhas exclusivas na
+  premium, 5 delas novas: Laje Neon, Pipa no Céu, Cria do Beco, Onça da Quebrada e Fogo no Asfalto), **Chat** (MUNDO, SALA, EQUIPE, CLUBE e
+  AMIGOS; silenciar, denunciar com motivo, bloquear; o filtro e a trava de spam de antes valem nos canais novos),
+  **Denúncias** (a janela com os 7 motivos; na ficha do chat, o motivo ali mesmo, que funciona também na partida),
+  **Modo e campo** (a folha do MODO: RANQUEADA, SALAS e TREINO; os campos com o desenho, o nome e os modos em que valem —
+  a Arena leva a uma sala nova nela ou ao treino nela), **Estatísticas** (DA CONTA, com filtro de temporada e de modo, ao
+  lado do DESTE APARELHO de antes), **Espectador** (a câmera CAMPO INTEIRO na volta do CÂMERA e o SAIR na barra),
+  **Ajustes** (Música e Efeitos, sensibilidade do analógico, idioma, a aba nova PRIVACIDADE com as notificações, a
+  privacidade da conta, os silenciados e os bloqueados, e EXCLUIR MINHA CONTA) e o **controle Bluetooth** (API Gamepad:
+  as mesmas 32 direções e velocidade do toque, A/B/X/START, os menus pelo direcional).
+- **O fim da partida** com a conta: as moedas que a conta recebeu (com o teto do dia), as missões, o passe e o melhor da
+  partida (online: o do servidor das salas; contra os bots: o jogo diz quem foi e o servidor só aceita se for possível).
+
+Mudou de propósito, e os testes de antes foram postos em dia (com um comentário "v88" em cada troca):
+`camera_test.py` (a volta do CÂMERA passa pelo CAMPO INTEIRO), `v73_test.py` (12 cartões no TREINAMENTO: os 8 de sempre na
+mesma ordem e os novos depois), `v71_test.py` (o PASSE voltou ao topo; 7 abas nos Ajustes), `v77_test.py` (o CORREIO no
+topo), `v79_test.py` e `enxuto_test.py` (a folha do MODO mostra os dois campos com os modos de cada um; a
+ranqueada continua só no Estádio), `v81_test.py` (a denúncia pede o motivo; a aba EQUIPE ao lado da PARTIDA),
+`perfil_test.py` (a troca de gemas mora em OFERTAS) e `v87_site_test.py` (com a conta, o AMIGOS abre os amigos dentro do
+jogo; o painel do site continua para o perfil da conta).
+
+Testes novos: `tests/v88_plataforma_test.mjs` (a plataforma de verdade no banco de teste, três contas e o reinício),
+`tests/v88_social_test.js` (o social ao vivo no servidor das salas), `tests/v88_salas_plataforma_test.mjs` (o mesmo com o
+servidor montado na plataforma), `tests/v88_cliente_test.py` (o jogo de verdade logado em dois e três navegadores, pelos
+botões) e `tests/v88_controle_test.py` (o controle Bluetooth com um controle simulado no navegador). Os cinco entraram no
+`tests/roda_tudo.sh`.
+
 ## v87.2 — 17/10/2026 · moedas e gemas para testar o jogo
 
 A pedido: moedas e gemas para testar no jogo (no site com as contas também, não só na demonstração).

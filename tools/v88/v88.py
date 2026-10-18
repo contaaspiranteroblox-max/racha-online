@@ -17,9 +17,31 @@ SUBS.append(('<link rel="stylesheet" href="./v82.css">\n', '<link rel="styleshee
 SUBS.append(("    if (!NET49.host) return x49Toast('Esta partida está rodando no servidor: daqui não dá para pausar.');\n",
              "    if (!NET49.host && !(r.servidor && !r.ranked && !r.local)) return x49Toast('Esta partida está rodando no servidor: daqui não dá para pausar.');   // v88: na sala hospedada o admin pausa pelo servidor\n"))
 
+# ---- o som: a MÚSICA e os EFEITOS com volume próprio (Ajustes › Áudio). O Volume de sempre continua sendo o geral, por cima
+# dos dois; a música (o funk do lobby e do paredão) passa a ter o seu canal, e o resto (chute, torcida, apito, botões) o dele.
+SUBS.append(("  function aplicarVol(){ if (mestre) mestre.gain.setTargetAtTime(mudo ? 0 : vol, agora(), .05); }\n",
+             "  let geral88 = null, musBus88 = null, mus88 = 1, efx88 = 1;   // v88: a música e os efeitos, cada um com o seu volume (o geral fica por cima)\n"
+             "  try { const o = JSON.parse(localStorage.getItem('racha88-som') || 'null'); if (o){ if (o.mus >= 0 && o.mus <= 100) mus88 = o.mus/100; if (o.efx >= 0 && o.efx <= 100) efx88 = o.efx/100; } } catch (_) {}\n"
+             "  function aplicarVol(){ if (geral88) geral88.gain.setTargetAtTime(mudo ? 0 : vol, agora(), .05); }\n"))
+SUBS.append(("      mestre = ac.createGain(); mestre.gain.value = mudo ? 0 : vol; mestre.connect(ac.destination);\n",
+             "      geral88 = ac.createGain(); geral88.gain.value = mudo ? 0 : vol; geral88.connect(ac.destination);   // v88: o geral; embaixo dele, os efeitos (mestre) e a música\n"
+             "      mestre = ac.createGain(); mestre.gain.value = efx88; mestre.connect(geral88);\n"
+             "      musBus88 = ac.createGain(); musBus88.gain.value = mus88; musBus88.connect(geral88);\n"))
+SUBS.append(("    musIn.connect(musLP); musLP.connect(musG); musG.connect(mestre);",
+             "    musIn.connect(musLP); musLP.connect(musG); musG.connect(musBus88 || mestre);"))
+SUBS.append(("    get volume(){ return Math.round(vol*100); },\n",
+             "    get volume(){ return Math.round(vol*100); },\n"
+             "    get mistura(){ return {musica:Math.round(mus88*100), efeitos:Math.round(efx88*100)}; },   // v88\n"
+             "    setMistura(m, e){\n"
+             "      if (m != null && isFinite(m)) mus88 = Math.max(0, Math.min(1, m/100));\n"
+             "      if (e != null && isFinite(e)) efx88 = Math.max(0, Math.min(1, e/100));\n"
+             "      if (ac){ if (musBus88) musBus88.gain.setTargetAtTime(mus88, agora(), .05); if (mestre) mestre.gain.setTargetAtTime(efx88, agora(), .05); }\n"
+             "      try { localStorage.setItem('racha88-som', JSON.stringify({mus:Math.round(mus88*100), efx:Math.round(efx88*100)})); } catch (_) {}\n"
+             "    },\n"))
+
 # ---- o código novo, depois do site.js da v87 (o fim dele: o texto do presente de teste)
 ARQUIVOS = [n for n in ('base.js', 'lobby.js', 'amigos.js', 'mensagens.js', 'loja.js', 'cosmeticos.js', 'progressao.js', 'clube.js',
-                        'chat.js', 'estatisticas.js', 'espectador.js', 'treino.js', 'modos.js', 'ajustes.js', 'controle.js') if (AQUI / n).exists()]
+                        'chat.js', 'estatisticas.js', 'espectador.js', 'treino.js', 'modos.js', 'ajustes.js', 'controle.js', 'resultado.js') if (AQUI / n).exists()]
 CODIGO = '\n'.join((AQUI / n).read_text(encoding='utf-8') for n in ARQUIVOS)
 # o catálogo da loja (app/contracts/catalogo88.json: o MESMO arquivo que a plataforma usa para conferir preço e item)
 CAT = RAIZ / 'app' / 'contracts' / 'catalogo88.json'

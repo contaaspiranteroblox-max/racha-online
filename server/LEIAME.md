@@ -12,6 +12,38 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
+## v88 · o social ao vivo (`social88.js`)
+
+A v88 (a atualização completa dos menus) põe aqui o lado **ao vivo** do social — as contas, os amigos, os bloqueios e a
+privacidade continuam morando na plataforma; este servidor só usa o que ela diz. Tudo em `server/social88.js`, ligado no
+`turma.js` com uma linha (`social88.aplica(Turma)`): **nada muda na partida** (as salas, a física, a fila, os resultados).
+
+* **Status dos amigos:** online, na sala, procurando partida, em partida (com o código da sala pública para ASSISTIR) e
+  offline — só entre amigos dos dois lados, e quem desligou "Aparecer online" (Ajustes › Privacidade) aparece offline
+  para todos (nem a sala aparece).
+* **Convites em tempo real:** chamar um amigo para a sua sala ou para o seu time (ele aceita e entra na hora; o convite vale
+  60 s; quem desligou "Receber convites" não recebe; até 5 seguidos, depois 1 a cada 5 s).
+* **Chat dos amigos** (mensagem direta: chega mesmo offline, fica guardada 7 dias, as últimas 40), **chat do clube** (as
+  últimas 60) e **chat da equipe** (`say {text, canal:'equipe'}`: só o seu time, na sala e na partida; quem assiste não tem
+  equipe). O mesmo filtro, o mesmo limite de envio e a mesma trava contra a repetida dos outros chats.
+* **Bloqueio no servidor:** quem você bloqueou (ou bloqueou você) não aparece no seu chat da sala nem no Chat do Brasil, não
+  convida e não manda mensagem; os históricos chegam sem as mensagens dele.
+* **Denúncia de mensagem com motivo** (`report {mid, motivo}` na sala e na equipe, `brasil_report {id, motivo}` no Brasil,
+  `chat_denuncia {canal, mid, motivo}` no clube e nos amigos; motivos: `trapaca`, `toxico`, `ofensa`, `spam`, `nome`, `bug`,
+  `outro`): a regra da v81 continua (2 pessoas escondem na sala e silenciam 5 min; 3 no Brasil, 10 min) e, montado na
+  plataforma, a denúncia vai para a tabela do RACHA CONTROL (com o canal e o texto da mensagem); sem ela, fica no registro
+  (log) do servidor.
+* **Os avisos na hora da plataforma** (pedido de amizade, convite de clube, carta nova: `conta_aviso`) e as **relações que
+  mudaram** (montado na plataforma, ela avisa; separado, o jogo manda o bilhete novo: `relacoes {conta}`).
+* **O selo do resultado** ganha quem jogou junto (`g`: os IDs públicos das contas) e o melhor da partida (`v`), que a
+  plataforma usa para as missões "jogue com um amigo", os RECENTES e o MVP; a **lista das salas** traz o placar das salas em
+  jogo (para assistir).
+
+De onde vêm as relações: montado na plataforma, a sessão traz (e o banco é perguntado quando falta); separado dela, elas vêm
+assinadas no bilhete da conta (`a` = amigos, `b` = bloqueios, `o:0` = escondido, `c:0` = sem convites, `k` = clube, `q` =
+cosméticos equipados). Teste: `node tests/v88_social_test.js` (este servidor, na memória, com contas de verdade) e
+`node tests/v88_salas_plataforma_test.mjs` (montado na plataforma de teste).
+
 ## v86 · a mecânica clássica de volta (o comando `button`)
 
 A v86 voltou, a pedido, à mecânica da v84 — e o servidor junto: a partida autoritativa (`partida/fisica.js`) e o motor das
@@ -269,6 +301,9 @@ Cliente → servidor: `hello {token, name, skin, avatar, flag, conta?, clube?}` 
 `p2p {on}` · `cupCreate {name}` · `cupNext` · `cupEnd` · `club_req {rid, op, args}` ·
 `brasil_join {name, skin, avatar, token}` · `brasil_say {text}` · `brasil_report {id}` · `fila {n, pts}` · `fila_sai` (v79) ·
 `auto_entrar {n, ranked}` · `auto_cmd {seq, mx, my, k?}` · `auto_sair` · `auto_status` (v83, a partida autoritativa — acima).
+v88 (o social): `relacoes {conta}` · `amigos_status` · `convite {para, tipo}` (`tipo`: `sala` ou `time`) ·
+`convite_resposta {id, aceita}` · `dm {para, texto}` · `dm_hist {com}` · `clube_say {texto}` · `clube_hist` ·
+`chat_denuncia {canal, mid, motivo}` · `say {text, canal:'equipe'}` · `report {mid, motivo}` · `brasil_report {id, motivo}`.
 No `snapshot` da partida normal, `data.goal.el` é a hora do gol (v80).
 
 Servidor → cliente: `hello {id, token, server, p2p, pub, conta, selo}` · `rooms {list, online}` · `room {room}` ·
@@ -277,7 +312,10 @@ Servidor → cliente: `hello {id, token, server, p2p, pub, conta, selo}` · `roo
 `pong` · `error {message, codigo?}` · `brasil_hello` · `brasil_history` · `brasil_online` · `brasil_message` ·
 `brasil_hide` · `brasil_error {reason}` · `fila {on, n?, espera?, mista?, online?}` · `fila_nada {n}` (v79) ·
 `relogio {round, ms, pausado, seg, prorrog}` (v80) · `auto_bemvindo` · `auto_gente` · `auto_comeca` · `auto_q` · `auto_gol` ·
-`auto_fim` · `auto_erro {msg}` (v83). No `room`, `room.regra` e `room.relogio` (v80); no `result`, `servidor:true`
+`auto_fim` · `auto_erro {msg}` (v83) · v88: `amigos_status {lista, mostra, convites}` · `amigo_status {p, st, sala?}` ·
+`convite_recebido` · `convite_enviado` · `convite_erro` · `convite_resultado` · `dm` · `dm_hist` · `dm_erro` · `clube_msg` ·
+`clube_hist` · `clube_erro` · `conta_aviso` · `relacoes_ok` · `denuncia_ok` (o `say` da equipe vem com `canal:'equipe'`;
+o `result` traz `melhor {id, nome}` e, para quem foi, `mvp:true`; na lista das salas, o `placar` e o `assistir`). No `room`, `room.regra` e `room.relogio` (v80); no `result`, `servidor:true`
 quando o servidor encerrou pelo relógio dele (v80). Os `codigo` do `error` do chat da sala: `silenciado`, `repetida` e `filtro`
 (v81); os `reason` do `brasil_error`: `ritmo`, `repetida`, `filtro`, `silenciado`, `longa`. O `auto_erro` (v83) leva `msg` em
 português claro (sem hello, sem a conta, o servidor cheio, a partida lotada).
@@ -313,4 +351,6 @@ um clube podia achar o visitante no lugar da conta). O clube da turma procura a 
 node tests/servidor_test.js        # as regras (na memória) e duas sessões pela rede (HTTP, origem, reconexão); a parte 0: o login obrigatório (v84)
 python3 tests/online_test.py       # o jogo de verdade no navegador: sessões independentes contra este servidor
 node tests/plataforma_salas_test.mjs   # montado na plataforma (sessão do site e selo conferido)
+node tests/v88_social_test.js          # v88: o social ao vivo (status, convites, chat dos amigos/clube/equipe, bloqueio, denúncia)
+node tests/v88_salas_plataforma_test.mjs   # v88: o mesmo, montado na plataforma de teste (tests/plataforma)
 ```

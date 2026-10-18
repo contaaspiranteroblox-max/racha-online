@@ -2,7 +2,8 @@
 /* RACHA · servidor da turma — o que fica guardado (um arquivo JSON, gravado de forma atômica) e as funções de apoio.
    Guarda: quem é quem (o token vira um id fixo; só o hash do token fica no arquivo), os números de cada um (partidas e
    vitórias que o servidor conferiu = os troféus), os clubes, os convites, os duelos 1v1 e a galeria de campeões.
-   As salas e o chat vivem só na memória (somem quando o servidor reinicia). */
+   v88: e o histórico CURTO do chat dos amigos e do chat do clube (7 dias, as últimas 40/60 mensagens de cada conversa).
+   As salas, o chat da sala e o Chat do Brasil vivem só na memória (somem quando o servidor reinicia). */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
@@ -18,7 +19,8 @@ class Banco {
     this.carrega();
   }
   static vazio(){
-    return {versao:VERSAO, tokens:{}, gente:{}, clubes:{}, convites:[], duelos:{}, campeoes:[], seq:{pub:0, clube:0, convite:0}};
+    return {versao:VERSAO, tokens:{}, gente:{}, clubes:{}, convites:[], duelos:{}, campeoes:[], seq:{pub:0, clube:0, convite:0},
+      dms:{}, clubeChat:{}};                         // v88: o histórico curto do chat dos amigos e do clube (7 dias; as últimas 40/60)
   }
   carrega(){
     if (!this.arquivo) return;

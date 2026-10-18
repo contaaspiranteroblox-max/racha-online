@@ -1,0 +1,96 @@
+
+1) o status dos amigos (só entre amigos dos dois lados; o escondido aparece offline)
+  ok   a Ana entra com a conta
+  ok   logo ao entrar, a lista dos amigos online (ninguém ainda)
+  ok   o Beto entra e já vê a Ana online
+  ok   a Ana recebe na hora: Beto online
+  ok   o Caio escondeu o status: para a Ana ele continua offline
+  ok   mas o Caio vê os amigos dele (e sabe que está escondido)
+  ok   o Edu diz que é amigo da Ana, mas ela não confirma: ninguém vê ninguém
+
+2) o status muda: na sala, em partida, procurando, offline
+  ok   Beto criou a sala: a Ana vê "na sala" (com o código, porque é aberta)
+  ok   a Gabi foi procurar a ranqueada: "procurando partida"
+  ok   cancelou a busca: volta a "online"
+  ok   mexer no "pronto" e na configuração não manda status repetido para os amigos
+
+3) os convites (sala e time; só amigos online que aceitam convites)
+  ok   a Ana recebe o convite do Beto na hora (quem chamou e a sala)
+  ok   o Beto vê que o convite foi
+  ok   convidar quem está escondido: "não está online" (o status não vaza)
+  ok   convidar quem não é amigo: não pode
+  ok   a Ana aceitou: entrou na sala do Beto
+  ok   o Beto fica sabendo que ela aceitou
+  ok   o mesmo convite não vale duas vezes
+  ok   a Fabi desligou os convites: ninguém consegue chamar
+  ok   a Ana chama a Gabi para o time DELA
+  ok   a Gabi entrou no mesmo time da Ana
+  ok   no cartão da sala vão os cosméticos da conta (só visual; vêm assinados)
+
+4) o chat dos amigos (mensagem direta)
+  ok   a Ana manda para o Beto: os dois recebem (com o mesmo número)
+  ok   a mesma mensagem logo em seguida não vai (anti-spam)
+  ok   telefone (dado pessoal) é barrado pelo filtro
+  ok   ofensa é barrada pelo filtro
+  ok   só para amigos (o Edu não é amigo da Ana)
+  ok   o histórico da conversa (só o que passou)
+
+5) o chat da sala: a equipe e o bloqueio
+  ok   a Duda (que bloqueou a Ana) entra para assistir
+  ok   a fala da Ana chega ao Beto, mas não à Duda (bloqueio)
+  ok   e a fala da Duda não chega à Ana (o bloqueio vale dos dois lados)
+  ok   o chat da EQUIPE chega à Gabi (mesmo time)
+  ok   e não chega ao time adversário
+  ok   quem só assiste não vê o chat da equipe
+  ok   quem assiste não tem equipe para falar
+  ok   quem chega vê o histórico da sala, mas não o chat da equipe dos outros
+  ok   no histórico que a Duda recebe não vem nada que a Ana escreveu
+
+6) a denúncia com motivo (vai para a plataforma) e a mensagem escondida
+  ok   a denúncia do Beto vai para a plataforma: quem, contra quem, o motivo, o texto e a sala
+  ok   o Beto recebe a confirmação
+  ok   denunciar de novo a mesma mensagem não manda outra denúncia
+  ok   duas pessoas denunciaram: a mensagem some para todos (como antes)
+  ok   quem chega depois recebe a mensagem escondida SEM o texto
+
+7) o chat do clube
+  ok   a Ana fala no clube: o Beto (mesmo clube) recebe
+  ok   a Duda é do mesmo clube, mas bloqueou a Ana: não recebe
+  ok   quem é de fora do clube não recebe
+  ok   sem clube não tem chat do clube
+  ok   e o histórico do clube que a Duda recebe também não traz a Ana
+  ok   o histórico do clube para o Beto
+  ok   a denúncia de uma mensagem do clube também vai para a plataforma
+
+8) as relações que mudam: o bilhete novo (separado da plataforma) e o aviso da plataforma (montada)
+  ok   o bilhete novo da Ana vale
+  ok   o Beto deixa de ver a Ana (offline) na hora
+  ok   e não consegue mais mandar mensagem para ela
+  ok   o bilhete de outra conta não vale
+  ok   a plataforma avisa que voltaram a ser amigos: o Beto vê a Ana de novo
+  ok   e o cosmético novo aparece no cartão da sala (para todos)
+  ok   o aviso da plataforma chega na hora (conta_aviso)
+  ok   a Ana escondeu o status: o Beto passa a ver offline
+
+9) o Chat do Brasil: o bloqueio, a denúncia com motivo e o histórico sem o texto escondido
+  ok   a mensagem da Ana chega ao Beto
+  ok   mas não à Duda (que bloqueou a Ana)
+  ok   nem no histórico que a Duda recebe
+  ok   a denúncia no Chat do Brasil vai para a plataforma com o motivo
+  ok   três denúncias: some para todos (como antes)
+  ok   quem entra depois recebe a escondida SEM o texto
+
+10) o selo: quem jogou junto (g) e o melhor da partida (v); a lista mostra o placar (assistir)
+  ok   quem está fora vê a sala em jogo com o placar (e que dá para assistir)
+  ok   a Yara vê o Xavi "em partida"
+  ok   o selo leva as contas que jogaram (g), igual para os dois
+  ok   o melhor da partida (3 gols): v:1 só no selo dele, e todos veem quem foi
+  ok   empate em gols: quem deu mais assistências é o melhor
+  ok   empate em gols e assistências: o do time que venceu; no empate da partida, ninguém
+  ok   0 × 0: não tem melhor da partida
+
+11) offline e o histórico do chat dos amigos gravado no arquivo
+  ok   o Beto fechou o jogo: a Ana vê offline na hora
+  ok   o servidor reiniciou: a conversa (curta) continua lá
+
+v88 · o social ao vivo no servidor da turma: 72 ok, 0 falharam

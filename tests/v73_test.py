@@ -109,8 +109,9 @@ async def principal():
           return {n:cs.length, tst:!!g.querySelector('.tst-card'), outros:cs.filter(c => c.dataset.tr).map(c => c.dataset.tr),
             codigo:[typeof TST, typeof tstAtivo, typeof tstComeca, !!TR_INFO.teste, !!TR_X.teste], css:!!document.querySelector('link[href*="v72"]'),
             guardado:localStorage.getItem('racha-teste-modo-v72')}; })()""")
-        P.confere(r['n'] == 8 and not r['tst'] and r['outros'] == ['livre', 'cruz', 'dom', 'passe', 'tabela', 'final', 'cond'],
-                  'TREINAMENTO: os 8 cartões de sempre, na mesma ordem, sem o TESTE', r)
+        # v88: os 8 de sempre continuam primeiro, na mesma ordem; depois entram POSICIONAMENTO, DEFESA, GOLEIRO e o TREINO COM BOTS
+        P.confere(r['n'] == 12 and not r['tst'] and r['outros'] == ['livre', 'cruz', 'dom', 'passe', 'tabela', 'final', 'cond', 'posic', 'defesa', 'goleiro'],
+                  'TREINAMENTO: os 8 cartões de sempre, na mesma ordem, sem o TESTE (v88: + posicionamento, defesa, goleiro e com bots)', r)
         P.confere(r['codigo'] == ['undefined', 'undefined', 'undefined', False, False] and not r['css'], 'no jogo aberto não sobra nada do TESTE (código e estilo)', r)
         P.confere(r['guardado'] is None, 'a escolha que o TESTE guardava (IGUAL/CLÁSSICO) some do aparelho', r)
         await pg.screenshot(path=str(SAIDA / 'v73_treino_cartoes.png'))

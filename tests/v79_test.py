@@ -90,10 +90,13 @@ async def so_ranqueada(pw, P):
     await pg.wait_for_timeout(300)
     f = await rt(pg, """(() => { const vis = e => !!e && !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
       return {aba:JG.aba, abas:vis(RQP.abas), casual:vis(RQP.cabCas), mapas:Array.from(RQP.mapas.children).filter(vis).map(b => +b.dataset.m), buscar:RQP.buscar.textContent,
+        rq:Array.from(RQP.mapas.children).filter(b => vis(b) && /RANQUEADA/.test((b.querySelector('.v88-mapa-modos') || {}).textContent || '')).map(b => +b.dataset.m),
         tit:RQP.cabRq.querySelector('.rq-tit').textContent, nota:RQP.nota.textContent, como:vis(document.querySelector('#lb-rq .v79-como')), bots:vis(ECO.bots && ECO.bots.box),
         txt:document.querySelector('#lb-rq .rq-caixa').innerText}; })()""")
     P.confere(f['aba'] == 'ranked' and not f['abas'] and not f['casual'] and 'CASUAL' not in f['txt'], 'o MODO abre o JOGAR só com a ranqueada (sem a aba CASUAL)', {k: f[k] for k in ('aba', 'abas', 'casual')})
-    P.confere(f['mapas'] == [4] and f['buscar'] == 'JOGAR RANQUEADA' and f['tit'].startswith('RANQUEADA') and f['como'] and not f['bots'], 'só o Estádio, o JOGAR RANQUEADA, o COMO É e sem a escolha dos bots', f)
+    # v88: a folha mostra os campos do jogo com os modos de cada um; a ranqueada continua só no Estádio (o outro leva às salas ou ao treino)
+    P.confere(sorted(f['mapas']) == [0, 4] and f['rq'] == [4] and f['buscar'] == 'JOGAR RANQUEADA' and f['tit'].startswith('RANQUEADA') and f['como'] and not f['bots'],
+              'a ranqueada só no Estádio (v88: a Arena aparece com SALAS · TREINO), o JOGAR RANQUEADA, o COMO É e sem a escolha dos bots', f)
     P.confere(not SEM_NIVEL.search(f['txt']), 'a folha não fala em LIGA nem em FÁCIL/DIFÍCIL', [m.group(0) for m in SEM_NIVEL.finditer(f['txt'])][:3])
     await rt(pg, "document.querySelector('#rq-times [data-n=\"3\"]').click()")
     await rt(pg, "fechaRanqueada()")

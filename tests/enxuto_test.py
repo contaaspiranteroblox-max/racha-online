@@ -72,7 +72,9 @@ async def principal():
         r = await rt(pg, """(() => { const vis = e => !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
           return {modos:[...RQP.modos.children].filter(vis).map(b => b.textContent), mapas:[...RQP.mapas.children].filter(vis).map(b => b.textContent),
           cols:getComputedStyle(RQP.mapas).gridTemplateColumns.split(' ').length, aba:JG.aba}; })()""")
-        P.confere(r['modos'] == [] and r['mapas'] == ['ESTÁDIO'] and r['cols'] == 1 and r['aba'] == 'ranked', 'JOGAR (v79: só a ranqueada, mesmo pedindo a casual): sem os chips de modo, só o ESTÁDIO', r)
+        # v88: os dois campos aparecem com os modos de cada um; a ranqueada continua só no Estádio
+        P.confere(r['modos'] == [] and sorted(r['mapas']) == ['ARENASALAS · TREINO', 'ESTÁDIORANQUEADA · SALAS · TREINO'] and r['aba'] == 'ranked',
+                  'JOGAR (v79: só a ranqueada, mesmo pedindo a casual): sem os chips de modo; (v88) a Arena e o Estádio com os modos de cada um, a ranqueada só no Estádio', r)
         await rt(pg, "RQP.mapas.querySelector('[data-m=\"4\"]').click(); true"); await pg.wait_for_timeout(600)
         r = await rt(pg, """(() => { const c = RQP.mapas.querySelector('[data-m="4"] canvas'), g = c.getContext('2d'), d = g.getImageData(Math.round(c.width*.32), Math.round(c.height*.3), 4, 4).data;
           return {x49:X49.map, desc:RQP.desc.textContent, px:[d[0], d[1], d[2]], on:RQP.mapas.querySelector('[data-m="4"]').classList.contains('on')}; })()""")

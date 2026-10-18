@@ -1,0 +1,63 @@
+
+1) o login do jogo e o lobby da conta
+  OK      entrou pelo formulário do jogo: a conta é a do servidor (ID 000002)
+  OK      a carteira da tela é a do servidor (loja.estado)
+  OK      o lobby tem a lista dos amigos (vazia: "Nenhum amigo ainda")
+  OK      a CAIXA DE ENTRADA do topo mostra o número do que chegou (o login do dia e o presente de teste)
+
+2) o correio: COLETAR (o servidor entrega uma vez só)
+  OK      o botão abre a CAIXA DE ENTRADA com as cartas do servidor
+  OK      COLETAR o presente: +50.000 moedas na carteira do servidor e na tela
+  OK      coletar de novo: o servidor recusa (uma vez só)
+  OK      na tela, a carta coletada não tem mais o COLETAR
+
+3) a loja: comprar e equipar (o servidor confere preço e saldo)
+  OK      COMPRAR a Bola de Rua: o item na conta e −1.500 moedas (servidor e tela iguais)
+  OK      EQUIPAR AGORA: a bola equipada é a da conta
+  OK      preço mandado errado pelo aparelho: o servidor recusa
+
+4) amigos: buscar, pedir e aceitar (dois navegadores)
+  OK      BUSCAR "luc": acha o lucasznx (nível e ID de verdade)
+  OK      ADICIONAR: o pedido está no servidor (enviados)
+  OK      no outro navegador: o pedido chega (o número vermelho no AMIGOS)
+  OK      ACEITAR: viraram amigos no servidor
+  OK      o status do amigo é de verdade: o servidor das salas diz que ele está online
+  OK      o painel dos amigos do lobby mostra o amigo online
+
+5) a mensagem direta (o chat dos amigos)
+  OK      a mensagem chega no outro navegador (e conta como não lida)
+
+6) o convite para a sala e quem assiste
+  OK      CHAMAR cria a sala (fechada, com bots) e o convite aparece no outro navegador
+  OK      ENTRAR: o amigo está na sala de quem chamou
+  OK      a partida da sala começa e o amigo chamado joga (no lugar de um bot)
+  OK      assistindo: o SAIR e a CÂMERA na barra; a câmera passa pela bola, por cada jogador e pelo CAMPO INTEIRO
+  OK      quem assiste vê o placar e o tempo da partida (o mesmo do servidor)
+  OK      SAIR: quem assistia sai da sala
+
+7) a denúncia (vai para o servidor, com o motivo)
+  OK      conta criada agora: o servidor não aceita a denúncia (a janela fica aberta para tentar depois)
+  OK      uma hora depois: ENVIAR põe a denúncia no banco (motivo spam), para o RACHA CONTROL
+  OK      Chat do Brasil: a ficha tem um VER PERFIL só; DENUNCIAR pede o motivo na ficha (OFENSA marcado) e o TÓXICO vai para o banco com o texto da mensagem
+
+8) as partidas rendendo na conta: missões (COLETAR), passe (COLETAR), estatísticas
+  OK      MISSÕES: a missão cumprida (as partidas válidas) tem COLETAR e o prêmio entra na carteira do servidor
+  OK      PASSE: o nível alcançado tem COLETAR e a recompensa entra na conta (servidor)
+  OK      EVENTOS: os eventos do servidor aparecem (com a coluna de cada um)
+  OK      ESTATÍSTICAS (DA CONTA): as 6 partidas que o servidor contou
+  OK      o filtro RANQUEADA: zero (as 6 foram contra os bots, sem patente)
+
+9) a privacidade (no servidor)
+  OK      Ajustes › Privacidade: "Aparecer online" desligado fica na conta
+
+10) o treino na conta e o treino com bots (que não vale nada)
+  OK      fim do exercício (Goleiro, 3 estrelas): o servidor paga na conta (jogo.treinoConcluido)
+  OK      TREINO COM BOTS: a partida roda sem abrir partida na conta (nada de patente, moedas ou missão)
+  OK      de volta ao lobby, o JOGAR continua sendo a ranqueada
+  OK      nenhum erro de JavaScript na sessão A
+  OK      nenhum erro de JavaScript na sessão B
+
+11) reiniciando o servidor com o mesmo banco: tudo continua lá
+  OK      depois de reiniciar: a amizade, a compra e o equipado continuam (a sessão também)
+
+v88 · o jogo logado na plataforma de teste (dois navegadores, pelos botões): 39/39 verificações ok em 40.5 s

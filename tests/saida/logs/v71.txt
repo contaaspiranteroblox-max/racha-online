@@ -29,7 +29,8 @@
 
 5) o lobby novo: os lugares e os destinos
   OK      os botões quadrados: LOJA, TAMPINHA, CLUBE, TREINO à esquerda; SALAS, AMIGOS, RANKING e (v77) EVENTOS à direita
-  OK      saíram da tela e do Tab: PASSE, COMUNIDADE, o CHAT grande e o ícone repetido das SALAS (e o "Pronto, fulano!")
+  OK      saíram da tela e do Tab: COMUNIDADE, o CHAT grande e o ícone repetido das SALAS (e o "Pronto, fulano!")
+  OK      v88: o PASSE (o botão de sempre, que estava escondido) voltou no topo, para o Passe RACHA, e entra no Tab
   OK      a LIGA no topo, do lado do seu cartão (o elo certo); o nível no selo da tampinha
   OK      o nome lido de cada botão contém a palavra escrita nele (TREINO, não "Treinamento")
   OK      o MODO mostra o que vai ser jogado (v79: o tamanho da ranqueada e RANQUEADA · ESTÁDIO) e o JOGAR diz o mesmo para o leitor de tela
@@ -78,7 +79,7 @@
   OK      PERFIL no computador em partes (v77: VISÃO GERAL com a tampinha ao lado · ESTATÍSTICAS · CONQUISTAS · PARTIDAS): cada parte cabe sem rolar
   OK      a tampinha padrão se chama PADRÃO no perfil e no editor (era "Personalizada"); os modelos prontos ficam com o nome deles
   OK      LOJA: as 4 peças do dia com a faixa da cor da raridade certa
-  OK      AJUSTES: as 6 abas com o desenho delas (no computador)
+  OK      AJUSTES: as 7 abas com o desenho delas (no computador; v88: + PRIVACIDADE)
   OK      PAUSA: CONTINUAR, EDITAR CONTROLES, AJUSTES e SAIR com desenho e ≥ 44 px
   OK      FIM: a moldura grossa, o JOGAR DE NOVO amarelo e o LOBBY escuro
   OK      nenhum erro de JavaScript (telas de dentro, computador)
@@ -90,4 +91,4 @@
   OK      844x390: a PAUSA cabe na tela com os 4 botões ≥ 44 px
   OK      844x390: nenhum erro de JavaScript (telas de dentro)
 
-v71 · preto × branco e o lobby novo: 77/77 verificações ok em 82.0 s
+v71 · preto × branco e o lobby novo: 78/78 verificações ok em 86.3 s

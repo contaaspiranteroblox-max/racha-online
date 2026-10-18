@@ -12,12 +12,12 @@
   OK      a janela do presente diz que é de teste (sem falar em demonstração)
   OK      Ajustes › Conta: o SAIR DA CONTA está lá (e o RACHA CONTROL não, para quem não é da equipe)
 
-3) as páginas da conta abrem por cima do jogo
-  OK      o AMIGOS do lobby abre os amigos da conta num painel por cima do jogo, já com a sessão (AMIGOS DA CONTA)
+3) os amigos da conta no jogo; as páginas do site por cima do jogo
+  OK      v88: com a conta, o AMIGOS do lobby abre os amigos da conta dentro do jogo (sem o painel do site)
+  OK      o ABRIR O PERFIL DA CONTA (o nome do cartão) abre o perfil da conta num painel por cima do jogo, já com a sessão (PERFIL DA CONTA)
   OK      o VOLTAR AO JOGO fecha o painel e o jogo continua do jeito que estava (sem recarregar)
   OK      o "JOGAR" de dentro da página do site também fecha o painel
   OK      o Esc fecha o painel (como as outras janelas do jogo)
-  OK      o ABRIR O PERFIL DA CONTA (o nome do cartão) abre o perfil da conta no painel
   OK      só as páginas da conta abrem no painel (o resto não)
 
 4) SAIR DA CONTA
@@ -39,4 +39,4 @@
   OK      e o SÓ TREINAR OFFLINE abre o jogo
   OK      nenhum erro de JavaScript
 
-v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 17.3 s
+v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 19.7 s

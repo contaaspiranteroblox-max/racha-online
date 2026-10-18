@@ -2,7 +2,7 @@
   OK      1280x720: o fundo do lobby é a imagem limpa (6 amostras, cor a cor) e cobre a tela
   OK      o letreiro da imagem (RACHA, a coroa e FUTEBOL DE RUA) em cima da tampinha; o nome RACHA continua para o leitor de tela
   OK      os 8 botões dos lados com os desenhos da imagem (o EVENTOS entrou na coluna da direita)
-  OK      em cima: moedas e gemas com o +, o chat, os AMIGOS e os ajustes (como na imagem)
+  OK      em cima: moedas e gemas com o +, o chat, os AMIGOS, (v88) o CORREIO e os ajustes
   OK      você com o XP em números; o MODO com o tamanho grande (2 VS 2) e embaixo o que vai ser jogado (v79: RANQUEADA · ESTÁDIO); os DESAFIOS com a estrela e o prêmio na pilha de moedas
   OK      sem a fileira de tampinhas embaixo: no lobby só a sua tampinha (trocar é na TAMPINHA)
   OK      a tampinha do meio é desenhada reta (sem girar) e sem a bola do lado
@@ -34,4 +34,4 @@
   OK      844x390: o lobby, o perfil (VISÃO GERAL, CONQUISTAS, PARTIDAS) e as telas cabem sem rolar
   OK      844x390: nenhum erro de JavaScript
 
-v77 · o lobby, o perfil, as telas e o mapa principal das imagens enviadas: 34/34 verificações ok em 38.8 s
+v77 · o lobby, o perfil, as telas e o mapa principal das imagens enviadas: 34/34 verificações ok em 39.3 s

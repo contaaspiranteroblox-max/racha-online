@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/providers/trpc";
 import { CATALOGO_ITENS, SELO_INFO, type Selo } from "@contracts/racha";
 import { SeloV } from "@/lib/racha";
+import { AbaEventos, AbaCorreio } from "./AdminV88"; // v88: os eventos, o correio e os avisos do jogo
 
 const NOME_CARGO: Record<string, string> = {
   dono: "Dono",
@@ -117,6 +118,8 @@ const ABAS_PAINEL = [
   { id: "jogadores", rotulo: "👥 Jogadores", perm: "consultar_jogadores" },
   { id: "recompensas", rotulo: "🎁 Recompensas", perm: "enviar_itens" },
   { id: "denuncias", rotulo: "🚩 Denúncias", perm: "analisar_denuncias" },
+  { id: "eventos", rotulo: "📅 Eventos", perm: "gerenciar_eventos" }, // v88
+  { id: "correio", rotulo: "✉️ Correio", perm: "enviar_itens" }, // v88
   { id: "equipe", rotulo: "🛡 Equipe", perm: "gerenciar_equipe" },
   { id: "registros", rotulo: "📜 Registros", perm: "consultar_registros" },
 ] as const;
@@ -163,6 +166,8 @@ function Painel({ cargo, permissoes, usuario }: { cargo: string; permissoes: str
       {aba === "jogadores" && <AbaJogadores tem={tem} />}
       {aba === "recompensas" && <AbaRecompensas tem={tem} />}
       {aba === "denuncias" && <AbaDenuncias />}
+      {aba === "eventos" && <AbaEventos />}
+      {aba === "correio" && <AbaCorreio tem={tem} />}
       {aba === "equipe" && <AbaEquipe />}
       {aba === "registros" && <AbaRegistros tem={tem} />}
     </div>

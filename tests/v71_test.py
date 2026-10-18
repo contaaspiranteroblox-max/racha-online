@@ -181,13 +181,15 @@ async def principal():
         print('\n5) o lobby novo: os lugares e os destinos')
         b, pg, erros = await abre(pw, 1280, 720)
         r = await rt(pg, """(() => { const nomes = s => [...document.querySelectorAll(s)].map(b => b.querySelector(':scope > b').textContent);
-          const fora = ['[data-rx="passe"]', '[data-rx="comunidade"]', '.rx-bt[data-rx="chat"]', '.rx-amg'].map(s => { const e = document.querySelector('#lb ' + s); return e && getComputedStyle(e).display === 'none' && e.tabIndex === -1; });
+          const fora = ['[data-rx="comunidade"]', '.rx-bt[data-rx="chat"]', '.rx-amg'].map(s => { const e = document.querySelector('#lb ' + s); return e && getComputedStyle(e).display === 'none' && e.tabIndex === -1; });
+          const pa = document.querySelector('#lb [data-rx="passe"]'), passe = !!pa && !!pa.closest('.lb-topo') && getComputedStyle(pa).display !== 'none' && pa.tabIndex === 0;   // (v88: o PASSE voltou, no topo, para o Passe RACHA)
           const liga = document.querySelector('.lb-topo .v71-liga');
-          return {esq:nomes('#rx .v71-esq > .rx-bt'), dir:nomes('#rx .v71-dir > .rx-bt'), fora, liga:!!liga && liga.previousElementSibling === LB.eu, elo:document.getElementById('lb-rq-elo').textContent === rqElo(CONTA.rq.pts).nome,
+          return {esq:nomes('#rx .v71-esq > .rx-bt'), dir:nomes('#rx .v71-dir > .rx-bt'), fora, passe, liga:!!liga && liga.previousElementSibling === LB.eu, elo:document.getElementById('lb-rq-elo').textContent === rqElo(CONTA.rq.pts).nome,
             nv:document.getElementById('v71-nv').textContent === String(nivelInfo(CONTA.xp).n), pronto:getComputedStyle(document.querySelector('.rx-pronto')).display,
             rotulos:[...document.querySelectorAll('#rx .v71-tile')].every(b => (b.getAttribute('aria-label') || '').toUpperCase().indexOf(b.querySelector(':scope > b').textContent) >= 0)}; })()""")
         P.confere(r['esq'] == ['LOJA', 'TAMPINHA', 'CLUBE', 'TREINO'] and r['dir'] == ['SALAS', 'AMIGOS', 'RANKING', 'EVENTOS'], 'os botões quadrados: LOJA, TAMPINHA, CLUBE, TREINO à esquerda; SALAS, AMIGOS, RANKING e (v77) EVENTOS à direita', r)
-        P.confere(all(r['fora']) and r['pronto'] == 'none', 'saíram da tela e do Tab: PASSE, COMUNIDADE, o CHAT grande e o ícone repetido das SALAS (e o "Pronto, fulano!")', r['fora'])
+        P.confere(all(r['fora']) and r['pronto'] == 'none', 'saíram da tela e do Tab: COMUNIDADE, o CHAT grande e o ícone repetido das SALAS (e o "Pronto, fulano!")', r['fora'])
+        P.confere(r['passe'], 'v88: o PASSE (o botão de sempre, que estava escondido) voltou no topo, para o Passe RACHA, e entra no Tab', r['passe'])
         P.confere(r['liga'] and r['elo'] and r['nv'], 'a LIGA no topo, do lado do seu cartão (o elo certo); o nível no selo da tampinha', r)
         P.confere(r['rotulos'], 'o nome lido de cada botão contém a palavra escrita nele (TREINO, não "Treinamento")', r)
         r = await rt(pg, """(() => { CONTA.rq.n = 3; lbRender();
@@ -262,7 +264,7 @@ async def principal():
         P.confere(ok, 'LOJA: as 4 peças do dia com a faixa da cor da raridade certa', r)
         await rt(pg, LIMPA71); await rt(pg, "ajxAbre('audio'); true"); await pg.wait_for_timeout(300)
         r = await rt(pg, "[...document.querySelectorAll('#pop-ajustes .ajx-aba')].map(b => !!b.querySelector('.v71-ic svg') && getComputedStyle(b.querySelector('.v71-ic')).display !== 'none')")
-        P.confere(len(r) == 6 and all(r), 'AJUSTES: as 6 abas com o desenho delas (no computador)', r)
+        P.confere(len(r) == 7 and all(r), 'AJUSTES: as 7 abas com o desenho delas (no computador; v88: + PRIVACIDADE)', r)
         await rt(pg, "ajxFecha(); jogar(); true"); await pg.wait_for_timeout(700)
         await rt(pg, "pausaAbre(); true"); await pg.wait_for_timeout(300)
         r = await rt(pg, """[...document.querySelectorAll('#pausa .pa-acoes > .pa-bt')].map(b => ({t:b.textContent.trim(), ic:!!b.querySelector('.v71-ic svg'), h:Math.round(b.getBoundingClientRect().height)}))""")

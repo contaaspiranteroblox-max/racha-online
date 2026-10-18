@@ -1,7 +1,7 @@
 
 · primeiros toques
   OK      abre no passo 1 (ANDAR) com o painel e o círculo
-  OK      a tecla de andar move a tampinha (614 → 744)
+  OK      a tecla de andar move a tampinha (614 → 753)
   OK      chegou no círculo: passa para o passo 2 (FIQUE ATRÁS DA BOLA)
   OK      atrás da bola: passa para o passo 3 (CHUTE)
   OK      CHUTE (tecla K) de trás da bola: gol, passa para o passo 4 (PASSE)
@@ -33,4 +33,4 @@
   OK      (guardado) GINGA: embaixo do placar, a janela do gol de ginga com o tempo que falta
   OK      nenhum erro de JavaScript (modos e indicadores)
 
-Etapa 4 · tutorial, Domínio, modos e indicadores: 26/26 verificações ok em 27.8 s
+Etapa 4 · tutorial, Domínio, modos e indicadores: 26/26 verificações ok em 28.6 s

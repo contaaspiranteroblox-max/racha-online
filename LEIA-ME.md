@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v87.2
+# RACHA · Futebol de Rua — v88
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -60,7 +60,11 @@ A **v86** voltou, a pedido, à **mecânica da v84** (a física, as quadras, o an
 **chute mais forte** (v87.1: o PASSE, o CHUTE e o teto da bola ficaram 15% abaixo da versão antiga), e o resto da v85 continua
 (textos, chaves, fontes, login). A **v87** leva tudo para **dentro do jogo**: a plataforma abre o jogo direto, em tela
 cheia, com o login do jogo e as coisas da conta nos botões dele — logo abaixo. A **v87.2** dá **moedas e gemas de teste**
-(50.000 e 5.000, uma vez em cada aparelho e em cada conta) também na produção, pelo `presente: true` do `config.js`.
+(50.000 e 5.000, uma vez em cada aparelho e em cada conta) também na produção, pelo `presente: true` do `config.js`. A **v88** é a
+**atualização completa dos menus**: amigos, mensagens, correio, loja por categorias, clube completo, treino (posicionamento,
+defesa, goleiro e com bots), missões, eventos, Passe RACHA, chat por canais, denúncias, a escolha do modo e do campo,
+estatísticas da conta, espectador, ajustes que faltavam e o controle Bluetooth — no lobby de sempre, ligados às contas e ao
+servidor (a carteira, o inventário e o progresso da conta conferidos nele) — logo abaixo, com o relatório da entrega.
 
 ---
 
@@ -92,6 +96,10 @@ tela de login, **SÓ TREINAR OFFLINE** abre o jogo contra os bots (v85: também 
 cd app && npm install && npm run db:push && npx tsx db/seed.ts && npm run build && npm start   # http://localhost:3000
 ```
 
+**v88:** rode a migração (`npm run db:push`, ou o `app/db/migrations/v88_social.sql`) antes do build — as telas da conta
+(amigos, mensagens, correio, loja com a carteira da conta, missões, passe, eventos, estatísticas, clube, privacidade)
+usam as tabelas novas. Sem MySQL, dá para testar as contas no computador com a plataforma de teste (ver a seção v88).
+
 Em produção a plataforma entrega o jogo em `/game/racha.html` e monta o servidor das salas no mesmo endereço (quem está
 logado entra nas salas com a conta). Desde a v87 **a raiz do site abre o jogo direto**, em tela cheia: o login é o do jogo
 e as páginas da conta (`/perfil`, `/amigos`…) abrem por cima dele; o jogo dentro do site, com a barra e as abas, ficou em
@@ -121,6 +129,203 @@ OFL) vêm em `app/public/game/fontes/` (os `.ttf` originais, com a licença ao l
 desenhar as letras. Ver `app/public/game/fontes/LEIA-ME.txt`.
 
 ---
+
+## v88 · a atualização completa dos menus
+
+O pedido ("PROMPT — ATUALIZAÇÃO COMPLETA DO RACHA", com 4 imagens de referência): pôr no jogo original os botões, menus e
+sistemas que faltavam — amigos, mensagens, correio, loja, clube, treino, missões, eventos, passe, chat, denúncias, a escolha
+do modo e do campo, estatísticas, espectador, ajustes e controle —, com a organização de um jogo mobile grande e a cara do
+RACHA, **sem criar outro jogo**, sem botão duplicado, sem mexer na física, sem tirar nada, sem inventar dado e com o
+servidor conferindo o que vale moeda, item ou vitória. Este é o relatório da entrega.
+
+**O que não mudou (conferido):** a física, a movimentação, os chutes e as colisões — o build confere o sha256 do bloco de
+física (`ad9f1d2216409b0e`, o mesmo da v87.1) e o servidor das salas usa o mesmo `server/partida/fisica.js`; o lobby da v77,
+com os mesmos botões nos mesmos lugares; as skins, as moedas, as contas, os mapas e os dados de antes; as salas, a fila, a
+partida hospedada e os resultados (o social entrou num módulo à parte, `server/social88.js`, que não toca na partida); a
+igualdade entre os jogadores (os cosméticos novos — bolas, efeitos, comemorações, gols, banners e avatares — são só
+aparência: o mesmo tamanho, a mesma velocidade, o mesmo chute).
+
+**Onde funciona.** As telas da conta (amigos, mensagens, correio, compras com a carteira da conta, missões, eventos e passe
+do servidor, estatísticas DA CONTA, o clube completo, a privacidade e excluir a conta) precisam da **plataforma RACHA 2.0**
+(`app/`, com o MySQL) no ar. **O site de teste do Render roda só o servidor das salas, sem as contas**: lá essas telas dizem
+que precisam da conta (não fingem que funcionam), e o resto (o treino novo, a loja para ver, o modo e o campo, o espectador,
+os ajustes, o controle, o chat MUNDO/SALA/EQUIPE) funciona sem conta. Para ver tudo: suba a plataforma (`app/DEPLOY.md`)
+ou use a plataforma de teste no computador (abaixo, "Instalar e testar").
+
+### O que entrou, parte por parte do pedido
+
+1. **Lobby** (`tools/v88/lobby.js`). Mantido inteiro (o fundo da favela com o Cristo, a tampinha equipada no meio, o perfil,
+   as moedas, as gemas, a patente, o chat, o JOGAR e os botões de antes). Dois botões que já existiam escondidos como "em
+   breve" passaram a funcionar: o **CORREIO** (o ícone da carta, ao lado dos ajustes: a caixa de entrada com as mensagens e o
+   correio, com o número do que chegou) e o **PASSE** (escondido desde a v71, agora um quadrado no topo com o nível e a barra
+   do XP). Entrou só um bloco novo, a **lista dos amigos** à direita, como na referência (avatar, nome, status de verdade e o botão de cada um — chamar para a sala,
+   assistir a partida, mandar mensagem —, o VER TODOS, o + de adicionar e o **sinal** da conexão com o servidor das salas).
+   A lista desce sozinha quando cobriria o Cristo (em telas 4:3 e 5:4) e some se sobrar pouco espaço. Os números vermelhos de
+   não lido entram nos botões que já existiam (AMIGOS: pedidos e convites; CLUBE: convites e pedidos; EVENTOS e DESAFIOS:
+   prêmios para pegar). A regra dos botões de antes: **sem conta, fazem o que sempre fizeram neste aparelho** (AMIGOS → a tela
+   AMIGOS/COMUNIDADE, EVENTOS → a Copa dos Amigos, DESAFIOS → as missões do aparelho); **com a conta, abrem as telas da conta**.
+   O jogo continua só na horizontal no celular.
+2. **Amigos** (`tools/v88/amigos.js`, `app/api/racha/amigosRouter.ts`, `social.ts`, `server/social88.js`). As abas AMIGOS,
+   PEDIDOS, BUSCAR, RECENTES e BLOQUEADOS: buscar pelo nome ou pelo ID; pedir, aceitar, recusar, cancelar o pedido; remover;
+   ver o perfil (o cartão com o banner, a patente, os números reais e a bio); status online, na sala, procurando partida, em
+   partida e offline (ao vivo, pelo servidor das salas, só entre amigos dos dois lados; quem desliga "Aparecer online"
+   aparece offline); **chamar para a sala** (cria a sala, fechada e com bots, se precisar) e **para o time**; o convite chega
+   na hora (janela com ENTRAR/RECUSAR, 60 s); bloquear (dos dois lados, no servidor: não aparece no chat, não convida, não
+   manda mensagem); avisos de pedido novo (o número no AMIGOS, a mensagem em MENSAGENS › AMIGOS e o balão no jogo);
+   adicionar pelo perfil, pela ficha do chat e **pelo resultado das partidas** (RECENTES: quem jogou com você nas últimas
+   partidas online, tirado do resultado conferido pelo servidor). Até 100 amigos. Nada inventado: lista vazia diz que está
+   vazia.
+3. **Mensagens** (`tools/v88/mensagens.js`, `mensagens.ts`): a central com **Sistema, Amigos, Clube, Convites e
+   Recompensas**, as não lidas em cada uma, abrir e marcar como lida, apagar; tudo na conta (vale em qualquer aparelho).
+4. **Correio** (`correio.ts`): cartas com moedas, gemas, itens e XP do passe — recompensa de login (o evento de login
+   diário), prêmios de evento, recompensas de temporada, presentes, avisos de manutenção e compensações oficiais (o RACHA
+   CONTROL manda para uma conta ou para todos). **COLETAR** pede ao servidor, que confere a carta, entrega e marca **na mesma
+   transação**: coletar de novo (até em outro aparelho) responde "já coletada".
+5. **Loja** (`tools/v88/loja.js`, `loja.ts`, `app/contracts/catalogo88.json`): a mesma tela LOJA, com a coluna de categorias
+   **Destaques, Tampinhas, Bolas, Efeitos, Comemorações, Gols, Banners, Avatares, Pacotes e Ofertas** (e o **Inventário**). As
+   que já existiam ficaram: as peças da tampinha (as do dia, o PERSONALIZAR, o COMO GANHAR) moram em TAMPINHAS e a troca de
+   gemas por moedas em OFERTAS. Cada produto mostra o desenho, o nome, a raridade e o preço, e abre a janela dele com o
+   COMPRAR (ou EQUIPAR). Com a conta, **o servidor confere o preço de agora (com a oferta), o saldo e entrega o item na mesma
+   transação**; saldo insuficiente e preço mandado errado são recusados. Nada é vendido por dinheiro de verdade. Os
+   desenhos (bolas, efeitos, comemorações, gols, banners e avatares) são feitos no próprio jogo, no estilo das tampinhas
+   (`tools/v88/cosmeticos.js`), sem imagem de fora.
+6. **Clube** (`tools/v88/clube.js`, `clubeRouter.ts`): o de sempre (criar, procurar, entrar, convidar, gerenciar membros,
+   escudo e descrição) e o que faltava: **pedir para entrar** (e cancelar), os **pedidos** para o dono e os admins aceitarem,
+   **líder e administradores** (o dono faz e desfaz admin; o admin aceita pedidos, convida e tira membros comuns), o **chat do
+   clube** (no painel do chat), as **estatísticas coletivas**, o **histórico de partidas** dos membros e o **ranking dos clubes**
+   (pelos troféus: vitórias validadas). Os clubes que já existiam ficaram como estavam.
+7. **Treino** (`tools/v88/treino.js`): os de sempre continuam (Primeiros toques, Treino livre, Cruzamento, Domínio, Passe,
+   Tabela, Finalização e Condução — o drible nos cones) e entraram **Posicionamento**, **Defesa**, **Goleiro** (você no gol,
+   com a sua tampinha) e **Treino com bots** (uma partida contra os bots que não vale nada: nem patente, nem moedas, nem
+   missão). Em cima: o **campo**, o **tamanho**, a **dificuldade** (o recorde só conta no Normal) e a **duração** do treino livre
+   (sem relógio, 2, 5 ou 10 min). A física é a de sempre (os exercícios novos usam o motor do treino que já existia). Os
+   prêmios: sem conta, os do aparelho; com a conta, o servidor paga (`jogo.treinoConcluido`, com o teto do dia); nada de
+   patente no treino.
+8. **Missões** (`progressao.js`, `missoes.ts`): **diárias** (4 por dia: jogue 3 partidas, marque 5 gols, dê 3 assistências,
+   vença 2, jogue com um amigo…), **semanais**, **da temporada** e **especiais** (as dos eventos), com a barra, o prêmio e o
+   COLETAR (ou o IR, que leva até onde se cumpre). O progresso anda só com partida válida contada pelo servidor (e os gols do
+   treino que contam); "jogue com um amigo" usa quem jogou junto, assinado pelo servidor das salas.
+9. **Eventos** (`eventos.ts`): a central com os eventos ativos — **login diário**, **desafios especiais**, **torneio** (a Copa
+   dos Amigos que já existia), **temporada** e **recompensas temporárias** —, cada um com o desenho, o nome, a duração, as
+   regras e as recompensas. Configuráveis no servidor (os padrões em `app/contracts/v88.ts`) e no **RACHA CONTROL** (a aba
+   nova 📅 Eventos).
+10. **Passe RACHA** (`passe.ts`): o botão que estava "em breve" virou o passe da temporada: **30 níveis**, o XP, a trilha
+    **GRÁTIS** (moedas, caixas, avatares, efeitos e a tampinha Raiz da Quebrada) e a **PREMIUM** (desbloqueada com 499 gemas:
+    **9 tampinhas exclusivas**, bolas, efeitos de gol, comemorações, banners, avatares e gemas), o que está bloqueado, o que dá
+    para coletar e o que já foi coletado. O progresso fica na conta, por temporada.
+11. **Chat** (`tools/v88/chat.js`): o painel da v81 ganhou as conversas que faltavam — **MUNDO** (o Chat do Brasil),
+    **SALA**, **EQUIPE** (só o seu time, na sala e na partida), **CLUBE** e **AMIGOS** (mensagem direta: chega mesmo offline,
+    fica 7 dias) —, em tempo real pelo servidor das salas, com histórico curto, silenciar (só para você), denunciar com
+    motivo, bloquear, o mesmo filtro (palavrão, link, @, telefone, e-mail, CPF) e a mesma trava de spam e de repetida. Sem
+    informação privada: só o nome escolhido e o ID público.
+12. **Denúncias**: a janela com os motivos **trapaça, comportamento tóxico, ofensa, spam, nome inadequado, abuso de bug e
+    outros** (pelo perfil, pelos RECENTES e pelo chat — na ficha do chat, o motivo é escolhido ali mesmo, o que funciona
+    também no meio da partida). Vão para o servidor e caem na aba 🚩 Denúncias do RACHA CONTROL (as de mensagem, com o texto).
+    Proteção: conta nova espera alguns minutos para denunciar, a mesma pessoa pelo mesmo motivo conta uma vez por dia,
+    limite por dia e quem tem denúncias arquivadas demais perde o botão por um tempo.
+13. **Modo e campo** (`tools/v88/modos.js`): a folha do MODO (o botão ao lado do JOGAR) mostra em cima os modos que o jogo
+    tem — **RANQUEADA** (1v1 a 4v4, online + bots), **SALAS** (personalizadas, públicas ou privadas) e **TREINO** — e embaixo os
+    **campos** com o desenho, o nome e os modos em que valem. A ranqueada é sempre no Estádio (a regra do servidor); a Arena
+    aparece com SALAS · TREINO e, tocada, leva a uma sala nova nela ou ao treino nela. (A casual continua fora do JOGAR desde
+    a v79: a partida livre é nas salas.) As medidas e a física dos campos não mudaram.
+14. **Estatísticas** (`tools/v88/estatisticas.js`, `estat.ts`): na aba ESTATÍSTICAS do perfil, **DA CONTA** (os números que o
+    servidor contou: partidas, vitórias, derrotas, empates, gols, assistências, aproveitamento, melhor sequência, melhor da
+    partida, tempo jogado e o histórico recente), com filtro de **temporada** e de **modo** (tudo, futebol, com curva,
+    ranqueada, online, contra os bots), ao lado do **DESTE APARELHO** de antes. Sem partida, tudo zero: nada estimado.
+15. **Espectador** (`tools/v88/espectador.js`): o de sempre (assistir a sala pública e a partida de um amigo pelo ASSISTIR,
+    ver o placar e o tempo, sem controlar nada — o servidor não aceita comando de quem assiste) com a câmera **CAMPO
+    INTEIRO** na volta do botão CÂMERA e o **SAIR** na barra.
+16. **Configurações** (`tools/v88/ajustes.js`): o que já tinha continua (gráficos/visual, áudio, controles, tamanho e posição
+    dos botões, câmera, acessibilidade, vibração, conta) e entraram o volume da **Música** e dos **Efeitos**, a
+    **sensibilidade do analógico** (as 32 direções e a velocidade são as mesmas para todos), o **idioma** (português do Brasil,
+    o único por enquanto), a aba **PRIVACIDADE** (as **notificações** por tipo, a privacidade da conta no servidor — aparecer
+    online, receber convites, receber pedidos, perfil aberto —, os silenciados e os bloqueados) e **EXCLUIR MINHA CONTA** (com a
+    senha e a palavra EXCLUIR; o servidor apaga a conta e as relações).
+17. **Controle Bluetooth** (`tools/v88/controle.js`): qualquer controle que o navegador reconheça (API Gamepad). Na partida,
+    o analógico ou o direcional andam nas mesmas 32 direções do toque (ninguém fica mais rápido de controle), A = PASSE,
+    B = CHUTE (dá para trocar), X = CURVA, START = pausa; nos menus, o direcional anda entre os botões, A confirma, B volta.
+    O toque continua igual. Ajustes › Controles mostra o controle conectado e a lista dos botões.
+18. **JOGAR**: preservado. Ele já fazia o caminho pedido (o modo, a conta, a conexão, a busca com o estado na tela, o
+    CANCELAR e a entrada na partida, com os erros de conexão tratados sem travar); o que mudou foi o fim da partida com a
+    conta: as moedas que a conta recebeu (com o teto do dia), as missões completas, o nível do passe e o **melhor da
+    partida** (online: o do servidor das salas; contra os bots: o jogo diz quem foi e o servidor só aceita se for possível).
+19. **Identidade visual** (`app/public/game/v88.css`): o preto-carvão e o amarelo do lobby em todas as telas novas, os ícones
+    grandes desenhados no jogo, os painéis com transparência, o toque que afunda, as letras legíveis; no celular deitado,
+    tudo cabe sem arrastar (como a v70.1). Nada copiado de outro jogo: as imagens de referência serviram para a organização.
+20. **Servidor**: as rotas novas da plataforma (`social`, `mensagens`, `correio`, `loja`, `missoes`, `passe`, `eventos`,
+    `estat`, `conta`, `admin88`), as tabelas novas (`app/db/migrations/v88_social.sql`) e o social ao vivo no servidor das salas
+    (`server/social88.js`: status, convites, chats, bloqueio, denúncia). **A carteira é a da conta**: logado, moedas, gemas e
+    itens moram no servidor, e ganhar ou gastar passa por ele, sempre numa transação e sem confiar no valor mandado pelo
+    aparelho. Sem conta, a economia do aparelho continua a de sempre.
+
+### O que foi preservado
+
+O lobby e os botões de antes (nos mesmos lugares, abrindo as telas deles); a física, os controles de toque, a câmera e as
+regras da partida; as tampinhas, o editor, as 44 prontas e as 8 animadas; as moedas e gemas do aparelho (sem conta) e o
+presente de teste do `config.js` (v87.2); as peças da loja e a troca de gemas; os treinos de sempre, os recordes e o
+tutorial; a ranqueada (as patentes, a fila, os bots, a conta da patente no servidor); as salas hospedadas, o espectador, a
+Copa dos Amigos, os duelos 1v1 e o clube (o pessoal e o da conta); o Chat do Brasil e o da sala com a moderação da v81; o
+perfil (as 4 abas da v77 e o DESTE APARELHO); o login do jogo, o progresso na conta (v82) e as páginas da conta por cima do
+jogo (v87 — o perfil da conta continua no painel; os amigos agora são do próprio jogo); o RACHA CONTROL (as abas de antes,
+com 2FA); o GitHub Pages e o site de teste do Render.
+
+### Pendências reais (o que falta ou depende de algo de fora)
+
+* **A plataforma de contas precisa estar no ar** para as telas da conta (ver "Onde funciona"). Ela foi testada com o código
+  de verdade num SQLite (a plataforma de teste); com o MySQL de verdade, não rodou aqui (o MySQL e o `npm install` não
+  rodam nesta máquina). Ao subir, rode a migração (`npm run db:push` ou o `v88_social.sql`).
+* **As abas 📅 Eventos e ✉️ Correio do RACHA CONTROL** (`app/src/pages/AdminV88.tsx`) foram conferidas só pela sintaxe: o
+  site React não compila aqui. As rotas por trás delas (`admin88.*`) estão testadas.
+* **A partida contra os bots e o treino continuam rodando no aparelho**: o servidor confere o token, o prazo e a
+  plausibilidade (e paga com teto por dia: 4.000 moedas de partidas, 1.500 do treino), mas não vê lance a lance — as
+  estrelas do exercício e o melhor da partida contra os bots vêm do aparelho (com a conferência de plausibilidade). A online
+  vale pelo selo do servidor das salas.
+* **Notificações só dentro do jogo** (o balão e os números): o RACHA não manda notificação com o jogo fechado (precisaria de
+  um serviço de push e da permissão do aparelho).
+* **Só português do Brasil** (o idioma aparece nos Ajustes, sem outra opção ainda).
+* **O controle Bluetooth foi testado com um controle simulado no navegador** (`tests/v88_controle_test.py`: um
+  `navigator.getGamepads()` de mentira com os botões de um controle comum), não com um controle de verdade; a vibração do
+  controle e o mapa de controles diferentes do padrão dependem do navegador e do aparelho.
+* **O celular foi conferido no Chromium com a tela de celular emulada**, não num aparelho de verdade; o conforto das letras
+  pequenas no celular deitado e o desempenho dependem de jogar.
+* **Adicionar "pelo resultado da partida"** é pela aba RECENTES dos AMIGOS (e pelo nome no chat da sala): a tela do fim não
+  ganhou um botão por jogador.
+* **Excluir a conta** foi testado no servidor (a rota, a senha e a palavra); o botão do jogo foi visto na tela, sem teste de
+  ponta a ponta.
+* **O catálogo** (`app/contracts/catalogo88.json`) vai colado no jogo pelo build: mudou um preço ou um item, rode o build do
+  jogo e o da plataforma juntos.
+
+### Instalar e testar
+
+* **Jogo sem servidor** e **com o servidor das salas**: como sempre (ver "Como rodar").
+* **A plataforma de verdade** (contas, MySQL): `app/DEPLOY.md`, seção v88 (backup, `npm run db:push` ou
+  `app/db/migrations/v88_social.sql`, `npm run build`, reiniciar). `RACHA_PRESENTE_TESTE=1` (opcional) põe no correio de cada
+  conta, uma vez, a carta "Presente de teste" com 50.000 moedas e 5.000 gemas.
+* **As contas no seu computador, sem MySQL** (Node 22.13+; uma vez `cd app && npm install` para o esbuild e o zod):
+  `node tests/plataforma/servidor.mjs --porta 8099 --banco racha88.db` e abra `http://localhost:8099` — crie duas contas em
+  dois navegadores para testar amigos, convites e chat. Com o mesmo `--banco`, reiniciar mantém tudo.
+* **Os testes** (Python 3 + Playwright + Chromium, Node 22+): `bash tests/roda_tudo.sh` roda tudo (≈ 30 min); a saída inteira
+  de cada um fica em `tests/saida/logs/` (`bash tests/roda_lista.sh …`). Os da v88: `node tests/v88_plataforma_test.mjs`,
+  `node tests/v88_social_test.js`, `node tests/v88_salas_plataforma_test.mjs` e `python3 tests/v88_cliente_test.py`.
+
+### O que os testes da v88 provam e o que não provam
+
+* **Executado de verdade** (a bateria inteira desta entrega: 44 suítes, todas passando — `tests/saida/logs/RESUMO.txt`; o
+  `v79` deu 67/68 uma vez, numa espera de relógio com a máquina carregada, e passou ao rodar de novo): a plataforma de verdade num SQLite com três
+  contas — amigos, mensagens, correio (COLETAR uma vez), loja (preço errado e saldo insuficiente recusados), missões, passe,
+  eventos, estatísticas, clube, denúncias (a proteção de conta nova), privacidade, excluir a conta, o RACHA CONTROL com 2FA e
+  o reinício com o mesmo banco (`v88_plataforma_test.mjs`); o social ao vivo no servidor das salas e montado na plataforma
+  (`v88_social_test.js`, `v88_salas_plataforma_test.mjs`); e **o jogo de verdade em dois e três navegadores, pelos botões**
+  (`v88_cliente_test.py`): o login, o correio, a compra e o equipar, a amizade entre duas contas, o status online, a mensagem
+  direta, o convite para a sala, a partida com o amigo, o terceiro assistindo (SAIR e CAMPO INTEIRO), a denúncia pelo perfil
+  e pela ficha do chat (no banco, com o motivo e o texto), as partidas rendendo missões, passe e estatísticas, a privacidade,
+  o treino pago pelo servidor, o treino com bots sem valer nada e o reinício do servidor com tudo lá. As suítes de antes
+  (interface, celular, v71–v87…) confirmam que o resto continua igual, em 5 tamanhos de tela e 4 de celular deitado.
+* **Visto só por inspeção de código**: as abas novas do RACHA CONTROL (só a sintaxe), a plataforma com o MySQL de verdade e o
+  `npm run build` do site.
+* **Não provado**: um controle Bluetooth de verdade (o teste usa um simulado), o celular de verdade (desempenho, conforto, rede móvel), muita gente ao
+  mesmo tempo no social (convites e chats com centenas de contas), o equilíbrio e se o visual novo agrada — isso é com quem
+  joga.
 
 ## v87.2 · moedas e gemas para testar o jogo
 
@@ -982,26 +1187,26 @@ no RELATORIO_DE_TESTES da auditoria.
 | Suíte | O que confere | Resultado |
 |---|---|---|
 | `regras_test.py` | gol contra e autoria, assistência depois de interceptação, touchdown com o portador certo, basquete (2 e 3), metas e unidades dos modos, a mesma classificação em placar/faixa/replay/estatística/prêmio/evento (v70.2: os modos guardados são ligados só na página de teste) | 56/56 |
-| `camera_test.py` | câmera protegendo o jogador (3v3/4v4, zoom alto, bola longe), enquadramentos, zoom automático, setinhas | 47/47 |
+| `camera_test.py` | câmera protegendo o jogador (3v3/4v4, zoom alto, bola longe), enquadramentos, zoom automático, setinhas; v88: o CÂMERA do espectador passa pelo CAMPO INTEIRO antes de voltar para a bola | 47/47 |
 | `controles_test.py` | moldes dos controles sem encostar, o layout da ginga (guardado), salvar/cancelar/restaurar | 29/29 |
-| `interface_test.py` | lobby, telas, Ajustes, pausa e editor em 5 tamanhos de tela: toque ≥ 44 px e texto ≥ 12 px (no celular deitado: cabe sem rolar) | 133/133 |
-| `interface4_test.py` | perfil, loja, missões, zerar, inventário, bots, tutorial, COMO JOGA em tamanho real (no celular deitado: cabe sem rolar) | 105/105 |
+| `interface_test.py` | lobby, telas, Ajustes, pausa e editor em 5 tamanhos de tela: toque ≥ 44 px e texto ≥ 12 px (no celular deitado: cabe sem rolar) (v88: a lista dos amigos do lobby com toques de 44 px em 1280×720; a loja cabendo no celular deitado) | 133/133 |
+| `interface4_test.py` | perfil, loja, missões, zerar, inventário, bots, tutorial, COMO JOGA em tamanho real (no celular deitado: cabe sem rolar) (v88: a loja nova, com as 11 categorias à vista) | 105/105 |
 | `interface5_test.py` | comunidade, clube, sala neste aparelho e demonstração sem servidor em tamanho real (no celular deitado: cabe sem rolar) | 68/68 |
-| `celular_test.py` (v70.1) | GIRE O CELULAR em pé (cobre, prende o foco, pausa o treino, volta com o CONTINUAR; nada no computador); 34 telas, janelas e abas do lobby e 4 da partida (pausa, Ajustes, editor, COMO JOGA) em 4 tamanhos de celular deitado sem rolar e sem botão fora da tela; o JOGAR e o MODO colado nele (v77: as medidas da imagem); as abas do perfil (v77: VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS); Ajustes compactos; 130% rola em vez de encolher | 195/195 |
-| `v71_test.py` (v71 e v71.1) | as cores e os nomes do Time Preto e do Time Branco (v80: do Time A laranja e do Time B roxo, com a Listras) (nenhum "Vermelho"/"Azul" na página); a tampinha padrão (metade) e as do time; o que o quadro da partida desenha em 1v1 e 3v3 (você e o seu time pretos, o adversário branco); o replay; outra tampinha e a Clássica sem mudar; a sala online e a deste aparelho; a tela do fim e a saída de bola; a amarela salva passando para a nova uma vez; o lobby novo (os lugares — v77: com o EVENTOS —, o que saiu do Tab, a LIGA, o selo do nível, o MODO, os 16 destinos); 6 tamanhos sem nada fora da tela nem um por cima do outro, com os toques de 44 px; a folha do JOGAR cabendo sem rolar (v79: só a ranqueada; a LIGA abre as PATENTES e o JOGAR, a BUSCA). v71.1: 16 telas e janelas sem azul-marinho; cabeçalhos (v77: sem abas de outras telas, com as moedas e os 3 ícones) e VOLTAR; o perfil em partes no computador (v77: as abas novas); o nome PADRÃO; a raridade na loja; os desenhos dos Ajustes e da pausa; o fim; a sala sem nome cortado; no celular, nenhuma tela abaixo de 0,72, os Ajustes compactos e a pausa cabendo | 77/77 (v79: sem as 6 da CASUAL) |
-| `v73_test.py` (v73) | o TESTE saiu inteiro (cartão, código, estilo, ganchos da física e a escolha guardada; o TREINAMENTO com os 8 cartões de sempre; a tecla do DRIBLE escondida fora da GINGA); o halo com 45% nos dois times, pixel a pixel o mesmo desenho (a borda no alcance do chute), a ponta com 70%, a carga do chute armado igual, a prévia de SKINS igual ao campo; o que o quadro da partida desenha de verdade (3v3, computador e celular): halos com 45%, contornos com 40%, cheio no Preto e tracejado no Branco; com `RACHA_REF`, o bloco de física e o caminho de um roteiro de 1.800 passos iguais aos da v71.1 | 18/18 (16 sem `RACHA_REF`) |
+| `celular_test.py` (v70.1) | GIRE O CELULAR em pé (cobre, prende o foco, pausa o treino, volta com o CONTINUAR; nada no computador); 34 telas, janelas e abas do lobby e 4 da partida (pausa, Ajustes, editor, COMO JOGA) em 4 tamanhos de celular deitado sem rolar e sem botão fora da tela; o JOGAR e o MODO colado nele (v77: as medidas da imagem); as abas do perfil (v77: VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS); Ajustes compactos; 130% rola em vez de encolher; v88: a loja nova e os Ajustes › Controles (com o controle) cabendo | 195/195 |
+| `v71_test.py` (v71 e v71.1) | as cores e os nomes do Time Preto e do Time Branco (v80: do Time A laranja e do Time B roxo, com a Listras) (nenhum "Vermelho"/"Azul" na página); a tampinha padrão (metade) e as do time; o que o quadro da partida desenha em 1v1 e 3v3 (você e o seu time pretos, o adversário branco); o replay; outra tampinha e a Clássica sem mudar; a sala online e a deste aparelho; a tela do fim e a saída de bola; a amarela salva passando para a nova uma vez; o lobby novo (os lugares — v77: com o EVENTOS —, o que saiu do Tab, a LIGA, o selo do nível, o MODO, os 16 destinos); 6 tamanhos sem nada fora da tela nem um por cima do outro, com os toques de 44 px; a folha do JOGAR cabendo sem rolar (v79: só a ranqueada; a LIGA abre as PATENTES e o JOGAR, a BUSCA). v71.1: 16 telas e janelas sem azul-marinho; cabeçalhos (v77: sem abas de outras telas, com as moedas e os 3 ícones) e VOLTAR; o perfil em partes no computador (v77: as abas novas); o nome PADRÃO; a raridade na loja; os desenhos dos Ajustes e da pausa; o fim; a sala sem nome cortado; no celular, nenhuma tela abaixo de 0,72, os Ajustes compactos e a pausa cabendo. v88: o PASSE de volta no topo (o Passe RACHA) e as 7 abas dos Ajustes (+ PRIVACIDADE) | 78/78 |
+| `v73_test.py` (v73) | o TESTE saiu inteiro (cartão, código, estilo, ganchos da física e a escolha guardada; o TREINAMENTO com os 8 cartões de sempre; a tecla do DRIBLE escondida fora da GINGA); o halo com 45% nos dois times, pixel a pixel o mesmo desenho (a borda no alcance do chute), a ponta com 70%, a carga do chute armado igual, a prévia de SKINS igual ao campo; o que o quadro da partida desenha de verdade (3v3, computador e celular): halos com 45%, contornos com 40%, cheio no Preto e tracejado no Branco; com `RACHA_REF`, o bloco de física e o caminho de um roteiro de 1.800 passos iguais aos da v71.1; v88: os 8 cartões de sempre na mesma ordem, e depois POSICIONAMENTO, DEFESA, GOLEIRO e o TREINO COM BOTS (12) | 18/18 (16 sem `RACHA_REF`) |
 | `v74_test.py` (v74) | o kit embutido e abrindo; o Estádio com o desenho novo em 1v1 a 4v4 (sem erro, com o kit e os 2 gols): as 13 faixas alternando entre as linhas de fundo e escura depois delas, a grama até a beira da área do jogador, o alambrado e o calçamento por fora, os bancos na cor de cada time; a geometria e o chute iguais aos da Arena; a Tela parada com o estacionamento e as casas dos lados (e nada disso seguindo o jogador); Ultra leve; Mostrar Torcedores; sem o kit; com erro no desenho novo (entra o gramado da v70.2); a prévia no JOGAR; a Arena sem nada do Estádio; o celular deitado; com `RACHA_REF`, o bloco de física, a imagem da Arena de antes (v77: a reserva da quadra nova; v80: desenhada com as cores dos times da v71, porque as redes e os bancos seguem a cor do time) pixel a pixel e o chute no Estádio iguais aos da v71.1 | 36/36 (33 sem `RACHA_REF`) |
 | `v75_test.py` (v75) | a imagem do lobby embutida e abrindo; em 5 tamanhos (1920×888, 1280×720, 1024×768 e os celulares deitados 844×390 e 667×375): o fundo do lobby é a imagem (6 amostras, cor a cor, contra a própria imagem), cobre a tela inteira, o Cristo aparece sem botão nem letreiro em cima e a tampinha fica em pé na quadra; o encaixe cobre qualquer palco (monitor bem largo, quadrado, em pé); sem a imagem volta o cenário de antes, sem erro; o degradê enquanto ela abre (v77: com a camada da v77 desligada — a v75 é a reserva) | 29/29 |
 | `v76_test.py` (v76) | o campo em 1v1, 2v2, 4v4 e no Ultra leve: fora das linhas a grama é do verde escuro (sem as faixas claras) e a calçada vai e volta entre a pedra clara e a escura (as ondas), atrás do gol e em cima; as 8 caras (lendárias) e as 4 bordas (épicas) no fim das listas, as 44 prontas de antes com o mesmo código (e, com `RACHA_REF`, o mesmo da v71.1); as 8 da coleção vão e voltam no código, mudam com o tempo e a miniatura fica igual; nada passa de 1,2 × o raio; os bots não pegam as animadas; mexe na partida (a sua tampinha parada no lugar) e no lobby, e com Reduzir animações fica parada; o editor (a coleção primeiro, os cartões mexendo, o ÍCONE sem posição para as caras); o custo de 8 animadas por quadro; o celular deitado; com `RACHA_REF`, o bloco de física igual ao da v71.1 | 30/30 (28 sem `RACHA_REF`) |
-| `v77_test.py` (v77) | as peças das imagens e o v77.css no jogo; o lobby em 4 tamanhos (computador e celular deitado): o fundo é a imagem limpa (6 amostras, cor a cor) e cobre a tela; o letreiro em cima da tampinha; os 8 botões com os desenhos da imagem (o EVENTOS); o topo com os AMIGOS; o XP em números, o MODO (2 VS 2) e o prêmio dos DESAFIOS; nenhuma fileira de tampinhas; a tampinha do meio reta e sem a bola; 11 telas só com o que é delas (sem abas de outras telas), o título do botão, a barra de cima e a quadra atrás, com os ícones funcionando; o perfil (as 4 abas, uma por vez, nada rola; os números de verdade; o cartão da imagem; a tampinha reta; as sub-abas antigas levando às novas; a tampinha abrindo o editor e voltando); a quadra em 1v1 a 4v4 (as cores nos lugares de cada tamanho), o Ultra leve, a Tela parada com as casas de fora, a prévia do JOGAR e o erro no desenho novo (entra a Arena de antes); o celular deitado sem rolar; com `RACHA_REF`, as medidas e o caminho da bola da Arena e o bloco de física iguais aos da v71.1 | 37/37 (34 sem `RACHA_REF`) |
+| `v77_test.py` (v77) | as peças das imagens e o v77.css no jogo; o lobby em 4 tamanhos (computador e celular deitado): o fundo é a imagem limpa (6 amostras, cor a cor) e cobre a tela; o letreiro em cima da tampinha; os 8 botões com os desenhos da imagem (o EVENTOS); o topo com os AMIGOS; o XP em números, o MODO (2 VS 2) e o prêmio dos DESAFIOS; nenhuma fileira de tampinhas; a tampinha do meio reta e sem a bola; 11 telas só com o que é delas (sem abas de outras telas), o título do botão, a barra de cima e a quadra atrás, com os ícones funcionando; o perfil (as 4 abas, uma por vez, nada rola; os números de verdade; o cartão da imagem; a tampinha reta; as sub-abas antigas levando às novas; a tampinha abrindo o editor e voltando); a quadra em 1v1 a 4v4 (as cores nos lugares de cada tamanho), o Ultra leve, a Tela parada com as casas de fora, a prévia do JOGAR e o erro no desenho novo (entra a Arena de antes); o celular deitado sem rolar; com `RACHA_REF`, as medidas e o caminho da bola da Arena e o bloco de física iguais aos da v71.1; v88: o CORREIO (o botão que estava escondido) no topo, entre os AMIGOS e os ajustes | 37/37 (34 sem `RACHA_REF`) |
 | `v78_test.py` (v78) | nada em cima da cabeça (com FINTA!, DRIBLE! e DOUBLE SHOT! na fila o quadro não desenha nada; o balão "digitando" da sala continua; 30 s de 4v4 sem etiqueta); a cabeça nova ligada de 1v1 a 4v4, um jeito para cada bot sem repetir no time, o goleiro-linha no 3v3 e no 4v4 e os seus companheiros no nível bom; a escalação na faixa de cima; a apresentação com o jeito e o nível de verdade; o mesmo corpo (em 45 s de 4v4 nenhum bot passa da velocidade do jogador e todo chute é PASSE ou CHUTE no alcance); o companheiro não toma a bola de você e toca para você; a saída (a sua espera 5 s); a comemoração; o placar mexendo no jogo só na casual; 6 partidas inteiras com sorteio fixo (acabam, sem bola presa mais de 6 s, sem gol contra demais); o custo por passo; o perfil (os 4 números com o nome inteiro, a frase, o nível por extenso, a bio, nada cortado nem rolando em 4 tamanhos, a tampinha maior, a frase de quem ainda não jogou); a tampinha do lobby 1,4× sem encostar no letreiro nem nos botões em 5 tamanhos; na partida, o raio da física (com `RACHA_REF`, igual ao da v71.1) | 38/38 |
-| `v79_test.py` (v79) | as 8 patentes da imagem nas faixas certas e as divisões nas bordas (III → II → I), as 24 insígnias diferentes, a conta dos pontos de antes (e a derrota que não tira da patente); a tela PATENTES RANQUEADAS pela sua patente no lobby e pelo VER PATENTES (a sua marcada, o foco, o Esc e o X); só a ranqueada (quem tinha a casual salva, o MODO, a folha sem abas e só com o Estádio, o tamanho do time valendo na hora, o caminho antigo da casual abrindo a ranqueada); a BUSCA e, sem servidor, a ranqueada contra bots no Estádio; nada de LIGA nem de FÁCIL/DIFÍCIL na faixa, na pílula, na pausa, na apresentação e no fim; os pontos de uma vitória; o JOGAR DE NOVO; desistir (−25); as missões; o fim do tutorial levando à busca; o Estádio padrão (e quem escolheu a Arena continua com ela); o selo V (o seu no lobby, no perfil e na partida; o dos outros na sala, na lista, no Chat do Brasil e no chat de baixo; selo inválido não aparece); **online, com o servidor de verdade e 3 sessões**: a fila do 1v1 juntando dois, a sala ranqueada fora da lista e sem a tela da sala, a pausa, a barrinha RANQUEADA ONLINE e o MENU sem o apito do árbitro, o resultado conferido com os pontos (+31/−20, sem o bônus dos bots), a missão, o JOGAR DE NOVO procurando outra, o DESISTIR (−25) de quem roda a partida e A PARTIDA PAROU para o outro (sem perder pontos), o 2v2 com 2 bots depois de ~8 s, o CANCELAR, o JOGAR CONTRA BOTS AGORA e, sozinho, a partida contra bots depois de ~20 s | 67/67 |
+| `v79_test.py` (v79) | as 8 patentes da imagem nas faixas certas e as divisões nas bordas (III → II → I), as 24 insígnias diferentes, a conta dos pontos de antes (e a derrota que não tira da patente); a tela PATENTES RANQUEADAS pela sua patente no lobby e pelo VER PATENTES (a sua marcada, o foco, o Esc e o X); só a ranqueada (quem tinha a casual salva, o MODO, a folha sem abas e só com o Estádio, o tamanho do time valendo na hora, o caminho antigo da casual abrindo a ranqueada); a BUSCA e, sem servidor, a ranqueada contra bots no Estádio; nada de LIGA nem de FÁCIL/DIFÍCIL na faixa, na pílula, na pausa, na apresentação e no fim; os pontos de uma vitória; o JOGAR DE NOVO; desistir (−25); as missões; o fim do tutorial levando à busca; o Estádio padrão (e quem escolheu a Arena continua com ela); o selo V (o seu no lobby, no perfil e na partida; o dos outros na sala, na lista, no Chat do Brasil e no chat de baixo; selo inválido não aparece); **online, com o servidor de verdade e 3 sessões**: a fila do 1v1 juntando dois, a sala ranqueada fora da lista e sem a tela da sala, a pausa, a barrinha RANQUEADA ONLINE e o MENU sem o apito do árbitro, o resultado conferido com os pontos (+31/−20, sem o bônus dos bots), a missão, o JOGAR DE NOVO procurando outra, o DESISTIR (−25) de quem roda a partida e A PARTIDA PAROU para o outro (sem perder pontos), o 2v2 com 2 bots depois de ~8 s, o CANCELAR, o JOGAR CONTRA BOTS AGORA e, sozinho, a partida contra bots depois de ~20 s; v88: a folha do MODO com os dois campos e os modos de cada um (a ranqueada continua só no Estádio) | 68/68 |
 | `v80_test.py` (v80) | as cores oficiais (Time A #FF6A00, Time B #7A3FC4) no halo, no placar e na sala; a tampinha inicial (o modelo Listras, grátis, metade laranja e metade roxa na vertical, no meio, sem branco, a borda de sempre — conferido nos pixels), toda laranja no A e toda roxa no B, metade/metade sem time (lobby, treino, assistindo), outra tampinha sem mudar, a da v71 passando para a nova; os nomes novos (nenhum preto × branco na página); o placar (laranja à esquerda, roxo à direita, o relógio no meio — nos pixels — e no mesmo espaço de antes); o relógio de 3:00 (correndo na saída e no jogo, amarelo no fim), 2 × 1 e 0 × 1 acabando no 00:00, 1 × 1 e 2 × 2 empatando, a prorrogação do 0 × 0 (vermelha, -00:21 … -02:00), o gol de ouro, o 0 × 0 até -02:00, os 3 gols, a bola que entra depois do tempo, nada mudando depois do fim, o tempo acabando na festa do gol, o empate (±0, a sequência, EMPATE, o histórico); a sala neste aparelho (as cores, o 3 min, as regras dela, o gol de ouro dela no placar novo); os adversários sem a setinha do halo e sem a gota (os companheiros e a bola com elas; os nomes e a sua setinha; o replay); o GOOOL! (a palavra, o autor e o passe, laranja × roxo nos pixels, o papel picado, o confete só na vitória, Reduzir animações, o treino, 1,7 s); o treino (sem verde nos pixels, os cartões maiores, toques de verdade voltando e avançando, o apertar) e as 5 abas do editor; **online, com o servidor de verdade (a partida encurtada para 14 s + 8 s)**: o mesmo relógio nos dois, a prorrogação nos dois, o gol de ouro conferido (vitória × derrota, o GOOOL! do outro lado com o nome), o 1 × 1 empatado nos dois (±0) e a troca de time mudando a tampinha na tela do outro | 79/79 |
-| `v81_test.py` (v81) | a barra no lobby (o bloco no vão entre o DESAFIOS e o MODO, da altura deles; a tag, NOME: a mensagem, o contador, o V; o aviso de baixo subindo), o painel embaixo (a aba BRASIL, as mensagens em ordem com o V, o campo, o ENVIAR, quem está online, o foco), a ficha (SILENCIAR salvo, DENUNCIAR), minimizar; o chip nas 6 telas do menu e nada nas de rodapé ocupado; a sala neste aparelho (a barra, as duas abas, as frases rápidas, "1 na sala", a troca de aba, o ENVIAR); os filtros no aparelho (telefone, CPF, e-mail, link, site, @, palavrão; placar e hora passam; a repetida); o OCULTAR e a chave dos Ajustes; **no celular (844×390)**: o bloco, o chip e a barra da sala maiores (altura e letra medidas) e o painel cabendo; **na partida (computador e celular)**: a barra embaixo do campo, longe do placar, entre o analógico e os botões, menor e meio transparente no tamanho do HUD, o painel PARTIDA sem pausar, os três pontinhos nos pixels (o balão escuro, o ponto branco, sem a palavra); **online, com o servidor de verdade e 3 sessões**: o Chat do Brasil ligando sozinho e chegando na barra de quem está fora de sala, o chat da sala só para quem está nela, o Brasil chegando dentro da sala, os pontinhos aparecendo na tela do outro e sumindo ao enviar, ao fechar e sozinhos (3–7 s), o ENVIAR fechando o painel na partida, o telefone barrado pelo servidor, o `mid`, 1 denúncia sem esconder e 2 escondendo para todos (inclusive o autor), o silenciado avisado no painel, o silenciar só para quem silencia | 64/64 |
+| `v81_test.py` (v81) | a barra no lobby (o bloco no vão entre o DESAFIOS e o MODO, da altura deles; a tag, NOME: a mensagem, o contador, o V; o aviso de baixo subindo), o painel embaixo (a aba BRASIL, as mensagens em ordem com o V, o campo, o ENVIAR, quem está online, o foco), a ficha (SILENCIAR salvo, DENUNCIAR), minimizar; o chip nas 6 telas do menu e nada nas de rodapé ocupado; a sala neste aparelho (a barra, as duas abas, as frases rápidas, "1 na sala", a troca de aba, o ENVIAR); os filtros no aparelho (telefone, CPF, e-mail, link, site, @, palavrão; placar e hora passam; a repetida); o OCULTAR e a chave dos Ajustes; **no celular (844×390)**: o bloco, o chip e a barra da sala maiores (altura e letra medidas) e o painel cabendo; **na partida (computador e celular)**: a barra embaixo do campo, longe do placar, entre o analógico e os botões, menor e meio transparente no tamanho do HUD, o painel PARTIDA sem pausar, os três pontinhos nos pixels (o balão escuro, o ponto branco, sem a palavra); **online, com o servidor de verdade e 3 sessões**: o Chat do Brasil ligando sozinho e chegando na barra de quem está fora de sala, o chat da sala só para quem está nela, o Brasil chegando dentro da sala, os pontinhos aparecendo na tela do outro e sumindo ao enviar, ao fechar e sozinhos (3–7 s), o ENVIAR fechando o painel na partida, o telefone barrado pelo servidor, o `mid`, 1 denúncia sem esconder e 2 escondendo para todos (inclusive o autor), o silenciado avisado no painel, o silenciar só para quem silencia; v88: a denúncia pede o motivo na ficha (OFENSA marcado) e a aba EQUIPE entra ao lado da PARTIDA | 64/64 |
 | `v82_test.py` (v82) | o jogo **dentro de uma plataforma de mentira** (`tests/plataforma82_falsa.mjs` + `tests/v82_plataforma.html`, com as mesmas regras do servidor da plataforma) em três aparelhos: **sem conta** (o cartão SEM CONTA com ENTRAR → `/entrar` e CRIAR CONTA → `/entrar?aba=criar`, o "NESTE APARELHO" do perfil, as abas PATENTES | LIGA DA SEMANA, as missões com o XP; os empates da ranqueada ficando ao abrir de novo); **a primeira vez de uma conta** (LEVAR O PROGRESSO PARA A CONTA? antes da primeira vez do jogo, o resumo do que vai, a nota dos 799; LEVAR: o jogo abre de novo com as moedas, o nome e as partidas, a patente 950 entrando como 799 na conta, o aviso, a cópia indo sozinha; COMEÇAR DO ZERO: a primeira vez do jogo, a cópia nova e o progresso sem conta ficando); **o nível da conta** (5 e 8 no lobby e no perfil, 234 / 500, os prêmios dos níveis uma vez, as missões sem o XP do aparelho); **a ranqueada** (o começo dizendo ranqueada e o tamanho; 3 × 0 = +31 na conta e na tela; +80 XP DA CONTA; os pontos e os gols contra chegando; o teto do dia: +5 com a nota, a resposta antes da tela do fim; a desistência −25; o fim antes da resposta do começo; a ranqueada aberta e vencida virando desistência na próxima partida, com o aviso no campo; a casual sem mexer na patente); **outro aparelho** (B abre com a cópia; QUAL PROGRESSO FICA? ao salvar e ao abrir, O DA CONTA e O DESTE APARELHO; abrir o jogo não manda versão nova à toa; sair guarda a gaveta da conta e volta o de sem conta; entrar de novo traz a versão mais nova; exportar sem as gavetas); **RANKING › PATENTES** (a ordem, a sua linha com os pontos legíveis, o "termina em" da liga escondido, a liga de volta); **as regras** (11 casos: o `rqPontua` do jogo × o `pontuaRanqueada` do servidor); **no celular** (844×390: as abas, as linhas e a janela da conta cabendo); sem erros de JavaScript | 63/63 |
-| `enxuto_test.py` (v70.2) | só FUTEBOL e COM CURVA e só a ARENA e o ESTÁDIO em todas as escolhas (JOGAR, CRIAR SALA, sala, treino, perfil, missões, editor, teclas); o ESTÁDIO com a mesma geometria da Arena de 1v1 a 4v4 e o mesmo chute dando o mesmo caminho da bola; o gramado desenhado (normal, sem torcida, Ultra leve, prévia); a bola sem rastro e sem respingo, a bola clássica; o Indicador desligado no aparelho novo e desligado uma vez em quem já jogava; o salvo antigo com modo/mapa que saiu | 37/37 |
+| `enxuto_test.py` (v70.2) | só FUTEBOL e COM CURVA e só a ARENA e o ESTÁDIO em todas as escolhas (JOGAR, CRIAR SALA, sala, treino, perfil, missões, editor, teclas); o ESTÁDIO com a mesma geometria da Arena de 1v1 a 4v4 e o mesmo chute dando o mesmo caminho da bola; o gramado desenhado (normal, sem torcida, Ultra leve, prévia); a bola sem rastro e sem respingo, a bola clássica; o Indicador desligado no aparelho novo e desligado uma vez em quem já jogava; o salvo antigo com modo/mapa que saiu; v88: a folha do JOGAR com a Arena e o Estádio e os modos de cada um | 37/37 |
 | `tutorial_test.py` | primeiros toques com teclado de verdade, primeira vez, COMO JOGA do COM CURVA, indicador da curva (finta/drible/ginga: guardados) | 26/26 |
-| `perfil_test.py` | compra e restauração de propriedade, reset completo, estatísticas, missões, exportar/importar, falha de gravação | 53/53 |
+| `perfil_test.py` | compra e restauração de propriedade, reset completo, estatísticas, missões, exportar/importar, falha de gravação (v88: a troca de gemas mora em OFERTAS) | 53/53 |
 | `eventos_test.py` | eventos emitidos uma única vez (bots, desistência, sala), paridade da curva anfitrião × convidado | 13/13 |
 | `polimento_test.py` | cores por papel e contraste, nomes botão = destino (v77: cada botão abre só a tela dele, com o título dele), contorno dos times e VOCÊ, sala no teclado, janelas (foco, Tab, inert, Escape por camada, foco de volta), abas e estados, Reduzir animações seguindo o sistema, sem armazenamento, o que vem de fora e o jogo sem internet | 64/64 |
 | `matriz_test.py` | os 2 modos × 2 mapas × 1v1–4v4 (16 partidas) abrindo e respondendo ao teclado com os bots jogando, e os 7 treinos | 12/12 |
@@ -1009,12 +1214,17 @@ no RELATORIO_DE_TESTES da auditoria.
 | `servidor_test.js` | regras do servidor (memória) e duas sessões pela rede (HTTP, origem, reconexão); só os 2 modos e os 2 mapas nas salas; v80: a partida normal (a regra e o relógio no start, a cada segundo e parado na pausa; 1 × 1 antes do tempo recusado e no fim empate guardado; gol depois do tempo, depois do gol de ouro, depois do 3º gol e depois da prorrogação recusados; 2 × 1 no fim; o gol de ouro; 0 × 0 até o fim; o relógio do anfitrião longe do servidor recusado; a hora do gol (goal.el); o servidor encerrando sozinho 10 s depois da hora, nos 3:00 e na prorrogação; o tempo encurtado por opção; a sala personalizada sem a regra nova); v79: a fila da ranqueada (juntar, misturar com bots depois de 8 s, os times pelos pontos, fila_nada depois de 20 s, sair, cair, recusar quem está numa sala), a sala ranqueada (no Estádio, fora da lista, sem entrar pelo código, sem trocar de time nem de regra, sem revanche, `ranked` no resultado), o Estádio como o mapa padrão e o selo da conta (só o assinado pela plataforma; no hello, nos cartões, na lista e no Chat do Brasil); v81: o filtro com telefone, CPF e e-mail nos dois chats, o `mid` de cada mensagem da sala, a repetida, 1 denúncia sem esconder, a do autor ignorada, 2 pessoas diferentes escondendo (`say_hide` para todos, `escondida` no histórico), o autor silenciado (`codigo:'silenciado'`) e os outros falando; v82: o selo diz se a partida era da ranqueada (`k`) e o tamanho (`n`) — a sala personalizada `k:0`, a fila da ranqueada com duas contas `k:1` e o placar de cada lado —, os IDs de visitante com 7 dígitos (9000000+, nunca o de uma conta) | 189/189 |
 | `plataforma_salas_test.mjs` | o servidor montado na plataforma (sessão do site, selo conferido, origem); v79: o selo V vindo do banco (`selosDe`) só para quem está logado, no hello e no cartão da sala | 10/10 |
 | `v86_chute_test.py` (v86, v87.1) | a mecânica clássica e a força do chute: PASSE 212,5, CHUTE 340 e o teto de 46,75 u/s (v87.1; na v86, 275, 440 e 60) iguais no jogo e no servidor (17 constantes, as quadras inclusive); a bola parada depois do PASSE e do CHUTE (21,25 e 34 u/s; na v86, 27,5 e 44) no `kickBall`, pelos botões de verdade, na partida autoritativa e no motor das salas (pelo comando da rede, o mesmo valor do aparelho); o teto; as 32 direções iguais no jogo e no servidor; o movimento e os botões 1/2/3 da v84; a quadra da v84 | 18/18 |
-| `v87_site_test.py` (v87) | tudo dentro do jogo, com a plataforma de mentira (`v87_plataforma_falsa.mjs`): a raiz leva ao jogo; o login é o do jogo, com a cara dele; entrar; o AMIGOS e o ABRIR O PERFIL DA CONTA abrem as páginas da conta por cima do jogo (VOLTAR AO JOGO, o "Jogar" da página e o Esc fecham, sem recarregar); o SAIR DA CONTA; quem entrou pelo site entra direto (pelo cookie, sem ficar recarregando); o RACHA CONTROL da equipe; o SÓ TREINAR OFFLINE enquanto confere; o jogo sem a plataforma; v87.2: a conta que entra pelo jogo ganha o presente de teste uma vez (e a janela diz que é de teste) | 24/24 |
+| `v87_site_test.py` (v87) | tudo dentro do jogo, com a plataforma de mentira (`v87_plataforma_falsa.mjs`): a raiz leva ao jogo; o login é o do jogo, com a cara dele; entrar; o AMIGOS e o ABRIR O PERFIL DA CONTA abrem as páginas da conta por cima do jogo (VOLTAR AO JOGO, o "Jogar" da página e o Esc fecham, sem recarregar); o SAIR DA CONTA; quem entrou pelo site entra direto (pelo cookie, sem ficar recarregando); o RACHA CONTROL da equipe; o SÓ TREINAR OFFLINE enquanto confere; o jogo sem a plataforma; v87.2: a conta que entra pelo jogo ganha o presente de teste uma vez (e a janela diz que é de teste); v88: com a conta, o AMIGOS do lobby abre os amigos dentro do jogo (o painel do site continua para o perfil da conta) | 24/24 |
 | `v872_presente_test.py` (v87.2) | as moedas e gemas de teste: o `config.js` do pacote com `presente: true`; na produção, +50.000 moedas e +5.000 gemas (o id `teste-v87`), sem o selo DEMONSTRAÇÃO, e a janela de teste; uma vez só (recarregar não dá de novo); a loja com o presente (uma peça de moedas e uma de gemas); `presente: {id, moedas, gemas}` dá de novo com outro valor, uma vez, e com teto; `presente: false` (o lançamento) sem presente; a demonstração igual | 12/12 |
 | `v85_online_test.py` (v85, v86) | duas sessões do jogo numa sala hospedada no servidor: a tampinha correndo e parando no servidor; na v86 (mecânica clássica) os comandos com `button` e o analógico em 1/32 de volta, o PASSE e o CHUTE saindo com a força do jogo (na v85: `acao` e 1/256, com a FR-85) | 14/14 |
 | (`v85_fisica_test.mjs` e `v85_sincronia_test.py`) | testavam o núcleo FR-85; saíram na v86 (estão na branch `v85-auditada`) | — |
 | `v85_chaves_test.py` (v85) | as chaves antigas do treino (perfil, HUD, som, campo, modo) indo para as novas no aparelho, nas gavetas das contas e na cópia antiga da conta; a chave nova que já existe fica | ver o RELATORIO_DE_TESTES |
 | `contas_test.mjs` (v82) | as regras da patente (`app/contracts/patentes.ts`: as 8 patentes e as divisões, vitória, bônus, derrota no Bronze pela metade, o piso, o empate, a desistência, o teto do dia contra os bots, a importação até 799), o que a partida faz com a patente (`partida.ts`: o selo da ranqueada, o tamanho, a desistência sem selo, a partida que mudou de tipo) e a cópia do progresso (`progresso.ts`: só as chaves de progresso, os tamanhos, o que não vai para a conta) | 33/33 |
+| `v88_plataforma_test.mjs` (v88) | a plataforma de verdade (`app/api`) na plataforma de teste (SQLite, `tests/plataforma`) com três contas: amigos (pedir, aceitar, recusar, cancelar, remover, bloquear, o limite), mensagens, correio (COLETAR uma vez, a carta vencida, o anexo falso recusado), loja (comprar, equipar, preço errado e saldo insuficiente recusados, a oferta), as partidas rendendo moedas, missões e passe (com o teto do dia), missões (COLETAR uma vez), passe (grátis, premium, coletar tudo), eventos (o presente uma vez), estatísticas com filtro, clube (admins, pedidos, ranking), denúncias (a proteção), privacidade, excluir a conta, o RACHA CONTROL (2FA, eventos, correio para uma conta e para todos) e o reinício com o mesmo banco | 59 ok |
+| `v88_social_test.js` (v88) | o social ao vivo no servidor das salas (na memória, com contas assinadas): o status dos amigos (online, sala, procurando, em partida, escondido), os convites (sala e time), o chat dos amigos, do clube e da equipe, o bloqueio (chat da sala, Brasil, históricos, convites, mensagens), a denúncia com motivo, as relações que mudam, o selo com quem jogou (g) e o melhor da partida (v), o placar na lista e o histórico gravado | 72 ok |
+| `v88_salas_plataforma_test.mjs` (v88) | o mesmo social com o servidor das salas montado na plataforma de teste: as relações vindas do banco, a denúncia de mensagem indo para a tabela do RACHA CONTROL, os avisos da plataforma na hora | 23 ok |
+| `v88_cliente_test.py` (v88) | **o jogo de verdade logado em dois e três navegadores, pelos botões**, na plataforma de teste: o login do jogo, a carteira do servidor, o correio (COLETAR uma vez), a loja (comprar, equipar, preço errado recusado), a amizade entre duas contas (buscar, pedir, aceitar), o status online no painel do lobby, a mensagem direta, o convite para a sala (CRIAR E CHAMAR → ENTRAR), a partida com o amigo, o terceiro assistindo (SAIR, CÂMERA com o CAMPO INTEIRO, o placar), a denúncia pelo perfil (conta nova recusada; depois, no banco) e pela ficha do Chat do Brasil (um VER PERFIL só; o motivo na ficha; no banco com o texto), as partidas rendendo missões (COLETAR), passe (COLETAR), eventos e estatísticas DA CONTA (com o filtro), a privacidade no servidor, o treino pago pelo servidor, o treino com bots sem valer nada e o reinício do servidor com tudo lá | 39/39 |
+| `v88_controle_test.py` (v88) | o controle Bluetooth com um controle simulado no navegador (a API Gamepad de mentira): conectar (os Ajustes › Controles), os menus (andar, confirmar, voltar), as 32 direções, a zona morta, a mesma velocidade do teclado, PASSE e CHUTE com a mesma força do teclado, TROCAR A E B, START (a pausa), o teclado valendo junto e desconectar sem nada preso | 18/18 |
 
 `dificuldade_medida.py` (Etapa 4) mede Fácil × Difícil com partidas simuladas IA × IA (`tests/saida/dificuldade.txt`).
 
@@ -1122,8 +1332,11 @@ no RELATORIO_DE_TESTES da auditoria.
 ## Limitações conhecidas (e o porquê)
 
 * **O presente de teste está LIGADO no pacote (v87.2)**: o `presente: true` do `app/public/game/config.js` dá 50.000 moedas
-  e 5.000 gemas a quem abre o jogo, inclusive no site com as contas e no GitHub Pages. É para testar a loja; **no lançamento,
-  apague a linha** — os jogadores que já ganharam ficam com o que ganharam (o saldo mora no progresso de cada um).
+  e 5.000 gemas a quem abre o jogo sem conta (o site de teste e o GitHub Pages). É para testar a loja; **no lançamento,
+  apague a linha** — os jogadores que já ganharam ficam com o que ganharam (o saldo mora no progresso de cada um). **Com a
+  conta (v88)**, a carteira é a do servidor: o presente de teste chega pelo CORREIO só quando a plataforma tem
+  `RACHA_PRESENTE_TESTE=1` (no lançamento, não defina); o saldo que já estava na cópia do progresso entra uma vez, até
+  50.000 moedas e 5.000 gemas.
 * **A força do chute (v86, v87.1) foi medida, não jogada por pessoas**: a velocidade da bola depois do PASSE e do CHUTE, o
   teto e os números iguais no jogo e no servidor foram testados no Chromium; se 15% abaixo da antiga ficou bom, o equilíbrio e a
   sensação no celular dependem de jogar. Os bots usam as mesmas constantes (a previsão do chute deles acompanha); o jeito
@@ -1139,7 +1352,9 @@ no RELATORIO_DE_TESTES da auditoria.
 
 * **Sem conta, moedas, gemas, peças e a patente ficam neste aparelho** (localStorage), como antes; dá para exportar/importar o
   progresso. **Com a conta** (v82: o jogo dentro da plataforma), a patente fica na conta (o servidor faz a conta) e o progresso
-  do jogo vai para a conta e volta em outro aparelho; XP, conquistas e itens da conta já ficavam no servidor.
+  do jogo vai para a conta e volta em outro aparelho; XP, conquistas e itens da conta já ficavam no servidor. **Desde a v88**,
+  com a conta, as moedas, as gemas e os itens também são da conta (a carteira do servidor): o jogo só mostra, e ganhar ou
+  gastar passa pela plataforma. As limitações da v88 estão na seção dela ("Pendências reais").
 * **A ranqueada contra os bots continua sem prova lance a lance** (v82): a simulação roda no aparelho, então o servidor da
   plataforma confere o tempo e o ritmo do placar, não cada toque — por isso o teto de 250 pontos por dia contra os bots e a
   patente do aparelho entrando na conta só até 799. A online vale pelo selo do servidor das salas (que confere o resultado

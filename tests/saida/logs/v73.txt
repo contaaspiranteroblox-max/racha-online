@@ -1,6 +1,6 @@
   OK      o TESTE saiu do jogo: nem os ganchos no bloco de física, nem o código, nem o v72.css
   OK      os arquivos do TESTE saíram do projeto (tools/v72 e v72.css)
-  OK      TREINAMENTO: os 8 cartões de sempre, na mesma ordem, sem o TESTE
+  OK      TREINAMENTO: os 8 cartões de sempre, na mesma ordem, sem o TESTE (v88: + posicionamento, defesa, goleiro e com bots)
   OK      no jogo aberto não sobra nada do TESTE (código e estilo)
   OK      a escolha que o TESTE guardava (IGUAL/CLÁSSICO) some do aparelho
   OK      Ajustes › Teclado: a tecla do DRIBLE volta a ficar escondida fora da GINGA (sem a CORRIDA do TESTE)
@@ -17,4 +17,4 @@
   OK      844x390: o halo transparente e o contorno leve também no celular
   OK      844x390: nenhum erro de JavaScript
 
-v73 · o TESTE saiu e o sensor ficou mais transparente: 16/16 verificações ok em 9.9 s
+v73 · o TESTE saiu e o sensor ficou mais transparente: 16/16 verificações ok em 10.2 s

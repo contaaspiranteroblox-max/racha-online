@@ -23,4 +23,4 @@
   OK      e a janela da demonstração com o texto dela
   OK      nenhum erro de JavaScript
 
-v87.2 · moedas e gemas para testar o jogo: 12/12 verificações ok em 12.1 s
+v87.2 · moedas e gemas para testar o jogo: 12/12 verificações ok em 13.0 s

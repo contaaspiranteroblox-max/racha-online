@@ -208,6 +208,7 @@ async def principal():
         # a troca de gemas: confirmação e DESFAZER
         await rt(pg, "CONTA.gemas = 100; CONTA.moedas = 500; contaSalvar(); abreTela('loja'); true"); await pg.wait_for_timeout(300)
         await pg.screenshot(path=str(SAIDA / 'e4_loja_1280x720.png'))
+        await pg.evaluate("document.querySelector('#tela-loja .v88-cat[data-cat=\"ofertas\"]').click()"); await pg.wait_for_timeout(200)   # (v88: a troca de gemas mora em OFERTAS)
         await pg.evaluate("document.querySelector('#lj-trocas .lj-troca').click()"); await pg.wait_for_timeout(200)
         r = await rt(pg, "({pop:!LB.pop.hidden, tx:LB.popCaixa.textContent, g:CONTA.gemas})")
         P.confere(r['pop'] and 'TROCAR GEMAS' in r['tx'] and r['g'] == 100, 'a troca de gemas pede confirmação (nada muda antes)', r['tx'][:80])

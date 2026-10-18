@@ -31,6 +31,16 @@
 # v87.2: o v872_presente confere as moedas e gemas de teste (o presente: true do config.js na produção: uma vez só, a loja
 # com o presente, o presente: false do lançamento, o presente com outro valor e a demonstração igual). Os outros testes
 # abrem como o lançamento (o comum.abre põe presente: false, a não ser que o teste diga outra coisa).
+# v88: o v88_plataforma (Node) roda o código de verdade da plataforma (app/api) na plataforma de teste (tests/plataforma:
+# SQLite no lugar do MySQL, sem npm) com três contas — amigos, mensagens, correio (o COLETAR uma vez), loja e carteira,
+# missões, passe, eventos, estatísticas, clube, denúncias, privacidade, excluir a conta e o RACHA CONTROL — e reinicia com o
+# mesmo banco; o v88_social (Node) testa o social ao vivo no servidor da turma (status dos amigos, convites, chat dos amigos,
+# do clube e da equipe, bloqueio, denúncia com motivo); o v88_salas_plataforma (Node) faz o mesmo com o servidor das salas
+# montado na plataforma; o v88_cliente (Python) abre o jogo de verdade logado em dois e três navegadores e usa os botões
+# (login, correio, loja, amigos, mensagem, convite, partida, espectador, denúncia, missões, passe, eventos, estatísticas,
+# privacidade, treino) e reinicia a plataforma para conferir que tudo ficou; ~1 min. O v88_controle confere o controle
+# Bluetooth com um controle simulado no navegador (a API Gamepad de mentira: menus, 32 direções, velocidade e força iguais às
+# do teclado, A/B trocados, START, desconectar).
 cd "$(dirname "$0")/.." || exit 1
 python3 tools/aplicar_rua.py | head -1 || exit 1
 falhou=0
@@ -57,6 +67,14 @@ if out=$(python3 tests/v83_salas_ws_test.py 2>&1); then echo "$out" | tail -1; e
 printf '%-12s ' "guard"
 if out=$(node tests/compila_guard.cjs >/dev/null 2>&1 && node tests/guard_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 for t in v85_online v85_chaves v86_chute v87_site v872_presente; do
+  printf '%-12s ' "$t"
+  if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
+done
+for t in v88_plataforma_test.mjs v88_social_test.js v88_salas_plataforma_test.mjs; do
+  printf '%-12s ' "${t%%_test*}"
+  if out=$(node "tests/$t" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+done
+for t in v88_cliente v88_controle; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

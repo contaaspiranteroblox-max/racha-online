@@ -6,7 +6,7 @@
   OK      os modos que saíram continuam guardados no código (para voltar um dia)
   OK      os mapas: o Estádio de grama (4, o padrão desde a v79) e a Arena (0)
   OK      a sala: as setas do CAMPO e do MODO só passam pelos que aparecem
-  OK      JOGAR (v79: só a ranqueada, mesmo pedindo a casual): sem os chips de modo, só o ESTÁDIO
+  OK      JOGAR (v79: só a ranqueada, mesmo pedindo a casual): sem os chips de modo; (v88) a Arena e o Estádio com os modos de cada um, a ranqueada só no Estádio
   OK      tocar no ESTÁDIO escolhe ele (e a descrição fala do gramado)
   OK      a prévia do ESTÁDIO no JOGAR é verde (o gramado desenhado)
 
