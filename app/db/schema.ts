@@ -10,6 +10,7 @@ import {
   json,
   uniqueIndex,
   index,
+  primaryKey,
 } from "drizzle-orm/mysql-core";
 
 // ============================================================================
@@ -49,6 +50,11 @@ export const usuarios = mysqlTable(
     // privacidade
     perfilPublico: boolean("perfil_publico").notNull().default(true),
     aceitaPedidos: boolean("aceita_pedidos").notNull().default(true),
+    mostraOnline: boolean("mostra_online").notNull().default(true), // v88: os amigos veem online / em partida (desligado: sempre offline)
+    aceitaConvites: boolean("aceita_convites").notNull().default(true), // v88: convites de sala/equipe dos amigos
+    equipados: json("equipados").$type<Record<string, string>>(), // v88: bola, efeito, comemoracao, gol, banner, avatar (códigos do catálogo)
+    bio: varchar("bio", { length: 80 }), // v88: a frase do perfil
+    excluidoEm: timestamp("excluido_em"), // v88: conta excluída a pedido (os dados pessoais são apagados; o ID não volta)
     criadoEm: timestamp("criado_em").notNull().defaultNow(),
     ultimoLoginEm: timestamp("ultimo_login_em"),
   },
@@ -190,6 +196,12 @@ export const partidas = mysqlTable(
     pontos: int("pontos"),
     golsContra: int("gols_contra"),
     rqDelta: int("rq_delta"),
+    // v88: o melhor da partida (o servidor das salas decide na online; contra os bots, a regra do contracts/estatisticas88.ts),
+    // os IDs públicos de quem jogou junto (o selo da sala online traz) e a temporada da partida
+    mvp: boolean("mvp").notNull().default(false),
+    jogadores: json("jogadores").$type<string[]>(),
+    temporada: varchar("temporada", { length: 16 }),
+    moedasConcedidas: int("moedas_concedidas").notNull().default(0),
     criadaEm: timestamp("criada_em").notNull().defaultNow(),
     encerradaEm: timestamp("encerrada_em"),
   },
@@ -321,12 +333,14 @@ export const denuncias = mysqlTable(
     alvoId: bigint("alvo_id", { mode: "number", unsigned: true }).notNull(),
     motivo: varchar("motivo", { length: 60 }).notNull(),
     detalhes: varchar("detalhes", { length: 500 }),
+    contexto: json("contexto").$type<Record<string, unknown>>(), // v88: de onde veio (perfil, chat: canal + mensagem, partida)
+    chave: varchar("chave", { length: 120 }), // v88: autor+alvo+motivo+dia (a mesma denúncia não entra duas vezes no dia)
     estado: mysqlEnum("estado", ["aberta", "em_analise", "resolvida", "arquivada"]).notNull().default("aberta"),
     atribuidaA: bigint("atribuida_a", { mode: "number", unsigned: true }),
     criadaEm: timestamp("criada_em").notNull().defaultNow(),
     resolvidaEm: timestamp("resolvida_em"),
   },
-  (t) => [index("idx_denuncias_alvo").on(t.alvoId)],
+  (t) => [index("idx_denuncias_alvo").on(t.alvoId), uniqueIndex("uq_denuncia_chave").on(t.chave), index("idx_denuncias_autor").on(t.autorId, t.criadaEm)],
 );
 
 // ---------- Punições ----------
@@ -436,7 +450,7 @@ export const clubeMembros = mysqlTable(
   {
     usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).primaryKey(), // um clube por jogador
     clubeId: bigint("clube_id", { mode: "number", unsigned: true }).notNull(),
-    papel: mysqlEnum("papel", ["dono", "membro"]).notNull().default("membro"),
+    papel: mysqlEnum("papel", ["dono", "admin", "membro"]).notNull().default("membro"), // v88: admin (o dono escolhe)
     entrouEm: timestamp("entrou_em").notNull().defaultNow(),
   },
   (t) => [index("idx_membros_clube").on(t.clubeId)],
@@ -520,3 +534,139 @@ export const aprovacoes = mysqlTable("aprovacoes", {
   criadoEm: timestamp("criado_em").notNull().defaultNow(),
   resolvidoEm: timestamp("resolvido_em"),
 });
+
+// ============================================================================
+// v88 — A ATUALIZAÇÃO COMPLETA DOS MENUS (amigos, mensagens, correio, missões, eventos, passe, clube)
+// As regras moram em app/contracts/*88.ts e o catálogo em app/contracts/catalogo88.json (o mesmo que o jogo usa).
+// ============================================================================
+
+// Pedidos para entrar em clube só por convite (o dono e os admins aceitam ou recusam)
+export const clubePedidos = mysqlTable(
+  "clube_pedidos",
+  {
+    id: serial("id").primaryKey(),
+    clubeId: bigint("clube_id", { mode: "number", unsigned: true }).notNull(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    estado: mysqlEnum("estado", ["pendente", "aceito", "recusado"]).notNull().default("pendente"),
+    criadoEm: timestamp("criado_em").notNull().defaultNow(),
+    respondidoEm: timestamp("respondido_em"),
+  },
+  (t) => [uniqueIndex("uq_clube_pedido").on(t.clubeId, t.usuarioId), index("idx_clube_pedidos").on(t.clubeId, t.estado)],
+);
+
+// A central de mensagens (os avisos ligados à conta): sistema, amigos, clube, convites e recompensas
+export const mensagens = mysqlTable(
+  "mensagens",
+  {
+    id: serial("id").primaryKey(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    categoria: mysqlEnum("categoria", ["sistema", "amigos", "clube", "convites", "recompensas"]).notNull(),
+    titulo: varchar("titulo", { length: 80 }).notNull(),
+    corpo: varchar("corpo", { length: 600 }).notNull().default(""),
+    deId: bigint("de_id", { mode: "number", unsigned: true }), // quem originou (null = o sistema)
+    refTipo: varchar("ref_tipo", { length: 24 }), // pedido_amizade, amizade, convite_clube, pedido_clube, correio, evento, missao…
+    refId: varchar("ref_id", { length: 60 }),
+    chave: varchar("chave", { length: 80 }), // a mesma mensagem não entra duas vezes (null = sem trava)
+    lida: boolean("lida").notNull().default(false),
+    criadaEm: timestamp("criada_em").notNull().defaultNow(),
+    expiraEm: timestamp("expira_em"),
+  },
+  (t) => [index("idx_mensagens_usuario").on(t.usuarioId, t.criadaEm), uniqueIndex("uq_mensagens_chave").on(t.usuarioId, t.chave)],
+);
+
+// O correio: cada carta pode trazer moedas, gemas, itens do catálogo e XP do passe; COLETAR vale uma vez (o servidor confere)
+export type AnexoCorreio = { tipo: "moedas" | "gemas" | "item" | "xp_passe"; qtd: number; codigo?: string };
+export const correio = mysqlTable(
+  "correio",
+  {
+    id: serial("id").primaryKey(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    tipo: mysqlEnum("tipo", ["login", "evento", "temporada", "presente", "manutencao", "compensacao", "missao", "passe", "sistema"]).notNull(),
+    titulo: varchar("titulo", { length: 80 }).notNull(),
+    corpo: varchar("corpo", { length: 600 }).notNull().default(""),
+    anexos: json("anexos").$type<AnexoCorreio[]>().notNull(),
+    chave: varchar("chave", { length: 80 }).notNull(), // login:2026-10-18, global:12, presente-teste…: a mesma carta não chega duas vezes
+    lidoEm: timestamp("lido_em"),
+    coletadoEm: timestamp("coletado_em"),
+    criadoEm: timestamp("criado_em").notNull().defaultNow(),
+    expiraEm: timestamp("expira_em"),
+    origemAdminId: bigint("origem_admin_id", { mode: "number", unsigned: true }),
+  },
+  (t) => [uniqueIndex("uq_correio_chave").on(t.usuarioId, t.chave), index("idx_correio_usuario").on(t.usuarioId, t.criadoEm)],
+);
+
+// Carta para todo mundo (manutenção, compensação, presente): cada conta recebe a sua cópia quando abre o jogo na janela
+export const correioGlobal = mysqlTable("correio_global", {
+  id: serial("id").primaryKey(),
+  tipo: mysqlEnum("tipo", ["login", "evento", "temporada", "presente", "manutencao", "compensacao", "missao", "passe", "sistema"]).notNull(),
+  titulo: varchar("titulo", { length: 80 }).notNull(),
+  corpo: varchar("corpo", { length: 600 }).notNull().default(""),
+  anexos: json("anexos").$type<AnexoCorreio[]>().notNull(),
+  inicio: timestamp("inicio").notNull().defaultNow(),
+  fim: timestamp("fim"),
+  contasAte: timestamp("contas_ate"), // compensação: só para contas criadas até esta data (null = todas)
+  ativo: boolean("ativo").notNull().default(true),
+  criadoPor: bigint("criado_por", { mode: "number", unsigned: true }).notNull(),
+  criadoEm: timestamp("criado_em").notNull().defaultNow(),
+});
+
+// As missões: o progresso de cada uma por período (dia, semana, temporada ou evento), contado pelo servidor
+export const missoesProgresso = mysqlTable(
+  "missoes_progresso",
+  {
+    id: serial("id").primaryKey(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    missao: varchar("missao", { length: 40 }).notNull(),
+    periodo: varchar("periodo", { length: 24 }).notNull(), // D:2026-10-18 · S:2026-10-12 · T:T1 · E:<evento>
+    progresso: int("progresso").notNull().default(0),
+    meta: int("meta").notNull(),
+    coletadaEm: timestamp("coletada_em"),
+    atualizadoEm: timestamp("atualizado_em").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("uq_missao").on(t.usuarioId, t.missao, t.periodo), index("idx_missao_usuario").on(t.usuarioId, t.periodo)],
+);
+
+// Os eventos (configurados pelo servidor/RACHA CONTROL): login diário, desafios, torneios, temporada, recompensas temporárias
+export const eventos = mysqlTable("eventos", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 40 }).notNull().unique(),
+  tipo: mysqlEnum("tipo", ["ativo", "login", "desafio", "torneio", "temporada", "temporario"]).notNull(),
+  nome: varchar("nome", { length: 60 }).notNull(),
+  descricao: varchar("descricao", { length: 300 }).notNull().default(""),
+  regras: varchar("regras", { length: 1000 }).notNull().default(""),
+  imagem: varchar("imagem", { length: 40 }).notNull().default("favela"), // um desenho do jogo (sem endereço de fora)
+  inicio: timestamp("inicio").notNull(),
+  fim: timestamp("fim").notNull(),
+  config: json("config").$type<Record<string, unknown>>().notNull(),
+  ativo: boolean("ativo").notNull().default(true),
+  ordem: int("ordem").notNull().default(0),
+  criadoPor: bigint("criado_por", { mode: "number", unsigned: true }),
+  criadoEm: timestamp("criado_em").notNull().defaultNow(),
+  atualizadoEm: timestamp("atualizado_em").notNull().defaultNow(),
+});
+
+export const eventosProgresso = mysqlTable(
+  "eventos_progresso",
+  {
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    eventoId: bigint("evento_id", { mode: "number", unsigned: true }).notNull(),
+    dados: json("dados").$type<Record<string, unknown>>().notNull(), // login: os dias coletados · desafio: o progresso das metas
+    atualizadoEm: timestamp("atualizado_em").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.usuarioId, t.eventoId] })],
+);
+
+// O Passe RACHA: o XP e as recompensas coletadas em cada temporada (trilha grátis e premium)
+export const passeTemporada = mysqlTable(
+  "passe_temporada",
+  {
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    temporada: varchar("temporada", { length: 16 }).notNull(),
+    xp: int("xp").notNull().default(0),
+    premium: boolean("premium").notNull().default(false),
+    premiumEm: timestamp("premium_em"),
+    coletadas: json("coletadas").$type<{ g: number[]; p: number[] }>().notNull(),
+    atualizadoEm: timestamp("atualizado_em").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.usuarioId, t.temporada] })],
+);

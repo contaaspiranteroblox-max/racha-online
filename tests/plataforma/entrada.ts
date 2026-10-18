@@ -5,6 +5,7 @@
 export { appRouter } from "../../app/api/router";
 export { createContext } from "../../app/api/context";
 export { ligaSalas } from "../../app/api/lib/salas";
+export { relacoesPorPub, denunciaDoChat } from "../../app/api/racha/v88/comum";
 export { getDb } from "../../app/api/queries/connection";
 export * as schema from "../../app/db/schema";
 export { hashSenha } from "../../app/api/racha/security";

@@ -1,0 +1,174 @@
+{
+  "_sobre": "RACHA v88 — o catálogo da loja, do passe e das missões. O MESMO arquivo vale para o jogo (o build cola no racha.html como CAT88) e para a plataforma (que confere cada compra, coleta e missão por ele: o servidor nunca aceita preço, item ou prêmio que venha do aparelho). As peças da tampinha ficam em catalogo_tampinhas.json (tiradas do jogo). Cosméticos não mudam nada no jogo: a física, o tamanho e os números são os mesmos para todos.",
+  "versao": 1,
+  "raridades": {
+    "comum": { "nome": "COMUM", "cor": "#9aa4ad" },
+    "raro": { "nome": "RARO", "cor": "#3b8cf0" },
+    "epico": { "nome": "ÉPICO", "cor": "#a259f0" },
+    "lendario": { "nome": "LENDÁRIO", "cor": "#f5a524" },
+    "exclusivo": { "nome": "EXCLUSIVO", "cor": "#ff5a4f" }
+  },
+  "categorias": [
+    { "id": "destaques", "nome": "DESTAQUES" },
+    { "id": "tampinhas", "nome": "TAMPINHAS" },
+    { "id": "bolas", "nome": "BOLAS", "tipo": "bola" },
+    { "id": "efeitos", "nome": "EFEITOS", "tipo": "efeito" },
+    { "id": "comemoracoes", "nome": "COMEMORAÇÕES", "tipo": "comemoracao" },
+    { "id": "gols", "nome": "GOLS", "tipo": "gol" },
+    { "id": "banners", "nome": "BANNERS", "tipo": "banner" },
+    { "id": "avatares", "nome": "AVATARES", "tipo": "avatar" },
+    { "id": "pacotes", "nome": "PACOTES" },
+    { "id": "ofertas", "nome": "OFERTAS" }
+  ],
+  "tiposEquipaveis": ["bola", "efeito", "comemoracao", "gol", "banner", "avatar"],
+  "padroes": { "bola": "bola_classica", "efeito": "efeito_nenhum", "comemoracao": "com_nenhuma", "gol": "gol_padrao", "banner": "banner_laje_noturna", "avatar": "av_tampinha" },
+  "itens": [
+    { "id": "bola_classica", "tipo": "bola", "nome": "Clássica", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "A bola de sempre.", "visual": { "padrao": "classica" } },
+    { "id": "bola_rua", "tipo": "bola", "nome": "Bola de Rua", "raridade": "comum", "moedas": 1500, "gemas": 0, "desc": "Laranja de borracha, gasta de tanto asfalto.", "visual": { "padrao": "gomos", "base": "#ff8a2a", "gomo": "#7a3410", "linha": "#2a1206" } },
+    { "id": "bola_couro", "tipo": "bola", "nome": "Couro Antigo", "raridade": "raro", "moedas": 3000, "gemas": 0, "desc": "A de capotão, com costura aparente.", "visual": { "padrao": "costura", "base": "#a5652e", "gomo": "#6e3d17", "linha": "#f3e1c2" } },
+    { "id": "bola_verdeamarela", "tipo": "bola", "nome": "Verde e Amarela", "raridade": "epico", "moedas": 0, "gemas": 60, "desc": "Gomos nas cores da bandeira.", "visual": { "padrao": "gomos", "base": "#ffd23f", "gomo": "#1fa34a", "linha": "#1b3fa0" } },
+    { "id": "bola_noite", "tipo": "bola", "nome": "Laje Noturna", "raridade": "epico", "moedas": 0, "gemas": 60, "desc": "Azul da madrugada com estrelinhas.", "visual": { "padrao": "estrelas", "base": "#e8f0ff", "gomo": "#1f3c8a", "linha": "#0c1a3d" } },
+    { "id": "bola_ouro", "tipo": "bola", "nome": "Bola de Ouro", "raridade": "lendario", "moedas": 0, "gemas": 150, "desc": "Dourada, com brilho que corre.", "visual": { "padrao": "brilho", "base": "#ffd23f", "gomo": "#c98a0b", "linha": "#7a5200" } },
+
+    { "id": "efeito_nenhum", "tipo": "efeito", "nome": "Sem efeito", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "O chute limpo, sem nada a mais.", "visual": { "tipo": "nenhum" } },
+    { "id": "efeito_poeira", "tipo": "efeito", "nome": "Poeira da Rua", "raridade": "comum", "moedas": 1200, "gemas": 0, "desc": "Uma nuvenzinha de poeira no chute.", "visual": { "tipo": "poeira", "cores": ["#d8c7a3", "#a8916a"] } },
+    { "id": "efeito_faisca", "tipo": "efeito", "nome": "Faísca", "raridade": "raro", "moedas": 2500, "gemas": 0, "desc": "Faíscas amarelas quando a bola sai.", "visual": { "tipo": "faisca", "cores": ["#ffd23f", "#ff8a2a"] } },
+    { "id": "efeito_spray", "tipo": "efeito", "nome": "Spray de Grafite", "raridade": "raro", "moedas": 2800, "gemas": 0, "desc": "Pontinhos de tinta coloridos.", "visual": { "tipo": "spray", "cores": ["#ff4fa3", "#3bc9db", "#ffd23f"] } },
+    { "id": "efeito_raio", "tipo": "efeito", "nome": "Raio", "raridade": "epico", "moedas": 0, "gemas": 50, "desc": "Riscos elétricos rápidos.", "visual": { "tipo": "raio", "cores": ["#7fd6ff", "#ffffff"] } },
+    { "id": "efeito_estrelas", "tipo": "efeito", "nome": "Estrelinhas", "raridade": "lendario", "moedas": 0, "gemas": 120, "desc": "Estrelas douradas girando.", "visual": { "tipo": "estrelas", "cores": ["#ffd23f", "#fff3bf"] } },
+
+    { "id": "com_nenhuma", "tipo": "comemoracao", "nome": "Sem comemoração", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "Só o GOOOL! de sempre.", "visual": { "tipo": "nenhuma" } },
+    { "id": "com_pulo", "tipo": "comemoracao", "nome": "Pulinho", "raridade": "comum", "moedas": 1000, "gemas": 0, "desc": "A tampinha pula de alegria.", "visual": { "tipo": "pulo" } },
+    { "id": "com_giro", "tipo": "comemoracao", "nome": "Giro", "raridade": "comum", "moedas": 1500, "gemas": 0, "desc": "Uma volta completa no lugar.", "visual": { "tipo": "giro" } },
+    { "id": "com_coracao", "tipo": "comemoracao", "nome": "Coraçãozinho", "raridade": "raro", "moedas": 2500, "gemas": 0, "desc": "Corações subindo da tampinha.", "visual": { "tipo": "coracao", "cores": ["#ff4f6d", "#ffb3c1"] } },
+    { "id": "com_danca", "tipo": "comemoracao", "nome": "Dancinha", "raridade": "raro", "moedas": 3000, "gemas": 0, "desc": "Rebolado com notas musicais.", "visual": { "tipo": "danca", "cores": ["#ffd23f", "#ffffff"] } },
+    { "id": "com_aviao", "tipo": "comemoracao", "nome": "Aviãozinho", "raridade": "epico", "moedas": 0, "gemas": 60, "desc": "Asas abertas e um rastro no ar.", "visual": { "tipo": "aviao", "cores": ["#ffffff", "#7fd6ff"] } },
+    { "id": "com_coroa", "tipo": "comemoracao", "nome": "Rei da Quadra", "raridade": "lendario", "moedas": 0, "gemas": 150, "desc": "A coroa dourada aparece sobre a tampinha.", "visual": { "tipo": "coroa", "cores": ["#ffd23f", "#fff3bf"] } },
+
+    { "id": "gol_padrao", "tipo": "gol", "nome": "GOOOL! clássico", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "A animação de sempre.", "visual": { "tipo": "padrao" } },
+    { "id": "gol_rede", "tipo": "gol", "nome": "Rede Balançando", "raridade": "comum", "moedas": 1200, "gemas": 0, "desc": "A rede estufa em ondas.", "visual": { "tipo": "rede", "cores": ["#ffffff", "#c9d6e3"] } },
+    { "id": "gol_confete", "tipo": "gol", "nome": "Confete", "raridade": "raro", "moedas": 2500, "gemas": 0, "desc": "Chuva de confete colorido no gol.", "visual": { "tipo": "confete", "cores": ["#ff4fa3", "#3bc9db", "#ffd23f", "#69db7c"] } },
+    { "id": "gol_verdeamarelo", "tipo": "gol", "nome": "Verde-Amarelo", "raridade": "epico", "moedas": 0, "gemas": 60, "desc": "Explosão verde e amarela.", "visual": { "tipo": "explosao", "cores": ["#1fa34a", "#ffd23f", "#1b3fa0"] } },
+    { "id": "gol_rojao", "tipo": "gol", "nome": "Rojão", "raridade": "epico", "moedas": 0, "gemas": 70, "desc": "Fogos de artifício subindo.", "visual": { "tipo": "fogos", "cores": ["#ffd23f", "#ff5a4f", "#ffffff"] } },
+    { "id": "gol_grafite", "tipo": "gol", "nome": "Grafite na Parede", "raridade": "lendario", "moedas": 0, "gemas": 150, "desc": "GOL pichado em respingo de tinta.", "visual": { "tipo": "grafite", "cores": ["#ff4fa3", "#ffd23f", "#111111"] } },
+
+    { "id": "banner_laje_noturna", "tipo": "banner", "nome": "Laje Noturna", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "As luzes da favela à noite.", "visual": { "cena": "laje", "cores": ["#101a33", "#ffcf6b"] } },
+    { "id": "banner_por_do_sol", "tipo": "banner", "nome": "Pôr do Sol", "raridade": "comum", "moedas": 1500, "gemas": 0, "desc": "O céu laranja atrás dos telhados.", "visual": { "cena": "por_do_sol", "cores": ["#ff7a2a", "#3a1c4a"] } },
+    { "id": "banner_grafite", "tipo": "banner", "nome": "Muro Grafitado", "raridade": "raro", "moedas": 3000, "gemas": 0, "desc": "O muro da quadra todo pintado.", "visual": { "cena": "grafite", "cores": ["#2b2b2b", "#ff4fa3"] } },
+    { "id": "banner_cristo", "tipo": "banner", "nome": "Cristo ao Fundo", "raridade": "epico", "moedas": 0, "gemas": 60, "desc": "O morro e o Cristo no fim de tarde.", "visual": { "cena": "cristo", "cores": ["#f59a0c", "#1c2340"] } },
+    { "id": "banner_arquibancada", "tipo": "banner", "nome": "Arquibancada", "raridade": "epico", "moedas": 0, "gemas": 60, "desc": "A torcida e os refletores.", "visual": { "cena": "estadio", "cores": ["#0f2a17", "#e8f5d0"] } },
+    { "id": "banner_carnaval", "tipo": "banner", "nome": "Carnaval", "raridade": "lendario", "moedas": 0, "gemas": 140, "desc": "Serpentinas e confete na rua.", "visual": { "cena": "carnaval", "cores": ["#7a1fd1", "#ffd23f"] } },
+
+    { "id": "av_tampinha", "tipo": "avatar", "nome": "Minha tampinha", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "A tampinha que você está usando.", "visual": { "desenho": "tampinha" } },
+    { "id": "av_bola", "tipo": "avatar", "nome": "Bola", "raridade": "comum", "moedas": 0, "gemas": 0, "gratis": true, "desc": "A bola no círculo.", "visual": { "desenho": "bola", "cores": ["#2f8f4a", "#ffffff"] } },
+    { "id": "av_10", "tipo": "avatar", "nome": "Camisa 10", "raridade": "comum", "moedas": 800, "gemas": 0, "desc": "O número do craque.", "visual": { "desenho": "dez", "cores": ["#ffd23f", "#1b3fa0"] } },
+    { "id": "av_brasil", "tipo": "avatar", "nome": "Bandeira", "raridade": "comum", "moedas": 800, "gemas": 0, "desc": "Verde, amarelo e azul.", "visual": { "desenho": "brasil", "cores": ["#1fa34a", "#ffd23f"] } },
+    { "id": "av_coroa", "tipo": "avatar", "nome": "Coroa", "raridade": "raro", "moedas": 2000, "gemas": 0, "desc": "Quem manda na quadra.", "visual": { "desenho": "coroa", "cores": ["#2b1f4a", "#ffd23f"] } },
+    { "id": "av_raio", "tipo": "avatar", "nome": "Raio", "raridade": "raro", "moedas": 2000, "gemas": 0, "desc": "Velocidade pura.", "visual": { "desenho": "raio", "cores": ["#13203f", "#7fd6ff"] } },
+    { "id": "av_chuteira", "tipo": "avatar", "nome": "Chuteira", "raridade": "raro", "moedas": 2200, "gemas": 0, "desc": "A chuteira pendurada no varal.", "visual": { "desenho": "chuteira", "cores": ["#3a1414", "#ff5a4f"] } },
+    { "id": "av_cristo", "tipo": "avatar", "nome": "Cristo", "raridade": "epico", "moedas": 0, "gemas": 50, "desc": "A silhueta no topo do morro.", "visual": { "desenho": "cristo", "cores": ["#f59a0c", "#3a1c4a"] } },
+    { "id": "av_trofeu", "tipo": "avatar", "nome": "Troféu", "raridade": "epico", "moedas": 0, "gemas": 50, "desc": "A taça do racha.", "visual": { "desenho": "trofeu", "cores": ["#1c2b1c", "#ffd23f"] } },
+    { "id": "av_estrela", "tipo": "avatar", "nome": "Estrela de Ouro", "raridade": "lendario", "moedas": 0, "gemas": 120, "desc": "Brilho de lenda.", "visual": { "desenho": "estrela", "cores": ["#3a2a00", "#ffd23f"] } },
+
+    { "id": "tp_t1_rua", "tipo": "tampinha", "nome": "Rei da Rua", "raridade": "epico", "venda": false, "desc": "Exclusiva do Passe RACHA · Temporada 1.", "visual": { "d": { "p": "rl", "pc": ["#111111", "#ffd23f", "#111111"], "b": "ou", "bc": ["#ffd23f", "#000000"], "i": "co", "ic": ["#ffd23f", "#111111"], "ip": [50, 50, 40, 0], "ie": 2 } } },
+    { "id": "tp_t1_favela", "tipo": "tampinha", "nome": "Favela em Festa", "raridade": "epico", "venda": false, "desc": "Exclusiva do Passe RACHA · Temporada 1.", "visual": { "d": { "p": "pi", "pc": ["#ff7a2a", "#ffd23f", "#7a1fd1"], "b": "lt", "bc": ["#7a1fd1", "#ffd23f"], "i": "pd", "ic": ["#ffffff", "#3a1c4a"], "ip": [50, 54, 44, 0], "ie": 2 } } },
+    { "id": "tp_t1_cristo", "tipo": "tampinha", "nome": "Morro do Cristo", "raridade": "lendario", "venda": false, "desc": "Exclusiva do Passe RACHA · Temporada 1.", "visual": { "d": { "p": "dc", "pc": ["#f59a0c", "#3a1c4a", "#000000"], "b": "ne", "bc": ["#ffd23f", "#f59a0c"], "i": "zr", "ic": ["#ffffff", "#3a1c4a"], "ip": [50, 50, 46, 0], "ie": 2 } } },
+    { "id": "tp_t1_lenda", "tipo": "tampinha", "nome": "Lenda da Temporada", "raridade": "lendario", "venda": false, "desc": "Exclusiva do Passe RACHA · Temporada 1 (nível 30).", "visual": { "d": { "p": "gx", "pc": ["#1b1140", "#a259f0", "#ffd23f"], "b": "ai", "bc": ["#ffd23f", "#a259f0"], "i": "zb", "ic": ["#ffd23f", "#1fa34a"], "ip": [50, 50, 46, 0], "ie": 2 } } },
+    { "id": "tp_t1_raiz", "tipo": "tampinha", "nome": "Raiz da Quebrada", "raridade": "raro", "venda": false, "desc": "Do Passe RACHA · Temporada 1 (trilha grátis).", "visual": { "d": { "p": "tj", "pc": ["#8a3b1f", "#c96a3c", "#2a1206"], "b": "re", "bc": ["#c7ccd2", "#000000"], "i": "bo", "ic": ["#ffffff", "#171a1c"], "ip": [50, 50, 40, 0], "ie": 2 } } },
+
+    { "id": "caixa_rua", "tipo": "caixa", "nome": "Caixa da Rua", "raridade": "comum", "venda": false, "desc": "Conteúdo fixo, mostrado antes de abrir: 500 moedas e 5 gemas.", "conteudo": [{ "tipo": "moedas", "qtd": 500 }, { "tipo": "gemas", "qtd": 5 }] },
+    { "id": "caixa_laje", "tipo": "caixa", "nome": "Caixa da Laje", "raridade": "raro", "venda": false, "desc": "Conteúdo fixo, mostrado antes de abrir: 1.000 moedas e 15 gemas.", "conteudo": [{ "tipo": "moedas", "qtd": 1000 }, { "tipo": "gemas", "qtd": 15 }] }
+  ],
+  "pacotes": [
+    { "id": "pacote_estreia", "nome": "Pacote de Estreia", "raridade": "comum", "moedas": 2900, "gemas": 0, "desc": "Bola de Rua, Poeira da Rua e Camisa 10.", "itens": ["bola_rua", "efeito_poeira", "av_10"] },
+    { "id": "pacote_laje", "nome": "Pacote da Laje", "raridade": "raro", "moedas": 0, "gemas": 90, "desc": "Muro Grafitado, Dancinha e Confete.", "itens": ["banner_grafite", "com_danca", "gol_confete"] },
+    { "id": "pacote_craque", "nome": "Pacote do Craque", "raridade": "lendario", "moedas": 0, "gemas": 400, "desc": "Bola de Ouro, Rei da Quadra, Grafite na Parede e Estrela de Ouro.", "itens": ["bola_ouro", "com_coroa", "gol_grafite", "av_estrela"] }
+  ],
+  "trocas": [
+    { "id": "troca_30", "gemas": 30, "moedas": 600 },
+    { "id": "troca_80", "gemas": 80, "moedas": 1800 },
+    { "id": "troca_200", "gemas": 200, "moedas": 5000 }
+  ],
+  "ofertas": { "porSemana": 4, "desconto": 30, "_como": "Toda segunda-feira (UTC) entram 4 itens à venda com 30% de desconto, sorteados pelo número da semana (iguais para todos). O RACHA CONTROL pode pôr outras ofertas num evento do tipo temporario (config.ofertas)." },
+  "destaques": { "porDia": 6, "_como": "Todo dia (UTC) 6 itens à venda, um de cada categoria, pelo número do dia (iguais para todos)." },
+  "temporada": {
+    "id": "T1", "nome": "TEMPORADA 1 · RUA EM FESTA", "inicio": "2026-10-01T00:00:00Z", "fim": "2027-01-01T00:00:00Z",
+    "xpPorNivel": 600, "niveis": 30, "premiumGemas": 499,
+    "xp": { "partida": 60, "vitoria": 40, "golTreino": 5, "_como": "XP do passe por partida válida (contada pelo servidor), mais a vitória; os gols do treino rendem pouco (até 10 por dia, o mesmo teto do XP do treino). As missões dão XP do passe no prêmio delas." },
+    "trilha": [
+      { "n": 1, "g": { "tipo": "moedas", "qtd": 300 }, "p": { "tipo": "item", "codigo": "tp_t1_rua" } },
+      { "n": 2, "g": { "tipo": "moedas", "qtd": 300 }, "p": { "tipo": "gemas", "qtd": 10 } },
+      { "n": 3, "g": { "tipo": "item", "codigo": "caixa_rua" }, "p": { "tipo": "item", "codigo": "av_raio" } },
+      { "n": 4, "g": { "tipo": "moedas", "qtd": 400 }, "p": { "tipo": "moedas", "qtd": 800 } },
+      { "n": 5, "g": { "tipo": "item", "codigo": "av_bola" }, "p": { "tipo": "item", "codigo": "bola_noite" } },
+      { "n": 6, "g": { "tipo": "moedas", "qtd": 400 }, "p": { "tipo": "gemas", "qtd": 10 } },
+      { "n": 7, "g": { "tipo": "item", "codigo": "caixa_rua" }, "p": { "tipo": "item", "codigo": "com_giro" } },
+      { "n": 8, "g": { "tipo": "moedas", "qtd": 400 }, "p": { "tipo": "item", "codigo": "gol_rede" } },
+      { "n": 9, "g": { "tipo": "moedas", "qtd": 500 }, "p": { "tipo": "moedas", "qtd": 1000 } },
+      { "n": 10, "g": { "tipo": "item", "codigo": "efeito_poeira" }, "p": { "tipo": "item", "codigo": "tp_t1_favela" } },
+      { "n": 11, "g": { "tipo": "moedas", "qtd": 500 }, "p": { "tipo": "gemas", "qtd": 15 } },
+      { "n": 12, "g": { "tipo": "item", "codigo": "caixa_rua" }, "p": { "tipo": "item", "codigo": "com_coracao" } },
+      { "n": 13, "g": { "tipo": "moedas", "qtd": 500 }, "p": { "tipo": "item", "codigo": "av_chuteira" } },
+      { "n": 14, "g": { "tipo": "moedas", "qtd": 500 }, "p": { "tipo": "moedas", "qtd": 1200 } },
+      { "n": 15, "g": { "tipo": "item", "codigo": "tp_t1_raiz" }, "p": { "tipo": "item", "codigo": "banner_arquibancada" } },
+      { "n": 16, "g": { "tipo": "moedas", "qtd": 600 }, "p": { "tipo": "gemas", "qtd": 15 } },
+      { "n": 17, "g": { "tipo": "item", "codigo": "caixa_laje" }, "p": { "tipo": "item", "codigo": "efeito_raio" } },
+      { "n": 18, "g": { "tipo": "moedas", "qtd": 600 }, "p": { "tipo": "item", "codigo": "gol_rojao" } },
+      { "n": 19, "g": { "tipo": "moedas", "qtd": 600 }, "p": { "tipo": "moedas", "qtd": 1500 } },
+      { "n": 20, "g": { "tipo": "item", "codigo": "av_brasil" }, "p": { "tipo": "item", "codigo": "tp_t1_cristo" } },
+      { "n": 21, "g": { "tipo": "moedas", "qtd": 700 }, "p": { "tipo": "gemas", "qtd": 20 } },
+      { "n": 22, "g": { "tipo": "item", "codigo": "caixa_laje" }, "p": { "tipo": "item", "codigo": "banner_cristo" } },
+      { "n": 23, "g": { "tipo": "moedas", "qtd": 700 }, "p": { "tipo": "item", "codigo": "av_cristo" } },
+      { "n": 24, "g": { "tipo": "moedas", "qtd": 700 }, "p": { "tipo": "moedas", "qtd": 2000 } },
+      { "n": 25, "g": { "tipo": "item", "codigo": "efeito_faisca" }, "p": { "tipo": "item", "codigo": "bola_verdeamarela" } },
+      { "n": 26, "g": { "tipo": "moedas", "qtd": 800 }, "p": { "tipo": "gemas", "qtd": 25 } },
+      { "n": 27, "g": { "tipo": "item", "codigo": "caixa_laje" }, "p": { "tipo": "item", "codigo": "gol_verdeamarelo" } },
+      { "n": 28, "g": { "tipo": "moedas", "qtd": 800 }, "p": { "tipo": "item", "codigo": "com_aviao" } },
+      { "n": 29, "g": { "tipo": "moedas", "qtd": 1000 }, "p": { "tipo": "gemas", "qtd": 30 } },
+      { "n": 30, "g": { "tipo": "gemas", "qtd": 30 }, "p": { "tipo": "item", "codigo": "tp_t1_lenda" } }
+    ]
+  },
+  "missoes": {
+    "diarias": {
+      "porDia": 4, "fixas": ["d_partidas3", "d_amigo1"],
+      "lista": [
+        { "id": "d_partidas3", "nome": "Jogue 3 partidas", "tipo": "partidas", "meta": 3, "premio": { "moedas": 200, "xp_passe": 100 } },
+        { "id": "d_amigo1", "nome": "Jogue com um amigo", "tipo": "amigo", "meta": 1, "premio": { "moedas": 300, "xp_passe": 150 } },
+        { "id": "d_gols5", "nome": "Marque 5 gols", "tipo": "gols", "meta": 5, "premio": { "moedas": 300, "xp_passe": 100 } },
+        { "id": "d_assist3", "nome": "Dê 3 assistências", "tipo": "assistencias", "meta": 3, "premio": { "moedas": 200, "xp_passe": 100 } },
+        { "id": "d_vitorias2", "nome": "Vença 2 partidas", "tipo": "vitorias", "meta": 2, "premio": { "moedas": 250, "xp_passe": 100 } },
+        { "id": "d_ranq1", "nome": "Jogue 1 ranqueada", "tipo": "ranqueadas", "meta": 1, "premio": { "moedas": 150, "xp_passe": 100 } },
+        { "id": "d_treino5", "nome": "Marque 5 gols no treino", "tipo": "treino_gols", "meta": 5, "premio": { "moedas": 100, "xp_passe": 50 } }
+      ]
+    },
+    "semanais": {
+      "porSemana": 4, "fixas": ["s_partidas15"],
+      "lista": [
+        { "id": "s_partidas15", "nome": "Jogue 15 partidas", "tipo": "partidas", "meta": 15, "premio": { "moedas": 800, "gemas": 10, "xp_passe": 300 } },
+        { "id": "s_gols20", "nome": "Marque 20 gols", "tipo": "gols", "meta": 20, "premio": { "moedas": 800, "xp_passe": 300 } },
+        { "id": "s_vitorias8", "nome": "Vença 8 partidas", "tipo": "vitorias", "meta": 8, "premio": { "moedas": 600, "gemas": 10, "xp_passe": 300 } },
+        { "id": "s_assist10", "nome": "Dê 10 assistências", "tipo": "assistencias", "meta": 10, "premio": { "moedas": 700, "xp_passe": 300 } },
+        { "id": "s_amigo3", "nome": "Jogue 3 partidas com amigos", "tipo": "amigo", "meta": 3, "premio": { "moedas": 600, "gemas": 15, "xp_passe": 300 } },
+        { "id": "s_ranq5", "nome": "Jogue 5 ranqueadas", "tipo": "ranqueadas", "meta": 5, "premio": { "moedas": 700, "gemas": 10, "xp_passe": 300 } }
+      ]
+    },
+    "temporada": {
+      "lista": [
+        { "id": "t_partidas100", "nome": "Jogue 100 partidas na temporada", "tipo": "partidas", "meta": 100, "premio": { "gemas": 50, "xp_passe": 1500 } },
+        { "id": "t_vitorias50", "nome": "Vença 50 partidas na temporada", "tipo": "vitorias", "meta": 50, "premio": { "gemas": 50, "xp_passe": 1500 } },
+        { "id": "t_gols150", "nome": "Marque 150 gols na temporada", "tipo": "gols", "meta": 150, "premio": { "moedas": 3000, "xp_passe": 1500 } },
+        { "id": "t_amigo20", "nome": "Jogue 20 partidas com amigos", "tipo": "amigo", "meta": 20, "premio": { "item": "com_pulo", "gemas": 30, "xp_passe": 1000 } },
+        { "id": "t_ranq30", "nome": "Jogue 30 ranqueadas", "tipo": "ranqueadas", "meta": 30, "premio": { "item": "av_trofeu", "xp_passe": 1000 } }
+      ]
+    },
+    "tipos": {
+      "partidas": "partida válida (contada pelo servidor; contra bots ou online)",
+      "vitorias": "vitória numa partida válida",
+      "gols": "gols seus numa partida válida",
+      "assistencias": "assistências suas numa partida válida",
+      "ranqueadas": "partida ranqueada válida",
+      "amigo": "partida online válida com um amigo na mesma sala (o selo da sala diz quem jogou)",
+      "treino_gols": "gols no treino (os mesmos que rendem XP: até 10 por dia)"
+    }
+  }
+}

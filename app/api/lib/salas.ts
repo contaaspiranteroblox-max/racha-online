@@ -23,14 +23,35 @@ function cabecalhos(req: IncomingMessage): Headers {
 
 // v79: selosDe (passado pelo boot, que tem o banco) devolve os selos da conta — o V na frente do nome nas salas e no Chat do
 // Brasil sai do banco, nunca do jogo. Sem ele (os testes), ninguém aparece com selo.
-export type OpcoesSalas = { selosDe?: (usuarioId: number) => Promise<string[]> };
+// v88: relacoesDe (os amigos, os bloqueios e a privacidade da conta, do banco) e denuncia (a denúncia de uma mensagem do chat
+// vai para a tabela denuncias, a mesma do RACHA CONTROL). Sem eles (os testes antigos), o servidor das salas usa o que vem
+// assinado no bilhete e guarda as denúncias só na memória.
+export type RelacoesConta = { amigos: string[]; bloqueios: string[]; mostraOnline: boolean; aceitaConvites: boolean; clube: string | null; cos: Record<string, string> };
+export type DenunciaChat = { autor: string; alvo: string; motivo: string; texto: string; canal: string; mid?: string; sala?: string };
+export type OpcoesSalas = {
+  selosDe?: (usuarioId: number) => Promise<string[]>;
+  relacoesDe?: (idPublico: string) => Promise<RelacoesConta | null>;
+  denuncia?: (d: DenunciaChat) => Promise<void>;
+};
+// v88: a turma montada aqui (a plataforma avisa na hora: pedido de amizade, convite de clube, carta nova, amizade desfeita…)
+let turmaAtual: Turma | null = null;
+type TurmaV88 = Turma & { avisaConta?: (pub: string, m: Record<string, unknown>) => boolean; atualizaRelacoes?: (pub: string, r: RelacoesConta | null) => void };
+export function avisaConta(idPublico: number | string, msg: Record<string, unknown>): boolean {
+  try { return !!(turmaAtual as TurmaV88 | null)?.avisaConta?.(String(idPublico).padStart(6, "0"), msg); } catch (_) { return false; }
+}
+export function relacoesMudaram(idPublico: number | string, r: RelacoesConta | null): void {
+  try { (turmaAtual as TurmaV88 | null)?.atualizaRelacoes?.(String(idPublico).padStart(6, "0"), r); } catch (_) { /* sem a turma aqui */ }
+}
 export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
   const turma = new Turma({
     arquivo: process.env.RACHA_DADOS || null,
     nome: process.env.RACHA_SALAS_NOME || "RACHA",
     segredo: garanteSegredoSalas(),
     p2p: process.env.RACHA_P2P !== "0",
-  });
+    relacoesDe: opcoes.relacoesDe,
+    denuncia: opcoes.denuncia,
+  } as ConstructorParameters<typeof Turma>[0]);
+  turmaAtual = turma;
   const origens = (process.env.RACHA_ORIGENS || "").split(",").map((s) => s.trim()).filter(Boolean);
   servidor.on("upgrade", (req: IncomingMessage, sock: Duplex, cabeca: Buffer) => {
     if (!origemPermitida(req.headers.origin, req.headers.host, origens)) {

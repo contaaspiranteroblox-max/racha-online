@@ -29,7 +29,7 @@ export function assina(segredo: string, obj: Record<string, unknown>): string {
 }
 
 export function confere(segredo: string, txt: unknown, agora = Date.now()): Record<string, unknown> | null {
-  if (!segredo || typeof txt !== "string" || txt.length > 600) return null;
+  if (!segredo || typeof txt !== "string" || txt.length > 8000) return null;   // v88: o bilhete leva os amigos (até 100) e os bloqueios
   const i = txt.indexOf(".");
   if (i < 1) return null;
   const corpo = txt.slice(0, i);
@@ -48,7 +48,7 @@ export function confere(segredo: string, txt: unknown, agora = Date.now()): Reco
   return r;
 }
 
-export type Selo = { s: string; r: number; j: string; l: 0 | 1; p: [number, number]; m: string; d: number; t: number; e: number; k?: 0 | 1; n?: number }; // v82: k = ranqueada, n = o tamanho do time
+export type Selo = { s: string; r: number; j: string; l: 0 | 1; p: [number, number]; m: string; d: number; t: number; e: number; k?: 0 | 1; n?: number; g?: string[]; v?: 0 | 1 }; // v82: k = ranqueada, n = o tamanho do time · v88: g = os IDs das contas que jogaram, v = o melhor da partida
 
 export function confereSelo(txt: unknown): Selo | null {
   const o = confere(segredoSalas(), txt);
@@ -65,9 +65,20 @@ export function confereSelo(txt: unknown): Selo | null {
 
 // v79: o bilhete leva também os selos da conta (s: verificado, parceiro, equipe, criador), assinados — o servidor da turma
 // só mostra o V na frente do nome de quem chega com eles daqui (o jogo não consegue inventar um selo).
-export function bilheteDaConta(idPublico: number, nome: string, selos: string[] = []): string | null {
+// v88: e as relações da conta (a: os amigos, b: os bloqueios dos dois lados, o: mostra o status online, c: aceita convites,
+// k: o clube, q: os cosméticos equipados) — o servidor das salas usa no status dos amigos, nos convites, no chat dos amigos e
+// do clube e no bloqueio, quando ele roda em outro lugar (montado aqui, ele pergunta direto ao banco).
+export type ExtraBilhete = { a?: string[]; b?: string[]; o?: 0 | 1; c?: 0 | 1; k?: string | null; q?: Record<string, string> };
+export function bilheteDaConta(idPublico: number, nome: string, selos: string[] = [], extra: ExtraBilhete = {}): string | null {
   const seg = segredoSalas();
   if (!seg) return null;
   const s = selos.filter((x) => ["verificado", "criador", "parceiro", "equipe"].includes(x));
-  return assina(seg, { p: String(idPublico), n: nome, ...(s.length ? { s } : {}), e: Date.now() + 30 * 60 * 1000 });
+  const x: Record<string, unknown> = {};
+  if (extra.a && extra.a.length) x.a = extra.a.slice(0, 100);
+  if (extra.b && extra.b.length) x.b = extra.b.slice(0, 300);
+  if (extra.o === 0) x.o = 0;
+  if (extra.c === 0) x.c = 0;
+  if (extra.k) x.k = extra.k;
+  if (extra.q && Object.keys(extra.q).length) x.q = extra.q;
+  return assina(seg, { p: String(idPublico), n: nome, ...(s.length ? { s } : {}), ...x, e: Date.now() + 30 * 60 * 1000 });
 }

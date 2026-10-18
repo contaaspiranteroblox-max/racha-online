@@ -35,6 +35,8 @@ import { XP, formatarIdPublico } from "@contracts/racha";
 import { bilheteDaConta, confereSelo } from "../lib/selo";
 import { aplicaRanqueada, type RespostaRanqueada } from "./ranqueada";
 import { motivoResultadoOnline, acaoRanqueada } from "@contracts/partida";
+import { relacoesDe } from "./v88/comum";
+import { recompensaPartida, recompensaGolTreino, recompensaExercicio, premiosDeNivel, type Selo88 } from "./v88/partida";
 
 const MODOS = ["futebol", "curva", "ginga", "volei", "americano", "basquete"];
 const NIVEIS_BOT = ["facil", "medio", "dificil", "lenda"];
@@ -97,7 +99,8 @@ export const jogoRouter = createRouter({
     const c = ctx as unknown as CtxAutenticado;
     await exigeLimite(`bilhete:${c.usuario.id}`, 30, 60 * 60 * 1000, "Muitos pedidos seguidos.");
     const meus = await getDb().query.selos.findMany({ where: eq(selos.usuarioId, c.usuario.id) });   // v79: os selos vão assinados no bilhete
-    return { bilhete: bilheteDaConta(Number(c.usuario.idPublico), c.usuario.nomeExibicao, meus.map((x) => x.selo)) };
+    const r = await relacoesDe(c.usuario.id);                // v88: os amigos, os bloqueios, a privacidade, o clube e os cosméticos
+    return { bilhete: bilheteDaConta(Number(c.usuario.idPublico), c.usuario.nomeExibicao, meus.map((x) => x.selo), r ? { a: r.amigos, b: r.bloqueios, o: r.mostraOnline ? 1 : 0, c: r.aceitaConvites ? 1 : 0, k: r.clube, q: r.cos } : {}) };
   }),
 
   // ---------- Início de partida: emite token de uso único (válido 30 min) ----------
@@ -159,7 +162,8 @@ export const jogoRouter = createRouter({
         golsContra: z.number().int().min(0).max(XP.PLACAR_MAX).default(0),
         online: z.boolean().default(false),
         valida: z.boolean().default(true),
-        selo: z.string().max(600).optional(),
+        selo: z.string().max(1200).optional(),
+        mvp: z.boolean().optional(), // v88: o melhor da partida contra os bots (o jogo diz; o servidor só aceita se for possível)
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -206,8 +210,10 @@ export const jogoRouter = createRouter({
 
       // v70: partida online sem o selo do servidor da turma (ou que ele não validou) não rende: não dá para conferir
       // (v82: as regras em contracts/partida.ts; na ranqueada, o selo precisa dizer "ranqueada" e o mesmo tamanho)
+      let seloOk: Selo88 = null;                                 // v88: o selo conferido (quem jogou junto e o melhor da partida)
       if (input.online && !input.abandonada) {
         const selo = input.valida ? confereSelo(input.selo) : null;
+        seloOk = selo as Selo88;
         const motivo = motivoResultadoOnline(selo, {
           valida: input.valida,
           idPublico: formatarIdPublico(Number(c.usuario.idPublico)),
@@ -279,6 +285,7 @@ export const jogoRouter = createRouter({
         modo: p.modo,
       });
       const prog = await concederXp(c.usuario.id, xp, `partida:${p.modo}`, p.id);
+      const niveis88 = prog.subiuNivel ? await premiosDeNivel(c.usuario.id, prog.nivelAntes, prog.nivelDepois) : null;   // v88: os prêmios de nível na carteira
       await db
         .update(xpDiario)
         .set({ xpPartidas: hoje.xpPartidas + prog.xpConcedido })
@@ -286,9 +293,17 @@ export const jogoRouter = createRouter({
       const conquistasNovas = await verificarConquistas(c.usuario.id);
       // v82: a patente (depois do XP: se algo acima falhar, a partida não mexe na patente)
       const rqRes: RespostaRanqueada | null = acaoFim("") === "partida" ? await aplicaRanqueada(c.usuario.id, p.id, partidaRq(false), extraRq) : null;
+      // v88: as moedas da partida (na carteira da conta), as missões, o XP do passe e o melhor da partida
+      const r88 = await recompensaPartida(c.usuario.id, Number(c.usuario.idPublico), p.id, {
+        resultado, gols: input.gols, assistencias: input.assistencias, placarNosso: input.placarNosso, ranqueada: rq, online: !!input.online, mvp: input.mvp, selo: seloOk,
+      });
       await db
         .update(partidas)
         .set({
+          mvp: r88.mvp,
+          jogadores: r88.jogadores,
+          temporada: r88.temporada,
+          moedasConcedidas: r88.moedas,
           estado: "encerrada",
           placarNosso: input.placarNosso,
           placarDeles: input.placarDeles,
@@ -318,6 +333,16 @@ export const jogoRouter = createRouter({
         conquistasNovas: [...new Set([...prog.conquistasNovas, ...conquistasNovas])],
         tetoDiarioAtingido: restanteHoje === 0,
         rq: rqRes, // v82: a patente depois desta partida (null fora da ranqueada)
+        // v88: a carteira da conta depois da partida, as moedas que ela rendeu, os prêmios de nível, as missões que completaram,
+        // o passe e o melhor da partida
+        carteira: r88.carteira, // (a última movimentação: depois dos prêmios de nível e das moedas da partida)
+        moedasGanhas: r88.moedas,
+        tetoMoedas: r88.tetoMoedas,
+        niveisPremiados: niveis88?.niveis ?? [],
+        missoesCompletas: r88.missoes,
+        passe: r88.passe,
+        mvp: r88.mvp,
+        comAmigo: r88.amigoNaPartida,
       };
     }),
 
@@ -345,7 +370,14 @@ export const jogoRouter = createRouter({
       if (validos > 0) {
         prog = await concederXp(c.usuario.id, validos * XP.TREINO_GOL, "treino", `${hojeUTC()}:${hoje.golsTreino}`);
       }
+      const niveis88 = prog?.subiuNivel ? await premiosDeNivel(c.usuario.id, prog.nivelAntes, prog.nivelDepois) : null;
+      const r88 = await recompensaGolTreino(c.usuario.id, validos, input.origem, `${hojeUTC()}:${hoje.golsTreino}`);   // v88
       return {
+        carteira: r88.carteira,
+        moedasGanhas: r88.moedas,
+        missoesCompletas: r88.missoes,
+        passe: r88.passe,
+        niveisPremiados: niveis88?.niveis ?? [],
         ok: true as const,
         validos,
         restanteHoje: XP.TREINO_MAX_DIARIO - hoje.golsTreino - validos,
@@ -355,6 +387,15 @@ export const jogoRouter = createRouter({
         itensNovos: prog?.itensNovos ?? [],
         conquistasNovas: prog?.conquistasNovas ?? [],
       };
+    }),
+
+  // ---------- v88: o fim de um exercício do treino (as moedas e gemas do jogo, na carteira da conta, com o teto do dia) ----------
+  treinoConcluido: autenticado
+    .input(z.object({ exercicio: z.string().regex(/^[a-z0-9_-]{2,30}$/), estrelas: z.number().int().min(0).max(3), recorde: z.boolean().default(false), nonce: z.string().min(8).max(40) }))
+    .mutation(async ({ ctx, input }) => {
+      const c = ctx as unknown as CtxAutenticado;
+      await exigeLimite(`treino-fim:${c.usuario.id}`, 30, 10 * 60 * 1000, "Muitos exercícios seguidos.");
+      return recompensaExercicio(c.usuario.id, input.exercicio, input.estrelas, input.recorde, input.nonce);
     }),
 
   // ---------- Histórico recente de partidas ----------

@@ -36,9 +36,13 @@ if (env.isProduction) {
     const { getDb } = await import("./queries/connection");
     const { selos } = await import("@db/schema");
     const { eq } = await import("drizzle-orm");
+    const { relacoesPorPub, denunciaDoChat } = await import("./racha/v88/comum");
     ligaSalas(servidor as unknown as import("http").Server, {
       // v79: os selos da conta (verificado, parceiro, equipe, criador) — o V na frente do nome nas salas e no Chat do Brasil
       selosDe: async (usuarioId) => (await getDb().query.selos.findMany({ where: eq(selos.usuarioId, usuarioId) })).map((x) => x.selo),
+      // v88: os amigos/bloqueios/privacidade da conta (status online, convites, chat dos amigos e do clube) e as denúncias do chat
+      relacoesDe: relacoesPorPub,
+      denuncia: denunciaDoChat,
     });
     console.log("Servidor da turma (salas online) no mesmo endereço: ws(s)://<este endereço>/");
   }

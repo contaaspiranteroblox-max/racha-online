@@ -81,7 +81,7 @@ function assina(segredo, obj){
   return corpo + '.' + b64u(crypto.createHmac('sha256', segredo).update(corpo).digest());
 }
 function confere(segredo, txt, agora){
-  if (!segredo || typeof txt !== 'string' || txt.length > 600) return null;
+  if (!segredo || typeof txt !== 'string' || txt.length > 8000) return null;   // v88: o bilhete leva os amigos e os bloqueios
   const i = txt.indexOf('.'); if (i < 1) return null;
   const corpo = txt.slice(0, i), sig = deB64u(txt.slice(i + 1));
   const certo = crypto.createHmac('sha256', segredo).update(corpo).digest();

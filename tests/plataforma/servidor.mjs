@@ -126,7 +126,8 @@ const servidor = http.createServer((r, res) => {
 });
 // o servidor das salas montado na plataforma, como no app/api/boot.ts (com os selos da conta vindo do banco)
 const { eq } = P;
-const turma = P.ligaSalas(servidor, { selosDe: async (usuarioId) => (await db.query.selos.findMany({ where: eq(S.selos.usuarioId, usuarioId) })).map((x) => x.selo) });
+const turma = P.ligaSalas(servidor, { selosDe: async (usuarioId) => (await db.query.selos.findMany({ where: eq(S.selos.usuarioId, usuarioId) })).map((x) => x.selo), relacoesDe: P.relacoesPorPub, denuncia: P.denunciaDoChat });
+if (TESTE) req('../ganchos_teste.cjs').liga(turma);   // (só nos testes: o gol pedido ao motor)
 globalThis.__turma = turma;
 servidor.listen(PORTA, ARG.host && ARG.host !== true ? String(ARG.host) : '127.0.0.1', () => {
   const porta = servidor.address().port;
