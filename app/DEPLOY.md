@@ -50,6 +50,7 @@ rode o `npm run build` de novo — o `config.js` vai para o `dist/public/game` n
 | `RACHA_OWNER_USERNAME` | usuário do Dono quando a conta 000001 é criada (padrão: `dono`) |
 | `RACHA_OWNER_PASSWORD` | **v88.1:** a senha do Dono (a conta 000001). A cada início da plataforma, a senha do Dono passa a ser esta (8 a 100 caracteres; se mudou, as sessões antigas do Dono caem e o 2FA do painel é zerado). A senha do manual de antes (`Racha@Dono1`) **não abre mais** o painel nem a conta do Dono |
 | `RACHA_CADASTRO` | **v88.1:** `aberto` ou `fechado` — só vale enquanto o Dono não escolheu no painel (RACHA CONTROL › Contas). Sem ela: **fechado** (só o Dono cria contas) |
+| `RACHA_VISITANTES` | **v88.2:** sem ela, as salas aceitam quem joga **sem conta, só com o nome** (o JOGAR ONLINE da tela de entrada: salas, JOGAR AGORA e chat; nada que é da conta). `0` volta ao login obrigatório da v84 (só quem tem conta entra nas salas) |
 
 ## Primeiro acesso do Dono
 

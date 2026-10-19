@@ -1,0 +1,24 @@
+1) num servidor que aceita visitante (como o site de teste), sem a plataforma de contas
+  OK      a tela de entrada mostra só o JOGAR ONLINE (com o nome) e o SÓ TREINAR OFFLINE — as abas da conta não funcionariam aqui
+  OK      os nomes recusados na hora (curto demais, o "Jogador" de quem não escolheu, palavrão) — a tela continua
+  OK      JOGAR ONLINE com o nome: a tela fecha, abre as SALAS e o jogo já conecta no servidor (sem conta)
+  OK      a segunda pessoa (outro navegador) entra do mesmo jeito, só com o nome
+
+2) a sala online entre duas pessoas sem conta
+  OK      quem entrou sem conta cria a sala online (e já fica no Time A)
+  OK      a outra entra pelo JOGAR AGORA e as duas veem o nome uma da outra na sala
+  OK      as duas estão como visitantes (sem conta: o número de visitante, não o de uma conta)
+  OK      a partida começa e roda no servidor para as duas (os quadros chegando)
+
+3) o nome fica guardado para a próxima vez
+  OK      abrindo de novo, o nome já vem escrito (é só tocar em JOGAR ONLINE)
+
+4) na plataforma com as contas: o JOGAR ONLINE em cima e o ENTRAR da conta embaixo
+  OK      com a plataforma: o JOGAR ONLINE, o "OU ENTRE NA SUA CONTA" e as abas da conta
+  OK      sem conta, a sala abre também na plataforma (o padrão da v88.2: visitante entra nas salas)
+
+5) a plataforma com RACHA_VISITANTES=0 (o login obrigatório de antes, se o dono quiser)
+  OK      o servidor recusa quem não tem conta e o jogo mostra o LOGIN OBRIGATÓRIO (ENTRAR NA CONTA / SÓ TREINAR OFFLINE)
+  OK      nenhum erro de JavaScript
+
+v88.2 · jogar online sem conta (só o nome): 13/13 verificações ok em 20.6 s

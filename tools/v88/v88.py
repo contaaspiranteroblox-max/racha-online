@@ -70,7 +70,7 @@ SUBS.append(("        rq: c.rq ? c.rq : null\n      };\n    },\n",
 # ---- o código novo, depois do site.js da v87 (o fim dele: o texto do presente de teste)
 ARQUIVOS = [n for n in ('base.js', 'lobby.js', 'amigos.js', 'mensagens.js', 'loja.js', 'cosmeticos.js', 'progressao.js', 'clube.js',
                         'chat.js', 'estatisticas.js', 'espectador.js', 'treino.js', 'modos.js', 'ajustes.js', 'controle.js', 'resultado.js',
-                        'contas.js') if (AQUI / n).exists()]   # v88.1: o cadastro fechado e o mesmo número de outra conta (tools/v88/contas.js)
+                        'contas.js', 'visitante.js') if (AQUI / n).exists()]   # v88.1: o cadastro fechado e o mesmo número de outra conta (contas.js) · v88.2: jogar online sem conta, só com o nome (visitante.js)
 CODIGO = '\n'.join((AQUI / n).read_text(encoding='utf-8') for n in ARQUIVOS)
 # o catálogo da loja (app/contracts/catalogo88.json: o MESMO arquivo que a plataforma usa para conferir preço e item)
 CAT = RAIZ / 'app' / 'contracts' / 'catalogo88.json'

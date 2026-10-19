@@ -48,6 +48,8 @@
 # RACHA CONTROL e o login do site num navegador de verdade (as páginas do app/src juntadas pelo tests/ui_site com o React
 # desta máquina e um cliente de teste no lugar do @trpc/react-query) e usa os botões; o v881_jogo (Python) confere o login do
 # jogo com o cadastro fechado e o aparelho tirando o que era das contas apagadas quando o mesmo número volta.
+# v88.2: o v882_visitante (Python) confere o JOGAR ONLINE SEM CONTA: duas pessoas só com o nome jogando numa sala (num servidor
+# que aceita visitante, como o do Render) e, na plataforma de teste, a sala sem conta e o login obrigatório com RACHA_VISITANTES=0.
 cd "$(dirname "$0")/.." || exit 1
 python3 tools/aplicar_rua.py | head -1 || exit 1
 falhou=0
@@ -83,7 +85,7 @@ for t in v88_plataforma_test.mjs v88_social_test.js v88_salas_plataforma_test.mj
 done
 printf '%-12s ' "v881_contas"
 if out=$(node tests/v881_contas_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
-for t in v88_cliente v88_controle v881_painel v881_jogo; do
+for t in v88_cliente v88_controle v881_painel v881_jogo v882_visitante; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

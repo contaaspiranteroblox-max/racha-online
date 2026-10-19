@@ -63,7 +63,12 @@ export function marcaContasZeradas(em: number | null, manter: string[] = ["00000
   d.zeradoEm = em;
 }
 export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
+  // v88.2: as salas aceitam quem joga SEM CONTA, só com o nome (o JOGAR ONLINE da tela de entrada) — a pedido. O que é da conta
+  // (o selo do resultado, a patente, o XP, os amigos, o chat dos amigos e do clube) continua só para quem entrou na conta.
+  // RACHA_VISITANTES=0 volta ao login obrigatório da v84.
+  const visitantes = process.env.RACHA_VISITANTES !== "0";
   const turma = new Turma({
+    exigeConta: !visitantes,
     arquivo: process.env.RACHA_DADOS || null,
     nome: process.env.RACHA_SALAS_NOME || "RACHA",
     segredo: garanteSegredoSalas(),

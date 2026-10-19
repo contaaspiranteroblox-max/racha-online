@@ -92,7 +92,7 @@ async def principal():
 
             # ------------------------------------------------ 2) entrar pelo jogo
             print('\n2) entrar pelo formulário do jogo')
-            await pg.fill('#v84auth input[type=text]', 'croy')
+            await pg.fill('#v84auth input[autocomplete="username"]', 'croy')   # (v88.2: o primeiro campo de texto agora é o nome do JOGAR ONLINE)
             await pg.fill('#v84auth input[type=password]', 'racha123')
             await pg.click('#v84auth .v84-go')
             await pg.wait_for_function(LOGADO, timeout=20000)
@@ -225,9 +225,10 @@ async def principal():
             print('\n8) sem a plataforma (/api responde 404)')
             ctx, pg = await contexto()
             await pg.goto(BS + '/')
-            await pg.wait_for_selector('#v84auth .v84-abas', timeout=20000)
-            s8 = await pg.evaluate("() => ({offline:!![...document.querySelectorAll('#v84auth button')].find(b => /TREINAR OFFLINE/.test(b.textContent)), logado:RACHA84.logado(), cookie:RACHA84.cookie})")
-            P.confere(s8['offline'] and not s8['logado'] and not s8['cookie'], 'sem a plataforma: o login de sempre, com o SÓ TREINAR OFFLINE (o servidor das salas e o GitHub Pages ficam como antes)', s8)
+            await pg.wait_for_selector('#v84auth .v882-visit', timeout=20000)
+            await pg.wait_for_timeout(800)                   # (v88.2: a pergunta do cadastro responde 404 → sem a plataforma aqui)
+            s8 = await pg.evaluate("() => ({offline:!![...document.querySelectorAll('#v84auth button')].find(b => /TREINAR OFFLINE/.test(b.textContent) && b.offsetParent !== null), logado:RACHA84.logado(), cookie:RACHA84.cookie, abas:!!document.querySelector('#v84auth .v84-abas') && document.querySelector('#v84auth .v84-abas').offsetParent !== null, visit:document.querySelector('#v84auth .v882-visit').offsetParent !== null})")
+            P.confere(s8['offline'] and s8['visit'] and not s8['abas'] and not s8['logado'] and not s8['cookie'], 'v88.2 · sem a plataforma: o JOGAR ONLINE (só o nome) e o SÓ TREINAR OFFLINE — as abas da conta não aparecem (não funcionariam aqui)', s8)
             await pg.locator('#v84auth button', has_text='SÓ TREINAR OFFLINE').click()
             await pg.wait_for_timeout(300)
             P.confere(not await pg.evaluate("!!document.getElementById('v84auth')"), 'e o SÓ TREINAR OFFLINE abre o jogo')

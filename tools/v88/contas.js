@@ -9,7 +9,7 @@
      número de quem jogava antes neste aparelho mas nasceu em outra hora, o jogo abre de novo — e o começo (tools/v82/inicio.js,
      a troca da v88.1 no tools/v88/v88.py) tira do aparelho o que era da conta apagada antes de o jogo ler.
    A física, as regras e os outros menus não mudam. */
-const V881 = {cadastro:null, perguntando:false, recarregando:false, esperando:[]};
+const V881 = {cadastro:null, perguntando:false, recarregando:false, esperando:[], semPlataforma:false};   // v88.2: semPlataforma = as rotas da conta não existem neste endereço (o Render, o GitHub Pages)
 function v881PerguntaCadastro(depois){                     // (uma pergunta por vez; quem chegar enquanto isso espera a mesma resposta)
   const R = window.RACHA84;
   if (depois) V881.esperando.push(depois);
@@ -17,7 +17,7 @@ function v881PerguntaCadastro(depois){                     // (uma pergunta por 
   V881.perguntando = true;
   Promise.resolve().then(() => R.api('auth.cadastro', undefined, true))
     .then(r => { if (r && typeof r.aberto === 'boolean') V881.cadastro = r.aberto; })
-    .catch(() => {})
+    .catch(e => { if (e && e.status === 404 && /^Erro 404$/.test(String(e.message || ''))) V881.semPlataforma = true; })   // (404 sem o tRPC: não há plataforma aqui)
     .then(() => {
       V881.perguntando = false;
       const l = V881.esperando.splice(0);
@@ -42,7 +42,7 @@ v84Form = function(aba){
   const r = v84FormAntes881.call(this, aba);
   try {
     if (V881.cadastro === false) v881ArrumaForm();
-    else if (V881.cadastro === null) v881PerguntaCadastro(v881ArrumaForm);
+    else if (V881.cadastro === null && !V881.semPlataforma) v881PerguntaCadastro(v881ArrumaForm);
   } catch (_) {}
   return r;
 };

@@ -287,8 +287,8 @@ async function principal() {
     // o bilhete assinado antes do zerar (o 000003) não vale mais nas salas
     const W3 = await socket(null, ORIGEM);
     W3.manda({ type: 'hello', name: 'lucasznx', conta: antigoBilhete });
-    const sc = await W3.espera('error', (x) => x.codigo === 'sem_conta', 3000);
-    confere(!!sc, 'o bilhete de antes do zerar é recusado nas salas (o número pode ser de outra pessoa agora)', W3.caixa.slice(0, 3));
+    const h3 = await W3.espera('hello', null, 3000);
+    confere(h3 && h3.conta === false && h3.id !== 'c3' && !/^0*3$/.test(h3.pub), 'o bilhete de antes do zerar não vale nas salas: entra só como visitante, nunca como a 000003 (o número pode ser de outra pessoa agora)', h3 || W3.caixa.slice(0, 3));
     try { W3.ws.close(); } catch (_) {}
 
     console.log('\n10) as contas novas com os números de volta não herdam nada');
@@ -349,7 +349,8 @@ async function principal() {
     confere(us.map((x) => x.id_publico).join(',') === '1,2,3,4', 'as contas continuam (000001 a 000004)', us);
     const W4 = await socket(null, BASE);
     W4.manda({ type: 'hello', name: 'lucasznx', conta: antigoBilhete });
-    confere(!!(await W4.espera('error', (x) => x.codigo === 'sem_conta', 3000)), 'depois de reiniciar, o bilhete de antes do zerar continua recusado');
+    const h4 = await W4.espera('hello', null, 3000);
+    confere(h4 && h4.conta === false && h4.id !== 'c3', 'depois de reiniciar, o bilhete de antes do zerar continua sem valer (só visitante)', h4 || W4.caixa.slice(0, 3));
     try { W4.ws.close(); } catch (_) {}
     const reg3 = await erro(m('auth.registrar', { username: 'outro99', nomeExibicao: 'Outro', senha: 'senha1234', confirmacaoSenha: 'senha1234', email: 'o@x.com', aceiteTermos: true }));
     confere(reg3 && reg3.code === 'FORBIDDEN', 'o cadastro continua fechado depois de reiniciar (vale o que o Dono escolheu)');

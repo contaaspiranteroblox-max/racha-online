@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v88.1
+# RACHA · Futebol de Rua — v88.2
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -67,7 +67,8 @@ estatísticas da conta, espectador, ajustes que faltavam e o controle Bluetooth 
 servidor (a carteira, o inventário e o progresso da conta conferidos nele) — logo abaixo, com o relatório da entrega. A
 **v88.1** põe **as contas nas mãos do Dono**: o cadastro fica fechado (só o Dono cria contas, no RACHA CONTROL › 👤 Contas),
 o **ZERAR CONTAS** faz os IDs voltarem a contar do 000002 e a senha do Dono vem da variável `RACHA_OWNER_PASSWORD` — com o
-painel voltando a abrir no navegador depois do 2FA (não abria) e o site voltando a compilar.
+painel voltando a abrir no navegador depois do 2FA (não abria) e o site voltando a compilar. A **v88.2** deixa **jogar
+online sem conta, só com o nome**: na tela de entrada, o JOGAR ONLINE abre as salas na hora.
 
 ---
 
@@ -132,6 +133,35 @@ OFL) vêm em `app/public/game/fontes/` (os `.ttf` originais, com a licença ao l
 desenhar as letras. Ver `app/public/game/fontes/LEIA-ME.txt`.
 
 ---
+
+## v88.2 · jogar online sem conta, só com o nome
+
+O pedido: "a sala funcionar online sem criar conta, só botando o nome de usuário" — e já funcionando no site.
+
+**Como fica.** A tela de entrada do jogo tem, em cima de tudo, **JOGAR ONLINE SEM CONTA**: o campo **Seu nome no jogo** e o
+botão verde **JOGAR ONLINE**. O nome (de 2 a 12 letras; o "Jogador" e os nomes com palavrão, link, @, telefone ou e-mail são
+recusados na hora, com o mesmo filtro do chat) vira o nome do perfil, a tela fecha e abrem as **SALAS** (a GALERA), já
+conectadas no servidor das salas. Dali: criar sala, entrar pelo código ou pelo **JOGAR AGORA**, jogar a partida (que roda no
+servidor, como sempre), o chat da sala e o Chat do Brasil. Na próxima vez, o nome já vem escrito. O que é da conta continua
+pedindo a conta: o progresso salvo na conta, a patente da ranqueada, o XP, os amigos, as mensagens, o correio e a loja da
+conta.
+
+* **No site de teste do Render** (o `server.js`: só o servidor das salas, sem a plataforma de contas) a tela mostra só o
+  JOGAR ONLINE e o SÓ TREINAR OFFLINE — as abas da conta não funcionariam ali (antes, o único jeito de entrar nas salas ali
+  era tocar em "SÓ TREINAR OFFLINE", que dizia o contrário). O servidor do Render já aceitava visitante
+  (`RACHA_VISITANTES=1` no `render.yaml`): ele publica a versão nova sozinho quando o repositório está ligado a ele.
+* **Na plataforma** (com as contas), o JOGAR ONLINE fica em cima e o "OU ENTRE NA SUA CONTA" embaixo. O servidor das salas
+  montado nela passou a aceitar visitante (o número de visitante, de 7 dígitos: nunca o de uma conta). Para voltar ao login
+  obrigatório da v84: `RACHA_VISITANTES=0` (aí o JOGAR ONLINE mostra o LOGIN OBRIGATÓRIO de sempre).
+* **No GitHub Pages** não existe servidor: as salas precisam do endereço do servidor do Render (o link
+  `…/game/racha.html?servidor=ENDERECO-DO-RENDER`, ou Ajustes › Avançado › Servidor). Sem ele, o JOGAR ONLINE abre as salas e
+  avisa que não conectou.
+
+**Testado aqui (execução real).** `python3 tests/v882_visitante_test.py`: num servidor das salas como o do Render (o
+`tests/servidor_visitantes.cjs`), duas pessoas em dois navegadores, cada uma só com o nome, criando a sala, entrando pelo
+JOGAR AGORA, vendo o nome uma da outra e jogando a partida no servidor; os nomes recusados; o nome lembrado; na plataforma
+de teste, a sala sem conta e, com `RACHA_VISITANTES=0`, o LOGIN OBRIGATÓRIO. Não testado: o site do Render de verdade (daqui
+não deu para abrir o endereço dele) e celulares de verdade.
 
 ## v88.1 · as contas pelo Dono
 
@@ -1345,6 +1375,7 @@ no RELATORIO_DE_TESTES da auditoria.
 | `v881_contas_test.mjs` (v88.1) | as contas pelo Dono na plataforma de teste, em três boots com o mesmo banco: o cadastro fechado por padrão, a senha do manual recusada (painel e jogo), a senha do Dono pela variável (sessões e 2FA zerados quando muda), RACHA CONTROL › Contas (criar com a senha gerada ou escolhida, os erros, só o Dono — o administrador e a sessão de jogo recusados —, a senha nova, abrir e fechar o cadastro), o ZERAR CONTAS (a senha e a palavra, só a 000001, nenhuma tabela apontando para conta apagada, o clube do Dono ficando, as salas derrubando e esquecendo, o bilhete de antes recusado mesmo depois de reiniciar), as contas novas com os números de volta sem herdar nada e o contador atrasado pulando o número em uso | 63 ok |
 | `v881_painel_test.py` (v88.1) | **o RACHA CONTROL e o login do site num navegador de verdade, pelos botões** (as páginas do `app/src` com o React desta máquina e um cliente de teste no lugar do `@trpc/react-query`): o login do site com o cadastro fechado, o painel com o 2FA (a chave em grupos de 4) e continuando aberto depois de recarregar, a aba Contas só para o Dono, criar conta (a senha aparece uma vez), os erros, a senha nova, abrir e fechar o cadastro (o site mostra e esconde o "Criar conta"), o ZERAR CONTAS e o SAIR DO PAINEL sem derrubar a sessão do jogo | 26/26 |
 | `v881_jogo_test.py` (v88.1) | o jogo de verdade na plataforma de teste: o login do jogo com o cadastro fechado (só ENTRAR e RECUPERAR, o aviso, o CRIAR CONTA do Ajustes › Conta escondido) e aberto; o aparelho com duas contas (uma nas chaves, outra na gaveta) e o Dono — depois do zerar, as contas novas com os mesmos números entram limpas e o progresso do Dono continua (com a proteção desligada, o teste falha: as contas novas herdavam o das apagadas) | 15/15 |
+| `v882_visitante_test.py` (v88.2) | **jogar online sem conta, só com o nome**, com o jogo de verdade em dois navegadores: num servidor das salas como o do Render (sem a plataforma), a tela só com o JOGAR ONLINE e o SÓ TREINAR OFFLINE, os nomes recusados, duas pessoas só com o nome criando a sala, entrando pelo JOGAR AGORA, vendo o nome uma da outra e jogando a partida no servidor, o nome lembrado; na plataforma de teste, a sala sem conta e o LOGIN OBRIGATÓRIO com `RACHA_VISITANTES=0` | 13/13 |
 
 `dificuldade_medida.py` (Etapa 4) mede Fácil × Difícil com partidas simuladas IA × IA (`tests/saida/dificuldade.txt`).
 

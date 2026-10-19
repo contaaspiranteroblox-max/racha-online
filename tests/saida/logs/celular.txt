@@ -208,4 +208,4 @@
   OK      no computador os Ajustes ficam como estavam (e o teclado aparece)
   OK      nenhum erro de JavaScript
 
-v70.1 · celular: só na horizontal e tudo cabe na tela: 195/195 verificações ok em 106.5 s
+v70.1 · celular: só na horizontal e tudo cabe na tela: 195/195 verificações ok em 108.4 s

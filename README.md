@@ -1,6 +1,8 @@
-# RACHA · Futebol de Rua — v88.1
+# RACHA · Futebol de Rua — v88.2
 
-O jogo de futebol de rua com tampinhas, na versão **v88.1**: **as contas pelo Dono** — o cadastro fechado (só o Dono cria
+O jogo de futebol de rua com tampinhas, na versão **v88.2**: **jogar online sem conta, só com o nome** — na tela de entrada,
+**JOGAR ONLINE SEM CONTA**: escreva o seu nome e toque em JOGAR ONLINE; as salas abrem na hora (criar sala, JOGAR AGORA,
+jogar e conversar), sem criar conta. E a v88.1, **as contas pelo Dono** — o cadastro fechado (só o Dono cria
 contas, no RACHA CONTROL › 👤 Contas), o ZERAR CONTAS (os IDs voltam a contar do 000002) e o login do Dono pela variável
 `RACHA_OWNER_PASSWORD` ([abaixo](#as-contas-pelo-dono-v881)) — em cima da **v88**, a **atualização completa dos menus** — amigos, mensagens,
 correio, loja por categorias, clube completo, treino (posicionamento, defesa, goleiro e com bots), missões, eventos, Passe
@@ -57,8 +59,9 @@ O Render roda o `server.js`, que entrega o jogo **e** as salas no mesmo endereç
   confirme. O `render.yaml` já diz tudo. Em uns minutos o Render mostra o endereço do jogo.
 
 No site de teste o servidor está em **modo visitantes** (`RACHA_VISITANTES=1`): a plataforma de contas (o banco MySQL)
-não está no ar, então as salas aceitam quem não tem conta. Na tela de login do jogo, toque em **SÓ TREINAR OFFLINE** —
-depois disso dá para jogar contra os bots **e** entrar nas salas (GALERA › SALAS). Saúde do servidor: `/health`.
+não está no ar, então as salas aceitam quem não tem conta. **v88.2:** a tela de entrada do jogo mostra **JOGAR ONLINE SEM
+CONTA** — escreva o seu nome e toque em **JOGAR ONLINE**: as salas abrem já conectadas (criar sala, JOGAR AGORA, jogar e o
+chat). O SÓ TREINAR OFFLINE continua para jogar contra os bots. Saúde do servidor: `/health`.
 
 ### 2. GitHub Pages — o jogo sem servidor (contra os bots)
 

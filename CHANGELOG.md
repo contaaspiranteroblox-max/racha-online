@@ -2,6 +2,31 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v88.2 — 18/10/2026 · jogar online sem conta, só com o nome
+
+A pedido: "a sala funcionar online sem criar conta, só botando o nome de usuário". A física não mudou (sha256 do bloco:
+`ad9f1d2216409b0e`).
+
+- **A tela de entrada do jogo** ganhou, em cima de tudo, **JOGAR ONLINE SEM CONTA**: o campo **Seu nome no jogo** e o botão
+  **JOGAR ONLINE**. O nome (2 a 12 letras, com o filtro do chat: sem palavrão, link, @, telefone ou e-mail) vira o nome do
+  perfil; a tela fecha, abre as **SALAS** (a GALERA) e o jogo já conecta no servidor das salas. Sem conta dá para criar sala,
+  entrar pelo código ou pelo JOGAR AGORA, jogar a partida (no servidor), o chat da sala e o Chat do Brasil. Na próxima vez o
+  nome já vem escrito. O que é da conta (o progresso salvo na conta, a patente, o XP, os amigos, o correio, a loja da conta)
+  continua pedindo a conta. (`tools/v88/visitante.js`)
+- **Sem a plataforma de contas no endereço** (o site de teste do Render, que roda só o servidor das salas, ou o GitHub
+  Pages), a tela mostra só o JOGAR ONLINE e o SÓ TREINAR OFFLINE — as abas ENTRAR e RECUPERAR não funcionariam ali (antes,
+  o único jeito de entrar nas salas ali era o "SÓ TREINAR OFFLINE", que dizia o contrário). Com a plataforma, o JOGAR ONLINE
+  fica em cima e o "OU ENTRE NA SUA CONTA" embaixo.
+- **A plataforma** (o servidor das salas montado nela) passou a aceitar quem joga sem conta, como visitante (o número de
+  visitante, de 7 dígitos; nunca o de uma conta). `RACHA_VISITANTES=0` volta ao login obrigatório da v84 — aí o JOGAR ONLINE
+  mostra o LOGIN OBRIGATÓRIO de sempre. O site de teste do Render já aceitava visitante (`RACHA_VISITANTES=1` no
+  `render.yaml`).
+- **Testes:** `tests/v882_visitante_test.py` (o jogo de verdade em dois navegadores: num servidor como o do Render, duas
+  pessoas só com o nome criando a sala, entrando pelo JOGAR AGORA, vendo o nome uma da outra e jogando; os nomes recusados;
+  o nome lembrado; na plataforma, a sala sem conta e, com `RACHA_VISITANTES=0`, o LOGIN OBRIGATÓRIO). O
+  `plataforma_salas_test.mjs` confere o login obrigatório com `RACHA_VISITANTES=0` e o visitante no padrão; o
+  `v881_contas_test.mjs` confere que o bilhete de antes do zerar só entra como visitante (nunca com o número da conta).
+
 ## v88.1 — 18/10/2026 · as contas pelo Dono: cadastro fechado, RACHA CONTROL › Contas, ZERAR CONTAS e o login do Dono
 
 A pedido: "no painel Admin, um sistema em que só eu adiciono contas novas para jogar", "o login de Admin do RACHA CONTROL"

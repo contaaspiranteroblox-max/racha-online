@@ -60,4 +60,4 @@
 11) reiniciando o servidor com o mesmo banco: tudo continua lá
   OK      depois de reiniciar: a amizade, a compra e o equipado continuam (a sessão também)
 
-v88 · o jogo logado na plataforma de teste (dois navegadores, pelos botões): 39/39 verificações ok em 38.5 s
+v88 · o jogo logado na plataforma de teste (dois navegadores, pelos botões): 39/39 verificações ok em 30.0 s

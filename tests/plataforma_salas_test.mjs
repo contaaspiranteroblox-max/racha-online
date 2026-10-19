@@ -35,6 +35,7 @@ console.log('\nO servidor da turma montado na plataforma (o mesmo endereço do s
 delete process.env.RACHA_SEGREDO_SALAS;
 const srv = http.createServer((q, r) => { r.writeHead(200); r.end('site'); });
 let pediuSelos = [];
+process.env.RACHA_VISITANTES = '0';   // v88.2: o padrão aceita visitante (só com o nome); aqui, o login obrigatório da v84, que o dono liga com RACHA_VISITANTES=0
 const turma = ligaSalas(srv, {selosDe:async id => { pediuSelos.push(id); return id === 7 ? ['parceiro', 'verificado'] : []; }});   // v79: os selos vêm do banco (aqui, de mentira)
 await new Promise(r => srv.listen(0, '127.0.0.1', r));
 const porta = srv.address().port;
@@ -54,7 +55,7 @@ const V = await socket({Origin:'http://localhost'});   // (arnês v84: sem login
 A.manda({type:'hello', name:'Nome Qualquer', skin:'T.AAAA1111'}); B.manda({type:'hello', name:'Outro Nome', skin:'T.BBBB2222'}); V.manda({type:'hello', name:'Visitante', skin:'T.CCCC3333'});
 const hA = await A.espera('hello'), hB = await B.espera('hello'), eV = await V.espera('error', x => x.codigo === 'sem_conta');
 confira(hA && hA.conta === true && hA.id === 'c123' && hA.pub === '000123', 'logado no site: entra com a conta (a sessão do cookie, sem bilhete)', hA);
-confira(!!eV && !V.caixa.some(x => x.type === 'hello'), 'v84: sem login não entra (o hello é recusado: sem_conta)', eV);
+confira(!!eV && !V.caixa.some(x => x.type === 'hello'), 'v84 (com RACHA_VISITANTES=0): sem login não entra (o hello é recusado: sem_conta)', eV);
 confira(hB && hB.conta === true && hB.id === 'c456', 'a segunda conta também entra pela sessão do site', hB);
 confira(hA && hA.selo === 'verificado' && hB && hB.selo === '' && pediuSelos.slice().sort().join() === '7,8', 'v79: o selo da conta vem do banco (selosDe), só para quem está logado: o hello traz o V (verificado vem antes de parceiro)', [hA && hA.selo, hB && hB.selo, pediuSelos]);
 A.manda({type:'create', n:1, map:0, jogo:'futebol', tempo:0, bots:false, pub:true});
@@ -83,6 +84,25 @@ const s = confereSelo(rA.selo);
 confira(s && s.j === '000123' && s.l === 0 && s.p.join() === '3,1' && s.m === 'futebol' && s.s === sala.code, 'a plataforma confere o selo: a conta, o lado e o placar', s);
 confira(confereSelo(rA.selo.slice(0, -2) + (rA.selo.endsWith('AA') ? 'BB' : 'AA')) === null, 'selo adulterado não confere');
 A.ws.close(); B.ws.close(); V.ws.close(); srv.close();
+// v88.2: o padrão (sem RACHA_VISITANTES) aceita quem joga sem conta — só com o nome — como visitante (o número de visitante,
+// não o de uma conta); a conta continua entrando pela sessão do site
+{
+  delete process.env.RACHA_VISITANTES;
+  const srv2 = http.createServer((q, r) => { r.writeHead(200); r.end('site'); });
+  const turma2 = ligaSalas(srv2, {});
+  await new Promise(r => srv2.listen(0, '127.0.0.1', r));
+  const p2 = srv2.address().port;
+  const abre2 = (headers) => new Promise((res, rej) => {
+    const ws = new WebSocket('ws://127.0.0.1:' + p2 + '/', {headers});
+    const k = {ws, caixa:[], manda:m => ws.send(JSON.stringify(m)), espera:async (tipo, ms) => { const t0 = Date.now(); for (;;){ const m = k.caixa.find(x => x.type === tipo); if (m) return m; if (Date.now() - t0 > (ms || 3000)) return null; await espera(25); } }};
+    ws.onmessage = e => k.caixa.push(JSON.parse(e.data)); ws.onopen = () => res(k); ws.onerror = () => rej(new Error('não conectou'));
+  });
+  const V2 = await abre2({Origin:'http://localhost'}), A2 = await abre2({Origin:'http://localhost', Cookie:'racha_sessao=conta123'});
+  V2.manda({type:'hello', name:'Visitante', skin:'T.CCCC3333'}); A2.manda({type:'hello', name:'Qualquer', skin:'T.AAAA1111'});
+  const hV = await V2.espera('hello'), hA2 = await A2.espera('hello');
+  confira(hV && hV.conta === false && /^9\d{6}$/.test(hV.pub) && hA2 && hA2.conta === true && hA2.id === 'c123', 'v88.2 (o padrão): sem conta entra como visitante, só com o nome (o número de visitante); a conta continua pela sessão', [hV, hA2 && hA2.id]);
+  V2.ws.close(); A2.ws.close(); turma2.fecha(); srv2.close();
+}
 fs.rmSync(tmp, {recursive:true, force:true});
 console.log('\nservidor montado na plataforma: ' + ok + ' ok, ' + falhou + ' falharam');
 process.exit(falhou ? 1 : 0);

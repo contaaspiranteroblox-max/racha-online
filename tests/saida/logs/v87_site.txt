@@ -35,8 +35,8 @@
   OK      escolheu treinar offline: o jogo segue sem a conta (não entra nem recarrega quando a resposta chega)
 
 8) sem a plataforma (/api responde 404)
-  OK      sem a plataforma: o login de sempre, com o SÓ TREINAR OFFLINE (o servidor das salas e o GitHub Pages ficam como antes)
+  OK      v88.2 · sem a plataforma: o JOGAR ONLINE (só o nome) e o SÓ TREINAR OFFLINE — as abas da conta não aparecem (não funcionariam aqui)
   OK      e o SÓ TREINAR OFFLINE abre o jogo
   OK      nenhum erro de JavaScript
 
-v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 19.7 s
+v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 19.6 s

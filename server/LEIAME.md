@@ -12,6 +12,15 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
+## v88.2 · jogar online sem conta (só o nome)
+
+O jogo ganhou na tela de entrada o **JOGAR ONLINE SEM CONTA**: o nome e pronto — ele manda o `hello` de sempre com o nome
+(`name`) e sem bilhete, e este servidor recebe como **visitante** (um ID de 7 dígitos, `9000001…`) quando aceita visitante:
+`node server/servidor.js --visitantes` (ou `RACHA_VISITANTES=1`), o `server.js` do Render (já liga sozinho) e, desde a v88.2,
+montado na plataforma (o padrão; `RACHA_VISITANTES=0` exige a conta). O visitante joga as salas, o JOGAR AGORA, a partida e
+os chats da sala e do Brasil; o selo do resultado, a patente e o social da conta (amigos, mensagens, clube da conta) continuam
+só para quem tem conta. Teste: `python3 tests/v882_visitante_test.py`.
+
 ## v88.1 · o Dono zerou as contas (`v88ZeraContas` em `social88.js`)
 
 Na plataforma, o RACHA CONTROL › Contas › ZERAR CONTAS apaga todas as contas menos a do Dono, e os números voltam a ser

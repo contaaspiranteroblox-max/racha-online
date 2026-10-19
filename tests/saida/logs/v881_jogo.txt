@@ -23,4 +23,4 @@
   OK      o Dono sem a anotação da hora: o progresso dele continua (só as contas nascidas depois do zerar passam pela faxina)
   OK      nenhum erro de JavaScript
 
-v88.1 · o jogo com as contas pelo Dono (cadastro fechado e o mesmo número de outra conta): 15/15 verificações ok em 41.4 s
+v88.1 · o jogo com as contas pelo Dono (cadastro fechado e o mesmo número de outra conta): 15/15 verificações ok em 38.1 s
