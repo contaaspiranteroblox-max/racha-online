@@ -1,0 +1,13 @@
+diff --git a/app/api/lib/salas.ts b/app/api/lib/salas.ts
+index 483716a..049d0bc 100644
+--- a/app/api/lib/salas.ts
++++ b/app/api/lib/salas.ts
+@@ -68,6 +68,8 @@ export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
+     nome: process.env.RACHA_SALAS_NOME || "RACHA",
+     segredo: garanteSegredoSalas(),
+     p2p: process.env.RACHA_P2P !== "0",
++    // v88.4: por padrão entra só com o nome (o login obrigatório da v84 volta com RACHA_SALAS_EXIGE_CONTA=1)
++    exigeConta: process.env.RACHA_SALAS_EXIGE_CONTA === "1",
+     relacoesDe: opcoes.relacoesDe,
+     denuncia: opcoes.denuncia,
+   } as ConstructorParameters<typeof Turma>[0]);
