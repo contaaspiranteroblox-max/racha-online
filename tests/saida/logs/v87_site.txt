@@ -39,4 +39,4 @@
   OK      e o SÓ TREINAR OFFLINE abre o jogo
   OK      nenhum erro de JavaScript
 
-v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 19.6 s
+v87 · tudo dentro do jogo (o site abre o jogo direto): 24/24 verificações ok em 18.1 s

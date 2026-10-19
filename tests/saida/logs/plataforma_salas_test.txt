@@ -3,22 +3,23 @@ O servidor da turma montado na plataforma (o mesmo endereço do site)
   ok   sem RACHA_SEGREDO_SALAS, um segredo é sorteado (os dois lados estão no mesmo processo)
   ok   página de outra origem não conecta (403)
   ok   logado no site: entra com a conta (a sessão do cookie, sem bilhete)
-  ok   v84: sem login não entra (o hello é recusado: sem_conta)
+  ok   v84 (com RACHA_VISITANTES=0): sem login não entra (o hello é recusado: sem_conta)
   ok   a segunda conta também entra pela sessão do site
   ok   v79: o selo da conta vem do banco (selosDe), só para quem está logado: o hello traz o V (verificado vem antes de parceiro)
-2026-10-18 21:08:07 sala BK3QJP criada por Craque (aberta)
+2026-10-19 00:27:01 sala G96KBC criada por Craque (aberta)
   ok   o nome na sala é o da conta (não o do aparelho)
   ok   v79: no cartão da sala, o selo da conta (o V na frente do nome)
-2026-10-18 21:08:08 sala BK3QJP: partida hospedada começou (1v1, futebol, até 3)
+2026-10-19 00:27:01 sala G96KBC: partida hospedada começou (1v1, futebol, até 3)
   ok   v83: os quadros vêm do motor do servidor (montado na plataforma)
   (esperando 11 s de partida de verdade no servidor: a turma confere o tempo)
-2026-10-18 21:08:08 suspeito na sala BK3QJP: c123 mandou snapshot com a partida no servidor
-2026-10-18 21:08:19 suspeito na sala BK3QJP: c123 mandou finish com a partida no servidor
+2026-10-19 00:27:01 suspeito na sala G96KBC: c123 mandou snapshot com a partida no servidor
+2026-10-19 00:27:12 suspeito na sala G96KBC: c123 mandou finish com a partida no servidor
   ok   o fim mandado pelo aparelho é ignorado: a partida segue no servidor
-2026-10-18 21:08:19 sala BK3QJP rodada 1: 3×1 (o servidor encerrou no tempo) (valeu)
+2026-10-19 00:27:12 sala G96KBC rodada 1: 3×1 (o servidor encerrou no tempo) (valeu)
   ok   resultado conferido: cada conta recebe o seu selo
   ok   o selo da segunda conta é dela e do lado dela
   ok   a plataforma confere o selo: a conta, o lado e o placar
   ok   selo adulterado não confere
+  ok   v88.2 (o padrão): sem conta entra como visitante, só com o nome (o número de visitante); a conta continua pela sessão
 
-servidor montado na plataforma: 14 ok, 0 falharam
+servidor montado na plataforma: 15 ok, 0 falharam

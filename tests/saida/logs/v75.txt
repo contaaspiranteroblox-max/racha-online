@@ -28,4 +28,4 @@
   OK      667x375: a tampinha fica em pé na quadra (o meio da quadra embaixo dela, entre a linha do fundo e o círculo)
   OK      667x375: nenhum erro de JavaScript
 
-v75 · o fundo do lobby é a imagem enviada: 29/29 verificações ok em 16.3 s
+v75 · o fundo do lobby é a imagem enviada: 29/29 verificações ok em 16.5 s

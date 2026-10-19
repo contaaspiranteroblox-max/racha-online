@@ -70,6 +70,6 @@
 12) os bots do servidor completam e jogam a partida inteira
   ok   os bots fizeram gol em 4 minutos de simulação
   ok   os quadros saíram o tempo todo
-     (placar da simulação: 0 × 3)
+     (placar da simulação: 2 × 3)
 
 motor das salas (v83): 60 ok, 0 falharam

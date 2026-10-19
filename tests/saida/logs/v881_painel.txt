@@ -40,4 +40,4 @@
   OK      saiu do painel (a sessão do painel acabou) e o jogo continua logado
   OK      nenhum erro de JavaScript nas páginas
 
-v88.1 · o RACHA CONTROL e o login do site no navegador: 26/26 verificações ok em 17.0 s
+v88.1 · o RACHA CONTROL e o login do site no navegador: 26/26 verificações ok em 16.4 s

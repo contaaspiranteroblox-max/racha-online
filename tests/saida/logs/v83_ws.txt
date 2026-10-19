@@ -4,8 +4,8 @@
   ok   a partida começou quando lotou
   ok   nenhum erro no caminho
 2) os quadros do servidor
-  ok   a Ana recebeu os quadros do servidor (20/s: 279)
-  ok   a Bia recebeu os mesmos quadros (279)
+  ok   a Ana recebeu os quadros do servidor (20/s: 280)
+  ok   a Bia recebeu os mesmos quadros (280)
 3) o fim e o selo
   ok   o fim chegou pelo servidor
   ok   o resultado é do servidor: tempo

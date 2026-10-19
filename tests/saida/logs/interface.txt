@@ -145,4 +145,4 @@
   OK      em 130% o HUD da partida cresce também
   OK      fica guardado
 
-Etapa 3 · interface em tamanho real: 133/133 verificações ok em 70.8 s
+Etapa 3 · interface em tamanho real: 133/133 verificações ok em 70.9 s

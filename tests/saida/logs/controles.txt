@@ -37,4 +37,4 @@
   OK      ao encostar na bola o chute sai e o botão pisca
   OK      nenhum erro de JavaScript
 
-Etapa 3 · controles da tela: 29/29 verificações ok em 3.1 s
+Etapa 3 · controles da tela: 29/29 verificações ok em 3.3 s

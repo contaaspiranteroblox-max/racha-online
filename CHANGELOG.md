@@ -26,6 +26,7 @@ A pedido: "a sala funcionar online sem criar conta, só botando o nome de usuár
   o nome lembrado; na plataforma, a sala sem conta e, com `RACHA_VISITANTES=0`, o LOGIN OBRIGATÓRIO). O
   `plataforma_salas_test.mjs` confere o login obrigatório com `RACHA_VISITANTES=0` e o visitante no padrão; o
   `v881_contas_test.mjs` confere que o bilhete de antes do zerar só entra como visitante (nunca com o número da conta).
+  A bateria inteira com a v88.2 (`tests/saida/logs/`): 48 suítes, 2.227 verificações, nenhuma falha.
 
 ## v88.1 — 18/10/2026 · as contas pelo Dono: cadastro fechado, RACHA CONTROL › Contas, ZERAR CONTAS e o login do Dono
 

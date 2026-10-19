@@ -21,4 +21,4 @@
   OK      o servidor recusa quem não tem conta e o jogo mostra o LOGIN OBRIGATÓRIO (ENTRAR NA CONTA / SÓ TREINAR OFFLINE)
   OK      nenhum erro de JavaScript
 
-v88.2 · jogar online sem conta (só o nome): 13/13 verificações ok em 20.6 s
+v88.2 · jogar online sem conta (só o nome): 13/13 verificações ok em 20.3 s

@@ -63,7 +63,7 @@
   ok   o zerar fica na auditoria (com quantas e quais)
   ok   o painel do Dono continua aberto: 1 conta, a próxima é a 000002
   ok   o Dono continua logado no jogo (a conta mostra quando as contas foram zeradas; a dele não nasceu depois)
-  ok   o bilhete de antes do zerar é recusado nas salas (o número pode ser de outra pessoa agora)
+  ok   o bilhete de antes do zerar não vale nas salas: entra só como visitante, nunca como a 000003 (o número pode ser de outra pessoa agora)
 
 10) as contas novas com os números de volta não herdam nada
   ok   as primeiras contas depois do zerar são a 000002 e a 000003 (o mesmo usuário pode voltar; o servidor diz que nasceram depois do zerar)
@@ -82,7 +82,7 @@
   ok   as sessões antigas do Dono caíram (a senha mudou)
   ok   e o 2FA do painel foi zerado: configura de novo com a senha nova
   ok   as contas continuam (000001 a 000004)
-  ok   depois de reiniciar, o bilhete de antes do zerar continua recusado
+  ok   depois de reiniciar, o bilhete de antes do zerar continua sem valer (só visitante)
   ok   o cadastro continua fechado depois de reiniciar (vale o que o Dono escolheu)
 
 v88.1 · as contas pelo Dono (plataforma de teste): 63 ok, 0 falharam

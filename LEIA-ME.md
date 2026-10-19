@@ -160,8 +160,9 @@ conta.
 **Testado aqui (execução real).** `python3 tests/v882_visitante_test.py`: num servidor das salas como o do Render (o
 `tests/servidor_visitantes.cjs`), duas pessoas em dois navegadores, cada uma só com o nome, criando a sala, entrando pelo
 JOGAR AGORA, vendo o nome uma da outra e jogando a partida no servidor; os nomes recusados; o nome lembrado; na plataforma
-de teste, a sala sem conta e, com `RACHA_VISITANTES=0`, o LOGIN OBRIGATÓRIO. Não testado: o site do Render de verdade (daqui
-não deu para abrir o endereço dele) e celulares de verdade.
+de teste, a sala sem conta e, com `RACHA_VISITANTES=0`, o LOGIN OBRIGATÓRIO. E a bateria inteira de novo: 48 suítes, 2.227
+verificações, nenhuma falha. Não testado: o site do Render de verdade (daqui não deu para abrir o endereço dele) e celulares
+de verdade.
 
 ## v88.1 · as contas pelo Dono
 

@@ -75,4 +75,4 @@
   OK      nenhum erro de JavaScript na sessão de Beto
   OK      nenhum erro de JavaScript na sessão de Caio
 
-v79 · patentes, só ranqueada (online + bots) e o selo V: 68/68 verificações ok em 98.5 s
+v79 · patentes, só ranqueada (online + bots) e o selo V: 68/68 verificações ok em 96.6 s

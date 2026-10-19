@@ -7,9 +7,9 @@
   ok   os dois receberam o start da MESMA partida, com host srv (ninguém é anfitrião)
   ok   o criador é o admin (só a função de administrar)
 5/11/12) os quadros do servidor: mesma bola, gol e placar sincronizados
-  ok   quadros a ~30/s para os dois (219 e 219)
-  ok   a bola é IDÊNTICA nos dois aparelhos em todos os 219 ticks comuns
-  ok   os comandos dos dois lados valem no servidor (acks 184 e 184)
+  ok   quadros a ~30/s para os dois (220 e 220)
+  ok   a bola é IDÊNTICA nos dois aparelhos em todos os 220 ticks comuns
+  ok   os comandos dos dois lados valem no servidor (acks 185 e 185)
   ok   o gol chegou no quadro com a autoria (o pacote clássico)
 7/15) a física do aparelho não vale nada (nem quadro, nem resultado)
   ok   snapshot e finish falsos do criador foram ignorados (nenhum resultado 9×0)
@@ -41,12 +41,12 @@
   ok   o selo da Duda é de RANQUEADA (k:1) na conta certa
 14) várias partidas ao mesmo tempo · e a medição (CPU, RAM, banda, quadros)
   ok   três salas independentes ao mesmo tempo
-  ok   as três receberam quadros o tempo todo (~30/s por 20 s): [633, 627, 620]
-     · quadros por jogador: 31.0/s (o ritmo de 30/s da v82)
-     · banda por jogador: 11.4 KB/s de down (só os quadros + sala)
-     · CPU do servidor com 3 partidas + as anteriores: 3.5% de um núcleo
-     · RAM do servidor: 67.7 MB
+  ok   as três receberam quadros o tempo todo (~30/s por 20 s): [635, 629, 623]
+     · quadros por jogador: 31.1/s (o ritmo de 30/s da v82)
+     · banda por jogador: 10.6 KB/s de down (só os quadros + sala)
+     · CPU do servidor com 3 partidas + as anteriores: 2.9% de um núcleo
+     · RAM do servidor: 74.3 MB
   ok   a taxa de quadros aguentou (acima de 20/s em todas)
-  ok   a CPU ficou folgada com as partidas simultâneas (3.5%)
+  ok   a CPU ficou folgada com as partidas simultâneas (2.9%)
 
 salas 100% hospedadas (v83): 35 ok, 0 falharam
