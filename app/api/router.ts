@@ -17,6 +17,7 @@ import { estatRouter } from "./racha/v88/estat";
 import { contaRouter } from "./racha/v88/conta";
 import { admin88Router } from "./racha/v88/admin88";
 import { donoContasRouter } from "./racha/v88/donoContas";
+import { rankingRouter } from "./racha/v90/ranking";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -39,6 +40,7 @@ export const appRouter = createRouter({
   estat: estatRouter, // as estatísticas da conta com filtro
   conta: contaRouter, // excluir a conta
   admin88: admin88Router, // RACHA CONTROL: eventos, correio e avisos
+  ranking: rankingRouter, // v90: o ranking da temporada (gols, assistências, pontos ranqueados, Craque do Jogo) e as temporadas
   donoContas: donoContasRouter, // v88.1: RACHA CONTROL › Contas (só o Dono): criar contas, senha nova, o cadastro e o ZERAR CONTAS
 });
 

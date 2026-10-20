@@ -670,3 +670,94 @@ export const passeTemporada = mysqlTable(
   },
   (t) => [primaryKey({ columns: [t.usuarioId, t.temporada] })],
 );
+
+// ============================================================================
+// v90 — O RANKING DA TEMPORADA (gols, assistências, pontos ranqueados e Craque do Jogo) · regras em contracts/v90.ts
+// Só tabelas novas: nada do que já existia muda ou some (as estatísticas de sempre continuam somando para sempre).
+// ============================================================================
+
+// As temporadas do ranking (a T1 nasce das datas do catálogo; as outras, pelo RACHA CONTROL)
+export const temporadasRanking = mysqlTable("temporadas_ranking", {
+  id: varchar("id", { length: 16 }).primaryKey(), // "T1", "T2"…
+  nome: varchar("nome", { length: 60 }).notNull(),
+  inicio: timestamp("inicio").notNull(),
+  fim: timestamp("fim").notNull(),
+  estado: mysqlEnum("estado", ["ativa", "fechando", "fechada"]).notNull().default("ativa"),
+  fechadaEm: timestamp("fechada_em"),
+  recompensasEm: timestamp("recompensas_em"), // quando as recompensas do TOP 3 foram entregues (uma vez)
+  criadaEm: timestamp("criada_em").notNull().defaultNow(),
+});
+
+// Os contadores da temporada de cada conta (só partidas que o servidor simulou) · os *Em = quando chegou nesse valor (o desempate)
+export const rankingSazonal = mysqlTable(
+  "ranking_sazonal",
+  {
+    temporada: varchar("temporada", { length: 16 }).notNull(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    gols: int("gols").notNull().default(0),
+    assistencias: int("assistencias").notNull().default(0),
+    craques: int("craques").notNull().default(0),
+    partidas: int("partidas").notNull().default(0),
+    golsEm: timestamp("gols_em").notNull().defaultNow(),
+    assistenciasEm: timestamp("assistencias_em").notNull().defaultNow(),
+    craquesEm: timestamp("craques_em").notNull().defaultNow(),
+    atualizadoEm: timestamp("atualizado_em").notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.temporada, t.usuarioId] }),
+    index("idx_rksaz_gols").on(t.temporada, t.gols),
+    index("idx_rksaz_assist").on(t.temporada, t.assistencias),
+    index("idx_rksaz_craques").on(t.temporada, t.craques),
+  ],
+);
+
+// Cada partida conta uma vez por conta (a chave impede duplicar gols, assistências e Craque do Jogo)
+export const rankingPartidas = mysqlTable(
+  "ranking_partidas",
+  {
+    pid: varchar("pid", { length: 16 }).notNull(), // o número da partida no servidor das salas (vem no selo)
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    temporada: varchar("temporada", { length: 16 }).notNull(),
+    gols: int("gols").notNull().default(0),
+    assistencias: int("assistencias").notNull().default(0),
+    craque: boolean("craque").notNull().default(false),
+    matchId: varchar("match_id", { length: 36 }), // a partida da conta (tabela partidas)
+    criadoEm: timestamp("criado_em").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.pid, t.usuarioId] })],
+);
+
+// A classificação final de cada temporada e categoria (todas as posições: o TOP 20 e a de cada um), congelada no fechamento
+export const rankingFinal = mysqlTable(
+  "ranking_final",
+  {
+    temporada: varchar("temporada", { length: 16 }).notNull(),
+    categoria: mysqlEnum("categoria", ["gols", "assistencias", "pontos", "craque"]).notNull(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    posicao: int("posicao").notNull(),
+    valor: int("valor").notNull(),
+    nome: varchar("nome", { length: 40 }).notNull(), // o nome e a tampinha do dia do fechamento (o histórico não muda depois)
+    tampa: varchar("tampa", { length: 64 }),
+    criadoEm: timestamp("criado_em").notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.temporada, t.categoria, t.usuarioId] }),
+    index("idx_rkfinal_pos").on(t.temporada, t.categoria, t.posicao),
+    index("idx_rkfinal_usuario").on(t.usuarioId),
+  ],
+);
+
+// As recompensas do TOP 3 (a chave impede entregar duas vezes)
+export const recompensasRanking = mysqlTable(
+  "recompensas_ranking",
+  {
+    temporada: varchar("temporada", { length: 16 }).notNull(),
+    categoria: mysqlEnum("categoria", ["gols", "assistencias", "pontos", "craque"]).notNull(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
+    posicao: int("posicao").notNull(),
+    itens: json("itens").$type<string[]>().notNull(),
+    titulo: varchar("titulo", { length: 80 }).notNull(),
+    entregueEm: timestamp("entregue_em").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.temporada, t.categoria, t.usuarioId] }), index("idx_rkpremio_usuario").on(t.usuarioId)],
+);

@@ -503,6 +503,7 @@ class Turma {
   }
   ligaPartida(r){                                      // v83: o motor autoritativo da sala (todos os lugares, com bots nas vagas)
     if (r.partida) return;
+    r.pid = novoId('p', 9);                            // v90: o número desta partida (a plataforma conta os gols e as assistências dela uma vez só)
     const jogadores = [];
     for (let i = 0; i < 2*r.n; i++){
       const id = r.roster[i], x = id && r.members.find(m => m.id === id);
@@ -634,7 +635,11 @@ class Turma {
       const i = r.roster.indexOf(x.id);
       if (valida && this.segredo && cl.conta && i >= 0){   // o selo: a plataforma confere antes de dar XP da partida online
         const t = Math.floor(i/r.n), agora = Date.now();
-        msg.selo = assina(this.segredo, {s:r.code, r:r.round, j:cl.conta.idPublico, l:t, p:[score[t], score[1 - t]], m:r.jogo, d:dur, k:r.ranked ? 1 : 0, n:r.n, g:g88, v:mvp88 === x.id ? 1 : 0, t:agora, e:agora + 40*60e3});   // v82: k = ranqueada, n = o tamanho do time (a conta só conta a patente com o selo da ranqueada) · v88: g = as contas que jogaram, v = o melhor da partida
+        const sl = {s:r.code, r:r.round, j:cl.conta.idPublico, l:t, p:[score[t], score[1 - t]], m:r.jogo, d:dur, k:r.ranked ? 1 : 0, n:r.n, g:g88, v:mvp88 === x.id ? 1 : 0, t:agora, e:agora + 40*60e3};   // v82: k = ranqueada, n = o tamanho do time (a conta só conta a patente com o selo da ranqueada) · v88: g = as contas que jogaram, v = o melhor da partida
+        if (r.servidor && r.pid){                         // v90: o ranking — só a partida que o SERVIDOR simulou: os gols (sem os contra) e as assistências DESTE jogador, contados pelo motor
+          sl.h = 1; sl.pid = r.pid; sl.gl = (r.gols && r.gols[x.id]) | 0; sl.as = (r.assist && r.assist[x.id]) | 0;
+        }
+        msg.selo = assina(this.segredo, sl);
       }
       if (mvp88){ msg.melhor = {id:mvp88, nome:this.nomeNaSala(r, mvp88)}; if (mvp88 === x.id) msg.mvp = true; }   // v88: o melhor da partida (o jogo mostra; a conta confere pelo selo)
       this.manda(cl, msg);

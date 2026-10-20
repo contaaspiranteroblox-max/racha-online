@@ -36,6 +36,7 @@ import { bilheteDaConta, confereSelo } from "../lib/selo";
 import { aplicaRanqueada, type RespostaRanqueada } from "./ranqueada";
 import { motivoResultadoOnline, acaoRanqueada } from "@contracts/partida";
 import { relacoesDe } from "./v88/comum";
+import { registraPartidaRanking } from "./v90/ranking";
 import { recompensaPartida, recompensaGolTreino, recompensaExercicio, premiosDeNivel, type Selo88 } from "./v88/partida";
 
 const MODOS = ["futebol", "curva", "ginga", "volei", "americano", "basquete"];
@@ -297,6 +298,9 @@ export const jogoRouter = createRouter({
       const r88 = await recompensaPartida(c.usuario.id, Number(c.usuario.idPublico), p.id, {
         resultado, gols: input.gols, assistencias: input.assistencias, placarNosso: input.placarNosso, ranqueada: rq, online: !!input.online, mvp: input.mvp, selo: seloOk,
       });
+      // v90: o ranking da temporada (gols, assistências e Craque do Jogo): só a partida que o servidor das salas simulou e
+      // assinou (h:1 no selo), com os números que o MOTOR contou — nada que o aparelho mandou; cada partida conta uma vez
+      const rk90 = input.online && seloOk ? await registraPartidaRanking(c.usuario.id, seloOk, p.id) : null;
       await db
         .update(partidas)
         .set({
@@ -343,6 +347,7 @@ export const jogoRouter = createRouter({
         passe: r88.passe,
         mvp: r88.mvp,
         comAmigo: r88.amigoNaPartida,
+        ranking: rk90, // v90: o que esta partida somou no ranking da temporada (null = não entra)
       };
     }),
 

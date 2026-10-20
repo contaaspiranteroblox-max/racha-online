@@ -4,8 +4,9 @@
    "forçar" um placar, e um teste de navegador não tem como fazer 3 gols de verdade em poucos segundos. Com estes ganchos o
    teste pede um gol ao MOTOR de verdade (server/partida/sala.js): o toque fica marcado para o autor e o próprio motor faz o
    resto — o placar, a autoria, o gol de ouro, a meta de 3, a saída de bola, o apito final, o resultado conferido e o selo.
-     {type:'__teste_gol', time:0|1, autor?:'<id>'}   o gol do time (o autor: quem pediu, se for desse time; senão o primeiro
-                                                     jogador do time)
+     {type:'__teste_gol', time:0|1, autor?:'<id>', assist?:'<id>'}   o gol do time (o autor: quem pediu, se for desse time;
+                                                     senão o primeiro jogador do time · v90: assist = o companheiro que
+                                                     tocou antes, meio segundo antes do gol)
    Uso: require('./ganchos_teste.cjs').liga(TurmaOuInstancia) */
 function trata(turma, c, m) {
   if (m.type !== '__teste_gol') return false;
@@ -17,6 +18,8 @@ function trata(turma, c, m) {
   if (!q) return true;
   if (p.estado === 'saida') p.estado = 'jogo';
   p.toques.length = 0;
+  const pa = typeof m.assist === 'string' ? p.jog.find(x => x.time === time && x.netId === m.assist && x !== q) : null;   // v90: o passe de um companheiro antes do gol
+  if (pa) p.toques.push({ p: pa, tick: p.tick - 30, t0: p.tick - 40 });
   p.toques.push({ p: q, tick: p.tick, t0: p.tick });
   p.gol(time === 0 ? 1 : -1);
   return true;
