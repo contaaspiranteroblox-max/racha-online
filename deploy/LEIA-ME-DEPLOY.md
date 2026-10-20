@@ -131,6 +131,7 @@ Em Settings › Actions › Runners ele aparece como **racha-vps** (Idle), com o
 | vazar a senha do banco | fica só em `/etc/racha/racha.env` (root:racha 640); o backup e as migrações usam um arquivo temporário só do root (a senha nunca vai na linha de comando) |
 | migração estragar o banco | backup completo (mysqldump) antes de qualquer migração; sem backup, nada roda; os 15 mais novos ficam em `/var/backups/racha` (só root) |
 | versão nova não subir | conferência automática e rollback automático para a versão de antes; as 5 últimas versões ficam guardadas |
+| um processo antigo preso na porta "responder no lugar" da versão nova | a conferência exige que o processo do serviço seja da pasta da versão nova e que seja ele quem escuta na porta |
 | dois deploys ao mesmo tempo | trava (`flock`) na VPS e `concurrency` no GitHub |
 | mudar a física ou a jogabilidade | o teste do build confere o sha256 do bloco de física e para tudo se mudar |
 
