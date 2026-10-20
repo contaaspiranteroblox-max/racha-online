@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# RACHA · VOLTA O BANCO para um backup feito pelo deploy (só à mão, com confirmação: apaga o que entrou no banco depois dele).
+#   sudo racha-restaura-banco                 → lista os backups
+#   sudo racha-restaura-banco <arquivo.sql.gz> → restaura (pede para digitar RESTAURAR)
+# Antes de restaurar, faz um backup de agora (para dar para desfazer). Use junto com o racha-rollback se a versão nova
+# precisar sair.
+set -Eeuo pipefail
+umask 077
+BACKUPS=/var/backups/racha; ENV=/etc/racha/racha.env
+[ -n "${1:-}" ] || { ls -1t "$BACKUPS"/*.sql.gz 2>/dev/null || echo "nenhum backup em $BACKUPS"; exit 0; }
+ARQ=$(readlink -f "$1"); [[ "$ARQ" == "$BACKUPS"/*.sql.gz && -f "$ARQ" ]] || { echo "o arquivo precisa ser um backup de $BACKUPS"; exit 2; }
+URL=$(grep -E '^DATABASE_URL=' "$ENV" | head -1 | cut -d= -f2- | sed -e 's/^["'\'']//' -e 's/["'\'']$//')
+[[ "$URL" =~ ^mysql://([^:@/]+)(:([^@]*))?@([^:/]+)(:([0-9]+))?/([^?]+) ]] || { echo "DATABASE_URL não encontrado"; exit 5; }
+U=${BASH_REMATCH[1]}; S=$(printf '%b' "${BASH_REMATCH[3]//%/\\x}"); H=${BASH_REMATCH[4]}; P=${BASH_REMATCH[6]:-3306}; DB=${BASH_REMATCH[7]}
+CNF=$(mktemp); trap 'rm -f "$CNF"' EXIT
+q(){ local v=${1//\\/\\\\}; printf '"%s"' "${v//\"/\\\"}"; }   # (entre aspas: a senha pode ter # ; " e \)
+printf '[client]\nuser=%s\npassword=%s\nhost=%s\nport=%s\n' "$(q "$U")" "$(q "$S")" "$H" "$P" > "$CNF"
+echo "Isto vai trocar o banco $DB pelo backup $(basename "$ARQ"). O que entrou depois dele se perde."
+read -r -p "Digite RESTAURAR para continuar: " r; [ "$r" = RESTAURAR ] || { echo "cancelado"; exit 1; }
+AGORA="$BACKUPS/$DB-$(date +%Y%m%d-%H%M%S)-antes-de-restaurar.sql.gz"
+mysqldump --defaults-extra-file="$CNF" --single-transaction --routines --triggers --no-tablespaces "$DB" | gzip > "$AGORA"
+echo "backup de agora: $AGORA"
+systemctl stop racha
+# o banco volta EXATAMENTE como no backup: as tabelas de agora saem (o backup de agora, logo acima, guarda todas)
+T=$(mysql --defaults-extra-file="$CNF" --batch --skip-column-names "$DB" -e "SELECT GROUP_CONCAT(CONCAT('\`', table_name, '\`')) FROM information_schema.tables WHERE table_schema = DATABASE()")
+[ -n "$T" ] && [ "$T" != NULL ] && mysql --defaults-extra-file="$CNF" "$DB" -e "SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS $T; SET FOREIGN_KEY_CHECKS = 1;"
+gunzip -c "$ARQ" | mysql --defaults-extra-file="$CNF" "$DB"
+systemctl start racha
+/opt/racha/bin/racha-verifica && echo "✔ banco restaurado e site no ar"

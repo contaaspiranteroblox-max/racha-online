@@ -1,0 +1,37 @@
+# RACHA · ROLLBACK À MÃO: Actions › Rollback do site › Run workflow. Volta o site para uma versão que já está guardada na
+# VPS (a de antes, se o campo ficar vazio), confere o site e o multiplayer e, se a escolhida não subir, volta de novo.
+# Não mexe no banco (as migrações só acrescentam; para voltar o banco: sudo racha-restaura-banco na VPS).
+name: Rollback do site
+
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: 'Versão (o começo do SHA, ex.: 3f3ff6e). Vazio = a versão de antes da que está no ar.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    name: Voltar a versão
+    runs-on: [self-hosted, linux, racha-producao]
+    environment:
+      name: producao
+      url: ${{ vars.RACHA_URL }}
+    concurrency:
+      group: racha-deploy-producao
+      cancel-in-progress: false
+    timeout-minutes: 10
+    steps:
+      - name: Versões guardadas
+        run: ls -1t /opt/racha/releases
+      - name: Voltar
+        env:
+          VERSAO: ${{ github.event.inputs.versao }}
+        run: |
+          if [ -z "$VERSAO" ]; then sudo -n /opt/racha/bin/racha-rollback; exit; fi
+          [[ "$VERSAO" =~ ^[A-Za-z0-9._-]{4,80}$ ]] || { echo "::error::versão inválida"; exit 1; }
+          sudo -n /opt/racha/bin/racha-rollback "$VERSAO"

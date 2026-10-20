@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# RACHA · CONFERE SE O SITE E O MULTIPLAYER ESTÃO NO AR (usado depois de cada deploy e de cada rollback; pode rodar à mão).
+#   1. o serviço racha está ativo (systemd);
+#   2. a saúde responde: /health (servidor das salas) ou /api/trpc/ping (plataforma);
+#   3. a página do jogo abre (/game/racha.html, 200, com o RACHA dentro);
+#   4. o MULTIPLAYER: uma conexão WebSocket de verdade nas salas recebe a resposta do servidor (verifica_salas.mjs).
+# Espera até 60 s o serviço subir. Saída 0 = tudo certo.
+set -uo pipefail
+. /etc/racha/deploy.conf
+URL="http://127.0.0.1:$PORTA"
+ok(){ printf '  ✔ %s\n' "$*"; }; ruim(){ printf '  ✖ %s\n' "$*"; exit 1; }
+saude=0
+for _ in $(seq 1 30); do
+  if [ "$MODO" = plataforma ]; then c=$(curl -fsS -m 4 "$URL/api/trpc/ping" 2>/dev/null) && [[ "$c" == *'"ok":true'* ]] && { saude=1; break; }
+  else curl -fsS -m 4 -o /dev/null "$URL/health" 2>/dev/null && { saude=1; break; }; fi
+  sleep 2
+done
+systemctl is-active --quiet racha || ruim "o serviço racha não está ativo"
+[ "$saude" = 1 ] || ruim "a saúde não respondeu em 60 s ($URL)"
+ok "serviço ativo e saúde respondendo"
+pg=$(curl -fsS -m 8 "$URL/game/racha.html" 2>/dev/null) || ruim "a página do jogo (/game/racha.html) não abriu"
+[[ "$pg" == *RACHA* ]] || ruim "a página do jogo abriu sem o RACHA dentro"
+ok "a página do jogo abre ($(printf '%s' "$pg" | wc -c) bytes)"
+node /opt/racha/bin/verifica_salas.mjs "$URL" || ruim "o multiplayer (as salas por WebSocket) não respondeu"
+ok "o multiplayer responde"
+exit 0

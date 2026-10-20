@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# RACHA · O DEPLOY (roda como root, chamado pelo runner do GitHub com "sudo -n /opt/racha/bin/racha-deploy <SHA>").
+# Instalado UMA VEZ pelo prepara-vps.sh em /opt/racha/bin (dono root): o código que chega do GitHub nunca roda como root.
+#
+# O que faz, em ordem — qualquer falha PARA tudo e o site continua na versão de antes:
+#   1. trava (um deploy por vez) e confere o SHA: precisa ser um commit da branch principal (RAMO, padrão main) baixado
+#      DIRETO do GitHub por este script — um commit de outra branch é recusado (nada de publicar desenvolvimento);
+#   2. monta a versão nova numa pasta nova (/opt/racha/releases/<data>-<sha>), sem tocar na que está no ar;
+#   3. plataforma: npm ci e npm run build (como o usuário racha, sem root);
+#   4. plataforma: as migrações do banco que faltam (deploy/migracoes.conf), com BACKUP do banco antes (mysqldump);
+#   5. troca o link /opt/racha/current para a versão nova e reinicia o serviço racha;
+#   6. confere o site e o multiplayer (racha-verifica: a página do jogo, a saúde e uma conexão de verdade nas salas);
+#   7. se a conferência falhar: volta o link para a versão de antes, reinicia e confere de novo (rollback automático).
+# As migrações só ACRESCENTAM (tabelas e colunas novas): a versão de antes continua funcionando com o banco novo. Para
+# voltar o banco também, use o racha-restaura-banco com o backup que este script guardou.
+set -Eeuo pipefail
+umask 027
+CONF=/etc/racha/deploy.conf
+[ -r "$CONF" ] || { echo "falta $CONF (rode o prepara-vps.sh)"; exit 2; }
+# shellcheck disable=SC1090
+. "$CONF"
+: "${MODO:?MODO no deploy.conf}" "${PORTA:?PORTA no deploy.conf}" "${REPO_URL:?REPO_URL no deploy.conf}"
+RAMO=${RAMO:-main}; MANTER=${MANTER:-5}
+BASE=/opt/racha; ESPELHO=$BASE/repo.git; REL=$BASE/releases; ATUAL=$BASE/current
+LOG=/var/log/racha-deploy.log
+SHA=${1:-}
+[[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "uso: racha-deploy <sha de 40 letras>"; exit 2; }
+[[ "$MODO" == salas || "$MODO" == plataforma ]] || { echo "MODO precisa ser salas ou plataforma"; exit 2; }
+
+exec 9>/run/racha-deploy.lock
+flock -n 9 || { echo "já tem um deploy rodando"; exit 3; }
+exec > >(tee -a "$LOG") 2>&1
+passo(){ printf '\n[%s] ▶ %s\n' "$(date '+%F %T')" "$*"; }
+passo "deploy de ${SHA:0:12} (modo $MODO, porta $PORTA)"
+
+# 1) o código, direto do GitHub, e só da branch principal
+passo "baixando a branch $RAMO do GitHub"
+[ -d "$ESPELHO" ] || git clone --quiet --mirror "$REPO_URL" "$ESPELHO"
+git -C "$ESPELHO" remote set-url origin "$REPO_URL"
+git -C "$ESPELHO" fetch --quiet --prune origin "+refs/heads/$RAMO:refs/heads/$RAMO"
+git -C "$ESPELHO" cat-file -e "$SHA^{commit}" 2>/dev/null || { echo "o commit $SHA não existe no GitHub"; exit 4; }
+git -C "$ESPELHO" merge-base --is-ancestor "$SHA" "refs/heads/$RAMO" || { echo "RECUSADO: $SHA não está na branch $RAMO (branch de desenvolvimento não é publicada)"; exit 4; }
+
+# 2) a pasta da versão nova
+NOVA="$REL/$(date +%Y%m%d-%H%M%S)-${SHA:0:12}"
+passo "montando $NOVA"
+mkdir -p "$NOVA"
+git -C "$ESPELHO" archive "$SHA" | tar -x -C "$NOVA"
+echo "$SHA" > "$NOVA/.racha-versao"
+limpa_nova(){ rm -rf "$NOVA"; }
+trap 'echo "✖ o deploy falhou antes de trocar a versão: o site continua na de antes"; limpa_nova' ERR
+
+# 3) a construção (só a plataforma precisa; o servidor das salas não tem dependências)
+if [ "$MODO" = plataforma ]; then
+  passo "npm ci + npm run build (usuário racha)"
+  chown -R racha:racha "$NOVA"
+  [ -f /etc/racha/racha.env ] && ln -sf /etc/racha/racha.env "$NOVA/app/.env"
+  runuser -u racha -- env HOME=/var/lib/racha npm_config_cache=/var/cache/racha-npm bash -c "cd '$NOVA/app' && npm ci --no-audit --no-fund && npm run build"
+  [ -f "$NOVA/app/dist/boot.js" ] || { echo "o build não gerou app/dist/boot.js"; false; }
+fi
+chown -R root:racha "$NOVA"; chmod -R g-w,o-rwx "$NOVA"
+
+# 4) as migrações (com backup antes)
+if [ "$MODO" = plataforma ]; then
+  passo "conferindo as migrações do banco"
+  /opt/racha/bin/racha-migra "$NOVA"
+fi
+
+# 5) troca de versão
+ANTES=$(readlink -f "$ATUAL" 2>/dev/null || true)
+passo "trocando a versão no ar: ${ANTES:-(nenhuma)} → $NOVA"
+trap - ERR
+ln -sfn "$NOVA" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
+systemctl restart racha 9>&-
+
+# 6) conferência; 7) rollback automático
+if /opt/racha/bin/racha-verifica; then
+  passo "✔ no ar: ${SHA:0:12}"
+  # guarda só as últimas MANTER versões (nunca a de agora nem a de antes)
+  ls -1dt "$REL"/*/ 2>/dev/null | tail -n +"$((MANTER + 1))" | while read -r d; do d=${d%/}; [ "$d" != "$NOVA" ] && [ "$d" != "$ANTES" ] && rm -rf "$d"; done
+  exit 0
+fi
+passo "✖ a versão nova não passou na conferência: ROLLBACK"
+journalctl -u racha -n 40 --no-pager || true
+if [ -n "$ANTES" ] && [ -d "$ANTES" ]; then
+  ln -sfn "$ANTES" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
+  systemctl restart racha 9>&-
+  if /opt/racha/bin/racha-verifica; then passo "↩ voltou para $(basename "$ANTES") e está no ar"; else passo "‼ a versão de antes também não respondeu: veja journalctl -u racha"; fi
+  mv "$NOVA" "$NOVA-falhou" 2>/dev/null || true      # (fica para investigar, mas o rollback nunca escolhe uma que falhou)
+else
+  passo "‼ não havia versão de antes para voltar"
+fi
+exit 1

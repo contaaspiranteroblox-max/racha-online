@@ -1,0 +1,122 @@
+# RACHA · TESTA E PUBLICA. Só a branch main é publicada (as outras branches e os pull requests só rodam os testes).
+#
+#   push na main ──► testes (GitHub) ──► testes no navegador (GitHub) ──► deploy (o runner da VPS: racha-producao)
+#
+# O deploy roda no runner da própria VPS (a conexão é de dentro para fora: não precisa abrir SSH). Na VPS, o
+# /opt/racha/bin/racha-deploy (dono root, instalado pelo deploy/prepara-vps.sh) baixa o commit DIRETO do GitHub, recusa o
+# que não estiver na main, faz o backup do banco antes das migrações, troca a versão, confere o site e o multiplayer e volta
+# sozinho para a versão de antes se algo falhar. Guia completo: deploy/LEIA-ME-DEPLOY.md.
+name: Testar e publicar
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:      # publicar de novo a main à mão (Actions › Testar e publicar › Run workflow)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: racha-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  testes:
+    name: Testes (servidor, plataforma, ranking e build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: A física do jogo continua a mesma e o jogo publicado está em dia com o código
+        run: |
+          python3 tools/aplicar_rua.py | head -3
+          if ! git diff --quiet -- app/public/game; then
+            echo "::error::O app/public/game/racha.html (ou o v71-tema.css) não está em dia com o tools/: rode 'python3 tools/aplicar_rua.py' e faça o commit do resultado."
+            git diff --stat -- app/public/game
+            exit 1
+          fi
+
+      - name: Dependências da plataforma
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+
+      - name: A plataforma compila para a produção
+        working-directory: app
+        run: npm run build
+
+      - name: Testes do servidor das salas e da partida no servidor
+        run: |
+          node tests/contas_test.mjs
+          node tests/servidor_test.js
+          node tests/v83_partida_test.mjs
+          node tests/v83_sala_test.mjs
+          node tests/v88_social_test.js
+
+      - name: Testes da plataforma (as rotas de verdade num banco de teste)
+        run: |
+          node tests/plataforma/compila.cjs
+          node tests/compila_guard.cjs >/dev/null && node tests/guard_test.mjs
+          node tests/v88_plataforma_test.mjs
+          node tests/v88_salas_plataforma_test.mjs
+          node tests/v881_contas_test.mjs
+          node tests/v90_ranking_test.mjs
+
+  navegador:
+    name: Testes no navegador (o jogo de verdade)
+    runs-on: ubuntu-latest
+    needs: testes
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright e o Chromium
+        run: |
+          pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+          echo "RACHA_CHROME=$(python -c 'from playwright.sync_api import sync_playwright as s; p=s().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+      - name: Regras, controles, câmeras, modos e telas
+        run: |
+          python3 tools/aplicar_rua.py | head -1
+          for t in regras controles camera enxuto interface interface4 interface5 tutorial perfil eventos; do
+            echo "::group::$t"; python3 "tests/${t}_test.py"; echo "::endgroup::"
+          done
+
+  deploy:
+    name: Publicar no site (VPS)
+    needs: [testes, navegador]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, linux, racha-producao]
+    environment:
+      name: producao
+      url: ${{ vars.RACHA_URL }}
+    concurrency:
+      group: racha-deploy-producao
+      cancel-in-progress: false
+    timeout-minutes: 30
+    steps:
+      - name: Publicar (backup, migrações, troca de versão e conferência; rollback automático se falhar)
+        env:
+          SHA: ${{ github.sha }}
+        run: sudo -n /opt/racha/bin/racha-deploy "$SHA"
+      - name: Conferir de fora (o endereço público)
+        if: ${{ vars.RACHA_URL != '' }}
+        env:
+          URL: ${{ vars.RACHA_URL }}
+        run: |
+          for i in 1 2 3 4 5 6; do curl -fsS -m 10 -o /dev/null "$URL" && { echo "✔ $URL responde"; exit 0; }; sleep 5; done
+          echo "::warning::O site respondeu dentro da VPS, mas $URL não respondeu de fora (DNS, nginx ou firewall?)."

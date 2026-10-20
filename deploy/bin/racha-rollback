@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# RACHA · ROLLBACK: volta o site para uma versão anterior que já está na VPS (sem baixar nada, sem mexer no banco).
+#   sudo racha-rollback            → a versão logo antes da que está no ar
+#   sudo racha-rollback <pasta|sha> → uma versão específica (uma pasta de /opt/racha/releases ou o começo do SHA)
+#   sudo racha-rollback --lista     → mostra as versões guardadas
+# Depois de trocar, confere o site e o multiplayer (racha-verifica); se a escolhida não subir, volta para a de antes.
+set -Eeuo pipefail
+BASE=/opt/racha; REL=$BASE/releases; ATUAL=$BASE/current
+exec 9>/run/racha-deploy.lock; flock -n 9 || { echo "tem um deploy rodando agora"; exit 3; }
+AGORA=$(readlink -f "$ATUAL" 2>/dev/null || true)
+mapfile -t VERS < <(ls -1dt "$REL"/*/ 2>/dev/null | sed 's:/$::' | grep -v -- '-falhou$')
+if [ "${1:-}" = --lista ]; then for v in "${VERS[@]}"; do printf '%s %s\n' "$([ "$v" = "$AGORA" ] && echo '*' || echo ' ')" "$(basename "$v")"; done; exit 0; fi
+ALVO=""
+if [ -n "${1:-}" ]; then
+  [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "nome de versão inválido"; exit 2; }
+  for v in "${VERS[@]}"; do b=$(basename "$v"); [[ "$b" == "$1" || "$b" == *-"$1"* ]] && { ALVO=$v; break; }; done
+else
+  achou=0; for v in "${VERS[@]}"; do [ $achou = 1 ] && { ALVO=$v; break; }; [ "$v" = "$AGORA" ] && achou=1; done
+fi
+[ -n "$ALVO" ] && [ -d "$ALVO" ] || { echo "não achei a versão para voltar (veja: racha-rollback --lista)"; exit 4; }
+[ "$ALVO" = "$AGORA" ] && { echo "essa já é a versão no ar"; exit 0; }
+echo "rollback: $(basename "$AGORA") → $(basename "$ALVO")"
+ln -sfn "$ALVO" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
+systemctl restart racha 9>&-
+if /opt/racha/bin/racha-verifica; then echo "✔ no ar: $(basename "$ALVO")"; exit 0; fi
+echo "✖ a versão escolhida não subiu: voltando para $(basename "$AGORA")"
+ln -sfn "$AGORA" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
+systemctl restart racha 9>&-; /opt/racha/bin/racha-verifica || true
+exit 1
