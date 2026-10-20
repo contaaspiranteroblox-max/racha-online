@@ -42,7 +42,8 @@ if [ "$MODO" = plataforma ]; then
     SB=$(aleat 28)
     mysql -e "CREATE DATABASE IF NOT EXISTS racha CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
               CREATE USER IF NOT EXISTS 'racha'@'localhost' IDENTIFIED BY '$SB'; ALTER USER 'racha'@'localhost' IDENTIFIED BY '$SB';
-              GRANT ALL PRIVILEGES ON racha.* TO 'racha'@'localhost'; FLUSH PRIVILEGES;"
+              CREATE USER IF NOT EXISTS 'racha'@'127.0.0.1' IDENTIFIED BY '$SB'; ALTER USER 'racha'@'127.0.0.1' IDENTIFIED BY '$SB';
+              GRANT ALL PRIVILEGES ON racha.* TO 'racha'@'localhost'; GRANT ALL PRIVILEGES ON racha.* TO 'racha'@'127.0.0.1'; FLUSH PRIVILEGES;"
     echo "DATABASE_URL=mysql://racha:$SB@127.0.0.1:3306/racha" >> "$ENV"
   fi
   if ! tem RACHA_OWNER_PASSWORD; then
@@ -63,8 +64,11 @@ bash "$DIR/deploy/prepara-vps.sh" --modo "$MODO" --porta "$PORTA" --ramo "$RAMO"
 if [ "$MODO" = plataforma ]; then
   passo "4/6 as tabelas do banco"
   URL=$(grep '^DATABASE_URL=' "$ENV" | cut -d= -f2-)
-  if [ "$(mysql -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='racha' AND table_name='usuarios'")" = 0 ]; then
+  tabelas(){ mysql -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='racha' AND table_name='usuarios'"; }
+  if [ "$(tabelas)" = 0 ]; then
     (cd "$DIR/app" && npm ci --no-audit --no-fund --loglevel=error && DATABASE_URL="$URL" npx drizzle-kit push --force)
+    [ "$(tabelas)" != 0 ] || { echo "✖ as tabelas do banco não foram criadas (veja o erro acima)"; exit 1; }
+    echo "  ✔ tabelas criadas"
   else echo "  as tabelas já existem (as contas de agora ficam)"; fi
 fi
 
