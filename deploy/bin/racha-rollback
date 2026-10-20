@@ -22,7 +22,7 @@ fi
 echo "rollback: $(basename "$AGORA") → $(basename "$ALVO")"
 ln -sfn "$ALVO" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
 systemctl restart racha 9>&-
-if /opt/racha/bin/racha-verifica; then echo "✔ no ar: $(basename "$ALVO")"; exit 0; fi
+if /opt/racha/bin/racha-verifica "$ALVO"; then echo "✔ no ar: $(basename "$ALVO")"; exit 0; fi
 echo "✖ a versão escolhida não subiu: voltando para $(basename "$AGORA")"
 ln -sfn "$AGORA" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
 systemctl restart racha 9>&-; /opt/racha/bin/racha-verifica || true

@@ -74,7 +74,7 @@ ln -sfn "$NOVA" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
 systemctl restart racha 9>&-
 
 # 6) conferência; 7) rollback automático
-if /opt/racha/bin/racha-verifica; then
+if /opt/racha/bin/racha-verifica "$NOVA"; then
   passo "✔ no ar: ${SHA:0:12}"
   # guarda só as últimas MANTER versões (nunca a de agora nem a de antes)
   ls -1dt "$REL"/*/ 2>/dev/null | tail -n +"$((MANTER + 1))" | while read -r d; do d=${d%/}; [ "$d" != "$NOVA" ] && [ "$d" != "$ANTES" ] && rm -rf "$d"; done
@@ -85,7 +85,7 @@ journalctl -u racha -n 40 --no-pager || true
 if [ -n "$ANTES" ] && [ -d "$ANTES" ]; then
   ln -sfn "$ANTES" "$BASE/.current-novo" && mv -Tf "$BASE/.current-novo" "$ATUAL"
   systemctl restart racha 9>&-
-  if /opt/racha/bin/racha-verifica; then passo "↩ voltou para $(basename "$ANTES") e está no ar"; else passo "‼ a versão de antes também não respondeu: veja journalctl -u racha"; fi
+  if /opt/racha/bin/racha-verifica "$ANTES"; then passo "↩ voltou para $(basename "$ANTES") e está no ar"; else passo "‼ a versão de antes também não respondeu: veja journalctl -u racha"; fi
   mv "$NOVA" "$NOVA-falhou" 2>/dev/null || true      # (fica para investigar, mas o rollback nunca escolhe uma que falhou)
 else
   passo "‼ não havia versão de antes para voltar"

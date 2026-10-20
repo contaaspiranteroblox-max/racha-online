@@ -4,7 +4,8 @@
 #   2. a saúde responde: /health (servidor das salas) ou /api/trpc/ping (plataforma);
 #   3. a página do jogo abre (/game/racha.html, 200, com o RACHA dentro);
 #   4. o MULTIPLAYER: uma conexão WebSocket de verdade nas salas recebe a resposta do servidor (verifica_salas.mjs).
-# Espera até 60 s o serviço subir. Saída 0 = tudo certo.
+# Com uma pasta (racha-verifica /opt/racha/releases/<versão>), confere também que o processo no ar é DESSA versão (e não um
+# processo antigo que ficou respondendo na porta). Espera até 60 s o serviço subir. Saída 0 = tudo certo.
 set -uo pipefail
 . /etc/racha/deploy.conf
 URL="http://127.0.0.1:$PORTA"
@@ -18,6 +19,16 @@ done
 systemctl is-active --quiet racha || ruim "o serviço racha não está ativo"
 [ "$saude" = 1 ] || ruim "a saúde não respondeu em 60 s ($URL)"
 ok "serviço ativo e saúde respondendo"
+ESPERADA=${1:-}
+if [ -n "$ESPERADA" ]; then
+  pid=$(systemctl show -p MainPID --value racha 2>/dev/null || echo 0)
+  [ "${pid:-0}" -gt 0 ] 2>/dev/null || ruim "não deu para saber qual processo é o serviço racha"
+  cwd=$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true); esp=$(readlink -f "$ESPERADA")
+  [[ "$cwd" == "$esp" || "$cwd" == "$esp"/* ]] || ruim "o processo no ar ($pid, em $cwd) não é da versão nova ($esp)"
+  sockpid=$(ss -ltnpH "sport = :$PORTA" 2>/dev/null | grep -o 'pid=[0-9]*' | head -1 | cut -d= -f2)
+  [ -z "$sockpid" ] || [ "$sockpid" = "$pid" ] || ruim "a porta $PORTA está com outro processo ($sockpid), não com o serviço ($pid)"
+  ok "o processo no ar é da versão $(basename "$esp")"
+fi
 pg=$(curl -fsS -m 8 "$URL/game/racha.html" 2>/dev/null) || ruim "a página do jogo (/game/racha.html) não abriu"
 [[ "$pg" == *RACHA* ]] || ruim "a página do jogo abriu sem o RACHA dentro"
 ok "a página do jogo abre ($(printf '%s' "$pg" | wc -c) bytes)"
