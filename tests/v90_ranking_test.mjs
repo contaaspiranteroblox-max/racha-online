@@ -121,7 +121,16 @@ async function principal() {
     console.log('  (esperando o tempo mínimo de partida de verdade no servidor)');
     await espera(11000);
     const gols = [[A.id, B.id], [A.id, B.id], [B.id, A.id]];   // [autor, quem passou]
-    for (const [autor, assist] of gols) { WA.manda({ type: '__teste_gol', time: 0, autor, assist }); await espera(2300); }
+    // cada gol só sai com o motor em jogo: depois de um gol ele fica 2 s comemorando (em ticks, que numa máquina lenta duram
+    // mais que 2 s de relógio) e ignora outro pedido. Então o teste pede de novo até o placar do servidor mostrar o gol.
+    for (const [i, [autor, assist]] of gols.entries()) {
+      let ok = null;
+      for (const t0 = Date.now(); !ok && Date.now() - t0 < 20000;) {
+        WA.manda({ type: '__teste_gol', time: 0, autor, assist });
+        ok = await WA.espera('snapshot', (x) => x.data && x.data.score && x.data.score[0] >= i + 1, 700);
+      }
+      if (!ok) throw new Error('o servidor não marcou o gol ' + (i + 1));
+    }
     const rA = await WA.espera('result', null, 8000), rB = await WB.espera('result', null, 3000);
     const sA = rA && rA.selo ? lerSelo(rA.selo) : null, sB = rB && rB.selo ? lerSelo(rB.selo) : null;
     confere(rA && rA.valida && sA && sA.h === 1 && /^p[a-z0-9]+$/.test(sA.pid) && sB && sB.pid === sA.pid, 'o resultado valeu e os dois selos dizem "o servidor simulou" (h:1) com o mesmo número de partida', sA);
