@@ -94,7 +94,9 @@ export const authRouter = createRouter({
           nomeExibicao: z.string().trim().min(2).max(32),
           senha: senhaSchema,
           confirmacaoSenha: z.string().min(1).max(100), // v84
-          email: z.string().email("E-mail inválido.").max(120), // v84: obrigatório (recuperação segura por e-mail)
+          // v90.1: o e-mail é opcional (o login de teste: só o usuário e a senha). Com e-mail, a recuperação por e-mail funciona;
+          // sem ele, a conta se recupera pelo código de recuperação mostrado no cadastro.
+          email: z.union([z.literal(""), z.string().trim().email("E-mail inválido.").max(120)]).optional(),
           aceiteTermos: z.literal(true, { error: "É preciso aceitar os termos e a política de privacidade." }), // v84
         })
         .refine((d) => d.senha === d.confirmacaoSenha, { message: "As senhas não são iguais.", path: ["confirmacaoSenha"] }),
@@ -108,7 +110,8 @@ export const authRouter = createRouter({
 
       const existe = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username) });
       if (existe) throw new TRPCError({ code: "CONFLICT", message: "Esse usuário já está em uso." });
-      const em = await db.query.usuarios.findFirst({ where: eq(usuarios.email, input.email.toLowerCase()) });
+      const email = input.email ? input.email.trim().toLowerCase() : null;
+      const em = email ? await db.query.usuarios.findFirst({ where: eq(usuarios.email, email) }) : null;
       if (em) throw new TRPCError({ code: "CONFLICT", message: "Esse email já está em uso." });
 
       // ID público: gerado SÓ pelo servidor, atômico (LAST_INSERT_ID numa transação: a mesma conexão do pool). v88.1: os
@@ -124,7 +127,7 @@ export const authRouter = createRouter({
           username: input.username,
           nomeExibicao: input.nomeExibicao,
           senhaHash: hashSenha(input.senha),
-          email: input.email.toLowerCase(),
+          email,
           aceiteTermosEm: new Date(), // v84
           codigoRecuperacaoHash: hashSenha(codigoRecuperacao),
           tituloEquipado: "Novato da Rua",

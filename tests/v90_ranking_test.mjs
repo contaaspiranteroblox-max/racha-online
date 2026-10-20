@@ -229,6 +229,15 @@ async function principal() {
     confere(abre.ok && nT2.ranking && nT2.ranking.temporada === 'T2' && tT2.temporada.id === 'T2' && tT2.eu.valor === 1, 'a T2 abriu: o ranking começa do zero (o Caio com 1 gol) e a T1 continua guardada', [nT2.ranking, tT2.eu]);
     const estat = await sqlT("SELECT gols FROM estatisticas WHERE usuario_id = (SELECT id FROM usuarios WHERE username = 'caiozin99')");
     confere(estat.length && Number(estat[0].gols) > 0, 'as estatísticas de sempre da conta continuam (não zeraram)', estat);
+
+    console.log('v90.1) o login de teste: criar a conta só com o usuário e a senha (o e-mail é opcional)');
+    const sem = (u, ip, extra) => api('auth.registrar', { username: u, nomeExibicao: u, senha: 'senha1234', confirmacaoSenha: 'senha1234', aceiteTermos: true, ...(extra || {}) }, null, false, ip);
+    const s1 = await sem('semmail1', '10.91.0.1'), s2 = await sem('semmail2', '10.91.0.2', { email: '' });
+    confere(s1.conta && s2.conta && s1.conta.idPublico !== s2.conta.idPublico, 'duas contas sem e-mail (o campo ausente e o campo vazio) nascem com números diferentes', [s1.conta && s1.conta.idPublico, s2.conta && s2.conta.idPublico]);
+    const ent = await m('auth.entrar', { identificador: 'semmail1', senha: 'senha1234' }).catch((e) => e);
+    confere(ent && ent.conta && ent.conta.idPublico === s1.conta.idPublico, 'e entra com o usuário e a senha', ent && (ent.conta || ent.message));
+    const ruim = await erro(sem('semmail3', '10.91.0.3', { email: 'nao-e-email' }));
+    confere(ruim && /E-mail inválido/.test(ruim.message), 'um e-mail escrito errado continua recusado', ruim && ruim.message);
   } finally { S.p.kill('SIGTERM'); }
 }
 
