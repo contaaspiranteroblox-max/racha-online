@@ -2,6 +2,22 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v89 — 20/10/2026 · o lobby com a cara da imagem enviada
+
+A pedido: "melhore o lobby [...] no estilo desta foto". Só a cara do lobby mudou: os botões, as ações, as telas que abrem
+deles e a arrumação feita pelo JS são os mesmos. A física não mudou (sha256 do bloco: `ad9f1d2216409b0e`).
+
+- **O fundo** fica no fim de tarde roxo e laranja da imagem (a mesma quadra, com o céu mais quente e as bordas roxas).
+- **Os botões dos lados** viram largos: o desenho à esquerda, a palavra e a setinha, com a borda pintada **roxa ou
+  laranja** e brilho (LOJA, TAMPINHA, CLUBE e TREINO à esquerda; SALAS, AMIGOS, RANKING e EVENTOS à direita).
+- **O letreiro** em cima da tampinha: a coroa laranja, **RACHA** e **FUTEBOL DE RUA**; a tampinha ganha um brilho laranja.
+- **Em cima** (o cartão do jogador, a ranqueada, o passe, as moedas, as gemas e os ícones) e **embaixo** (os desafios, o chat
+  e o modo) no mesmo estilo; as barras de XP em roxo, a dos desafios em laranja e o **+** das moedas laranja.
+- **O JOGAR** fica laranja, maior, com a palavra inclinada e o play num círculo preto à direita.
+- O estilo mora em `app/public/game/v89.css` (carregado depois do `v88.css` pelo `tools/v89/lobby.py`, a etapa nova do build).
+  Conferido em 1920×1080, 1672×941, 1366×768, 1024×768 e no celular deitado (844×390 e 667×375): nada sai da tela nem fica
+  por cima de outro botão, e cada botão abre a mesma tela de antes.
+
 ## v88.2 — 18/10/2026 · jogar online sem conta, só com o nome
 
 A pedido: "a sala funcionar online sem criar conta, só botando o nome de usuário". A física não mudou (sha256 do bloco:

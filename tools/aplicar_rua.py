@@ -70,7 +70,8 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v82/conta',                                                                # v82: as contas (o script de entrada, a exportação, o XP das missões)
               'v84/v84',                                                                  # v83/v84: os textos das salas no servidor e o login obrigatório (eram editados direto no gerado)
               'v87/v87',                                                                  # v87: tudo dentro do jogo (o login com a cara do jogo, a sessão do site, as páginas da conta por cima do jogo)
-              'v88/v88']                                                                  # v88: a atualização completa dos menus (amigos, mensagens, correio, loja, missões, eventos, passe, chat, espectador…)
+              'v88/v88',                                                                  # v88: a atualização completa dos menus (amigos, mensagens, correio, loja, missões, eventos, passe, chat, espectador…)
+              'v89/lobby']                                                                # v89: o lobby com a cara da imagem enviada (o v89.css depois do v88.css)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:
