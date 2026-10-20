@@ -33,6 +33,10 @@ DIR=/root/racha-deploy-ferramentas
 if [ -d "$DIR/.git" ]; then git -C "$DIR" fetch -q origin "$RAMO" && git -C "$DIR" checkout -q -B "$RAMO" "origin/$RAMO"
 else git clone -q --branch "$RAMO" "$REPO.git" "$DIR"; fi
 mkdir -p /etc/racha; touch "$ENV"; chmod 600 "$ENV"
+# pouca memória (1 GB) e sem swap: 2 GB de swap, para o MySQL e o build da plataforma caberem
+if [ "$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)" -lt 1900 ] && [ "$(awk 'NR>1' /proc/swaps | wc -l)" = 0 ] && [ ! -e /swapfile ]; then
+  echo "  memória pequena: criando 2 GB de swap"; fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap -q /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
 
 if [ "$MODO" = plataforma ]; then
   passo "2/6 o banco (MySQL nesta VPS) e a conta do Dono (000001)"
