@@ -178,8 +178,8 @@ html.v70-calmo .rk90-passes .rk90-traco{ animation:none; }
 @media (hover:hover){ #lb.v77.v90 #lb-palco #rx .rx-bt.v71-tile:hover{ filter:brightness(1.12); } }
 
 /* em cima: o perfil compacto, o letreiro, as moedas e os ícones */
-#lb.v77.v90:not(.retrato) #lb-palco .lb-topo{ left:28px; right:28px; top:22px; height:96px; gap:12px; }
-#lb.v77.v90 #lb-palco .lb-topo #lb-eu{ width:380px; max-width:380px; height:96px; padding:0 18px 0 12px; gap:14px; }
+#lb.v77.v90:not(.retrato) #lb-palco .lb-topo{ left:28px; right:28px; top:22px; height:max(96px, calc(46px / var(--s, 1))); gap:12px; }
+#lb.v77.v90 #lb-palco .lb-topo #lb-eu{ width:380px; max-width:380px; height:max(96px, calc(46px / var(--s, 1))); padding:0 18px 0 12px; gap:14px; }
 #lb.v77.v90 #lb-palco #lb-eu .tp-eu-tx{ flex:1; min-width:0; gap:6px; }
 #lb.v77.v90 #lb-palco #lb-eu .tp-eu-tx b{ font:400 28px/1 var(--v90-tit); letter-spacing:.6px; text-shadow:none; }
 #lb.v77.v90 #lb-palco #lb-eu .hm-xp{ border:1px solid var(--v90-linha); background:#0c0d0f; }
@@ -190,14 +190,14 @@ html.v70-calmo .rk90-passes .rk90-traco{ animation:none; }
 #lb.v90 .v90-pat svg{ width:18px; height:18px; color:var(--v90-am); }
 #lb.v90 .v90-pat[hidden]{ display:none; }
 #lb.v77.v90 #lb-palco .lb-topo .tp-dir{ margin-left:auto; gap:12px; }
-#lb.v77.v90 #lb-palco .lb-topo .hm-grana{ height:62px; min-width:176px; padding:0 54px 0 58px; border-radius:16px; }
+#lb.v77.v90 #lb-palco .lb-topo .hm-grana{ height:max(62px, calc(46px / var(--s, 1))); min-width:176px; padding:0 54px 0 58px; border-radius:16px; }
 #lb.v77.v90 #lb-palco .lb-topo .hm-grana i{ left:10px; }
 #lb.v77.v90 #lb-palco .lb-topo .hm-grana b{ font:800 30px/1 var(--v90-num); letter-spacing:.4px; }
 #lb.v77.v90 #lb-palco .lb-topo .hm-grana::after{ right:8px; width:40px; height:40px; margin-top:-20px; border-radius:11px; border:2px solid var(--v90-k); color:#1a1405;
   background:linear-gradient(180deg, var(--v90-am2), var(--v90-am)); box-shadow:inset 0 2px 0 rgba(255,255,255,.5); text-shadow:none; }
-#lb.v77.v90 #lb-palco .lb-topo .tp-ic{ width:58px; height:58px; border-radius:15px; }
+#lb.v77.v90 #lb-palco .lb-topo .tp-ic{ width:max(58px, calc(46px / var(--s, 1))); height:max(58px, calc(46px / var(--s, 1))); border-radius:15px; }
 #lb.v77.v90 #lb-palco .lb-topo .tp-ic svg, #lb.v77.v90 #lb-palco .lb-topo .tp-ic .v88-tp-ic{ width:30px; height:30px; }
-#lb.v77.v90 #lb-palco .lb-topo #lb-ajustes{ width:62px; height:62px; }
+#lb.v77.v90 #lb-palco .lb-topo #lb-ajustes{ width:max(62px, calc(46px / var(--s, 1))); height:max(62px, calc(46px / var(--s, 1))); }
 #lb.v90 .v90-logo{ position:absolute; left:50%; top:24px; z-index:1; transform:translateX(-50%); text-align:center; pointer-events:none; }
 #lb.v90 .v90-logo b{ display:block; font:400 70px/.9 var(--v90-tit); letter-spacing:3px; color:#fff; text-shadow:0 4px 0 var(--v90-k), 0 0 18px rgba(0,0,0,.35); }
 #lb.v90 .v90-logo b i{ font-style:normal; color:var(--v90-lar); }
