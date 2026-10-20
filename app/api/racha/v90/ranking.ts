@@ -27,7 +27,13 @@ import { entregarItens } from "../economia";
 import { usuarioPorPub } from "../v88/comum";
 
 type Db = ReturnType<typeof getDb>;
-const ehDup = (e: unknown) => /duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e));
+// a chave repetida (o MySQL de verdade manda o erro dentro do "Failed query" do drizzle, em .cause; o banco de teste, direto)
+const ehDup = (e: unknown): boolean => {
+  for (let x = e as { message?: unknown; code?: unknown; errno?: unknown; cause?: unknown } | undefined, i = 0; x && i < 5; x = x.cause as typeof x, i++) {
+    if (x.code === "ER_DUP_ENTRY" || x.errno === 1062 || /duplicate entry|ER_DUP_ENTRY/i.test(String(x.message ?? ""))) return true;
+  }
+  return false;
+};
 const ms = (d: Date | number | null | undefined) => (d == null ? 0 : typeof d === "number" ? d : d.getTime());
 
 // ---------------------------------------------------------------- as temporadas
