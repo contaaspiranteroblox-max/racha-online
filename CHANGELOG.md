@@ -2,21 +2,56 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
-## v89 — 20/10/2026 · o lobby com a cara da imagem enviada
+## v90 — 20/10/2026 · a nova temática do RACHA e o ranking completo da temporada
 
-A pedido: "melhore o lobby [...] no estilo desta foto". Só a cara do lobby mudou: os botões, as ações, as telas que abrem
-deles e a arrumação feita pelo JS são os mesmos. A física não mudou (sha256 do bloco: `ad9f1d2216409b0e`).
+A pedido: a nova temática visual (preto fosco, roxo e laranja dos dois times, amarelo no JOGAR, pouco brilho), a tela
+inicial reorganizada, a troca rápida de tampinhas, o COFRE e o RANKING de verdade (gols, assistências, pontos ranqueados e
+Craque do Jogo), com temporadas, histórico, perfil e recompensas do TOP 3. **A física não mudou** (sha256 do bloco:
+`ad9f1d2216409b0e`): o chute, o movimento, as colisões, o multiplayer, o login, as contas, as moedas, as gemas e as skins
+continuam os mesmos. (A v89 — o lobby roxo e laranja com brilho — nunca foi para a `main` e saiu: a v90 toma o lugar dela.)
 
-- **O fundo** fica no fim de tarde roxo e laranja da imagem (a mesma quadra, com o céu mais quente e as bordas roxas).
-- **Os botões dos lados** viram largos: o desenho à esquerda, a palavra e a setinha, com a borda pintada **roxa ou
-  laranja** e brilho (LOJA, TAMPINHA, CLUBE e TREINO à esquerda; SALAS, AMIGOS, RANKING e EVENTOS à direita).
-- **O letreiro** em cima da tampinha: a coroa laranja, **RACHA** e **FUTEBOL DE RUA**; a tampinha ganha um brilho laranja.
-- **Em cima** (o cartão do jogador, a ranqueada, o passe, as moedas, as gemas e os ícones) e **embaixo** (os desafios, o chat
-  e o modo) no mesmo estilo; as barras de XP em roxo, a dos desafios em laranja e o **+** das moedas laranja.
-- **O JOGAR** fica laranja, maior, com a palavra inclinada e o play num círculo preto à direita.
-- O estilo mora em `app/public/game/v89.css` (carregado depois do `v88.css` pelo `tools/v89/lobby.py`, a etapa nova do build).
-  Conferido em 1920×1080, 1672×941, 1366×768, 1024×768 e no celular deitado (844×390 e 667×375): nada sai da tela nem fica
-  por cima de outro botão, e cada botão abre a mesma tela de antes.
+**O ranking (servidor e plataforma)**
+- **Só conta o que o servidor viu.** O servidor das salas (`server/turma.js`) põe no **selo assinado** de cada conta os
+  gols e as assistências que o **motor** contou (`h:1`, o número da partida `pid`, `gl`, `as`), só nas partidas que ele
+  simulou. A plataforma (`app/api/racha/v90/ranking.ts`) soma isso no ranking da temporada — o que o aparelho manda não
+  entra. Partida contra os bots, treino e sala antiga (com anfitrião) não entram em gols, assistências nem Craque do Jogo.
+- **O critério da assistência** é o que o servidor já usava (`server/partida/sala.js · lance`), agora documentado em
+  `app/contracts/v90.ts`: o toque imediatamente anterior ao do autor, de um companheiro, até 10 s antes do gol; se um
+  adversário tocou no meio, não há assistência (a não ser o desvio rápido num chute que já ia no gol); gol contra não dá
+  gol nem assistência; o autor nunca dá assistência para si mesmo.
+- **Sem duplicar:** cada (partida, conta) entra uma vez (`ranking_partidas`). **Desempate** sempre igual: o maior número →
+  quem chegou primeiro nele → o menor número da conta. **Craque do Jogo** = o "melhor da partida" de sempre (mais gols,
+  depois assistências, depois o time que venceu). **Pontos ranqueados** = os pontos da patente (as regras da v82).
+- **Temporadas:** a T1 nasce das datas do catálogo (a do Passe RACHA). O RACHA CONTROL abre a próxima e **fecha** a que
+  acabou: a classificação de cada categoria congela (todas as posições), a ranqueada faz o **recomeço parcial** (metade dos
+  pontos, uma vez por temporada) e, **depois** de conferir, as **recompensas do TOP 3** são entregues (uma vez só). As
+  estatísticas de sempre da conta não zeram.
+- **Recompensas do TOP 3** (só cosméticas): uma tampinha exclusiva para o 1º, o 2º e o 3º de cada categoria (12 no total,
+  com o símbolo grande da categoria: bola, seta do passe, coroa e estrela; bordas de ouro, prata e bronze), um banner do
+  pódio e um título com a temporada (`catalogo88.json`, raridade "exclusivo", fora da loja).
+- Tabelas novas: `temporadas_ranking`, `ranking_sazonal`, `ranking_partidas`, `ranking_final`, `recompensas_ranking`
+  (migração `app/db/migrations/v90_ranking.sql`; nada que já existia muda).
+
+**A tela inicial e o visual**
+- **Cenário novo**: a quadra do bairro no fim de tarde (as casas, o alambrado, o muro com pouco grafite, os postes e a
+  arquibancadinha), em desenho vetorial dentro do jogo (`tools/v90/cenario.svg`).
+- **Perfil compacto** em cima à esquerda (a tampinha, o nome, o nível, o XP e a **patente**; tocar abre o perfil), o
+  letreiro RACHA no meio, e à direita as moedas e as gemas (com o +), o correio, o chat e os ajustes.
+- **Os lados**: LOJA, **COFRE**, CLUBE e TREINO; SALAS, AMIGOS (convites e chamar para jogar), RANKING e EVENTOS — com o
+  desenho, o nome e uma legenda. **Embaixo**: PASSE RACHA, MISSÕES DIÁRIAS, o modo e o **JOGAR amarelo**.
+- **A tampinha do meio**: tocar abre o COFRE; **segurar** abre a **roda com as 3 favoritas** — arrastar até uma e soltar
+  equipa. As favoritas são marcadas no COFRE (★) e vão para a conta junto com as tampinhas salvas.
+- **COFRE**: as tampinhas (equipar, favoritar e o CRIAR TAMPINHA), avatares, banners, efeitos, bolas, comemorações, gols
+  e emotes (ainda não existem no jogo: a categoria avisa que chegam numa próxima atualização).
+- **A tela de RANKING**: as 4 categorias (assistências em turquesa, com as linhas de passe no TOP 1), o pódio com as
+  tampinhas de verdade (ouro, prata e bronze), a lista do TOP 4 ao TOP 20 com o perfil de cada um, a **minha posição**
+  fixa embaixo (mesmo fora do TOP 20, e quanto falta), as temporadas anteriores e os prêmios do TOP 3.
+- **O perfil** (o público e o seu): as melhores colocações (TOP 1 — Assistências, Temporada…), os números validados, a
+  melhor colocação, a patente, as exclusivas ganhas e os títulos; o **banner do pódio** atrás do nome e do ID.
+
+**Testes:** `tests/v90_ranking_test.mjs` (35 verificações: uma partida 2v2 de verdade no servidor com passe e gol, o selo
+adulterado, a mesma partida duas vezes, os bots, o TOP 20, o desempate, a posição fora do TOP 20, o perfil privado, o
+fechamento, o recomeço parcial, as recompensas uma vez só, o histórico e a temporada nova) e a bateria inteira.
 
 ## v88.2 — 18/10/2026 · jogar online sem conta, só com o nome
 

@@ -111,6 +111,7 @@ function v90Favoritas(){ return (TP.salvas || []).filter(s => s.f && tpLe(s.c)).
 function v90SeguraComeca(e){
   if (e.button != null && e.button > 0) return;
   const em = e.currentTarget;
+  V90I.engole = false;                                    // (um SEGURAR cancelado pelo sistema não engole o próximo toque)
   clearTimeout(V90I.segura);
   V90I.segura = setTimeout(() => { V90I.engole = true; v90RodaAbre(em, e.pointerId); }, 380);
   const cancela = () => { clearTimeout(V90I.segura); em.removeEventListener('pointerup', cancela); em.removeEventListener('pointercancel', cancela); em.removeEventListener('pointerleave', cancela); };

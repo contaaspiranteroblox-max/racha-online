@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v88.2
+# RACHA · Futebol de Rua — v90
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -68,7 +68,10 @@ servidor (a carteira, o inventário e o progresso da conta conferidos nele) — 
 **v88.1** põe **as contas nas mãos do Dono**: o cadastro fica fechado (só o Dono cria contas, no RACHA CONTROL › 👤 Contas),
 o **ZERAR CONTAS** faz os IDs voltarem a contar do 000002 e a senha do Dono vem da variável `RACHA_OWNER_PASSWORD` — com o
 painel voltando a abrir no navegador depois do 2FA (não abria) e o site voltando a compilar. A **v88.2** deixa **jogar
-online sem conta, só com o nome**: na tela de entrada, o JOGAR ONLINE abre as salas na hora.
+online sem conta, só com o nome**: na tela de entrada, o JOGAR ONLINE abre as salas na hora. A **v90** traz a **nova temática** (preto fosco, roxo e laranja, o JOGAR amarelo), a tela inicial
+reorganizada com o **COFRE** e a **roda das favoritas**, e o **RANKING da temporada** de verdade (gols, assistências, pontos
+ranqueados e Craque do Jogo, contados pelo servidor), com temporadas, histórico, perfil e recompensas do TOP 3 — detalhes no
+`CHANGELOG.md`.
 
 ---
 

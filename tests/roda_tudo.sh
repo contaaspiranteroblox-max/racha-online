@@ -31,6 +31,8 @@
 # v87.2: o v872_presente confere as moedas e gemas de teste (o presente: true do config.js na produção: uma vez só, a loja
 # com o presente, o presente: false do lançamento, o presente com outro valor e a demonstração igual). Os outros testes
 # abrem como o lançamento (o comum.abre põe presente: false, a não ser que o teste diga outra coisa).
+# v90: o v90_ranking (Node) sobe a plataforma de teste com o servidor das salas e confere o ranking da temporada: o selo com os
+# gols e as assistências contados pelo motor, nada do aparelho, nada duplicado, o TOP 20 e o desempate, o fechamento e as recompensas.
 # v88: o v88_plataforma (Node) roda o código de verdade da plataforma (app/api) na plataforma de teste (tests/plataforma:
 # SQLite no lugar do MySQL, sem npm) com três contas — amigos, mensagens, correio (o COLETAR uma vez), loja e carteira,
 # missões, passe, eventos, estatísticas, clube, denúncias, privacidade, excluir a conta e o RACHA CONTROL — e reinicia com o
@@ -85,6 +87,8 @@ for t in v88_plataforma_test.mjs v88_social_test.js v88_salas_plataforma_test.mj
 done
 printf '%-12s ' "v881_contas"
 if out=$(node tests/v881_contas_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+printf '%-12s ' "v90_ranking"
+if out=$(node tests/v90_ranking_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 for t in v88_cliente v88_controle v881_painel v881_jogo v882_visitante; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
