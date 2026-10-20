@@ -314,3 +314,24 @@ html.v70-calmo .rk90-passes .rk90-traco{ animation:none; }
 #lb.v90.v90-roda-on #lb-brilho{ z-index:31; }
 #lb.v90.v90-roda-on .v90-dica{ opacity:0; }
 .cf90{ grid-template-columns:292px minmax(0, 1fr); }
+
+/* ---------------------------------------------------------------- 3) O RANKING NO PERFIL (tools/v90/perfil.js) */
+.v90-pf-rk{ margin:12px 0 4px; padding:14px 16px; border-radius:16px; background:linear-gradient(180deg, rgba(34,36,40,.9), rgba(20,21,24,.92)); border:1px solid var(--v90-linha2); text-align:left; }
+.v90-pf-rk h3{ margin:0 0 10px; font:800 17px/1 var(--v90-num); letter-spacing:2px; color:var(--v90-am2); }
+.v90-pf-col{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.v90-pf-chip{ display:flex; align-items:center; gap:10px; height:38px; padding:0 14px 0 6px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid color-mix(in srgb, var(--c, #888) 60%, transparent); }
+.v90-pf-chip b{ height:28px; padding:0 9px; border-radius:7px; font:400 18px/28px var(--v90-tit); letter-spacing:.6px; color:#141008; background:#9aa4ad; }
+.v90-pf-chip.p1 b{ background:linear-gradient(180deg, #ffe17a, #f5c542); } .v90-pf-chip.p2 b{ background:linear-gradient(180deg, #eef1f5, #b9c1cc); } .v90-pf-chip.p3 b{ background:linear-gradient(180deg, #f0b07a, #d98a4e); }
+.v90-pf-chip span{ font:800 15px/1 var(--v90-num); letter-spacing:.8px; color:#e6e3ec; white-space:nowrap; }
+.v90-pf-num{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:8px; }
+.v90-pf-num > div{ padding:10px 8px; border-radius:12px; background:#15161a; border:1px solid var(--v90-linha); text-align:center; }
+.v90-pf-num b{ display:block; font:400 26px/1 var(--v90-tit); color:#fff; }
+.v90-pf-num small{ display:block; margin-top:5px; font:700 13px/1.1 var(--v90-num); letter-spacing:.6px; color:var(--v90-tx2); }
+.v90-pf-premios{ display:flex; align-items:center; gap:6px; margin-top:10px; overflow-x:auto; }
+.v90-pf-premios-tit{ margin-right:6px; font:800 14px/1 var(--v90-num); letter-spacing:1.4px; color:var(--v90-tx2); white-space:nowrap; }
+.v90-pf-premio{ flex:none; display:flex; width:52px; height:52px; align-items:center; justify-content:center; border-radius:50%; background:rgba(245,197,66,.12); border:1px solid rgba(245,197,66,.35); }
+.v90-pf-premio canvas{ width:46px; height:46px; }
+.v90-pf-titulos{ margin:6px 0 0; font:700 14px/1.25 var(--v90-num); letter-spacing:.4px; color:#f5e3b0; }
+.v90-pf-rk{ padding:10px 14px; } .v90-pf-col{ margin-bottom:8px; } .v90-pf-num > div{ padding:7px 6px; } .v90-pf-num b{ font-size:22px; }
+.v90-pf-chip{ height:32px; } .v90-pf-chip b{ height:24px; line-height:24px; font-size:16px; }
+#lb.v70-estreitas .v90-pf-num{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
