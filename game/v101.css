@@ -1,0 +1,366 @@
+/* =====================================================================================================================
+   RACHA v101 · O ESTILO DA IMAGEM DA NOITE (o lobby em tools/v101/lobby.js; a arte em tools/v101/arte)
+   A cena do pôr do sol cobre a tela; por cima, os PAINÉIS ESCUROS de vidro (o azul-noite com o contorno fino e claro), os
+   ícones coloridos com volume, as letras condensadas em caixa alta, o roxo do neon (o XP, o anel da tampinha), o laranja e
+   o dourado (a patente, a OFICINA, o PASSE) e o JOGAR amarelo-laranja, o único botão quente.
+   Tudo atrás da classe .v101 (no #lb e no <html>): sem ela, é a v95 de sempre.
+   ===================================================================================================================== */
+html.v101{
+  --v101-painel:linear-gradient(180deg, rgb(30,34,88) 0%, rgb(17,19,56) 100%);   /* (chapado: o vidro de .93 não mostrava nada atrás) */
+  --v101-painel2:linear-gradient(180deg, rgba(24,27,72,.95) 0%, rgba(13,15,44,.96) 100%);
+  --v101-solido:linear-gradient(180deg, #1e2259 0%, #121438 100%);
+  --v101-borda:rgba(128,142,255,.36); --v101-borda2:rgba(170,180,255,.55);
+  --v101-luz:inset 0 1px 0 rgba(255,255,255,.11), inset 0 0 0 1px rgba(4,4,22,.35);
+  --v101-sombra:0 6px 16px rgba(3,2,18,.55);
+  --v101-roxo:#8b3dff; --v101-roxo2:#b46dff; --v101-rosa:#ff3fa0; --v101-lar:#ff8a1f; --v101-ama:#ffc21a; --v101-ouro:#f6b81c; --v101-verde:#2cc94e;
+  --v101-txt:#f7f4ff; --v101-txt2:#bcc0ea; --v101-txt3:#8d93c8; --v101-k:#070720;
+  --v101-tit:"Barlow Condensed", "Anton", "Arial Narrow", system-ui, sans-serif;
+  --v101-jog:"Lilita One", "Anton", Impact, sans-serif;
+  --v101-cont:0 2px 0 rgba(4,3,20,.85), 0 0 6px rgba(4,3,20,.55);
+}
+
+/* ---------------------------------------------------------------- 1) a cena: sem a faixa de cima; a dica some (a imagem não tem) */
+#lb.v91.v101:not(.retrato) .v91-faixa{ display:none !important; }
+#lb.v91.v101:not(.retrato) .v91-cena::after{ content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg, rgba(6,4,26,.5) 0%, rgba(6,4,26,0) 13%), linear-gradient(0deg, rgba(6,4,26,.58) 0%, rgba(6,4,26,0) 24%),
+             radial-gradient(ellipse 75% 70% at 50% 52%, rgba(0,0,0,0) 62%, rgba(6,4,26,.42) 100%); }
+#lb.v91.v95v.v101:not(.retrato) .v90-dica{ display:none !important; }
+#lb.v101:not(.retrato) .v93-gm-lista, #lb.v101:not(.retrato) .v93-grupo-bt{ display:none !important; }   /* (as vagas do lado da tampinha fazem o papel dos dois) */
+
+/* ---------------------------------------------------------------- 2) os painéis do lobby: o vidro azul-noite, o contorno fino */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo #lb-eu::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .v91-pat::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .tp-ic.v91-quad::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v88-passe.v91-passe::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo::before{
+  transform:none !important; border-radius:9px !important; background:var(--v101-painel) !important; border:1.5px solid var(--v101-borda) !important;
+  box-shadow:var(--v101-luz), var(--v101-sombra) !important; top:0 !important; bottom:0 !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo #lb-eu:active, #lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .v91-pat:active,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana:active, #lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .tp-ic.v91-quad:active,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v88-passe.v91-passe:active, #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes:active,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo:active{ transform:translateY(2px) scale(.985) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo #lb-eu:active::before, #lb.v91.v95v.v101:not(.retrato) #lb-palco .v88-passe.v91-passe:active::before,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes:active::before, #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo:active::before{ box-shadow:var(--v101-luz), 0 2px 8px rgba(3,2,18,.5) !important; }
+@media (hover:hover){
+  #lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo #lb-eu:hover::before, #lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .v91-pat:hover::before,
+  #lb.v91.v95v.v101:not(.retrato) #lb-palco .v88-passe.v91-passe:hover::before, #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes:hover::before,
+  #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo:hover::before{ border-color:var(--v101-borda2) !important; }
+}
+
+/* ---------------------------------------------------------------- 3) em cima: o perfil, a patente, as moedas, as gemas, os botões e o sinal */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo{ left:22px !important; right:22px !important; top:12px !important; height:86px !important; gap:16px !important; }
+/* o perfil */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo #lb-eu{ width:356px !important; height:84px !important; padding:0 44px 0 104px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo #lb-eu::before{ left:44px !important; right:0 !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .hm-av{ left:0 !important; width:92px !important; height:92px !important; margin-top:-46px !important;
+  background:radial-gradient(circle at 50% 38%, #3a1f6e, #120a2a 72%) !important;
+  box-shadow:0 0 0 2px #1a0d38, inset 0 0 0 4px #c9a6ff, inset 0 0 0 7px #7a36e8, inset 0 0 0 9px #14092e, 0 0 18px rgba(150,80,255,.6), 0 6px 10px rgba(0,0,0,.5) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .hm-av canvas{ width:74px !important; height:74px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .v71-nv{ left:-6px !important; bottom:-14px !important; width:42px !important; height:46px !important; font:800 23px/1 var(--v101-tit) !important; padding:0 0 2px !important;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 48'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23c79bff'/%3E%3Cstop offset='.45' stop-color='%238b3dff'/%3E%3Cstop offset='1' stop-color='%235a19c9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M22 2.5L40.5 13v22L22 45.5 3.5 35V13z' fill='url(%23a)' stroke='%23140a33' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M22 7L36 15v4L22 11 8 19v-4z' fill='%23fff' opacity='.28'/%3E%3C/svg%3E") center/100% 100% no-repeat !important;
+  text-shadow:0 2px 0 #1a0838 !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .tp-eu-tx{ gap:2px !important; padding:6px 0 0 !important; justify-content:flex-start !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-nome{ display:flex; align-items:center; gap:8px; min-width:0; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-nome > b{ min-width:0; font:800 29px/1 var(--v101-tit) !important; letter-spacing:.4px; color:var(--v101-txt) !important; text-shadow:var(--v101-cont) !important;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; padding:1px 0 2px; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-band{ flex:none; display:flex; align-items:center; min-width:26px; height:22px; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-band svg{ width:26px; height:19px; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-band .sl-flag-e{ font-size:24px !important; line-height:1 !important; }   /* (a bandeira de outro país é um emoji: grande o bastante para os 12 px de verdade) */
+#lb.v101.retrato #lb-eu .v101-band .sl-flag-e{ font-size:30px !important; line-height:1 !important; }   /* (em pé o palco encolhe mais: 30 × 0,43 = 13 px) */
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-id{ display:block; font:700 17px/1 var(--v101-tit); letter-spacing:.5px; color:var(--v101-txt2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:1px 0 5px; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .tp-nv{ height:20px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .hm-xp{ border-radius:10px !important; background:rgba(6,5,24,.85) !important; border:1.5px solid rgba(150,120,255,.35) !important; box-shadow:inset 0 2px 3px rgba(0,0,0,.6) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .hm-xp i{ border-radius:9px !important; background:linear-gradient(180deg, #d3a8ff 0%, #9a4dff 45%, #6b20e6 100%) !important; box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 10px rgba(160,80,255,.7) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-eu .v77-xp{ bottom:0 !important; height:20px !important; font:800 15px/1 var(--v101-tit) !important; letter-spacing:.4px; text-shadow:0 1px 2px #000, 0 0 4px #000 !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-seta{ position:absolute; right:12px; top:14px; width:22px; height:22px; opacity:.85; }
+#lb.v101:not(.retrato) #lb-palco #lb-eu .v101-seta svg{ width:100%; height:100%; display:block; }
+#lb.v101 #lb-palco #lb-eu .v101-seta, #lb.v101.retrato .v101-id, #lb.v101.retrato .v101-band, #lb.v101.retrato .v101-pts, #lb.v101.retrato .v101-sinal{ pointer-events:none; }
+#lb.v101.retrato .v101-seta, #lb.v101.retrato .v101-pts, #lb.v101.retrato .v101-sinal{ display:none !important; }
+/* a patente */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .v91-pat{ width:300px !important; height:84px !important; padding:0 16px 0 96px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .v91-pat::before{ left:34px !important; right:0 !important; }
+#lb.v101:not(.retrato) .v91-pat .v91-pat-ins{ left:2px !important; width:90px !important; height:90px !important; margin-top:-46px !important; filter:drop-shadow(0 4px 4px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,170,40,.35)) !important; }
+#lb.v101:not(.retrato) .v91-pat .v91-pat-tx{ gap:8px !important; padding-bottom:16px; }
+#lb.v101:not(.retrato) .v91-pat .v91-pat-tx b{ font:800 29px/1 var(--v101-tit) !important; letter-spacing:.5px; color:var(--v101-txt) !important; text-shadow:var(--v101-cont) !important; text-transform:uppercase; }
+#lb.v101:not(.retrato) .v91-pat .v91-barra{ height:12px !important; border-radius:8px !important; background:rgba(6,5,24,.85) !important; border:1.5px solid rgba(255,190,80,.3) !important; }
+#lb.v101:not(.retrato) .v91-pat .v91-barra i{ border-radius:7px !important; background:linear-gradient(180deg, #ffe08a 0%, #ffb21a 50%, #ff7a00 100%) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 0 8px rgba(255,160,30,.6) !important; }
+#lb.v101:not(.retrato) .v91-pat .v101-pts{ position:absolute; right:14px; bottom:9px; display:flex; align-items:center; gap:5px; }
+#lb.v101:not(.retrato) .v91-pat .v101-pts svg{ width:22px; height:22px; display:block; }
+#lb.v101:not(.retrato) .v91-pat .v101-pts b{ font:800 19px/1 var(--v101-tit); color:#ffe4a0; letter-spacing:.4px; text-shadow:var(--v101-cont); }
+/* moedas, gemas e os quadrados */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .tp-dir{ gap:10px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana{ width:202px !important; height:var(--v101-q, 62px) !important; padding:0 58px 0 64px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana::before{ left:26px !important; right:0 !important; border-radius:calc(var(--v101-q, 62px) / 2) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana > i.v91-grana-ic{ width:58px !important; height:58px !important; margin:-30px 0 0 !important; filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana > b{ font:800 28px/1 var(--v101-tit) !important; letter-spacing:.3px; color:var(--v101-txt) !important; text-shadow:var(--v101-cont) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .hm-grana > i.v91-mais{ right:6px !important; width:42px !important; height:42px !important; margin:-21px 0 0 !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .tp-ic.v91-quad{ width:var(--v101-q, 62px) !important; height:var(--v101-q, 62px) !important; }   /* (no celular deitado, maiores: o v101Medidas) */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .tp-ic.v91-quad::before{ border-radius:10px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .lb-topo .tp-ic.v91-quad .v91-tp-ic{ width:40px !important; height:40px !important; filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)) !important; }
+/* o sinal (as barras e o ping) */
+#lb.v101:not(.retrato) #lb-palco .lb-topo .v101-sinal{ position:relative; flex:none; width:max(64px, var(--v101-q, 62px)); height:var(--v101-q, 62px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  background:none; border:0; padding:0; color:var(--v101-txt); cursor:pointer; }
+#lb.v101 .v101-sinal svg{ width:40px; height:32px; display:block; overflow:visible; filter:drop-shadow(0 2px 2px rgba(0,0,0,.6)); }
+#lb.v101 .v101-sinal svg path{ fill:none; stroke:rgba(200,205,240,.28); stroke-width:3.6; stroke-linecap:round; }
+#lb.v101 .v101-sinal svg circle{ fill:rgba(200,205,240,.28); }
+#lb.v101 .v101-sinal small{ font:800 16px/1 var(--v101-tit); letter-spacing:.4px; text-shadow:var(--v101-cont); }
+#lb.v101 .v101-sinal[data-cor="verde"]{ --sv:#3fe36f; } #lb.v101 .v101-sinal[data-cor="amarelo"]{ --sv:#ffcf3a; } #lb.v101 .v101-sinal[data-cor="vermelho"]{ --sv:#ff4d4d; } #lb.v101 .v101-sinal[data-cor="cinza"]{ --sv:#9aa0c8; }
+#lb.v101 .v101-sinal small{ color:var(--sv, #9aa0c8); }
+#lb.v101 .v101-sinal:not([data-barras="0"]) svg circle{ fill:var(--sv); }
+#lb.v101 .v101-sinal[data-barras="2"] svg .w2, #lb.v101 .v101-sinal[data-barras="3"] svg .w2, #lb.v101 .v101-sinal[data-barras="3"] svg .w3,
+#lb.v101 .v101-sinal[data-barras="4"] svg .w2, #lb.v101 .v101-sinal[data-barras="4"] svg .w3, #lb.v101 .v101-sinal[data-barras="4"] svg .w4{ stroke:var(--sv); }
+#lb.v101 .v101-sinal[data-cor="cinza"] svg circle{ fill:#9aa0c8; }
+
+/* ---------------------------------------------------------------- 4) os lados: botões baixos (o ícone e o nome) */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v71-col{ top:var(--v101-col-top, 148px) !important; gap:var(--v101-tile-gap, 10px) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v71-esq{ left:22px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v71-dir{ right:22px !important; left:auto !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile, #lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile[data-v91]{
+  width:198px !important; height:var(--v101-tile-h, 84px) !important; padding:0 8px 0 8px !important; flex-direction:row !important; align-items:center !important; justify-content:flex-start !important; gap:8px !important;
+  border-radius:9px !important; background:var(--v101-painel) !important; border:1.5px solid var(--v101-borda) !important;
+  box-shadow:var(--v101-luz), var(--v101-sombra) !important; transition:transform .08s, border-color .12s, box-shadow .12s; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .v71-dir .rx-bt.v71-tile{ width:198px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile:active{ transform:translateY(2px) scale(.98) !important; box-shadow:var(--v101-luz), 0 2px 8px rgba(3,2,18,.5) !important; }
+@media (hover:hover){ #lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile:hover{ filter:none; border-color:var(--v101-borda2) !important; } }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile > i.v91-tile-ic{ position:relative !important; left:auto !important; top:auto !important; flex:none; width:60px !important; height:58px !important; margin:0 !important;
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile > b:not(.v88-selo), #lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile[data-v91="loja"] > b:not(.v88-selo){
+  width:auto !important; flex:1; min-width:0; text-align:left !important; font:800 28px/1 var(--v101-tit) !important; letter-spacing:.4px !important; color:#fff !important;   /* (28: o RANKING e o EVENTOS cabem com folga — com 30 ficavam no limite e cortavam com o selo/a conta) */
+  text-shadow:var(--v101-cont) !important; background:none !important; box-shadow:none !important; margin:0 !important; padding:0 0 2px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* os números de não lido e o ponto: o vermelho redondo no canto */
+#lb.v91.v95v.v101 .v88-selo, #lb.v91.v95v.v101 #lb-palco #rx .rx-bt.v71-tile.rx-ponto::after, #lb.v91.v95v.v101 #lb-palco .tp-ic.rx-ponto::after{
+  background:radial-gradient(circle at 40% 35%, #ff6a72, #ff1f3d 60%, #c40024) !important; box-shadow:0 0 0 2.5px #1a0716, 0 0 8px rgba(255,40,70,.6) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #rx .rx-bt.v71-tile .v88-selo{ top:-9px !important; right:-9px !important; }
+
+/* ---------------------------------------------------------------- 5) a OFICINA: o cartão dourado embaixo da coluna da esquerda */
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby.ofi-lobby{ left:22px !important; top:var(--v101-ofi-top, 530px) !important; width:356px !important; height:var(--v101-ofi-h, 104px) !important; padding:0 0 0 14px !important; gap:10px !important;
+  border-radius:10px !important; background:linear-gradient(180deg, rgba(40,30,70,.95) 0%, rgba(20,15,44,.97) 100%) !important; border:2.5px solid var(--v101-ouro) !important; color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,240,190,.35), inset 0 0 16px rgba(255,186,40,.2), 0 0 16px rgba(255,180,30,.45), 0 6px 16px rgba(3,2,18,.55) !important; overflow:visible; }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby.ofi-lobby:active{ transform:translateY(2px) scale(.985); }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .ofi-lobby-ic{ flex:none; width:60px !important; height:60px !important; background:none !important; box-shadow:none !important; border:0 !important; border-radius:0 !important; display:flex; align-items:center; justify-content:center; z-index:1; }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .ofi-lobby-ic > .v101-ofi-ic{ width:60px; height:60px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.55)); }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .ofi-lobby-ic > .v101-ofi-ic svg{ width:100%; height:100%; display:block; }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .ofi-lobby-tx{ position:relative; z-index:1; flex:none; }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .ofi-lobby-tx b{ display:block; font:400 37px/1 var(--v101-jog) !important; letter-spacing:.5px; color:#fff; transform:skewX(-8deg) rotate(-3deg); transform-origin:left center;
+  text-shadow:0 3px 0 #2a1600, 2px 0 0 #2a1600, -2px 0 0 #2a1600, 0 -2px 0 #2a1600, 0 0 12px rgba(255,190,40,.45) !important; padding:0 0 4px; }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .ofi-lobby-tx small{ display:none !important; }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .v101-ofi-coroa{ position:absolute; left:80px; top:-26px; width:46px; height:40px; z-index:2; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(0,0,0,.6)) drop-shadow(0 0 8px rgba(255,200,60,.55)); transform:rotate(-12deg); }
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .v101-ofi-coroa svg{ width:100%; height:100%; display:block; }
+#lb.v101:not(.retrato) #lb-palco.v101-cel #ofi-lobby .v101-ofi-coroa{ top:-12px; left:84px; width:38px; height:33px; }   /* (no celular a coluna desce até perto da OFICINA) */
+#lb.v101:not(.retrato) #lb-palco #ofi-lobby .v101-ofi-arte{ position:absolute; right:4px; top:50%; width:35%; height:auto; max-height:118%; transform:translateY(-50%); object-fit:contain; pointer-events:none; z-index:0;
+  filter:drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+
+/* ---------------------------------------------------------------- 6) as vagas do grupo (as três do lado da tampinha) */
+#lb.v101 .v101-vagas{ display:none; }
+#lb.v101:not(.retrato) #lb-palco .v101-vagas{ display:block; position:absolute; left:0; top:0; width:0; height:0; z-index:4; --vr:var(--v101-vr, calc(var(--v101-r, 140px) * .33)); }   /* (o raio da vaga: um terço da tampinha; no celular, 46 px de verdade de lado a lado)
+   as vagas: a da esquerda com a beirada a 1,29 R do meio da tampinha; as da direita a 1,17 R e, depois dela, a outra a 0,12 R */
+#lb.v101:not(.retrato) #lb-palco .v101-vaga{ position:absolute; top:calc(var(--v101-cy, 520px) + var(--v101-r, 140px) * .2 - var(--vr)); width:calc(var(--vr) * 2); height:calc(var(--vr) * 2);
+  margin:0; padding:0; border:0; border-radius:50%; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#lb.v101:not(.retrato) #lb-palco .v101-vaga[data-i="0"]{ left:calc(var(--v101-cx, 790px) - var(--v101-r, 140px) * 1.29 - var(--vr) * 2); }
+#lb.v101:not(.retrato) #lb-palco .v101-vaga[data-i="1"]{ left:calc(var(--v101-cx, 790px) + var(--v101-r, 140px) * 1.17); }
+#lb.v101:not(.retrato) #lb-palco .v101-vaga[data-i="2"]{ left:calc(var(--v101-cx, 790px) + var(--v101-r, 140px) * 1.29 + var(--vr) * 2); }
+#lb.v101 .v101-vaga-mais{ position:absolute; inset:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 50% 40%, rgba(60,24,40,.92), rgba(18,8,26,.95) 70%);
+  box-shadow:0 0 0 3px #ff5a2c, 0 0 0 5px rgba(20,6,10,.7), 0 0 16px rgba(255,90,40,.75), inset 0 0 10px rgba(255,120,60,.35); transition:transform .1s; }
+#lb.v101 .v101-vaga-mais svg{ width:58%; height:58%; filter:drop-shadow(0 0 4px rgba(255,200,120,.8)); }
+#lb.v101 .v101-vaga:active .v101-vaga-mais{ transform:scale(.92); }
+@media (hover:hover){ #lb.v101 .v101-vaga:hover .v101-vaga-mais{ box-shadow:0 0 0 3px #ff8a3c, 0 0 0 5px rgba(20,6,10,.7), 0 0 22px rgba(255,120,40,.9), inset 0 0 10px rgba(255,140,60,.45); } }
+#lb.v101 .v101-vaga.cheia{ overflow:visible; }
+#lb.v101 .v101-vaga-cap{ position:absolute; inset:0; width:100%; height:100%; border-radius:50%; box-shadow:0 0 0 3px #8b3dff, 0 0 14px rgba(150,80,255,.8); background:#12092a; }
+#lb.v101 .v101-vaga-coroa{ position:absolute; left:50%; top:-34%; width:56%; margin-left:-28%; }
+#lb.v101 .v101-vaga-coroa svg{ width:100%; display:block; }
+#lb.v101 .v101-vaga-nome, #lb.v101 .v101-vaga-st{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; font:800 calc(var(--vr) * .42)/1 var(--v101-tit); letter-spacing:.3px; color:var(--v101-txt); text-shadow:var(--v101-cont); }
+#lb.v101 .v101-vaga-nome{ top:calc(100% + 6px); max-width:calc(var(--vr) * 3.4); overflow:hidden; text-overflow:ellipsis; }
+#lb.v101 .v101-vaga-st{ top:calc(100% + 6px + var(--vr) * .5); font-size:calc(var(--vr) * .34); color:var(--v101-txt2); }
+#lb.v101 .v101-vaga-st.st-pronto{ color:#58f08a; } #lb.v101 .v101-vaga-st.st-ok{ color:#9cf0b8; } #lb.v101 .v101-vaga-st.st-busca{ color:#ffd35a; } #lb.v101 .v101-vaga-st.st-jogo{ color:#ff9f5a; } #lb.v101 .v101-vaga-st.st-off{ color:#8d93c8; }
+
+/* ---------------------------------------------------------------- 7) embaixo: o PASSE, as MISSÕES, o CAMPO, o MODO e o JOGAR */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v88-passe.v91-passe{ left:var(--v101-x-passe, 22px) !important; width:var(--v101-w-passe, 430px) !important; bottom:42px !important; height:116px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v88-passe.v91-passe::before{ border-color:rgba(255,190,60,.42) !important; box-shadow:var(--v101-luz), inset 0 0 18px rgba(255,170,30,.1), var(--v101-sombra) !important; }
+#lb.v91.v95v.v101 .v91-passe.premium::before{ border-color:var(--v101-ouro) !important; box-shadow:var(--v101-luz), inset 0 0 18px rgba(255,170,30,.22), 0 0 14px rgba(255,180,30,.4), var(--v101-sombra) !important; }
+#lb.v101:not(.retrato) .v91-passe .v91-passe-coroa{ left:14px !important; top:-6px !important; width:66px !important; height:58px !important; }
+#lb.v101:not(.retrato) .v91-passe .v91-hex{ left:16px !important; bottom:10px !important; width:58px !important; height:62px !important; }
+#lb.v101:not(.retrato) .v91-passe .v91-hex b{ font:800 26px/1 var(--v101-tit) !important; text-shadow:0 2px 0 #3a1d00 !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v91-passe .v90-passe-tit{ left:92px !important; top:18px !important; right:130px !important; font:800 30px/1 var(--v101-tit) !important; letter-spacing:.6px; color:var(--v101-txt) !important; text-shadow:var(--v101-cont) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v91-passe .v88-passe-barra{ left:80px !important; right:130px !important; bottom:22px !important; height:28px !important; border-radius:14px !important;
+  background:rgba(6,5,24,.88) !important; border:1.5px solid rgba(160,120,255,.35) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco .v91-passe .v88-passe-barra > i{ border-radius:13px !important; background:linear-gradient(180deg, #d3a8ff 0%, #9a4dff 45%, #6b20e6 100%) !important; box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 10px rgba(160,80,255,.7) !important; }
+#lb.v101:not(.retrato) .v91-passe .v91-passe-num{ font:800 18px/1 var(--v101-tit) !important; text-shadow:0 1px 2px #000, 0 0 4px #000 !important; inset:0 !important; }
+#lb.v101:not(.retrato) .v91-passe .v91-passe-bil{ right:8px !important; top:8px !important; width:116px !important; height:98px !important; filter:drop-shadow(0 4px 4px rgba(0,0,0,.5)) drop-shadow(0 0 12px rgba(160,80,255,.45)) !important; }
+/* as MISSÕES: o quadrado baixo, o ícone e o nome (o prêmio e o progresso continuam no painel e no rótulo de voz) */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes{ left:var(--v101-x-mis, 464px) !important; width:var(--v101-w-mis, 118px) !important; bottom:42px !important; height:116px !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-missoes .v91-mi-ic{ left:50% !important; top:12px !important; width:60px !important; height:60px !important; margin-left:-30px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-missoes .v91-mi-tit{ left:0 !important; right:0 !important; bottom:13px !important; text-align:center; font:800 23px/1 var(--v101-tit) !important; letter-spacing:.4px; text-shadow:var(--v101-cont) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes .mi-premio, #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes .mi-barra, #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes .mi-n{ display:none !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-missoes.pronta::before{ border-color:rgba(255,200,60,.6) !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-missoes.v101-ponto::after{ content:''; position:absolute; right:10px; top:10px; width:16px; height:16px; border-radius:50%; z-index:3;
+  background:radial-gradient(circle at 40% 35%, #ff6a72, #ff1f3d 60%, #c40024); box-shadow:0 0 0 2.5px #1a0716, 0 0 8px rgba(255,40,70,.7); }
+/* o CAMPO (o #lb-modo de sempre): o desenho do campo, o tamanho do time, o nome do campo e as setas */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo{ left:var(--v101-x-mapa, 594px) !important; width:var(--v101-w-mapa, 330px) !important; bottom:42px !important; height:116px !important; padding:0 64px 0 12px !important; gap:14px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v91-modo-ic{ width:116px !important; height:86px !important; border-radius:8px !important; overflow:hidden; display:flex !important; align-items:center; justify-content:center;
+  background:linear-gradient(180deg, #0f3a2a, #082116) !important; box-shadow:0 0 0 1.5px rgba(150,255,190,.3), inset 0 0 12px rgba(0,0,0,.5) !important; filter:none !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v91-modo-ic > *{ transform:scale(.92); }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v71-modo-tx{ gap:6px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v71-modo-tx > b{ font:800 36px/1 var(--v101-tit) !important; letter-spacing:.6px; color:var(--v101-txt) !important; text-shadow:var(--v101-cont) !important; padding:0 !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v77-modo-sub, #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v71-modo-tx > small:not(.v101-campo), #lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v91-desce,
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-modo .v71-modo-tr{ display:none !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-modo .v101-campo{ display:block; font:800 20px/1 var(--v101-tit); letter-spacing:.8px; color:#8fb4ff; text-shadow:var(--v101-cont); white-space:nowrap; }
+#lb.v101:not(.retrato) #lb-palco #lb-modo .v101-troca{ position:absolute; right:16px; top:50%; width:36px; height:36px; margin-top:-18px; color:#dfe3ff; font:800 30px/36px var(--v101-tit); text-align:center; opacity:.9; }
+#lb.v101:not(.retrato) #lb-palco #lb-modo .v101-troca svg{ width:100%; height:100%; display:block; }
+/* o MODO (novo, do lado do campo: a bola, MODO e RANQUEADA; abre a mesma folha) */
+#lb.v101 .v101-modo{ display:none; }
+#lb.v91.v101:not(.retrato) #lb-palco .v101-modo{ position:absolute !important; display:flex !important; align-items:center; gap:12px; left:var(--v101-x-modo, 936px); width:var(--v101-w-modo, 262px); bottom:42px; height:116px; z-index:2;
+  padding:0 52px 0 14px; margin:0; border:1.5px solid var(--v101-borda); border-radius:9px; background:var(--v101-painel); box-shadow:var(--v101-luz), var(--v101-sombra); color:var(--v101-txt); cursor:pointer; text-align:left; }
+#lb.v91.v101:not(.retrato) #lb-palco .v101-modo:active{ transform:translateY(2px) scale(.985); }
+@media (hover:hover){ #lb.v91.v101:not(.retrato) #lb-palco .v101-modo:hover{ border-color:var(--v101-borda2); } }
+#lb.v101 .v101-modo-ic{ flex:none; width:60px; height:60px; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+#lb.v101 .v101-modo-ic svg{ width:100%; height:100%; display:block; }
+#lb.v101 .v101-modo-tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+#lb.v101 .v101-modo-tx b{ font:800 30px/1 var(--v101-tit); letter-spacing:.6px; text-shadow:var(--v101-cont); }
+#lb.v101 .v101-modo-tx small{ font:800 18px/1 var(--v101-tit); letter-spacing:.7px; color:var(--v101-txt2); text-shadow:var(--v101-cont); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb.v101 .v101-modo-seta{ position:absolute; right:14px; top:50%; width:30px; height:30px; margin-top:-15px; opacity:.9; }
+#lb.v101 .v101-modo-seta svg{ width:100%; height:100%; display:block; }
+/* o JOGAR: o amarelo-laranja, a letra grande inclinada e a coroa no canto */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar{ left:var(--v101-x-jogar, auto) !important; right:auto !important; width:var(--v101-w-jogar, 372px) !important; bottom:36px !important; height:140px !important; gap:14px !important; padding:0 18px 0 14px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar::before{ border-radius:12px !important; border:3px solid #3a1700 !important;
+  background:linear-gradient(180deg, #ffe85a 0%, #ffc61c 40%, #ff9d00 78%, #ff8200 100%) !important;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.62), inset 0 -7px 0 rgba(170,70,0,.42), 0 0 26px rgba(255,170,20,.55), 0 6px 0 #6b3000, 0 12px 22px rgba(0,0,0,.45) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar:active{ transform:translateY(5px) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar:active::before{ box-shadow:inset 0 3px 0 rgba(255,255,255,.62), inset 0 -4px 0 rgba(170,70,0,.42), 0 0 18px rgba(255,170,20,.45), 0 1px 0 #6b3000 !important; }
+#lb.v101:not(.retrato) #lb-jogar .v91-play{ width:70px !important; height:70px !important; filter:drop-shadow(0 4px 0 rgba(58,23,0,.7)) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar .lb-jogar-tit{ font:400 90px/1 var(--v101-jog) !important; letter-spacing:1px !important; transform:skewX(-9deg) rotate(-2deg) !important; color:#fff !important;
+  -webkit-text-stroke:3px #2a1000; paint-order:stroke fill; text-shadow:0 5px 0 #2a1000, 0 0 14px rgba(255,255,255,.25) !important; padding:0 0 6px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar .lb-jogar-sub{ display:none !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar.v101-com-sub .lb-jogar-sub{ display:block !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-jogar .v101-jogar-coroa{ position:absolute; right:-12px; top:-30px; width:54px; height:46px; z-index:2; transform:rotate(14deg); filter:drop-shadow(0 3px 2px rgba(0,0,0,.6)) drop-shadow(0 0 8px rgba(255,210,60,.6)); pointer-events:none; }
+#lb.v101:not(.retrato) #lb-palco #lb-jogar .v101-jogar-coroa svg{ width:100%; height:100%; display:block; }
+#lb.v101 #lb-jogar .v101-jogar-coroa{ display:none; }
+#lb.v101:not(.retrato) #lb-palco #lb-jogar .v101-jogar-coroa{ display:block; }
+/* o JOGAR do grupo (v95): o PRONTO na letra menor (o "PRONTO ✓" cabe), o verde quando a pessoa está pronta, o líder esperando
+   mais apagado; com a etiqueta em cima (ESPERANDO O LÍDER…), a coroa do canto sai (as duas no mesmo lugar) */
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar.v95-pronto .lb-jogar-tit{ font-size:74px !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar.v95-pronto.v95-pronto-on .lb-jogar-tit{ font-size:64px !important; -webkit-text-stroke-color:#0b3a1a; text-shadow:0 5px 0 #0b3a1a !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar.v95-pronto.v95-pronto-on::before{ background:linear-gradient(180deg, #a8ffc0 0%, #52e083 42%, #25b558 100%) !important; border-color:#0b3a1a !important;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.6), inset 0 -7px 0 rgba(0,90,30,.35), 0 0 26px rgba(60,230,120,.5), 0 6px 0 #12692f, 0 12px 22px rgba(0,0,0,.45) !important; }
+#lb.v91.v95v.v101:not(.retrato) #lb-palco #lb-jogar.v95-lider-espera::before{ filter:saturate(.5) brightness(.9) !important; }
+#lb.v101:not(.retrato) #lb-palco #lb-jogar:has(.v95-jogar-pr:not([hidden])) .v101-jogar-coroa{ display:none; }
+/* em pé (a janela estreita do computador; no celular em pé o jogo pede para girar): o lobby da v95, sem as peças da imagem
+   que só cabem deitado — a ilustração e a coroa da OFICINA, o nome do campo e as setas do cartão do campo */
+#lb.v101.retrato #ofi-lobby .v101-ofi-arte, #lb.v101.retrato #ofi-lobby .v101-ofi-coroa, #lb.v101.retrato #lb-modo .v101-campo, #lb.v101.retrato #lb-modo .v101-troca{ display:none !important; }
+
+/* =====================================================================================================================
+   8) AS TELAS (loja, cofre, perfil, ranking, salas, amigos, passe, missões, eventos, clube, treino, correio, janelas):
+      o mesmo vidro azul-noite, a faixa de cima escura com o fio do pôr do sol (roxo → rosa → laranja), as abas em vidro
+      (a escolhida no roxo do neon), os botões por papel com volume e o fundo da cena nova desfocado.
+   ===================================================================================================================== */
+html.v101{
+  --v91-painel:linear-gradient(180deg, rgba(34,38,96,.96) 0%, rgba(22,25,68,.96) 55%, rgba(16,18,52,.97) 100%);
+  --v91-painel2:linear-gradient(180deg, rgba(26,29,78,.96) 0%, rgba(17,19,56,.97) 100%);
+  --v91-ama:linear-gradient(180deg, #ffe85a 0%, #ffd21f 45%, #ff9d00 100%);
+  --v91-verde-f:linear-gradient(180deg, #3cc46b 0%, #1d8a45 50%, #146b34 100%);   /* o verde do confirmar: o meio escuro o bastante para o branco (≥ 4:1) */
+  --v91-verm-f:linear-gradient(180deg, #ff6a62 0%, #e8322f 50%, #b51f22 100%);
+  --v91-azul-f:linear-gradient(180deg, #58a0ff 0%, #2a6fe0 50%, #2250c4 100%);
+  --v91-roxo-f:linear-gradient(180deg, #b77cff 0%, #8b3dff 50%, #6420d6 100%);
+}
+#lb.v91.v101{
+  --k-face:var(--v101-painel); --v77-face:var(--v101-painel); --v77-face2:var(--v101-painel2); --v88-face:var(--v101-painel); --v88-face2:var(--v101-painel2);
+  --v88-fundo:rgba(14,15,46,.9); --v88-linha:rgba(140,150,255,.14); --v90-painel:linear-gradient(180deg, rgba(32,36,92,.96), rgba(16,18,52,.97)); --v90-linha:rgba(140,150,255,.13); --v90-linha2:rgba(150,160,255,.24);
+  --v90-roxo:#8b3dff; --v90-roxo2:#b46dff; --sx-azul:#1b1f55; --sx-azul2:#262b6e; --sx-fundo:#0f1136; --sx-linha:#2b3078; --rx-azul:#1b1f55; --rx-azul2:#262b6e;
+  --v95-placa:#1d2157; --v95-placa-b:#151845; --v95-beira:rgba(3,2,18,.6);
+  --v95-placa-f:var(--v101-painel); --v95-relevo:var(--v101-luz);
+}
+/* o fundo das telas: a cena nova desfocada, mais escura embaixo */
+#lb.v91.v101 #lb-camada .lb-tela.v91-tl:not(.sl-tela),
+#lb.v91.v101.v71.v77 #lb-camada .lb-tela.v77-tl.v91-tl:not(.sl-tela):not(.tpe-tela),
+#lb.v91.v101 #lb-camada .lb-tela.rk90-tela.v91-tl{
+  background:linear-gradient(180deg, rgba(10,8,40,.5) 0%, rgba(8,7,32,.62) 55%, rgba(5,4,22,.82) 100%), var(--v91-fundo-telas, none) center/cover no-repeat, #0e0f34 !important; }
+/* a faixa de cima: escura, o fio do pôr do sol embaixo */
+#lb.v91.v95v.v101 #lb-camada .lb-tela > .tl-cab.v91-cab, #lb.v91.v95v.v101 #lb-camada .br-painel > .tl-cab.v91-cab{
+  background:linear-gradient(90deg, #7a2cff 0%, #d636c8 45%, #ff7a1f 100%) left bottom/100% 2px no-repeat, linear-gradient(180deg, rgba(22,20,64,.97) 0%, rgba(12,11,40,.97) 100%) !important;
+  border-bottom:0 !important; box-shadow:0 0 14px rgba(200,60,220,.28), 0 8px 18px rgba(0,0,0,.42) !important; }
+#lb.v91.v95v.v101 #lb-camada .tl-cab.v91-cab .tl-voltar::before, #lb.v91.v95v.v101 #lb-camada .tl-cab.v91-cab .v77-cab-bt::before,
+#lb.v91.v95v.v101 #lb-camada .tl-cab.v91-cab .tl-carteira .lb-grana::before{
+  transform:none !important; border-radius:10px !important; background:var(--v101-painel) !important; border:1.5px solid var(--v101-borda) !important; box-shadow:var(--v101-luz), 0 4px 10px rgba(3,2,18,.45) !important; }
+#lb.v91.v95v.v101 #lb-camada .tl-cab.v91-cab .tl-carteira .lb-grana::before{ border-radius:30px !important; left:26px !important; }
+#lb.v91.v95v.v101 #lb-camada .tl-cab.v91-cab .tl-voltar::before{ background:linear-gradient(180deg, rgba(46,40,110,.96), rgba(24,20,66,.97)) !important; border-color:var(--v101-borda2) !important; }
+#lb.v91.v101 #lb-camada .tl-cab.v91-cab h2{ font:800 50px/1 var(--v101-tit) !important; letter-spacing:1.2px !important; transform:none !important; text-shadow:0 3px 0 rgba(4,3,20,.9), 0 0 16px rgba(160,90,255,.45) !important; }
+#lb.v91.v101 #lb-camada .tl-cab.v91-cab .tl-carteira .lb-grana > b{ font:800 28px/1 var(--v101-tit) !important; text-shadow:var(--v101-cont) !important; }
+/* os painéis e as janelas */
+#lb.v91.v95v.v101 .sx, #lb.v91.v95v.v101 .tpe, #lb.v91.v95v.v101 #lb-camada .pop-caixa:not(.ajx-caixa), #lb.v91.v95v.v101 .v79-pat{
+  background:linear-gradient(180deg, rgba(32,36,92,.97) 0%, rgba(17,19,56,.98) 100%) !important; border-color:var(--v101-borda) !important;
+  box-shadow:var(--v101-luz), 0 0 0 1.5px var(--v101-borda), 0 18px 44px rgba(2,1,14,.62) !important; }
+#lb.v91.v95v.v101 .v77-pf-card{ background:var(--v101-painel) !important; box-shadow:var(--v101-luz), 0 0 0 1.5px var(--v101-borda), var(--v101-sombra) !important; }
+#lb.v91.v95v.v101 .v88-linha{ background:rgba(22,24,66,.9) !important; box-shadow:var(--v101-luz), 0 0 0 1px rgba(128,142,255,.2), 0 3px 8px rgba(3,2,18,.35) !important; }
+#lb.v91.v95v.v101 .v88-linha.nova{ background:linear-gradient(180deg, rgba(70,48,20,.92) 0%, rgba(42,28,14,.92) 100%) !important; }
+#lb.v91.v95v.v101 .v88-linha.on{ box-shadow:inset 0 0 0 2px rgba(180,110,255,.75), 0 0 12px rgba(150,80,255,.4) !important; }
+/* as abas: vidro; a escolhida no roxo do neon */
+#lb.v91.v95v.v101 .v88-btic, #lb.v91.v95v.v101 .v88-aba, #lb.v91.v95v.v101 #lb-camada .tl-aba, #lb.v91.v95v.v101 .rk90-aba, #lb.v91.v95v.v101 .clb-aba, #lb.v91.v95v.v101 .tpe-aba, #lb.v91.v95v.v101 .v88-cat, #lb.v91.v101 #lb-camada .v77-pf-aba{
+  background:var(--v101-painel) !important; border-color:transparent !important; box-shadow:var(--v101-luz), 0 0 0 1.5px var(--v101-borda), 0 4px 10px rgba(3,2,18,.4) !important; color:var(--v101-txt) !important; }
+#lb.v91.v95v.v101 .v88-aba.on, #lb.v91.v95v.v101 #lb-camada .tl-aba.on, #lb.v91.v95v.v101 #lb-camada .tl-aba[aria-selected="true"], #lb.v91.v95v.v101 .clb-aba.on, #lb.v91.v95v.v101 .tpe-aba.on, #lb.v91.v95v.v101 .v88-cat.on, #lb.v91.v101 #lb-camada .v77-pf-aba.on{
+  background:linear-gradient(180deg, #a866ff 0%, #7e34f0 50%, #5d1fc8 100%) !important; color:#fff !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 0 1.5px #c9a2ff, 0 0 16px rgba(150,80,255,.6) !important; }
+#lb.v91.v95v.v101 .v88-aba.on *, #lb.v91.v95v.v101 #lb-camada .tl-aba.on *, #lb.v91.v95v.v101 .clb-aba.on *, #lb.v91.v95v.v101 .tpe-aba.on *, #lb.v91.v95v.v101 .v88-cat.on *, #lb.v91.v101 #lb-camada .v77-pf-aba.on *{ color:#fff !important; }
+#lb.v91.v95v.v101 .rk90-aba.on{ background:linear-gradient(180deg, var(--rk-cat2) 0%, var(--rk-cat) 62%, color-mix(in srgb, var(--rk-cat) 72%, #000) 100%) !important; color:#fff !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.4), 0 0 0 1.5px rgba(255,255,255,.5), 0 0 14px color-mix(in srgb, var(--rk-cat) 60%, transparent) !important; }
+#lb.v91.v95v.v101 .rk90-aba.on *{ color:#fff !important; }
+#lb.v91.v95v.v101 .rk90-aba.on b, #lb.v91.v95v.v101 .rk90-aba.on span{ text-shadow:0 2px 0 rgba(0,0,0,.45) !important; }
+/* os botões por papel: o volume com o brilho em cima e a beirada fina (sem o degrau grosso de tinta) */
+#lb.v91.v101 .lb-btn{ border:1.5px solid rgba(8,6,30,.85) !important; border-radius:10px !important; font-family:var(--v101-tit) !important; font-weight:800 !important; letter-spacing:.8px !important;
+  background:var(--v91-azul-f); text-shadow:0 2px 0 rgba(0,0,0,.45) !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.22), 0 4px 0 rgba(4,3,20,.75), 0 8px 14px rgba(0,0,0,.35) !important; }
+#lb.v91.v101 .lb-btn.amarelo{ color:#2a1300 !important; text-shadow:0 1px 0 rgba(255,255,255,.45) !important; border-color:#3a1700 !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6), inset 0 -4px 0 rgba(170,70,0,.35), 0 4px 0 #6b3000, 0 0 14px rgba(255,170,20,.35), 0 8px 14px rgba(0,0,0,.35) !important; }
+#lb.v91.v101 .lb-btn.preto, #lb.v91.v101 .lb-btn.cinza{ background:var(--v101-painel) !important; border-color:var(--v101-borda) !important; }
+#lb.v91.v101 .lb-btn:active{ transform:translateY(3px); box-shadow:inset 0 2px 0 rgba(255,255,255,.3), 0 1px 0 rgba(4,3,20,.75) !important; }
+/* as escolhas em segmentos (o TREINO: campo, tamanho, dificuldade, tempo): a escolhida no roxo do neon (o amarelo é das ações) */
+#lb.v91.v101 .v88-seg-b{ border-radius:8px !important; }
+#lb.v91.v101 .v88-seg-b.on{ background:linear-gradient(180deg, #a866ff 0%, #7e34f0 50%, #5d1fc8 100%) !important; color:#fff !important; text-shadow:0 1px 0 rgba(20,0,50,.6) !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 0 1.5px #c9a2ff, 0 0 12px rgba(150,80,255,.55) !important; }
+/* a folha do JOGAR (o campo e o MODO abrem): o vidro, as escolhidas no roxo e o JOGAR RANQUEADA quente como o JOGAR */
+#lb.v91.v101 #lb-rq .folha.rq-caixa{ background:linear-gradient(180deg, rgba(30,33,88,.97) 0%, rgba(15,17,50,.98) 100%) !important; border:1.5px solid var(--v101-borda) !important; border-radius:14px !important;
+  box-shadow:var(--v101-luz), 0 0 30px rgba(140,70,255,.25), 0 24px 56px rgba(2,1,14,.65) !important; }
+#lb.v91.v101 #lb-rq .folha.rq-caixa .rq-cab, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-num, #lb.v91.v101 #lb-rq .folha.rq-caixa .v95-vivo, #lb.v91.v101 #lb-rq .folha.rq-caixa .v79-como{
+  background:rgba(12,13,40,.72) !important; border:1px solid rgba(128,142,255,.24) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.06) !important; border-radius:10px !important; }
+#lb.v91.v101 #lb-rq .folha.rq-caixa .v88-md-b, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-time, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-mapa, #lb.v91.v101 #lb-rq .folha.rq-caixa .v79-ver-pat{
+  background:var(--v101-painel) !important; border:1.5px solid var(--v101-borda) !important; border-radius:10px !important; box-shadow:var(--v101-luz), 0 4px 10px rgba(3,2,18,.4) !important; color:var(--v101-txt) !important; }
+#lb.v91.v101 #lb-rq .folha.rq-caixa .v88-md-b.on, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-time.on, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-mapa.on{
+  background:linear-gradient(180deg, #a866ff 0%, #7e34f0 50%, #5d1fc8 100%) !important; border-color:#c9a2ff !important; color:#fff !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 16px rgba(150,80,255,.6) !important; }
+#lb.v91.v101 #lb-rq .folha.rq-caixa .v88-md-b.on *, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-time.on *, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-mapa.on *{ color:#fff !important; text-shadow:0 1px 0 rgba(20,0,50,.6) !important; }
+#lb.v91.v101 #lb-rq .folha.rq-caixa .rq-buscar.lb-btn{ background:var(--v91-ama) !important; color:#2a1300 !important; border:2px solid #3a1700 !important; text-shadow:0 1px 0 rgba(255,255,255,.45) !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6), inset 0 -4px 0 rgba(170,70,0,.35), 0 4px 0 #6b3000, 0 0 18px rgba(255,170,20,.45) !important; outline:0 !important; }
+#lb.v91.v101 #lb-rq .folha.rq-caixa .rq-buscar.lb-btn::before, #lb.v91.v101 #lb-rq .folha.rq-caixa .rq-buscar.lb-btn::after{ display:none !important; }
+
+/* =====================================================================================================================
+   9) A OFICINA (o hub, o editor e a sala do mapa: o oficina.css da v92): o mesmo vidro azul-noite e o fio do pôr do sol;
+      a escolhida no roxo; o amarelo continua nos botões de ação (CRIAR, SALVAR, TESTAR)
+   ===================================================================================================================== */
+html.v101 .ofi{ --k:#070720; --n1:#262a6e; --n2:#171a4c; --n3:#0e1036;
+  --painel:linear-gradient(180deg, rgba(34,38,96,.97) 0%, rgba(22,25,68,.97) 55%, rgba(16,18,52,.98) 100%); --painel2:linear-gradient(180deg, rgba(26,29,78,.97) 0%, rgba(17,19,56,.98) 100%);
+  background:radial-gradient(120% 90% at 50% 0%, #2b1f68 0%, #161340 45%, #0a0a26 100%); }
+html.v101 .ofi .ofi-hub-topo, html.v101 .ofi .ofi-ed-topo, html.v101 .ofi .ofi-sala-topo{ border-bottom:0;
+  background:linear-gradient(90deg, #7a2cff 0%, #d636c8 45%, #ff7a1f 100%) left bottom/100% 2px no-repeat, linear-gradient(180deg, rgba(24,22,68,.98) 0%, rgba(13,12,42,.98) 100%);
+  box-shadow:0 0 14px rgba(200,60,220,.25), 0 6px 14px rgba(0,0,0,.4); }
+html.v101 .ofi .ofi-hub-nav{ border-right:1px solid rgba(128,142,255,.22); background:rgba(8,7,30,.45); }
+html.v101 .ofi .ofi-bt, html.v101 .ofi .ofi-item, html.v101 .ofi .ofi-lib-it, html.v101 .ofi .ofi-cartao{ border-width:1.5px; border-color:rgba(8,6,30,.9); }
+html.v101 .ofi .ofi-bt:not(.ama):not(.verm):not(.verde):not(.on), html.v101 .ofi .ofi-item, html.v101 .ofi .ofi-lib-it{ border-color:var(--v101-borda); box-shadow:var(--v101-luz), 0 3px 8px rgba(3,2,18,.4); }
+html.v101 .ofi .ofi-cartao{ border-color:var(--v101-borda); box-shadow:var(--v101-luz), 0 6px 14px rgba(3,2,18,.45); }
+html.v101 .ofi .ofi-cartao-novo{ border-style:dashed; border-color:rgba(170,180,255,.45); }
+html.v101 .ofi .ofi-bt.on, html.v101 .ofi .ofi-seg-bt.on, html.v101 .ofi .ofi-hub-aba.on, html.v101 .ofi .ofi-modo-bt.on{ background:linear-gradient(180deg, #a866ff 0%, #7e34f0 50%, #5d1fc8 100%) !important; color:#fff !important; text-shadow:0 1px 0 rgba(20,0,50,.6) !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 12px rgba(150,80,255,.55) !important; }
+html.v101 .ofi .ofi-hub-aba.on .ofi-ic, html.v101 .ofi .ofi-seg-bt.on .ofi-ic{ color:#fff !important; }
+/* os ajustes e o chat: as abas e as escolhas no roxo do neon */
+html.v101 #pop-ajustes .ajx-aba.on, html.v101 #pop-ajustes .ajx-aba[aria-selected="true"],
+html.v101 #pop-ajustes .tl-seg button.on, html.v101 #pop-ajustes .ajx-seg button.on, html.v101 #pop-ajustes .ajx-seg button[aria-pressed="true"],
+html.v101 #lb .v95-ch-aba.on{
+  background:linear-gradient(180deg, #a866ff 0%, #7e34f0 50%, #5d1fc8 100%) !important; color:#fff !important; text-shadow:0 1px 0 rgba(20,0,50,.6) !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 0 0 1.5px #c9a2ff, 0 0 12px rgba(150,80,255,.55) !important; }
+html.v101 #pop-ajustes .ajx-aba.on *, html.v101 #pop-ajustes .ajx-seg button.on *, html.v101 #lb .v95-ch-aba.on *{ color:#fff !important; }
+
+/* =====================================================================================================================
+   10) SÓ O CRIAR TAMPINHA (tools/v101/semskins.js): o que mostrava as prontas some junto (as exclusivas do cofre e do perfil)
+   ===================================================================================================================== */
+html.v101-semskins .cf90-tp.exclusiva, html.v101-semskins .v90-pf-premios{ display:none !important; }
+html.v101 .v101-cofre-nota{ margin:-4px 0 10px; color:#d7c9ff !important; }

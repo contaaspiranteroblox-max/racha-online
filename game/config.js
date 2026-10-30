@@ -13,10 +13,16 @@
    servidor:  o endereço do servidor da turma (salas online, Chat do Brasil, clubes da turma e copa), se ele NÃO estiver no
               mesmo endereço do jogo. Ex.: 'meu-racha.onrender.com' ou 'wss://salas.meusite.com'. Vazio = o mesmo endereço
               (node server/servidor.js entrega o jogo e as salas juntos; a plataforma também, quando roda em produção).
+   servidoresConfiaveis: v100 — outros servidores das salas do RACHA (com o mesmo RACHA_SEGREDO_SALAS da plataforma), além
+              do 'servidor' e do mesmo endereço do jogo. Ex.: ['salas2.meusite.com']. Só esses recebem o bilhete da conta; o
+              convite (?servidor=) de qualquer outro pergunta antes de trocar e entra sem a conta.
    salas:     'servidor' liga as salas numa demonstração (com o servidor do mesmo endereço).
    origensPlataforma: as páginas que podem receber os eventos do jogo (começo e fim de partida, gols de treino), quando o
               jogo está dentro de um iframe de OUTRO endereço. Ex.: ['https://racha.meusite.com']. Vazio = só o mesmo
-              endereço do jogo (a plataforma serve o jogo em /game/racha.html). Nunca vai para '*'. */
+              endereço do jogo (a plataforma serve o jogo em /game/racha.html). Nunca vai para '*'.
+   skinsProntas: v101 — as tampinhas prontas (as da loja, as animadas, as do passe e dos eventos, a dos fundadores) estão
+              guardadas: o jogo mostra só o CRIAR TAMPINHA. true traz todas de volta (o que cada um tinha continua guardado).
+              Ex.: skinsProntas: true */
 window.RACHA_CONFIG = Object.assign({
   modo: 'producao',
   presente: true            // v87.2: o presente de TESTE (moedas e gemas) — apague esta linha no lançamento

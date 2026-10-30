@@ -1,0 +1,245 @@
+/* =====================================================================================================================
+   RACHÃO · A OFICINA DE ESTÁDIOS — o visual (app/public/game/rachao/estadios.css · RACHA v97)
+   A mesma parede amarela, o piche nas bordas, as placas com parafuso e a sombra seca do Rachão. O editor junta as duas
+   caras do jogo: o campo no escuro, como na partida, e o painel na parede amarela, como nos menus. Feito para o celular
+   deitado (844 × 390), em pé (390 × 844) e para o computador.
+   ===================================================================================================================== */
+.rc-ic { display: inline-flex; width: 20px; height: 20px; flex: none; align-items: center; justify-content: center; }
+.rc-ic svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* ---------------------------------------------------------------- a tela inicial: a placa da Oficina e o voltar */
+.placa.rc-placa { --bg: var(--piche); --fg: var(--muro); margin-top: 14px; }
+.placa.rc-placa .d { color: #f3ead0; }
+.rc-volta { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 2px; margin: 0 0 2px; padding: 5px 14px 6px 8px; }
+.rc-volta .rc-ic { width: 18px; height: 18px; }
+
+/* ---------------------------------------------------------------- os botões */
+.rc-bt { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 6px 14px 7px; border: 3px solid var(--piche); border-radius: 11px;
+  background: #fff; color: var(--piche); font: 800 16px/1.1 var(--ui); box-shadow: 0 3px 0 var(--piche); white-space: nowrap; }
+.rc-bt:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--piche); }
+.rc-bt:disabled { opacity: .4; cursor: default; transform: none; box-shadow: 0 3px 0 var(--piche); }
+.rc-bt.verde { background: var(--grama); color: #fff; }
+.rc-bt.verm { background: var(--verm); color: #fff; }
+.rc-bt.escuro { background: #3a362c; color: #fff; border-color: #000; box-shadow: 0 3px 0 #000; }
+.rc-bt.ic { width: 40px; min-width: 40px; padding: 0; }
+.rc-bt.grande { min-height: 48px; padding: 8px 18px 9px; font-size: 19px; }
+.rc-bt .rc-ic { width: 19px; height: 19px; }
+.rc-bt.ic .rc-ic { width: 22px; height: 22px; }
+.rc-linha-bts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+/* ---------------------------------------------------------------- SEUS ESTÁDIOS */
+.rc-tela .setupHead { flex-wrap: wrap; }
+.rc-tit { font-family: var(--disp); font-weight: 900; font-synthesis: none; font-size: clamp(26px, 7.5vw, 40px); margin: 0; line-height: 1; }
+.rc-conta { margin-left: auto; font-weight: 800; font-size: 15px; background: var(--piche); color: var(--muro); border-radius: 8px; padding: 2px 9px 3px; }
+.rc-conta:empty { display: none; }
+.rc-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 6px; }
+.rc-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; padding-bottom: 18px; }
+.rc-cartao { display: flex; flex-direction: column; min-width: 0; border: 3px solid var(--piche); border-radius: 12px; background: #fff; box-shadow: 0 4px 0 var(--piche); overflow: hidden; }
+.rc-cartao-img { display: block; padding: 0; border: 0; border-bottom: 3px solid var(--piche); background: #2f7639; }
+.rc-cartao-img canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+.rc-cartao .mn { font-weight: 800; font-size: 19px; padding: 8px 11px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-cartao .md { font-size: 14.5px; padding: 2px 11px 2px; line-height: 1.25; flex: 1 1 auto; }
+.rc-cartao .ms { font-size: 13.5px; padding: 0 11px 6px; font-weight: 700; opacity: .7; }
+.rc-cartao-bts { display: flex; gap: 6px; padding: 4px 10px 11px; }
+.rc-cartao-bts .rc-bt:first-child { flex: 1 1 auto; }
+.rc-vazio { grid-column: 1 / -1; display: grid; gap: 4px; padding: 22px 18px; border: 3px dashed var(--piche); border-radius: 14px; background: rgba(255, 255, 255, .45); font-size: 16.5px; max-width: 560px; }
+.rc-vazio b { font-size: 21px; }
+
+/* os cartões na preparação da partida: o selo SEU e o "Criar o seu" */
+.rc-selo { display: inline-block; margin-right: 6px; padding: 0 7px 1px; border-radius: 6px; background: var(--piche); color: var(--muro); font-size: 12.5px; font-weight: 800; vertical-align: 2px; }
+.mapCard.rc-criar { border-style: dashed; background: rgba(255, 255, 255, .55); box-shadow: none; }
+.rc-criar-img { display: grid; place-items: center; aspect-ratio: 16 / 9; border-bottom: 3px dashed var(--piche); color: var(--piche); }
+.rc-criar-img .rc-ic { width: 46px; height: 46px; }
+
+/* ---------------------------------------------------------------- as janelas (a folha amarela) e o recado */
+.rc-fundo { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: calc(var(--st) + 14px) calc(var(--sr) + 14px) calc(var(--sb) + 14px) calc(var(--sl) + 14px); background: rgba(29, 27, 22, .6); }
+.rc-folha { width: min(460px, 100%); max-height: calc(100dvh - 28px); }
+.rc-folha.rc-larga { width: min(820px, 100%); }
+.rc-folha h2 { font-size: clamp(24px, 6vw, 32px); overflow-wrap: anywhere; }
+.rc-tx { margin: 0; font-weight: 600; }
+.rc-erro { margin: 0; color: #9b1d0e; font-weight: 800; }
+.rc-codigo { width: 100%; resize: vertical; min-height: 96px; border: 3px solid var(--piche); border-radius: 10px; padding: 8px 10px; background: #fff; color: var(--piche);
+  font: 600 13px/1.35 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+.rc-item { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 3px solid var(--piche); border-radius: 12px; background: #fff;
+  text-align: left; box-shadow: 0 3px 0 var(--piche); }
+.rc-item:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--piche); }
+.rc-item .rc-ic { width: 26px; height: 26px; }
+.rc-item b { display: block; font-size: 18px; }
+.rc-item small { display: block; font-size: 14.5px; font-weight: 600; opacity: .8; }
+.rc-item.perigo { color: #9b1d0e; }
+.rc-modelos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.rc-modelo { display: flex; flex-direction: column; padding: 0 0 8px; border: 3px solid var(--piche); border-radius: 11px; background: #fff; overflow: hidden; text-align: left; box-shadow: 0 3px 0 var(--piche); }
+.rc-modelo:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--piche); }
+.rc-modelo canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-bottom: 3px solid var(--piche); }
+.rc-modelo b { font-size: 16.5px; padding: 5px 8px 0; }
+.rc-modelo small { font-size: 13px; font-weight: 600; padding: 0 8px; line-height: 1.2; opacity: .8; }
+.rc-aviso { position: fixed; z-index: 60; left: 50%; top: calc(var(--st) + 12px); max-width: min(92vw, 560px); transform: translate(-50%, -10px); padding: 7px 15px 8px; border-radius: 11px;
+  background: var(--piche); color: #fff; font-weight: 800; text-align: center; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
+.rc-aviso.on { opacity: 1; transform: translate(-50%, 0); }
+.rc-aviso.erro { background: var(--verm); }
+
+/* ---------------------------------------------------------------- O EDITOR */
+body.rc-editando { overflow: hidden; overscroll-behavior: none; }
+.rc-ed { --rc-painel: clamp(282px, 33vw, 392px); position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; background: var(--piche); color: #fff; }
+.rc-ed[hidden] { display: none !important; }
+.rc-ed-topo { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(var(--st) + 8px) calc(var(--sr) + 10px) 8px calc(var(--sl) + 10px); background: var(--piche); border-bottom: 3px solid #000; }
+.rc-ed-topo .rc-bt { flex: none; }
+.rc-ed-topo .rc-bt.voltar { background: var(--muro); }
+.rc-ed-nome { flex: 0 1 280px; min-width: 70px; height: 40px; padding: 0 11px; border: 3px solid #000; border-radius: 10px; background: #fff; color: var(--piche); font: 800 18px/1 var(--ui); }
+.rc-ed-estado { flex: none; font-weight: 700; font-size: 14px; color: #cfc6a8; min-width: 58px; }
+.rc-ed-estado.erro { color: #ff8a7a; }
+.rc-esp { flex: 1 1 auto; }
+.rc-ed-corpo { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--rc-painel); }
+.rc-ed-esq { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.rc-ed-palco { position: relative; flex: 1 1 auto; min-height: 120px; overflow: hidden; background: #0f1a14; }
+.rc-ed-cv { position: absolute; left: 0; top: 0; display: block; touch-action: none; outline: none; }
+.rc-ed-cv:focus-visible { box-shadow: inset 0 0 0 3px var(--muro); }
+.rc-ed-dica { position: absolute; left: 10px; top: 8px; max-width: calc(100% - 70px); padding: 4px 10px 5px; border-radius: 8px; background: rgba(29, 27, 22, .8); color: #fff; font-weight: 700; font-size: 14px; line-height: 1.2; pointer-events: none; opacity: 0; transition: opacity .35s; }
+.rc-ed-dica.on { opacity: 1; }
+.rc-ed-alerta { position: absolute; left: 10px; bottom: 9px; max-width: calc(100% - 20px); padding: 4px 10px 5px; border: 2.5px solid var(--piche); border-radius: 8px; background: var(--muro); color: var(--piche); font-weight: 800; font-size: 14px; line-height: 1.2; pointer-events: none; }
+.rc-ed-ferr { flex: none; display: flex; align-items: center; gap: 6px; padding: 7px calc(var(--sr) + 10px) 7px calc(var(--sl) + 10px); background: #2a2720; border-top: 3px solid #000; overflow-x: auto; scrollbar-width: thin; }
+.rc-ferr { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 56px; height: 50px; padding: 3px 6px; border: 2.5px solid #000; border-radius: 10px;
+  background: #3a362c; color: #fff; font: 800 11.5px/1 var(--ui); box-shadow: 0 2px 0 #000; }
+.rc-ferr .rc-ic { width: 24px; height: 24px; }
+.rc-ferr:active { transform: translateY(2px); box-shadow: none; }
+.rc-ferr.on { background: var(--muro); color: var(--piche); border-color: var(--piche); }
+.rc-ferr-sep { flex: none; width: 2px; height: 32px; margin: 0 2px; background: rgba(255, 255, 255, .14); border-radius: 2px; }
+/* o espelho: as 5 escolhas por cima das ferramentas */
+.rc-pop { position: absolute; z-index: 4; display: grid; gap: 3px; width: 230px; padding: 6px; border: 3px solid #000; border-radius: 12px; background: var(--piche); box-shadow: 0 6px 0 rgba(0, 0, 0, .35); }
+.rc-pop-it { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: #fff; font: 800 15.5px/1.1 var(--ui); text-align: left; }
+.rc-pop-it .rc-ic { width: 22px; height: 22px; }
+.rc-pop-it:hover { background: #3a362c; }
+.rc-pop-it.on { background: var(--muro); color: var(--piche); }
+
+/* o painel: a parede amarela */
+.rc-ed-painel { display: flex; flex-direction: column; min-width: 0; min-height: 0; color: var(--piche); border-left: 3px solid #000;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .022) 0 2px, transparent 2px 9px), var(--muro); }
+.rc-ed-abas { flex: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px 9px; border-bottom: 3px solid var(--piche); }
+.rc-ed-abas .tab { flex: none; font-size: 15.5px; }
+.rc-ed-abas .tab.rc-tab-peca:not(.on) { background: var(--azul); color: #fff; }
+.rc-ed-conteudo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 12px calc(var(--sb) + 18px); -webkit-overflow-scrolling: touch; }
+.rc-grupo { margin: 0 0 12px; padding: 9px 12px 12px; border: 3px solid var(--piche); border-radius: 12px; background: #fff; box-shadow: 0 3px 0 var(--piche); }
+.rc-grupo h3 { margin: 0 0 2px; font-size: 17px; font-weight: 800; }
+.rc-grupo h3:empty { display: none; }
+.rc-ctl { margin: 9px 0 0; }
+.rc-grupo > .rc-ctl:first-child, .rc-grupo h3 + .rc-ctl { margin-top: 4px; }
+.rc-rot { display: flex; align-items: center; gap: 8px; min-height: 22px; }
+.rc-rot label { flex: 1 1 auto; font-weight: 700; font-size: 15.5px; line-height: 1.15; }
+.rc-val { flex: none; min-width: 40px; padding: 1px 7px 2px; border-radius: 6px; background: var(--piche); color: var(--muro); font-weight: 800; font-size: 14px; text-align: center; font-variant-numeric: tabular-nums; }
+.rc-zera { flex: none; padding: 2px 4px; border: 0; background: none; color: #6b6350; font-weight: 700; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.rc-dica { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 600; line-height: 1.25; color: #5d5545; }
+.rc-nota { margin: 9px 0 0; font-size: 13.5px; font-weight: 600; line-height: 1.3; color: #5d5545; }
+.rc-rot2 { display: block; margin: 8px 0 4px; font-weight: 800; font-size: 14.5px; }
+.rc-in { display: block; width: 100%; padding: 7px 10px; border: 2.5px solid var(--piche); border-radius: 9px; background: #fff; color: var(--piche); font: 700 16px/1.25 var(--ui); resize: vertical; }
+
+/* a faixa (o slider): a pista de piche e a bolinha */
+.rc-faixa { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 30px; margin: 2px 0 0; padding: 0; background: transparent; --p: 50%; cursor: pointer; }
+.rc-faixa::-webkit-slider-runnable-track { height: 11px; border: 2.5px solid var(--piche); border-radius: 99px; background: linear-gradient(90deg, var(--grama) var(--p), #fff var(--p)); }
+.rc-faixa::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; margin-top: -9.5px; border: 3px solid var(--piche); border-radius: 50%; background: #fff; box-shadow: 0 2px 0 var(--piche); }
+.rc-faixa::-moz-range-track { height: 6px; border: 2.5px solid var(--piche); border-radius: 99px; background: #fff; }
+.rc-faixa::-moz-range-progress { height: 6px; border: 2.5px solid var(--piche); border-radius: 99px; background: var(--grama); }
+.rc-faixa::-moz-range-thumb { width: 19px; height: 19px; border: 3px solid var(--piche); border-radius: 50%; background: #fff; box-shadow: 0 2px 0 var(--piche); }
+.rc-faixa:focus { outline: none; }
+.rc-faixa:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--azul); }
+.rc-faixa:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--azul); }
+
+/* as escolhas, as chaves e as fichas */
+.rc-seg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.rc-seg button { padding: 5px 11px 6px; border: 2.5px solid var(--piche); border-radius: 9px; background: #fff; font-weight: 800; font-size: 15px; box-shadow: 0 2px 0 var(--piche); }
+.rc-seg button:active { transform: translateY(2px); box-shadow: none; }
+.rc-seg button.on { background: var(--piche); color: var(--muro); }
+.rc-chave { display: flex; align-items: center; gap: 10px; width: 100%; padding: 4px 0; border: 0; background: none; text-align: left; font-weight: 800; font-size: 16.5px; }
+.rc-chave i { position: relative; flex: none; width: 48px; height: 28px; border: 2.5px solid var(--piche); border-radius: 99px; background: #fff; transition: background .15s; }
+.rc-chave i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 19px; height: 19px; border-radius: 50%; background: var(--piche); transition: left .15s; }
+.rc-chave.on i { background: var(--grama); }
+.rc-chave.on i::after { left: 21px; background: #fff; box-shadow: 0 0 0 2.5px var(--piche); }
+.rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-chip { padding: 5px 12px 6px; border: 2.5px solid var(--piche); border-radius: 999px; background: #fff; font-weight: 800; font-size: 15px; }
+.rc-chip.on { background: var(--piche); color: var(--muro); }
+/* depois do teste: misturar com o RACHA (a bola, o jogador e o chute, cada um de um jogo) e os chutes do estádio */
+.rc-mistura { display: grid; gap: 10px; margin-top: 6px; }
+.rc-mistura-l { display: grid; grid-template-columns: 76px 1fr; align-items: center; column-gap: 10px; row-gap: 3px; padding-bottom: 9px; border-bottom: 2px dashed rgba(29, 27, 22, .22); }
+.rc-mistura-l:last-child { padding-bottom: 0; border-bottom: 0; }
+.rc-mistura-l > b { font-size: 16px; font-weight: 800; }
+.rc-mistura-l .rc-seg { margin: 0; }
+.rc-mistura-l .rc-seg button { min-width: 84px; }
+.rc-mistura-l > small { grid-column: 1 / -1; font-size: 13.5px; font-weight: 600; line-height: 1.3; color: #5d5545; }
+.rc-selo.rc-selo-chute { margin: 0 0 0 6px; background: var(--muro); color: var(--piche); box-shadow: inset 0 0 0 2px var(--piche); }
+.seg button.rc-trancado { opacity: .42; text-decoration: line-through; text-decoration-thickness: 2px; cursor: not-allowed; transform: none; box-shadow: none; }
+.rc-pisos { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.rc-piso { display: flex; flex-direction: column; padding: 0 0 6px; border: 2.5px solid var(--piche); border-radius: 10px; background: #fff; overflow: hidden; text-align: left; }
+.rc-piso img, .rc-piso i { display: block; width: 100%; aspect-ratio: 16 / 9; border-bottom: 2.5px solid var(--piche); background: #2f7639; }
+.rc-piso b { padding: 4px 8px 0; font-size: 15px; }
+.rc-piso small { padding: 0 8px; font-size: 12.5px; font-weight: 600; line-height: 1.15; color: #6b6350; }
+.rc-piso.on { box-shadow: 0 0 0 4px var(--verm); }
+.rc-poderes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 7px; }
+.rc-poder { position: relative; display: grid; grid-template-columns: 30px 1fr; grid-template-rows: auto auto; column-gap: 6px; align-items: start; padding: 7px 8px 8px; border: 2.5px solid var(--piche); border-radius: 10px;
+  background: #ece5cd; text-align: left; opacity: .62; }
+.rc-poder.on { background: #fff; opacity: 1; box-shadow: 0 2px 0 var(--piche); }
+.rc-poder.on::after { content: '✓'; position: absolute; right: 6px; top: 4px; font-weight: 800; color: var(--grama); }
+.rc-poder-ic { grid-row: 1 / span 2; font-size: 22px; line-height: 1.1; }
+.rc-poder b { font-size: 15.5px; }
+.rc-poder small { font-size: 12.5px; font-weight: 600; line-height: 1.15; }
+.rc-peca-tit { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+.rc-peca-tit .rc-ic { width: 32px; height: 32px; color: var(--piche); }
+.rc-peca-tit b { font-family: var(--disp); font-weight: 900; font-synthesis: none; font-size: 24px; line-height: 1; }
+.rc-peca-tit small { display: block; flex-basis: 100%; }
+.rc-peca-tit { flex-wrap: wrap; }
+.rc-peca-tit small { margin-top: -6px; padding-left: 42px; font-weight: 700; font-size: 14px; color: #5d5545; }
+.rc-pos { display: flex; gap: 8px; align-items: baseline; margin: 0 2px 10px; font-weight: 700; font-size: 14.5px; }
+.rc-pos b { font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- o editor em pé (celular em pé, janela estreita) */
+@media (max-aspect-ratio: 1 / 1) {
+  .rc-ed-corpo { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .rc-ed-palco { flex: none; height: min(44vh, 66vw); }
+  .rc-ed-painel { border-left: 0; border-top: 3px solid #000; }
+}
+@media (max-aspect-ratio: 1 / 1) and (max-width: 700px) {
+  .rc-ed-ferr { flex-wrap: wrap; justify-content: center; overflow: visible; }
+  .rc-ferr { min-width: 42px; width: 42px; height: 42px; padding: 0; }
+  .rc-ferr .rc-ferr-tx { display: none; }
+}
+/* a janela estreita: a barra de cima em duas linhas (o nome em cima; desfazer, testar e jogar embaixo) */
+@media (max-width: 600px) {
+  .rc-ed-topo { flex-wrap: wrap; gap: 6px; padding-left: calc(var(--sl) + 8px); padding-right: calc(var(--sr) + 8px); }
+  .rc-ed-topo .rc-t-voltar { order: 1; }
+  .rc-ed-nome { order: 2; flex: 1 1 0; font-size: 16px; }
+  .rc-ed-topo .rc-t-mais { order: 3; }
+  .rc-esp { order: 4; flex: 0 0 100%; height: 0; }
+  .rc-ed-topo .rc-t-desfaz { order: 5; }
+  .rc-ed-topo .rc-t-refaz { order: 6; }
+  .rc-ed-estado { order: 7; min-width: 0; }
+  .rc-ed-topo .rc-t-testar { order: 8; margin-left: auto; }
+  .rc-ed-topo .rc-t-jogar { order: 9; }
+}
+/* o celular deitado: tudo mais baixo para o campo crescer */
+@media (max-height: 460px) and (min-aspect-ratio: 1 / 1) {
+  .rc-ed { --rc-painel: clamp(262px, 36vw, 340px); }
+  .rc-ed-topo { padding-top: calc(var(--st) + 5px); padding-bottom: 5px; gap: 6px; }
+  .rc-ed-topo .rc-bt { min-height: 36px; }
+  .rc-ed-topo .rc-bt.ic { width: 36px; min-width: 36px; }
+  .rc-ed-nome { height: 36px; font-size: 16px; }
+  .rc-ed-ferr { padding-top: 5px; padding-bottom: 5px; gap: 5px; }
+  .rc-ferr { width: 40px; min-width: 40px; height: 40px; padding: 0; }
+  .rc-ferr .rc-ferr-tx { display: none; }
+  .rc-ferr .rc-ic { width: 22px; height: 22px; }
+  .rc-ed-abas { padding: 7px 10px 6px; }
+  .rc-ed-abas .tab { padding: 3px 11px; font-size: 14.5px; }
+  .rc-ed-conteudo { padding: 9px 10px calc(var(--sb) + 14px); }
+  .rc-ed-dica { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-aviso, .rc-chave i, .rc-chave i::after { transition: none; }
+}
+
+/* ---------------------------------------------------------------- v98 · o online (rede.js): a placa JOGAR ONLINE e o ENTRAR COM O CÓDIGO */
+.placa.rd-placa { margin-top: 14px; }
+.rd-entrar { padding: 12px 14px 14px; border: 3px solid var(--piche); border-radius: 14px; background: var(--cal); box-shadow: 0 4px 0 var(--piche); }
+.rd-entrar h3 { margin-top: 0; }
+.rd-entrar-l { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.rd-codigo { flex: 1 1 170px; min-width: 0; max-width: 260px; padding: 6px 12px; border: 3px solid var(--piche); border-radius: 11px; background: #fff; color: var(--piche);
+  font: 400 24px/1.2 var(--disp); letter-spacing: .14em; text-transform: uppercase; }
+.rd-codigo::placeholder { font: 700 17px/1.2 var(--ui); letter-spacing: 0; text-transform: none; color: #8a8270; }
+.rd-codigo:focus-visible { outline: 3px dashed var(--azul); outline-offset: 2px; }
+.mapCard.rd-da-sala .rc-selo { background: var(--azul); color: #fff; }   /* (o estádio da sala, nos AJUSTES de quem não tem ele) */
