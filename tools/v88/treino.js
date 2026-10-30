@@ -252,7 +252,7 @@ function v88TreinoNota(){                                   // a linha da conta 
     if (res.espera){ n.textContent = 'Registrando na sua conta…'; return; }
     if (res.erro){ n.textContent = 'A conta não registrou este treino (' + String(res.erro).slice(0, 80) + ').'; return; }
     premioNos(TRF.premio, {p:{m:res.moedas | 0, g:res.gemas | 0, xp:0}});
-    n.textContent = (res.moedas || res.gemas ? 'Na sua conta.' : 'Sem moedas agora: o treino de hoje já pagou o teto do dia.') + (res.nota ? ' ' + res.nota : '');
+    n.textContent = (res.nota || (res.moedas || res.gemas ? 'Na sua conta.' : 'Sem moedas agora: o treino de hoje já pagou o teto do dia.'));
   } catch (_) {}
 }
 const trUiMostraAntes88 = trUiMostra;

@@ -1,0 +1,165 @@
+/* =====================================================================================================================
+   RACHA v92 · FASE 1 — O EDITOR DOS CONTROLES DA TELA (tools/v92/hud.js). Vem depois do v92.css.
+   No lugar da janela fixa no meio da tela: uma CAMADA do tamanho da tela (#hp.he, que não pega toque) com a BARRA compacta
+   (arrasta pelo ⠿, recolhe no ▾ e sai sozinha de cima do botão escolhido), a CAIXINHA de cada ajuste presa a ela, a
+   PÍLULA do modo teste e a barra recolhida. As cores, as letras e os contornos são os da v91 (o azul-marinho, o contorno
+   preto grosso, o amarelo da escolha, o verde do salvar, a Lilita One). Todo toque tem pelo menos 44 px.
+   ===================================================================================================================== */
+#hp.he{
+  position:absolute !important; inset:0 !important; left:0 !important; top:0 !important; right:0 !important; bottom:0 !important;
+  transform:none !important; width:auto !important; height:auto !important; max-width:none !important; max-height:none !important;
+  overflow:visible !important; overscroll-behavior:auto !important; margin:0 !important; padding:0 !important; opacity:1 !important;
+  background:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important;
+  pointer-events:none; z-index:6; box-sizing:border-box;
+  font:500 15px/1.15 var(--v91-txt, "Barlow", system-ui, sans-serif); color:#fff; letter-spacing:.2px; touch-action:none;
+  -webkit-user-select:none; user-select:none;
+}
+#hp.he > .he-velho{ display:none !important; }
+#hp.he > .he-barra, #hp.he > .he-pop, #hp.he > .he-mini, #hp.he > .he-teste{ pointer-events:auto; }
+#hp.he [hidden]{ display:none !important; }
+
+/* ---- a barra ---- */
+#hp.he .he-barra, #hp.he .he-mini, #hp.he .he-teste{
+  position:absolute; left:0; top:0; box-sizing:border-box; display:flex; flex-wrap:nowrap; align-items:center; gap:4px;
+  max-width:calc(100% - 12px); padding:5px; border:3px solid var(--v91-k, #05060c); border-radius:16px;
+  background:linear-gradient(180deg, #2a3478 0%, #1b2360 45%, #111847 100%);
+  box-shadow:inset 0 0 0 2px rgba(70,120,255,.45), inset 0 3px 0 rgba(255,255,255,.08), 0 5px 0 var(--v91-k, #05060c), 0 12px 24px rgba(0,0,0,.45);
+  transition:transform .2s cubic-bezier(.2,.8,.2,1), opacity .15s; will-change:transform; touch-action:manipulation;
+}
+/* as duas partes da barra: numa linha quando cabe entre os controles; em duas (uma embaixo da outra) quando não cabe */
+#hp.he .he-g1, #hp.he .he-g2{ display:flex; flex:none; align-items:center; gap:4px; }
+#hp.he .he-barra.he-2l{ flex-direction:column; align-items:flex-start; gap:4px; }
+#hp.he .he-barra.he-2l .he-sep-g{ display:none; }
+#hp.he .he-barra.he-aperta .he-g1, #hp.he .he-barra.he-aperta .he-g2{ flex-wrap:wrap; max-width:100%; }
+#hp.he .he-sem-anim{ transition:opacity .15s !important; }
+/* enquanto um controle é arrastado (ou pinçado), a barra e a caixinha saem da frente: o dedo vai aonde quiser */
+#hp.he.he-arrastando .he-barra, #hp.he.he-arrastando .he-pop, #hp.he.he-arrastando .he-mini{ opacity:.12; pointer-events:none; }
+
+#hp.he .he-bt, #hp.he #hp-salvar, #hp.he #hp-canc, #hp.he #hp-rest{
+  position:relative; flex:none; display:inline-flex; align-items:center; justify-content:center; gap:5px;
+  min-width:44px; height:44px; min-height:44px; padding:0 8px; margin:0; box-sizing:border-box; border:3px solid var(--v91-k, #05060c); border-radius:12px;
+  background:linear-gradient(180deg, #3a48a6 0%, #26318a 48%, #19215f 100%); color:#fff;
+  font:400 15px/1 var(--v91-tit, "Lilita One", "Arial Black", sans-serif); letter-spacing:.3px; text-shadow:0 2px 0 rgba(0,0,0,.55); white-space:nowrap;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.16), 0 3px 0 var(--v91-k, #05060c); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+}
+#hp.he .he-bt b{ font-weight:400; }
+#hp.he .he-bt:active:not(:disabled){ transform:translateY(2px); box-shadow:inset 0 2px 0 rgba(255,255,255,.16), 0 1px 0 var(--v91-k, #05060c); }
+#hp.he .he-bt svg{ width:22px; height:22px; flex:none; overflow:visible; filter:drop-shadow(0 1.5px 0 rgba(0,0,0,.65)); }
+#hp.he .he-bt.on, #hp.he .he-bt[aria-expanded="true"]{ background:var(--v91-ama, linear-gradient(180deg, #fff27c 0%, #ffd21f 35%, #ffc20f 70%, #f39a00 100%)); color:var(--v91-ama-tx, #2a1d00); text-shadow:none; }
+#hp.he .he-bt.on svg, #hp.he .he-bt[aria-expanded="true"] svg{ filter:none; }
+#hp.he .he-bt:disabled{ opacity:.42; filter:saturate(.3); cursor:default; }
+#hp.he .he-bt:focus-visible{ outline:3px solid #5cc8ff !important; outline-offset:2px; }
+#hp.he .he-grip{ width:28px; min-width:28px; padding:0; border-color:transparent; background:transparent; box-shadow:none; cursor:grab; touch-action:none; color:#aab6e8; }
+#hp.he .he-grip:active{ transform:none; box-shadow:none; cursor:grabbing; }
+#hp.he .he-sel{ width:130px; min-width:0; justify-content:space-between; padding:0 6px 0 10px; background:#0e1438; }
+#hp.he .he-sel b{ overflow:hidden; text-overflow:ellipsis; min-width:0; }
+#hp.he .he-sel svg{ width:16px; height:16px; }
+#hp.he .he-val{ min-width:0; width:84px; padding:0 6px; background:#0e1438; justify-content:flex-start; }
+#hp.he .he-val svg{ width:20px; height:20px; }
+#hp.he .he-val b{ font:800 17px/1 var(--v91-num, "Barlow Condensed", "Arial Narrow", sans-serif); color:#ffd21f; text-shadow:0 2px 0 rgba(0,0,0,.6); }
+#hp.he .he-val[aria-expanded="true"] b{ color:var(--v91-ama-tx, #2a1d00); text-shadow:none; }
+#hp.he .he-ok, #hp.he #hp-salvar{ padding:0 12px; background:var(--v91-verde-f, linear-gradient(180deg, #7fe08f 0%, #2fae55 30%, #168a3c 65%, #0d6b2e 100%)); color:#fff; }
+#hp.he .he-ok.sujo::after{ content:''; position:absolute; top:-7px; right:-7px; width:13px; height:13px; border-radius:50%; background:#ffd21f; border:3px solid var(--v91-k, #05060c); }
+#hp.he .he-sair, #hp.he #hp-canc{ background:linear-gradient(180deg, #4a4f6e 0%, #2f3352 55%, #22253d 100%); color:#fff; }
+#hp.he .he-recolhe{ min-width:36px; width:36px; padding:0; }
+#hp.he .he-sep{ flex:none; width:2px; height:30px; margin:0 1px; border-radius:1px; background:rgba(140,160,255,.3); }
+#hp.he .he-rot{ display:none; }
+@media (min-width:1100px){ #hp.he .he-rot{ display:inline; } }
+/* o aviso (o que acabou de acontecer, ou o controle encostado): uma tira presa à barra, embaixo (ou em cima, com a barra embaixo) */
+#hp.he .he-aviso{ position:absolute; left:-3px; right:-3px; top:calc(100% + 7px); display:flex; align-items:center; gap:8px; min-height:34px; box-sizing:border-box;
+  padding:3px 4px 3px 10px; border:3px solid var(--v91-k, #05060c); border-radius:12px; background:#0e1438; box-shadow:0 4px 0 var(--v91-k, #05060c);
+  font:600 13px/1.2 var(--v91-txt, "Barlow", sans-serif); color:#dfe5ff; pointer-events:auto; }
+#hp.he .he-barra.he-baixo .he-aviso{ top:auto; bottom:calc(100% + 7px); }
+#hp.he .he-aviso[hidden]{ display:none !important; }
+#hp.he .he-aviso.ruim{ color:#ffc2b8; box-shadow:inset 0 0 0 2px rgba(255,75,58,.55), 0 4px 0 var(--v91-k, #05060c); }
+#hp.he .he-aviso.bom{ color:#9dffb4; }
+#hp.he .he-aviso > span{ flex:1 1 auto; min-width:0; }
+#hp.he .he-aviso .he-bt{ height:40px; min-height:40px; font-size:14px; }
+
+/* ---- a barra recolhida e a pílula do modo teste ---- */
+#hp.he .he-mini{ flex-wrap:nowrap; }
+#hp.he .he-mini .he-abre{ padding:0 12px; background:var(--v91-ama, #ffd21f); color:var(--v91-ama-tx, #2a1d00); text-shadow:none; }
+#hp.he .he-teste{ flex-wrap:nowrap; background:linear-gradient(180deg, #4a2a92 0%, #2d1a6a 55%, #1d1250 100%); box-shadow:inset 0 0 0 2px rgba(180,138,255,.55), 0 5px 0 var(--v91-k, #05060c), 0 12px 24px rgba(0,0,0,.45); }
+#hp.he .he-teste .he-tst-tx{ display:flex; flex-direction:column; justify-content:center; min-width:0; padding:0 4px 0 2px; }
+#hp.he .he-teste .he-tst-tx b{ font:400 15px/1.05 var(--v91-tit, "Lilita One", sans-serif); color:#ffd21f; letter-spacing:.4px; text-shadow:0 2px 0 rgba(0,0,0,.6); white-space:nowrap; }
+#hp.he .he-teste .he-tst-tx small{ font:600 13px/1.15 var(--v91-txt, "Barlow", sans-serif); color:#e6dcff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+#hp.he .he-teste .he-tst-luz{ flex:none; width:12px; height:12px; margin-left:4px; border-radius:50%; background:#ff4b3a; box-shadow:0 0 0 3px rgba(255,75,58,.3); animation:he-pisca 1.1s ease-in-out infinite; }
+@keyframes he-pisca{ 50%{ opacity:.35; } }
+@media (prefers-reduced-motion:reduce){ #hp.he .he-teste .he-tst-luz{ animation:none; } #hp.he .he-barra, #hp.he .he-mini, #hp.he .he-teste, #hp.he .he-pop{ transition:none !important; } }
+
+/* ---- a caixinha de cada ajuste ---- */
+#hp.he .he-pop{
+  position:absolute; left:0; top:0; box-sizing:border-box; width:max-content; max-width:min(620px, calc(100% - 12px)); overflow:auto; overscroll-behavior:contain;
+  padding:8px 10px 10px; border:3px solid var(--v91-k, #05060c); border-radius:16px;
+  background:linear-gradient(180deg, #27316c 0%, #19215a 48%, #111843 100%);
+  box-shadow:inset 0 0 0 2px rgba(70,120,255,.45), 0 5px 0 var(--v91-k, #05060c), 0 14px 28px rgba(0,0,0,.5);
+  transition:opacity .12s; -webkit-overflow-scrolling:touch; touch-action:pan-y;
+}
+#hp.he .he-pop-tit{ display:flex; align-items:center; gap:8px; margin:0 0 6px; font:400 16px/1.1 var(--v91-tit, "Lilita One", sans-serif); color:#ffd21f; letter-spacing:.4px;
+  text-shadow:0 2px 0 rgba(0,0,0,.6); white-space:nowrap; }
+#hp.he .he-pop-tit span{ color:#fff; }
+#hp.he .he-pop-tit .he-nuvem{ margin-left:auto; font:600 13px/1.2 var(--v91-txt, "Barlow", sans-serif); color:var(--v91-tx2, #aab6e8); text-shadow:none; white-space:normal; text-align:right; max-width:300px; }
+#hp.he .he-pop-tit .he-nuvem.ok{ color:#9dffb4; }
+#hp.he .he-pop-tit .he-nuvem.ruim{ color:#ffc2b8; }
+#hp.he .he-linha{ display:flex; align-items:center; gap:6px; margin:2px 0; }
+#hp.he .he-linha > span{ flex:none; min-width:64px; font:600 14px/1.1 var(--v91-txt, "Barlow", sans-serif); color:#dfe5ff; }
+#hp.he .he-linha output{ flex:none; min-width:54px; text-align:right; font:800 19px/1 var(--v91-num, "Barlow Condensed", sans-serif); color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.6); }
+#hp.he .he-nota{ margin:6px 2px 0; max-width:360px; font:500 13px/1.25 var(--v91-txt, "Barlow", sans-serif); color:var(--v91-tx2, #aab6e8); white-space:normal; }
+#hp.he .he-nota b{ color:#fff; font-weight:700; }
+/* a caixinha estreita (para caber do lado do controle escolhido numa tela pequena) e a curta (sem as dicas) */
+#hp.he .he-pop.he-curta .he-dica{ display:none; }
+#hp.he .he-pop.he-estreita .he-linha{ display:grid; grid-template-columns:44px minmax(140px, 1fr) 44px auto; column-gap:6px; row-gap:0; }
+#hp.he .he-pop.he-estreita .he-linha > span{ grid-column:1 / -1; min-width:0; margin:2px 0 0; }   /* (o nome em cima do deslizante) */
+#hp.he .he-pop.he-estreita input[type=range].he-faixa-r{ width:auto; min-width:140px; }           /* (mais curto que isso fica sensível demais: aí a estreita não cabe e não é usada) */
+#hp.he .he-pop.he-estreita .he-cols{ flex-direction:column; gap:8px; }
+#hp.he .he-pop.he-estreita .he-cols > div{ flex:none; width:100%; min-width:0; }
+#hp.he .he-pop.he-estreita .he-cols > div + div{ padding:8px 0 0; border-left:0; border-top:2px solid rgba(140,160,255,.22); }
+#hp.he .he-grade{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:5px; }
+#hp.he .he-grade3{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+#hp.he .he-faixa{ display:flex; flex-wrap:wrap; gap:5px; margin:5px 0 0; }
+#hp.he .he-faixa .he-bt{ flex:1 1 auto; }
+#hp.he .he-lista{ display:flex; flex-wrap:wrap; gap:5px; }
+#hp.he .he-lista .he-escolha{ flex:1 1 140px; max-width:100%; }
+#hp.he .he-cols{ display:flex; gap:12px; align-items:flex-start; }
+#hp.he .he-cols > div{ min-width:0; }
+#hp.he .he-cols > div:first-child{ flex:1 1 250px; min-width:230px; }
+#hp.he .he-cols > div:last-child{ flex:1 1 300px; }
+#hp.he .he-exclui{ width:44px; padding:0; }
+#hp.he .he-cols > div + div{ padding-left:12px; border-left:2px solid rgba(140,160,255,.22); }
+#hp.he .he-sub{ margin:8px 0 4px; font:800 13px/1 var(--v91-num, "Barlow Condensed", sans-serif); letter-spacing:1.2px; color:var(--v91-tx2, #aab6e8); text-transform:uppercase; }
+#hp.he .he-sub:first-child{ margin-top:0; }
+#hp.he .he-larga{ width:100%; }
+#hp.he .he-perigo, #hp.he #hp-rest.he-perigo{ background:var(--v91-verm-f, linear-gradient(180deg, #ff8a7a 0%, #e0352a 45%, #b5141c 100%)); color:#fff; }
+#hp.he .he-perigo.confirma{ animation:he-pisca .6s ease-in-out infinite; }
+#hp.he .he-verde{ background:var(--v91-verde-f, linear-gradient(180deg, #7fe08f 0%, #2fae55 30%, #168a3c 65%, #0d6b2e 100%)); }
+#hp.he .he-escolha{ justify-content:flex-start; gap:8px; min-width:0; padding:0 10px; background:#0e1438; text-align:left; }
+#hp.he .he-escolha b{ font-weight:400; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+#hp.he .he-escolha small{ margin-left:auto; padding-left:6px; font:700 13px/1 var(--v91-num, "Barlow Condensed", sans-serif); letter-spacing:.3px; color:var(--v91-tx2, #aab6e8); text-shadow:none; }
+#hp.he .he-escolha.on small{ color:var(--v91-ama-tx, #2a1d00); }
+#hp.he .he-escolha i{ flex:none; width:16px; height:16px; border-radius:50%; border:3px solid var(--v91-k, #05060c); background:#26318a; box-shadow:inset 0 0 0 2px rgba(255,255,255,.25); }
+#hp.he .he-escolha.on i{ background:#2fcf62; box-shadow:inset 0 0 0 3px #fff; }
+#hp.he .he-chave{ justify-content:flex-start; gap:8px; padding:0 10px 0 8px; background:#0e1438; text-align:left; }
+#hp.he .he-chave i{ flex:none; position:relative; width:20px; height:20px; border-radius:6px; border:3px solid var(--v91-k, #05060c); background:#26318a; }
+#hp.he .he-chave[aria-pressed="true"] i{ background:#2fcf62; }
+#hp.he .he-chave[aria-pressed="true"] i::after{ content:''; position:absolute; left:5px; top:1px; width:5px; height:10px; border:solid #fff; border-width:0 3px 3px 0; transform:rotate(45deg); }
+#hp.he .he-chave span{ font-weight:400; white-space:normal; line-height:1.05; text-align:left; }
+#hp.he .he-nome{ flex:1 1 200px; min-width:150px; height:44px; box-sizing:border-box; padding:0 12px; border:3px solid var(--v91-k, #05060c); border-radius:12px;
+  background:#0b1036; color:#fff; font:400 17px/1 var(--v91-tit, "Lilita One", sans-serif); letter-spacing:.3px; outline:none; -webkit-user-select:text; user-select:text; touch-action:manipulation; }
+#hp.he .he-nome:focus{ box-shadow:0 0 0 3px #5cc8ff; }
+
+/* os deslizantes (o mesmo desenho dos ajustes da v91: o trilho amarelo até onde está, a bolinha amarela de contorno preto) */
+#hp.he input[type=range].he-faixa-r{ -webkit-appearance:none; appearance:none; flex:1 1 170px; width:170px; min-width:110px; height:44px; margin:0; background:transparent; cursor:pointer; touch-action:none; }
+#hp.he input[type=range].he-faixa-r::-webkit-slider-runnable-track{ height:12px; border:3px solid var(--v91-k, #05060c); border-radius:8px;
+  background:linear-gradient(90deg, #ffd21f var(--p, 50%), #0b1036 var(--p, 50%)); }
+#hp.he input[type=range].he-faixa-r::-webkit-slider-thumb{ -webkit-appearance:none; width:30px; height:30px; margin-top:-12px; border-radius:50%;
+  border:3px solid var(--v91-k, #05060c); background:radial-gradient(circle at 40% 35%, #fff6b0, #ffd21f 55%, #e0a800); box-shadow:0 3px 0 rgba(0,0,0,.45); }
+#hp.he input[type=range].he-faixa-r::-moz-range-track{ height:8px; border:3px solid var(--v91-k, #05060c); border-radius:8px; background:#0b1036; }
+#hp.he input[type=range].he-faixa-r::-moz-range-progress{ height:8px; border-radius:6px; background:#ffd21f; }
+#hp.he input[type=range].he-faixa-r::-moz-range-thumb{ width:24px; height:24px; border-radius:50%; border:3px solid var(--v91-k, #05060c); background:#ffd21f; }
+#hp.he input[type=range].he-faixa-r:focus-visible{ outline:3px solid #5cc8ff; outline-offset:2px; }
+
+/* ---- AJUSTES › CONTROLES e a PAUSA: o layout em uso ---- */
+#pop-ajustes .he-aj-layouts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+#pop-ajustes .he-aj-layouts button{ flex:1 1 120px; }
+#pausa .pa-bt.he-pa-layout{ background:linear-gradient(180deg, #7cc4ff 0%, #2f7fff 35%, #1f5ad6 70%, #163f9e 100%) !important; color:#fff !important; }
+#pausa .pa-bt.he-pa-layout small{ display:block; margin-top:2px; font:700 0.62em/1 var(--v91-num, "Barlow Condensed", sans-serif); letter-spacing:.5px; opacity:.92; }

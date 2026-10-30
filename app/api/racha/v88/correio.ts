@@ -10,7 +10,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, and, desc, isNull, lte, or, gt } from "drizzle-orm";
 import { createRouter } from "../../middleware";
 import { getDb } from "../../queries/connection";
-import { correio, correioGlobal, eventos, usuarios, type AnexoCorreio } from "@db/schema";
+import { correio, correioGlobal, eventos, type AnexoCorreio } from "@db/schema";
 import { autenticado, exigeLimite, type UsuarioSessao } from "../guard";
 import { contaDe, entregaAnexos, notifica, type Conn } from "./comum";
 import { diaUtc, validaAnexos, type Anexo } from "@contracts/v88";

@@ -11,6 +11,9 @@ const fs = require('fs');
 const os = require('os');
 const EventEmitter = require('events');
 const RAIZ = path.resolve(__dirname, '..');
+// v93: os testes escritos antes da contagem (3, 2, 1, JÁ!) e do replay online começam na hora e sem o replay; os da v93 ligam
+if (process.env.RACHA_CONTAGEM_MS == null) process.env.RACHA_CONTAGEM_MS = '0';
+if (process.env.RACHA_REPLAY == null) process.env.RACHA_REPLAY = '0';
 const {Turma} = require(path.join(RAIZ, 'server', 'turma'));
 const {assina, confere} = require(path.join(RAIZ, 'server', 'banco'));
 

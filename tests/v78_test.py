@@ -208,7 +208,9 @@ PERFIL = r"""(() => {
 
 LOBBY = r"""(() => {
   const c = LB.brilho.getBoundingClientRect(), k = c.width/EMB.w, cx = c.x + EMB.w/2*k, cy = c.y + EMB.oy*k, R = EMB.R*V77L.esc*k;
-  const l = document.querySelector('#lb .v77-letreiro'), lr = l && l.offsetParent ? l.getBoundingClientRect() : null;
+  const l = document.querySelector('#lb .v77-letreiro'), f = document.querySelector('#lb .v91-faixa');   // (v91: sem o letreiro, o limite de cima é a faixa azul)
+  const topo = document.querySelector('#lb.v101 .lb-topo');   // (v101: sem a faixa — o limite de cima é a barra de cima: o perfil, a patente, as moedas…)
+  const lr = l && l.offsetParent ? l.getBoundingClientRect() : f && getComputedStyle(f).display !== 'none' ? f.getBoundingClientRect() : topo ? topo.getBoundingClientRect() : null;
   const bate = r => { const x = Math.max(r.left, Math.min(cx, r.right)), y = Math.max(r.top, Math.min(cy, r.bottom)); return Math.hypot(x - cx, y - cy) < R - 2; };
   const caixas = [LB.jogar, LB.modo, LB.missoes, ...document.querySelectorAll('#rx .v71-tile')].filter(e => e && e.offsetParent).map(e => e.getBoundingClientRect());
   return {esc:V77L.esc, R:Math.round(R), topo:Math.round(cy - R), letreiroBase:lr ? Math.round(lr.bottom) : null, bate:caixas.some(bate), retrato:LB.raiz.classList.contains('retrato'), dentro:cy + R <= innerHeight && cx - R >= 0 && cx + R <= innerWidth};
@@ -311,7 +313,7 @@ async def principal():
             r = await rt(pg, LOBBY)
             await pg.screenshot(path=str(SAIDA / ('v78_lobby_%s.png' % nome)))
             ok = r['esc'] == 1.15 and not r['bate'] and r['dentro'] and (r['retrato'] or (r['letreiroBase'] is not None and r['topo'] >= r['letreiroBase'] - 6))
-            P.confere(ok, '%s: a tampinha do lobby 1,4× maior (raio %d), sem encostar no letreiro nem nos botões' % (nome, r['R']), r)
+            P.confere(ok, '%s: a tampinha do lobby 1,4× maior (raio %d), sem encostar no letreiro (v91: na faixa de cima) nem nos botões' % (nome, r['R']), r)
             await b.close()
         # ---------------------------------------------------------------- na partida, o tamanho de sempre
         b, pg, erros = await abre(pw, 1280, 720)

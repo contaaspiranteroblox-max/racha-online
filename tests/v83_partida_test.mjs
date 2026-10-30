@@ -63,7 +63,7 @@ console.log('\n2) o gol e o relógio (as regras da v80 no servidor)');
   sim.jog[1].y = sim.campo.LY0 + 60;                      // (o adversário fora do caminho: o teste é do gol, não da marcação)
   p.comando('a', { seq: 1, x: 0, y: 0, k: 2 });
   confere_(sim.bola.vx > 0, 'o chute do servidor saiu (a bola vai para a direita)');
-  p.rodar(90);
+  p.rodar(150);                                         // (v95: o campo 30% maior — o chute do meio chega ao gol em ~1,7 s)
   confere_(p.placar[0] === 1 && p.estado === 'comemoracao', 'o gol valeu e o relógio parou na comemoração', p.status());
   const relogioNoGol = p.relogioSeg;
   p.rodar(120);   // os 2 s da comemoração
@@ -83,7 +83,7 @@ console.log('\n2) o gol e o relógio (as regras da v80 no servidor)');
     sim.jog[1].y = sim.campo.LY0 + 60;
     R.anda(100);                                          // (o relógio falso anda: o mínimo entre chutes passa)
     p.comando('a', { seq: g + 1, x: 0, y: 0, k: 2 });
-    p.rodar(90); p.rodar(120);
+    p.rodar(150); p.rodar(120);
   }
   confere_(fim.length === 1 && fim[0].motivo === 'meta' && fim[0].placar[0] === 3, '3 gols: fim na hora pela meta', fim[0] && fim[0].motivo);
 }
@@ -104,7 +104,7 @@ console.log('\n2) o gol e o relógio (as regras da v80 no servidor)');
   sim2.jog[1].x = sim2.bola.x + F.U(2); sim2.jog[1].y = sim2.bola.y;   // o jogador 1 chuta para a esquerda (gol do time 1)
   sim2.jog[0].y = sim2.campo.LY0 + 60;                                // (o adversário fora do caminho)
   p2.comando('b', { seq: 1, x: 0, y: 0, k: 2 });
-  p2.rodar(90);
+  p2.rodar(150);
   confere_(fim2.length === 1 && fim2[0].motivo === 'gol_de_ouro' && fim2[0].winner === 1, 'o gol de ouro decide na hora', fim2[0] && fim2[0].motivo);
 }
 

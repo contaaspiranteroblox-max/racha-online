@@ -25,6 +25,11 @@
    "moedas": 0,
    "gemas": 100,
    "nome": "Lendário"
+  },
+  "fundador": {
+   "moedas": 0,
+   "gemas": 0,
+   "nome": "Fundador"
   }
  },
  "pecas": [
@@ -238,10 +243,32 @@
    "anim": false
   },
   {
+   "k": "b:va",
+   "tipo": "b",
+   "id": "va",
+   "nome": "Arco-íris vivo",
+   "tipoNome": "Borda",
+   "raridade": "epico",
+   "moedas": 0,
+   "gemas": 40,
+   "anim": true
+  },
+  {
    "k": "b:vb",
    "tipo": "b",
    "id": "vb",
    "nome": "Brilhos",
+   "tipoNome": "Borda",
+   "raridade": "epico",
+   "moedas": 0,
+   "gemas": 40,
+   "anim": true
+  },
+  {
+   "k": "b:vc",
+   "tipo": "b",
+   "id": "vc",
+   "nome": "Cometa",
    "tipoNome": "Borda",
    "raridade": "epico",
    "moedas": 0,
@@ -271,6 +298,17 @@
    "anim": true
   },
   {
+   "k": "b:vo",
+   "tipo": "b",
+   "id": "vo",
+   "nome": "Ouro líquido",
+   "tipoNome": "Borda",
+   "raridade": "epico",
+   "moedas": 0,
+   "gemas": 40,
+   "anim": true
+  },
+  {
    "k": "b:vp",
    "tipo": "b",
    "id": "vp",
@@ -279,6 +317,17 @@
    "raridade": "epico",
    "moedas": 0,
    "gemas": 40,
+   "anim": true
+  },
+  {
+   "k": "b:vw",
+   "tipo": "b",
+   "id": "vw",
+   "nome": "Aura dos Fundadores",
+   "tipoNome": "Borda",
+   "raridade": "fundador",
+   "moedas": 0,
+   "gemas": 0,
    "anim": true
   },
   {
@@ -892,8 +941,8 @@
    "id": "tc",
    "nome": "Tricolor",
    "tipoNome": "Padrão",
-   "raridade": "comum",
-   "moedas": 300,
+   "raridade": "gratis",
+   "moedas": 0,
    "gemas": 0,
    "anim": false
   },
@@ -1811,6 +1860,50 @@
    "anim": true
   },
   {
+   "k": "i:zi",
+   "tipo": "i",
+   "id": "zi",
+   "nome": "Ipê amarelo",
+   "tipoNome": "Ícone",
+   "raridade": "lendario",
+   "moedas": 0,
+   "gemas": 100,
+   "anim": true
+  },
+  {
+   "k": "i:zk",
+   "tipo": "i",
+   "id": "zk",
+   "nome": "Pipa no céu",
+   "tipoNome": "Ícone",
+   "raridade": "lendario",
+   "moedas": 0,
+   "gemas": 100,
+   "anim": true
+  },
+  {
+   "k": "i:zm",
+   "tipo": "i",
+   "id": "zm",
+   "nome": "Maré",
+   "tipoNome": "Ícone",
+   "raridade": "lendario",
+   "moedas": 0,
+   "gemas": 100,
+   "anim": true
+  },
+  {
+   "k": "i:zn",
+   "tipo": "i",
+   "id": "zn",
+   "nome": "Baile",
+   "tipoNome": "Ícone",
+   "raridade": "lendario",
+   "moedas": 0,
+   "gemas": 100,
+   "anim": true
+  },
+  {
    "k": "i:zp",
    "tipo": "i",
    "id": "zp",
@@ -1830,6 +1923,39 @@
    "raridade": "lendario",
    "moedas": 0,
    "gemas": 100,
+   "anim": true
+  },
+  {
+   "k": "i:zt",
+   "tipo": "i",
+   "id": "zt",
+   "nome": "Tempestade",
+   "tipoNome": "Ícone",
+   "raridade": "lendario",
+   "moedas": 0,
+   "gemas": 100,
+   "anim": true
+  },
+  {
+   "k": "i:zv",
+   "tipo": "i",
+   "id": "zv",
+   "nome": "Lava",
+   "tipoNome": "Ícone",
+   "raridade": "lendario",
+   "moedas": 0,
+   "gemas": 100,
+   "anim": true
+  },
+  {
+   "k": "i:zw",
+   "tipo": "i",
+   "id": "zw",
+   "nome": "Fundador",
+   "tipoNome": "Ícone",
+   "raridade": "fundador",
+   "moedas": 0,
+   "gemas": 0,
    "anim": true
   },
   {

@@ -16,11 +16,19 @@
      --nome TXT       (RACHA_SALAS_NOME)     o nome do servidor (aparece na sala)
      --segredo TXT    (RACHA_SEGREDO_SALAS)  o mesmo segredo da plataforma: bilhete da conta e selo do resultado (opcional)
      --sem-p2p        (RACHA_P2P=0)          sem a conexão direta entre os aparelhos (tudo passa pelo servidor)
-     --memoria                               não grava nada em arquivo (testes)
+     --memoria                               não grava nada em arquivo (testes) — os mapas da Oficina também, a não ser com --mapas
+     --mapas DIR      (RACHA_MAPAS)          v92 · OFICINA: a pasta do catálogo dos mapas (os mapas publicados, as versões, as
+                                             curtidas, os favoritos e as denúncias) · padrão: a pasta "mapas" ao lado do --dados
+                                             (server/dados/mapas; no VPS, /var/lib/racha/mapas)
+     --moderadores L  (RACHA_MODERADORES)    v92 · OFICINA: os ids que moderam os mapas (além do selo 'equipe' e do Dono)
      --tempo-normal S (RACHA_TEMPO_NORMAL)   v80: os segundos da partida normal (a ranqueada) · padrão 180 (3:00); para testes e demonstrações
      --prorrogacao S  (RACHA_PRORROGACAO)    v80: os segundos da prorrogação do 0 × 0 · padrão 120 (até -2:00)
      --visitantes     (RACHA_VISITANTES=1)   v85.1: aceita quem joga sem conta (rede local, site de teste, demonstração). O padrão
                                              (desde a v84) é exigir a conta da plataforma; com a plataforma no ar, deixe desligado.
+     --experimental   (RACHA_EXPERIMENTAL=1) v92: a VERSÃO DE TESTES — o admin da sala manda o perfil da física (o painel de
+                                             testes do jogo) e pode pedir 60 quadros por segundo. Sem isto, toda sala usa o padrão.
+                      (RACHA_FISICA=v91)     v92: as salas com a física exata da v91 (sem o toque armado; a rede não segura a tampinha)
+                      (RACHA_MOTOR=v91)      v92: o relógio antigo do motor das salas (setInterval: ~61 passos/s em vez de 60)
    A saúde do servidor responde em /saude e em /health (o caminho que o Render confere).
    ===================================================================================================================== */
 const http = require('http');
@@ -28,6 +36,7 @@ const fs = require('fs');
 const path = require('path');
 const {aceita} = require('./ws');
 const {Turma, origemPermitida} = require('./turma');
+const {httpsDe} = require('./ip');                    // v100: o pedido chegou por https? (o proxy confiável diz)
 
 function argumentos(argv){
   const o = {};
@@ -51,37 +60,54 @@ const CFG = {
   segredo: String(A.segredo || process.env.RACHA_SEGREDO_SALAS || ''),
   p2p: !(A['sem-p2p'] || process.env.RACHA_P2P === '0'),
   regra80: {seg:Number(A['tempo-normal'] || process.env.RACHA_TEMPO_NORMAL || 0), prorrog:Number(A.prorrogacao || process.env.RACHA_PRORROGACAO || 0)},   // (0 = o padrão)
-  visitantes: !!A.visitantes || /^(1|sim|true)$/i.test(String(process.env.RACHA_VISITANTES || ''))   // v85.1: sem conta também entra (opcional)
+  visitantes: !!A.visitantes || /^(1|sim|true)$/i.test(String(process.env.RACHA_VISITANTES || '')),   // v85.1: sem conta também entra (opcional)
+  mapas: typeof A.mapas === 'string' ? path.resolve(A.mapas) : A.memoria ? null : path.resolve(String(process.env.RACHA_MAPAS || path.join(path.dirname(path.resolve(String(A.dados || process.env.RACHA_DADOS || path.join(__dirname, 'dados', 'turma.json')))), 'mapas'))),   // v92 · OFICINA: ao lado do arquivo da turma
+  moderadores: String(A.moderadores || process.env.RACHA_MODERADORES || '')
 };
 
 const TIPOS = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.svg':'image/svg+xml', '.ico':'image/x-icon', '.mp3':'audio/mpeg',
   '.ogg':'audio/ogg', '.wav':'audio/wav', '.woff':'font/woff', '.woff2':'font/woff2', '.ttf':'font/ttf', '.txt':'text/plain; charset=utf-8', '.map':'application/json'};
 
+/* v100 (segurança): os cabeçalhos de proteção em todas as respostas — o jogo só fica dentro de moldura do próprio endereço
+   e dos endereços de RACHA_ORIGENS/RACHA_MOLDURAS (a página que embute o jogo; frame-ancestors), sem plugins (object-src),
+   sem trocar a base dos endereços (base-uri), sem mandar o endereço completo para outros sites (Referrer-Policy), sem
+   câmera/microfone/localização/pagamento (Permissions-Policy) e, quando chegou por https (o proxy confiável diz), o HSTS. */
+const MOLDURAS = ["'self'"].concat(CFG.origens, String(process.env.RACHA_MOLDURAS || '').split(/[\s,]+/))
+  .filter(o => o === "'self'" || /^https?:\/\/[a-z0-9.-]+(:\d+)?$/i.test(o)).join(' ');
+function protecao(req){
+  const h = {'X-Content-Type-Options':'nosniff', 'Referrer-Policy':'same-origin', 'Content-Security-Policy':"frame-ancestors " + MOLDURAS + "; object-src 'none'; base-uri 'self'",
+    'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'};
+  if (httpsDe(req.socket && req.socket.remoteAddress, req.headers['x-forwarded-proto'], req.socket && req.socket.encrypted)) h['Strict-Transport-Security'] = 'max-age=15552000';
+  return h;
+}
 function entrega(req, res){
   const u = new URL(req.url, 'http://x');
-  if (u.pathname === '/saude' || u.pathname === '/health'){ res.writeHead(200, {'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store'}); return res.end(JSON.stringify(turma.status())); }   // (v85.1: /health é o que o Render confere)
+  const P = protecao(req), cab = o => Object.assign({}, P, o);
+  if (u.pathname === '/saude' || u.pathname === '/health'){ res.writeHead(200, cab({'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store'})); return res.end(JSON.stringify(turma.status())); }   // (v85.1: /health é o que o Render confere)
   if (u.pathname === '/' || u.pathname === '/index.html' && !fs.existsSync(path.join(CFG.estaticos, 'index.html'))){
-    res.writeHead(302, {Location:'/game/racha.html' + u.search}); return res.end();
+    res.writeHead(302, cab({Location:'/game/racha.html' + u.search})); return res.end();
   }
-  if (req.method !== 'GET' && req.method !== 'HEAD'){ res.writeHead(405, {Allow:'GET, HEAD'}); return res.end(); }
-  let rel; try { rel = decodeURIComponent(u.pathname); } catch (_) { res.writeHead(400); return res.end(); }
+  if (req.method !== 'GET' && req.method !== 'HEAD'){ res.writeHead(405, cab({Allow:'GET, HEAD'})); return res.end(); }
+  let rel; try { rel = decodeURIComponent(u.pathname); } catch (_) { res.writeHead(400, P); return res.end(); }
   const arq = path.resolve(CFG.estaticos, '.' + rel);
-  if (!arq.startsWith(CFG.estaticos + path.sep) && arq !== CFG.estaticos){ res.writeHead(403); return res.end(); }   // (nada fora da pasta)
+  if (!arq.startsWith(CFG.estaticos + path.sep) && arq !== CFG.estaticos){ res.writeHead(403, P); return res.end(); }   // (nada fora da pasta)
   fs.stat(arq, (e, st) => {
     let alvo = arq;
     if (!e && st.isDirectory()) alvo = path.join(arq, 'index.html');
     fs.readFile(alvo, (e2, buf) => {
-      if (e2){ res.writeHead(404, {'Content-Type':'text/plain; charset=utf-8'}); return res.end('não encontrado'); }
+      if (e2){ res.writeHead(404, cab({'Content-Type':'text/plain; charset=utf-8'})); return res.end('não encontrado'); }
       const ext = path.extname(alvo).toLowerCase();
-      res.writeHead(200, {'Content-Type':TIPOS[ext] || 'application/octet-stream', 'Content-Length':buf.length,
-        'Cache-Control':ext === '.html' || ext === '.js' || ext === '.css' ? 'no-cache' : 'public, max-age=3600', 'X-Content-Type-Options':'nosniff'});
+      res.writeHead(200, cab({'Content-Type':TIPOS[ext] || 'application/octet-stream', 'Content-Length':buf.length,
+        'Cache-Control':ext === '.html' || ext === '.js' || ext === '.css' ? 'no-cache' : 'public, max-age=3600'}));
       res.end(req.method === 'HEAD' ? undefined : buf);
     });
   });
 }
 
-const turma = new Turma({arquivo:CFG.dados, nome:CFG.nome, segredo:CFG.segredo, p2p:CFG.p2p, regra80:CFG.regra80, exigeConta:!CFG.visitantes});
+const turma = new Turma({arquivo:CFG.dados, nome:CFG.nome, segredo:CFG.segredo, p2p:CFG.p2p, regra80:CFG.regra80, exigeConta:!CFG.visitantes,
+  experimental:A.experimental ? true : undefined,       // v92: --experimental (ou RACHA_EXPERIMENTAL=1, lido na turma)
+  mapas:CFG.mapas, moderadores:CFG.moderadores});       // v92 · OFICINA: a pasta do catálogo dos mapas e quem modera
 const servidor = http.createServer(entrega);
 servidor.on('upgrade', (req, sock, cabeca) => {
   const origem = req.headers.origin;
@@ -96,7 +122,7 @@ servidor.on('clientError', (e, sock) => { try { sock.end('HTTP/1.1 400 Bad Reque
 servidor.listen(CFG.porta, CFG.host, () => {
   const ende = (CFG.host === '0.0.0.0' ? 'localhost' : CFG.host) + ':' + servidor.address().port;
   turma.log('RACHA · ' + CFG.nome + ' no ar: http://' + ende + '/game/racha.html (salas em ws://' + ende + '/)');
-  turma.log('arquivos: ' + CFG.estaticos + ' · dados: ' + (CFG.dados || 'só na memória') + (CFG.segredo ? ' · com o segredo da plataforma' : '') + (CFG.p2p ? '' : ' · sem conexão direta') + (CFG.visitantes ? ' · modo visitantes: entra quem não tem conta' : ' · só com a conta da plataforma'));
+  turma.log('arquivos: ' + CFG.estaticos + ' · dados: ' + (CFG.dados || 'só na memória') + ' · mapas da Oficina: ' + (CFG.mapas || 'só na memória') + (CFG.segredo ? ' · com o segredo da plataforma' : '') + (CFG.p2p ? '' : ' · sem conexão direta') + (CFG.visitantes ? ' · modo visitantes: entra quem não tem conta' : ' · só com a conta da plataforma'));
   if (process.send) process.send({pronto:true, porta:servidor.address().port});
 });
 function desliga(){ turma.log('desligando…'); turma.fecha(); servidor.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); }

@@ -238,7 +238,7 @@ console.log('8) o quadro (o formato clássico que o convidado já renderiza)');
   confere(s && typeof s.tick === 'number' && typeof s.elapsed === 'number' && s.state === 'saida' && typeof s.kickoff === 'number', 'tick, elapsed, state e kickoff');
   confere(Array.isArray(s.score) && s.score.length === 2, 'o placar');
   confere(Array.isArray(s.ball) && s.ball.length === 5, 'a bola [x, y, vx, vy, w]');
-  confere(Array.isArray(s.players) && s.players.length === 4 && s.players.every(pl => pl.length === 7), 'os jogadores [x, y, vx, vy, ack, chuteT, fxT]');
+  confere(Array.isArray(s.players) && s.players.length === 4 && s.players.every(pl => pl.length === 7 || pl.length === 8), 'os jogadores [x, y, vx, vy, ack, chuteT, fxT] (v92: + o estado dos botões no fim, que o jogo da v91 ignora)');
   confere(s.goal === null, 'sem gol ainda: goal nulo');
   p.estado = 'jogo';
   golForcado(p, [p.jog[0]]);

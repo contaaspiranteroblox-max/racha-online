@@ -1,0 +1,26 @@
+/* RACHA · os AJUSTES FINOS (tools/ajustes/ajustes.js): a página por cima da aba, dentro da janela dos Ajustes de sempre
+   (as mesmas letras, cores e botões da v91: ajx-grupo, ajx-seg, ajx-acao…). */
+#pop-ajustes .ajf{ overflow:visible; }
+#pop-ajustes .ajf-topo{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin:2px 0 8px; }
+#pop-ajustes .ajf-volta{ min-height:var(--v70-alvo, 44px); padding:0 14px; border:3px solid var(--k, #05060c); border-radius:12px; background:var(--k-face, #2c3878); color:#fff;
+  font:400 calc(15px*var(--v70-ui, 1))/1 var(--k-tit, sans-serif); letter-spacing:.6px; cursor:pointer; box-shadow:0 3px 0 var(--k, #05060c); }
+#pop-ajustes .ajf-volta:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--k, #05060c); }
+#pop-ajustes .ajf-tit{ font:400 calc(20px*var(--v70-ui, 1))/1.1 var(--k-tit, sans-serif); letter-spacing:1px; color:var(--k-am, #ffd21f); text-shadow:0 2px 0 var(--k, #05060c); }
+#pop-ajustes .ajf-sub{ flex:1 1 220px; color:var(--k-cinza, #b8bfd6); font-size:calc(13px*var(--v70-ui, 1)); }
+#pop-ajustes .ajf-nav{ margin:0 0 6px; }
+#pop-ajustes .ajf-nav button{ flex:1 1 90px; }
+#pop-ajustes .ajf-parte{ break-inside:auto; }
+#pop-ajustes .ajf-rot{ display:flex; flex-direction:column; gap:1px; margin:8px 0 4px; }
+#pop-ajustes .ajf-rot b{ font-weight:700; }
+#pop-ajustes .ajf-faixa span small, #pop-ajustes .ajf-nota{ display:block; font-size:calc(12px*var(--v70-ui, 1)); color:var(--k-cinza, #b8bfd6); font-weight:600; }
+#pop-ajustes .ajf-padrao{ margin-top:12px; background:var(--k-face, #2c3878); color:#fff; }
+#pop-ajustes .ajf-entrada .ajx-acao{ margin-top:4px; }
+#pop-ajustes .ajf.ajf-m94 .ajf-parte[data-parte="bola"]::before{ content:"Com o motor próprio da v94 (em testes) as linhas ainda não aparecem."; display:block; margin:4px 0 8px;
+  padding:6px 10px; border:2px solid var(--k, #05060c); border-radius:10px; background:rgba(255,194,26,.18); font-size:calc(12.5px*var(--v70-ui, 1)); }
+/* no celular deitado (os Ajustes compactos): a página também em duas colunas, as partes não quebram no meio de um grupo */
+#pop-ajustes.v70-compacto .ajf-topo{ column-span:all; margin:0 0 4px; }
+#pop-ajustes.v70-compacto .ajf-nav{ column-span:all; }
+#pop-ajustes.v70-compacto .ajf-volta{ min-height:34px; padding:0 10px; border-width:2px; font-size:calc(12.5px*var(--v70-ui, 1)); }
+#pop-ajustes.v70-compacto .ajf-tit{ font-size:calc(15px*var(--v70-ui, 1)); }
+#pop-ajustes.v70-compacto .ajf-sub{ display:none; }
+#pop-ajustes.v70-compacto .ajf .ajx-grupo{ break-inside:avoid; }

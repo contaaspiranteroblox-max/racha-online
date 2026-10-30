@@ -2,8 +2,8 @@
 com SQLite e o servidor das salas montado no mesmo endereço). Duas contas em dois navegadores, pelos botões da tela:
 o login do jogo, o correio (COLETAR uma vez só, no servidor), a loja (comprar e equipar, a carteira do servidor), amigos
 (buscar, pedir, aceitar, o status online de verdade), a mensagem direta, o convite para a sala, quem assiste (o SAIR e a
-câmera CAMPO INTEIRO), a denúncia, as missões (COLETAR), o passe (COLETAR), os eventos, as estatísticas da conta, a
-privacidade, o treino rendendo na conta, o treino com bots sem valer nada e — reiniciando o servidor com o mesmo banco —
+câmera CAMPO INTEIRO), a denúncia, as missões, o passe, os eventos, as estatísticas da conta, a
+privacidade, o treino sem prêmios oficiais, o treino com bots sem valer nada e — reiniciando o servidor com o mesmo banco —
 tudo continua lá.
   python3 tests/v88_cliente_test.py
 """
@@ -86,7 +86,8 @@ async def abre_logado(pw, PL, usuario, w=1280, h=720):
     b = await pw.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--autoplay-policy=no-user-gesture-required'])
     ctx = await b.new_context(viewport={'width': w, 'height': h}, has_touch=True)
     await ctx.add_init_script("document.addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent=%s;document.head.prepend(s);});" % json.dumps(FONTES))
-    await ctx.add_init_script('window.RACHA_CONFIG = {presente:false};')
+    import comum as _comum   # v101: os testes das prontas ligam o interruptor
+    await ctx.add_init_script('window.RACHA_CONFIG = {presente:false%s};' % (', skinsProntas:true' if _comum.SKINS_PRONTAS else ''))
     pg = await ctx.new_page()
     erros = []
     pg.on('pageerror', lambda e: erros.append(str(e)[:300] + ' @ ' + str(getattr(e, 'stack', '') or '')[:400]))
@@ -279,36 +280,34 @@ async def principal():
             P.confere(br and m_ok and fi and fi['verPerfil'] == 1 and fi['marcado'] == 'ofensa' and den2 and 'gol de placa' in (den2[0]['detalhes'] or ''),
                       'Chat do Brasil: a ficha tem um VER PERFIL só; DENUNCIAR pede o motivo na ficha (OFENSA marcado) e o TÓXICO vai para o banco com o texto da mensagem', [br, m_ok, fi, den2])
 
-            print('\n8) as partidas rendendo na conta: missões (COLETAR), passe (COLETAR), estatísticas')
+            print('\n8) partidas locais não geram missões, passe nem estatísticas oficiais')
             for _ in range(6):
                 mid = str(uuid.uuid4())
                 ini = PL.m('jogo.iniciarPartida', {'matchId': mid, 'modo': 'futebol', 'mapa': 'estadio', 'nivelBots': 'medio', 'ranqueada': False, 'online': False, 'tamanho': 2}, A['token'])
                 PL.m('jogo.encerrarPartida', {'matchId': mid, 'matchToken': ini['matchToken'], 'placarNosso': 3, 'placarDeles': 1, 'gols': 2, 'assistencias': 1, 'duracaoSeg': 160}, A['token'])
             await rt(pa, "(() => { if (lobby.tela) fechaTela(); abreTela('v88missoes'); return 1; })()")
-            pronta = await espera(pa, "v88Aberta('v88missoes') && (V88P.missoes || []).length && !!document.querySelector('#tela-v88missoes .v88-mis-i.pronta')", 6000)
+            carregou = await espera(pa, "v88Aberta('v88missoes') && (V88P.missoes || []).length", 6000)
             m0 = await rt(pa, 'CONTA.moedas')
-            await clica_texto(pa, '#tela-v88missoes .v88-mis-i.pronta button', 'COLETAR')
-            m1 = await espera(pa, "CONTA.moedas > %d ? CONTA.moedas : 0" % m0, 6000)
+            pronta = await rt(pa, "!!document.querySelector('#tela-v88missoes .v88-mis-i.pronta')")
             est = PL.q('loja.estado', None, A['token'])
-            P.confere(pronta and m1 and est['carteira']['moedas'] == m1, 'MISSÕES: a missão cumprida (as partidas válidas) tem COLETAR e o prêmio entra na carteira do servidor', [m0, m1, est['carteira']['moedas']])
+            P.confere(carregou and not pronta and est['carteira']['moedas'] == m0, 'MISSÕES: resultados declarados contra bots não liberam COLETAR ou moedas oficiais', [carregou, pronta, m0, est['carteira']['moedas']])
             await rt(pa, "(() => { fechaTela(); abreTela('v88passe'); return 1; })()")
-            pr = await espera(pa, "v88Aberta('v88passe') && V88P.passe && document.querySelector('#tela-v88passe .v88-pas-cel.pronto') ? 1 : 0", 6000)
+            carregou = await espera(pa, "v88Aberta('v88passe') && !!V88P.passe", 6000)
+            pr = await rt(pa, "!!document.querySelector('#tela-v88passe .v88-pas-cel.pronto')")
             g0 = await rt(pa, 'CONTA.moedas + CONTA.gemas')
-            if pr:
-                await rt(pa, "(() => { document.querySelector('#tela-v88passe .v88-pas-cel.pronto').click(); return 1; })()")
-            g1 = await espera(pa, "CONTA.moedas + CONTA.gemas > %d ? CONTA.moedas + CONTA.gemas : 0" % g0, 6000)
             ps = PL.q('passe.estado', None, A['token'])
-            P.confere(pr and g1 and 1 in ps['coletadas']['g'], 'PASSE: o nível alcançado tem COLETAR e a recompensa entra na conta (servidor)', ps['coletadas'])
+            P.confere(carregou and not pr and 1 not in ps['coletadas']['g'] and g0 == await rt(pa, 'CONTA.moedas + CONTA.gemas'), 'PASSE: partidas locais não liberam COLETAR nem alteram a carteira oficial', ps['coletadas'])
             await rt(pa, "(() => { fechaTela(); abreTela('v88eventos'); return 1; })()")
             ev = await espera(pa, "v88Aberta('v88eventos') && (V88P.eventos || []).length && document.querySelectorAll('#tela-v88eventos .v88-cat').length", 6000)
             P.confere(ev, 'EVENTOS: os eventos do servidor aparecem (com a coluna de cada um)', ev)
             await rt(pa, "(() => { fechaTela(); abreTela('perfil'); v77PfParte('est'); return 1; })()")
-            n_est = await espera(pa, "(() => { const d = V88E.dados.get(v88EstChave()); return d ? d.r.partidas : 0; })()", 6000)
+            carregou = await espera(pa, "!!V88E.dados.get(v88EstChave())", 6000)
+            n_est = await rt(pa, "V88E.dados.get(v88EstChave()).r.partidas") if carregou else None
             card = await rt(pa, "(document.querySelector('#tela-perfil .v88-est-grade .card b') || {}).textContent || ''")
-            P.confere(n_est == 6 and card == '6', 'ESTATÍSTICAS (DA CONTA): as 6 partidas que o servidor contou', [n_est, card])
+            P.confere(carregou and n_est == 0 and card == '0', 'ESTATÍSTICAS (DA CONTA): seis partidas locais não entram no resumo oficial', [n_est, card])
             await rt(pa, "(() => { V88E.modo = 'ranqueada'; v88EstPinta(); v88EstCarrega(true); return 1; })()")
             n_rq = await espera(pa, "(() => { const d = V88E.dados.get(v88EstChave()); return d ? 'n' + d.r.partidas : ''; })()", 6000)
-            P.confere(n_rq == 'n0', 'o filtro RANQUEADA: zero (as 6 foram contra os bots, sem patente)', n_rq)
+            P.confere(n_rq == 'n0', 'o filtro RANQUEADA: zero (as seis partidas foram locais)', n_rq)
             await rt(pa, "(() => { fechaTela(); return 1; })()")
 
             print('\n9) a privacidade (no servidor)')
@@ -326,9 +325,9 @@ async def principal():
             await rt(pa, "(() => { trEscolhe('goleiro'); jogar(); TR.pts = 20; trAcaba(); return 1; })()")
             res = await espera(pa, "V88T.ultimo && !V88T.ultimo.espera ? V88T.ultimo : null", 8000)
             m1 = await rt(pa, 'CONTA.moedas')
-            P.confere(res and not res.get('erro') and res.get('moedas', 0) > 0 and m1 == m0 + res['moedas'], 'fim do exercício (Goleiro, 3 estrelas): o servidor paga na conta (jogo.treinoConcluido)', [m0, m1, res])
+            P.confere(res and not res.get('erro') and res.get('moedas') == 0 and m1 == m0 and 'suspens' in res.get('nota', ''), 'fim do exercício: treino local não cria moedas na conta sem validação do servidor', [m0, m1, res])
             await rt(pa, "(() => { abrirLobby(); v88BotsComeca(); return 1; })()")
-            jogo = await espera(pa, "RQ.on && RQ.estado === 'jogo'", 10000)
+            jogo = await espera(pa, "RQ.on && RQ.estado === 'jogo'", 16000)   # (v100: a saída do seu time espera 8 s + a apresentação: ~10,2 s)
             r = await rt(pa, "({mm:X49.matchMode, nome:x49ModeName(), ev:!!V70ON.ev, v80:RQ.v80})")
             P.confere(jogo and r['mm'] == 'treino' and r['nome'] == 'TREINO COM BOTS' and not r['ev'], 'TREINO COM BOTS: a partida roda sem abrir partida na conta (nada de patente, moedas ou missão)', r)
             await rt(pa, "(() => { abrirLobby(); return 1; })()")

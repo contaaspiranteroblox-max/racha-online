@@ -10,13 +10,14 @@
 // ============================================================================
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { eq, and, or, desc, like, inArray, sql } from "drizzle-orm";
+import { eq, and, or, desc, like, inArray, sql, isNotNull } from "drizzle-orm";
 import { createRouter } from "../middleware";
 import { getDb } from "../queries/connection";
 import { usuarios, estatisticas, clubes, clubeMembros, clubeConvites, bloqueios, clubePedidos, partidas } from "@db/schema";
 import { notifica, empurraRelacoes, cartoesDe } from "./v88/comum";
 import { autenticado, exigeLimite, type CtxAutenticado } from "./guard";
 import { formatarIdPublico } from "@contracts/racha";
+import { podeUsarCodigo, AVISO_FUNDADOR } from "./fundador";
 
 const MAX_MEMBROS = 30;
 const MAX_ADMINS = 4;
@@ -245,6 +246,7 @@ export const clubeRouter = createRouter({
       if (nome.length < 3 || chave.length < 2) throw new TRPCError({ code: "BAD_REQUEST", message: "O nome precisa de 3 letras ou mais." });
       if (await meuVinculo(c.usuario.id)) throw new TRPCError({ code: "CONFLICT", message: "Saia do seu clube antes de criar outro." });
       if (await db.query.clubes.findFirst({ where: eq(clubes.nomeChave, chave) })) throw new TRPCError({ code: "CONFLICT", message: "Já existe um clube com esse nome." });
+      if (!(await podeUsarCodigo(c.usuario.id, input.escudo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_FUNDADOR });   // v96
       try {
         await db.insert(clubes).values({
           nome, nomeChave: chave, descricao: input.descricao, pais: input.pais, tipo: input.tipo,
@@ -282,6 +284,7 @@ export const clubeRouter = createRouter({
       const c = ctx as unknown as CtxAutenticado;
       const v = await exigeDono(c.usuario.id);
       if (v.clubeId !== input.id) throw new TRPCError({ code: "FORBIDDEN", message: "Só o dono do clube pode fazer isso." });
+      if (!(await podeUsarCodigo(c.usuario.id, input.escudo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_FUNDADOR });   // v96
       const { id, ...mud } = input;
       const set = Object.fromEntries(Object.entries(mud).filter(([, x]) => x !== undefined));
       if (Object.keys(set).length) await getDb().update(clubes).set(set).where(eq(clubes.id, id));
@@ -488,7 +491,7 @@ export const clubeRouter = createRouter({
     const db = getDb();
     const ms = await membrosDe(input.id);
     if (!ms.length) return [];
-    const l = await db.query.partidas.findMany({ where: and(inArray(partidas.usuarioId, ms.map((m) => m.usuarioId)), eq(partidas.estado, "encerrada")), orderBy: [desc(partidas.encerradaEm)], limit: 60 });
+    const l = await db.query.partidas.findMany({ where: and(inArray(partidas.usuarioId, ms.map((m) => m.usuarioId)), eq(partidas.estado, "encerrada"), isNotNull(partidas.resultado)), orderBy: [desc(partidas.encerradaEm)], limit: 60 });
     const us = await db.query.usuarios.findMany({ where: inArray(usuarios.id, ms.map((m) => m.usuarioId)), columns: { id: true, nomeExibicao: true, idPublico: true } });
     return l.filter((x) => x.resultado).slice(0, 30).map((x) => {
       const u = us.find((q) => q.id === x.usuarioId);
@@ -521,6 +524,7 @@ export const clubeRouter = createRouter({
   salvarTampa: autenticado.input(z.object({ codigo: z.string().regex(TAMPA_RE) })).mutation(async ({ ctx, input }) => {
     const c = ctx as unknown as CtxAutenticado;
     await exigeLimite(`tampa:${c.usuario.id}`, 60, 60 * 60 * 1000, "Muitas trocas seguidas. Tente mais tarde.");
+    if (!(await podeUsarCodigo(c.usuario.id, input.codigo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_FUNDADOR });   // v96
     await getDb().update(usuarios).set({ tampa: input.codigo }).where(eq(usuarios.id, c.usuario.id));
     return { ok: true };
   }),

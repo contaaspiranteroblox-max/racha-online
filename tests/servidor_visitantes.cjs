@@ -4,6 +4,9 @@
    escritos antes do login obrigatório (online, v79, v80, v81 e a parte "pela rede" do servidor_test) sobem este arquivo.
    O padrão do produto não muda: o server/servidor.js continua recusando quem não tem conta (ver o servidor_test, parte 0).
    Uso: node tests/servidor_visitantes.cjs --porta N --memoria ...   (as opções do servidor.js) */
+// v93: os testes escritos antes da contagem (3, 2, 1, JÁ!) e do replay online começam na hora e sem o replay; os da v93 ligam
+if (process.env.RACHA_CONTAGEM_MS == null) process.env.RACHA_CONTAGEM_MS = '0';
+if (process.env.RACHA_REPLAY == null) process.env.RACHA_REPLAY = '0';
 const turma = require('../server/turma');
 const Original = turma.Turma;
 turma.Turma = class TurmaComVisitantes extends Original {

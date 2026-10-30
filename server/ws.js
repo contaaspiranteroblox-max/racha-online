@@ -8,11 +8,13 @@ const EventEmitter = require('events');
 
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const MAX_QUADRO = 1 << 20;
+const MAX_FRAGMENTOS = 256;
+const PRAZO_FRAGMENTOS_MS = 15000;
 
 class Conexao extends EventEmitter {
   constructor(sock){
     super();
-    this.sock = sock; this.readyState = 1; this.buf = Buffer.alloc(0); this.partes = null; this.vivo = true;
+    this.sock = sock; this.readyState = 1; this.buf = Buffer.alloc(0); this.partes = null; this.timerPartes = null; this.vivo = true;
     sock.setNoDelay(true);
     sock.on('data', d => this._recebe(d));
     sock.on('close', () => this._fechou());
@@ -29,6 +31,7 @@ class Conexao extends EventEmitter {
   ping(){ if (this.readyState === 1) this.sock.write(Conexao.cabecalho(0x9, 0)); }
   close(codigo, motivo){
     if (this.readyState !== 1) return;
+    this._limpaPartes();
     const m = Buffer.from(String(motivo || '').slice(0, 100), 'utf8'), d = Buffer.alloc(2 + m.length);
     d.writeUInt16BE(codigo || 1000, 0); m.copy(d, 2);
     try { this.sock.write(Buffer.concat([Conexao.cabecalho(0x8, d.length), d])); } catch (_) {}
@@ -43,8 +46,13 @@ class Conexao extends EventEmitter {
   }
   _fechou(){
     if (this.readyState === 3) return;
+    this._limpaPartes(); this.buf = Buffer.alloc(0);
     this.readyState = 3;
     this.emit('close');
+  }
+  _limpaPartes(){
+    if (this.timerPartes) clearTimeout(this.timerPartes);
+    this.timerPartes = null; this.partes = null;
   }
   _recebe(d){
     this.buf = this.buf.length ? Buffer.concat([this.buf, d]) : d;
@@ -56,6 +64,7 @@ class Conexao extends EventEmitter {
       else if (n === 127){ if (b.length < 10) return; const alto = b.readUInt32BE(2); n = b.readUInt32BE(6); i = 10; if (alto) return this.close(1009, 'grande demais'); }
       if (n > MAX_QUADRO) return this.close(1009, 'grande demais');
       if (!mascara) return this.close(1002, 'quadro sem máscara');
+      if ((op === 0x8 || op === 0x9 || op === 0xA) && (!fin || n > 125)) return this.close(1002, 'quadro de controle invalido');
       if (b.length < i + 4 + n) return;
       const chave = b.subarray(i, i + 4), dados = Buffer.from(b.subarray(i + 4, i + 4 + n));
       for (let k = 0; k < n; k++) dados[k] ^= chave[k & 3];
@@ -63,11 +72,21 @@ class Conexao extends EventEmitter {
       if (op === 0x8){ this.close(1000, ''); return; }
       if (op === 0x9){ if (this.readyState === 1) this.sock.write(Buffer.concat([Conexao.cabecalho(0xA, dados.length), dados])); continue; }
       if (op === 0xA){ this.vivo = true; continue; }
-      if (op === 0x1 || op === 0x2){ this.partes = {op, l:[dados], n}; }
-      else if (op === 0x0 && this.partes){ this.partes.l.push(dados); this.partes.n += n; if (this.partes.n > MAX_QUADRO) return this.close(1009, 'grande demais'); }
-      else continue;
+      if (op === 0x1 || op === 0x2){
+        if (this.partes) return this.close(1002, 'mensagem incompleta');
+        this.partes = {op, l:[dados], n, qtd:1};
+        if (!fin){
+          this.timerPartes = setTimeout(() => this.close(1002, 'fragmentos expirados'), PRAZO_FRAGMENTOS_MS);
+          this.timerPartes.unref?.();
+        }
+      }
+      else if (op === 0x0 && this.partes){
+        this.partes.l.push(dados); this.partes.n += n; this.partes.qtd++;
+        if (this.partes.n > MAX_QUADRO || this.partes.qtd > MAX_FRAGMENTOS) return this.close(1009, 'grande demais');
+      }
+      else return this.close(1002, 'continuacao inesperada');
       if (fin && this.partes){
-        const p = this.partes; this.partes = null;
+        const p = this.partes; this._limpaPartes();
         if (p.op === 0x1) this.emit('message', Buffer.concat(p.l).toString('utf8'));
       }
     }

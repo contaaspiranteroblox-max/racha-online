@@ -110,7 +110,7 @@ const TP_PADROES = [
   {id:'ls', nome:'Listras', pr:'gratis', cores:1, f:(g, R, a) => { for (let x = -Math.ceil(R/.8)*.8 - .2; x < R; x += .8) tpRect(g, x, -R, .4, 2*R, a); }},
   {id:'fx', nome:'Faixa', pr:'gratis', cores:1, f:(g, R, a) => tpRect(g, -.32, -R, .64, 2*R, a)},
   {id:'bo', nome:'Bolinhas', pr:'gratis', cores:1, f:(g, R, a) => { const s = .5, n = Math.ceil(R/s) + 1; for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) tpCirc(g, i*s + (j & 1 ? s/2 : 0), j*s*.87, .13, a); }},
-  {id:'tc', nome:'Tricolor', pr:'comum', cores:2, f:(g, R, a, b) => { tpRect(g, -R, -R, R - .34, 2*R, a); tpRect(g, .34, -R, R, 2*R, b); }},
+  {id:'tc', nome:'Tricolor', pr:'gratis', cores:2, f:(g, R, a, b) => { tpRect(g, -R, -R, R - .34, 2*R, a); tpRect(g, .34, -R, R, 2*R, b); }},   // v95: de graça (é o padrão da tampinha inicial: mexer só na borda não cobra o padrão)
   {id:'lf', nome:'Listras finas', pr:'comum', cores:1, f:(g, R, a) => { for (let x = -Math.ceil(R/.36)*.36; x < R; x += .36) tpRect(g, x, -R, .12, 2*R, a); }},
   {id:'f2', nome:'Faixa dupla', pr:'comum', cores:2, f:(g, R, a, b) => { tpRect(g, -.62, -R, .34, 2*R, a); tpRect(g, .28, -R, .34, 2*R, a); tpRect(g, -.12, -R, .24, 2*R, b); }},
   {id:'cz', nome:'Cruz', pr:'comum', cores:1, f:(g, R, a) => { tpRect(g, -.24, -R, .48, 2*R, a); tpRect(g, -R, -.24, 2*R, .48, a); }},

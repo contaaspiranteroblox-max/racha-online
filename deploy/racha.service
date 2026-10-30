@@ -1,0 +1,28 @@
+# RACHA · o serviço do jogo (instalado pelo prepara-vps.sh em /etc/systemd/system/racha.service)
+[Unit]
+Description=RACHA Futebol de Rua (site, contas e salas online)
+After=network-online.target mysql.service mariadb.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=racha
+Group=racha
+WorkingDirectory=/opt/racha/current
+EnvironmentFile=/etc/racha/racha.env
+ExecStart=/opt/racha/bin/racha-inicia
+Restart=always
+RestartSec=3
+# o processo do jogo não ganha mais permissões, não escreve no sistema e só grava na pasta dos dados
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/racha
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

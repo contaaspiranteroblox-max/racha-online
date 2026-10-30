@@ -1,4 +1,4 @@
-# RACHA · Futebol de Rua — v88.2
+# RACHA · Futebol de Rua — v91
 
 O jogo (`app/public/game/racha.html`), o servidor das salas online (`server/`) e a plataforma RACHA 2.0 com contas
 (`app/`). A v70 é a revisão completa pedida na auditoria: regras e câmera, interface e HUD, perfil/inventário/economia,
@@ -68,7 +68,14 @@ servidor (a carteira, o inventário e o progresso da conta conferidos nele) — 
 **v88.1** põe **as contas nas mãos do Dono**: o cadastro fica fechado (só o Dono cria contas, no RACHA CONTROL › 👤 Contas),
 o **ZERAR CONTAS** faz os IDs voltarem a contar do 000002 e a senha do Dono vem da variável `RACHA_OWNER_PASSWORD` — com o
 painel voltando a abrir no navegador depois do 2FA (não abria) e o site voltando a compilar. A **v88.2** deixa **jogar
-online sem conta, só com o nome**: na tela de entrada, o JOGAR ONLINE abre as salas na hora.
+online sem conta, só com o nome**: na tela de entrada, o JOGAR ONLINE abre as salas na hora. A **v90** traz a **nova temática** (preto fosco, roxo e laranja, o JOGAR amarelo), a tela inicial
+reorganizada com o **COFRE** e a **roda das favoritas**, e o **RANKING da temporada** de verdade (gols, assistências, pontos
+ranqueados e Craque do Jogo, contados pelo servidor), com temporadas, histórico, perfil e recompensas do TOP 3 — detalhes no
+`CHANGELOG.md`. A **v91** recria o visual a partir da **imagem de referência** enviada: a tela inicial com a própria quadra da
+imagem no fundo, a faixa azul em cima, os botões quadrados dos lados, a tampinha em pé e em destaque no meio e o JOGAR amarelo;
+todas as telas (perfil, cofre, loja, ranking, salas, eventos, Passe RACHA, amigos, clube, treino, chat, a sala aberta, a folha do
+JOGAR, a pausa e o fim) com a mesma faixa e os mesmos painéis azul-marinho; os banners de perfil e as patentes redesenhados — só
+a cara (a física, as regras, o online e as contas são os mesmos), detalhes no `CHANGELOG.md`.
 
 ---
 
@@ -154,7 +161,7 @@ conta.
   montado nela passou a aceitar visitante (o número de visitante, de 7 dígitos: nunca o de uma conta). Para voltar ao login
   obrigatório da v84: `RACHA_VISITANTES=0` (aí o JOGAR ONLINE mostra o LOGIN OBRIGATÓRIO de sempre).
 * **No GitHub Pages** não existe servidor: as salas precisam do endereço do servidor do Render (o link
-  `…/game/racha.html?servidor=ENDERECO-DO-RENDER`, ou Ajustes › Avançado › Servidor). Sem ele, o JOGAR ONLINE abre as salas e
+  `…/game/racha.html?servidor=ENDERECO-DO-RENDER`; desde a v96 o campo Servidor não fica mais nos Ajustes). Sem ele, o JOGAR ONLINE abre as salas e
   avisa que não conectou.
 
 **Testado aqui (execução real).** `python3 tests/v882_visitante_test.py`: num servidor das salas como o do Render (o
@@ -175,7 +182,7 @@ migração (o cadastro, o contador e a hora do zerar ficam na tabela `contadores
 1. Defina `RACHA_OWNER_PASSWORD` (a senha do Dono, 8 a 100 caracteres) nas variáveis do servidor e reinicie. O usuário é
    `dono` — a conta **000001**. A cada início a plataforma confere a conta do Dono: a senha passa a ser a da variável (se
    mudou, as sessões antigas do Dono caem e o 2FA do painel é zerado); sem a conta 000001 no banco, ela é criada.
-2. Entre em `/admin` (no jogo: Ajustes › Conta › RACHA CONTROL) com `dono` e a senha. Na primeira vez, o painel mostra a
+2. Entre em `/admin` (no jogo: Perfil › o selo da conta, ao lado do ID — a janela SUA CONTA › RACHA CONTROL; até a v95 era Ajustes › Conta) com `dono` e a senha. Na primeira vez, o painel mostra a
    chave do 2FA em grupos de 4: no app autenticador, **+** › **Inserir chave de configuração** › nome `RACHA` › a chave ›
    **Baseada no horário**, e digite o código de 6 números.
 3. Aba **👤 Contas** (só a conta do Dono, a 000001, vê — nem um segundo "Dono" dado pelo painel): o resumo (contas, o número da próxima, o cadastro), **CRIAR CONTA** (usuário,
@@ -1379,6 +1386,13 @@ no RELATORIO_DE_TESTES da auditoria.
 | `v882_visitante_test.py` (v88.2) | **jogar online sem conta, só com o nome**, com o jogo de verdade em dois navegadores: num servidor das salas como o do Render (sem a plataforma), a tela só com o JOGAR ONLINE e o SÓ TREINAR OFFLINE, os nomes recusados, duas pessoas só com o nome criando a sala, entrando pelo JOGAR AGORA, vendo o nome uma da outra e jogando a partida no servidor, o nome lembrado; na plataforma de teste, a sala sem conta e o LOGIN OBRIGATÓRIO com `RACHA_VISITANTES=0` | 13/13 |
 
 `dificuldade_medida.py` (Etapa 4) mede Fácil × Difícil com partidas simuladas IA × IA (`tests/saida/dificuldade.txt`).
+
+**v91** (o visual da imagem de referência): a bateria inteira rodou na versão final (`tests/saida/logs/RESUMO.txt`): 46 dos 49
+conjuntos passam; o `v90_ranking_test` tem 1 falha que já existia na v90.1 (a mensagem do e-mail inválido na plataforma de
+teste daqui), o `v881_jogo` falhou 1 vez e passou nas outras 4 rodadas, e uma verificação do `enxuto` (salvar e recarregar,
+com o armazenamento antigo regravado a cada recarga) oscila na v91 — o detalhe e os testes atualizados para o desenho novo
+(`celular`, `v71`, `v76`, `v77`, `v78`, `v79`, `v81`, `v82`, `v87_site` e `polimento`, vários deles já quebrados na v90.1)
+estão no `CHANGELOG.md`.
 
 ### O que os testes provam e o que não provam
 

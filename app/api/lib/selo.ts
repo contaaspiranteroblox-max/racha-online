@@ -33,8 +33,11 @@ export function confere(segredo: string, txt: unknown, agora = Date.now()): Reco
   const i = txt.indexOf(".");
   if (i < 1) return null;
   const corpo = txt.slice(0, i);
-  const sig = deB64u(txt.slice(i + 1));
-  const certo = createHmac("sha256", segredo).update(corpo).digest();
+  // v100 (segurança): a assinatura só vale escrita do jeito canônico (base64url sem "=" e sem sobras). O decodificador
+  // base64 do Node aceita várias escritas dos mesmos bytes (o último caractere, "=", espaços): o mesmo selo virava uma
+  // string "nova" e passava de novo pela trava de selo já usado.
+  const sig = Buffer.from(txt.slice(i + 1));
+  const certo = Buffer.from(b64u(createHmac("sha256", segredo).update(corpo).digest()));
   if (sig.length !== certo.length || !timingSafeEqual(sig, certo)) return null;
   let o: unknown;
   try {
@@ -48,7 +51,14 @@ export function confere(segredo: string, txt: unknown, agora = Date.now()): Reco
   return r;
 }
 
-export type Selo = { s: string; r: number; j: string; l: 0 | 1; p: [number, number]; m: string; d: number; t: number; e: number; k?: 0 | 1; n?: number; g?: string[]; v?: 0 | 1 }; // v82: k = ranqueada, n = o tamanho do time · v88: g = os IDs das contas que jogaram, v = o melhor da partida
+export type Selo = { s: string; r: number; j: string; l: 0 | 1; p: [number, number]; m: string; d: number; t: number; e: number; k?: 0 | 1; n?: number; g?: string[]; v?: 0 | 1; h?: 0 | 1; gl?: number; as?: number; pid?: string; o?: 0 | 1 }; // h:1 e gl/as são estatísticas apuradas pelo motor autoritativo · v100: o:1 = havia contas de gente nos dois lados até o fim
+
+// v100 (segurança): a identidade do selo = o corpo assinado (o mesmo em qualquer escrita aceita; a trava de "selo já usado"
+// e a patente da ranqueada usam isto, não o texto que o aparelho mandou)
+export function corpoDoSelo(txt: string): string {
+  const i = txt.indexOf(".");
+  return i > 0 ? txt.slice(0, i) : txt;
+}
 
 export function confereSelo(txt: unknown): Selo | null {
   const o = confere(segredoSalas(), txt);
@@ -68,6 +78,7 @@ export function confereSelo(txt: unknown): Selo | null {
 // v88: e as relações da conta (a: os amigos, b: os bloqueios dos dois lados, o: mostra o status online, c: aceita convites,
 // k: o clube, q: os cosméticos equipados) — o servidor das salas usa no status dos amigos, nos convites, no chat dos amigos e
 // do clube e no bloqueio, quando ele roda em outro lugar (montado aqui, ele pergunta direto ao banco).
+export const BILHETE_MS = 15 * 60 * 1000; // v100: a validade do bilhete da conta nas salas
 export type ExtraBilhete = { a?: string[]; b?: string[]; o?: 0 | 1; c?: 0 | 1; k?: string | null; q?: Record<string, string> };
 export function bilheteDaConta(idPublico: number, nome: string, selos: string[] = [], extra: ExtraBilhete = {}): string | null {
   const seg = segredoSalas();
@@ -81,5 +92,7 @@ export function bilheteDaConta(idPublico: number, nome: string, selos: string[] 
   if (extra.k) x.k = extra.k;
   if (extra.q && Object.keys(extra.q).length) x.q = extra.q;
   const agora = Date.now(); // v88.1: + quando foi assinado (t): o servidor das salas recusa o bilhete de antes do ZERAR CONTAS
-  return assina(seg, { p: String(idPublico), n: nome, ...(s.length ? { s } : {}), ...x, t: agora, e: agora + 30 * 60 * 1000 });
+  // v100 (segurança): vale 15 minutos (eram 30): o jogo pede outro a cada 9 e só usa o de até 12 — um bilhete que vazou abre
+  // as salas por menos tempo
+  return assina(seg, { p: String(idPublico), n: nome, ...(s.length ? { s } : {}), ...x, t: agora, e: agora + BILHETE_MS });
 }

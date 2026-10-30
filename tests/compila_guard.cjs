@@ -26,6 +26,10 @@ export const eq = (col, val) => ({ valor: val });
 export const and = (...a) => a;
 export const gt = (a, b) => ({ gt: [a, b] });
 export const isNull = (a) => ({ isNull: a });
+export const gte = (a, b) => ({ gte: [a, b] });   // v100: os limites atômicos e o endereço conhecido usam estes
+export const lt = (a, b) => ({ lt: [a, b] });
+export const lte = (a, b) => ({ lte: [a, b] });
+export const sql = (partes, ...v) => ({ sql: partes.join('?'), v });
 `;
 
 async function main(){

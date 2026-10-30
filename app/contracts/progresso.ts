@@ -2,7 +2,9 @@
 // RACHA v82 — O PROGRESSO DO JOGO NA CONTA (o "save na nuvem")
 // O jogo guarda o progresso no aparelho (localStorage); com a conta, ele manda uma cópia das chaves de progresso para
 // a plataforma e, em outro aparelho, começa de onde parou. Só vão estas chaves (as configurações do aparelho — som,
-// câmera, controles, teclas, o endereço do servidor, os replays — ficam no aparelho).
+// câmera, teclas, o endereço do servidor, os replays — ficam no aparelho). v92 Fase 1: os LAYOUTS dos controles da tela
+// (racha-hud-layouts-v1, a pedido: "para não perdê-los ao limpar o cache") passam a ir para a conta; o resto do HUD
+// (racha-treino-hud-v11, com a câmera e os gráficos) continua no aparelho. Sem migração: a cópia é o JSON de sempre.
 // O servidor guarda a cópia com um número de versão: quem salva diz de qual versão partiu; se outro aparelho salvou
 // antes (a versão mudou), volta "conflito" com a cópia nova e o jogo pergunta qual fica.
 // Moedas, gemas e peças são cosméticos: o servidor confere o formato e o tamanho, não cada compra (ver LEIA-ME). A
@@ -23,6 +25,7 @@ export const PROGRESSO_CHAVES = [
   "streetball-recordes-v1", // os recordes dos treinos
   "racha-v71-padrao", // (as trocas da tampinha padrão já feitas)
   "racha-v80-padrao",
+  "racha-hud-layouts-v1", // v92 Fase 1: os layouts dos controles da tela (nome, lugar, tamanho e opacidade de cada controle)
 ] as const;
 
 export const PROGRESSO_MAX_BYTES = 256 * 1024; // a cópia inteira

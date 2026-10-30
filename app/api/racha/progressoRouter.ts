@@ -4,8 +4,8 @@
 // tamanho) e recebe de volta em outro aparelho. Cada cópia tem um número de versão: quem salva diz de qual versão
 // partiu; se outro aparelho salvou antes, volta { conflito } com a cópia nova (o jogo pergunta qual fica). O UPDATE só
 // passa se a versão ainda for a mesma (WHERE versao = base): dois aparelhos salvando juntos não se sobrescrevem.
-// HONESTIDADE: moedas, gemas e peças são cosméticos e a conta deles roda no aparelho; o servidor confere o formato e o
-// tamanho, não cada compra. A patente da ranqueada e o nível/XP da conta NÃO vêm desta cópia (ranqueada.ts, progressao.ts).
+// A cópia pode conter valores locais antigos, mas moedas, gemas, inventário,
+// patente oficial e XP da conta não são importados dela para as tabelas oficiais.
 // ============================================================================
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";

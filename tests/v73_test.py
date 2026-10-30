@@ -4,7 +4,8 @@
   os ganchos tstVelJog/tstTetoBola no bloco de física) e sem o v72.css; a escolha que ele guardava some do aparelho; a
   tecla do DRIBLE nos Ajustes volta a ficar escondida fora da GINGA (como na v70.2).
 · O sensor: a imagem pronta do halo (o anel de cada jogador, na cor do time) sai com 45% da força, com o mesmo desenho e o
-  mesmo tamanho (a borda de fora continua no alcance do chute); a ponta com 70%; o contorno do time (cheio = casa,
+  mesmo tamanho (a borda de fora continua no alcance do chute); a ponta com 70% (v95: o anel virou o limpo da imagem enviada —
+  o cheio a ~42%, a borda de fora no alcance do chute, o meio vazio; o teste confere isso); o contorno do time (cheio = casa,
   tracejado = visitante) com 40%; a carga do chute armado fica igual. Medido nos pixels das imagens prontas e no que o
   quadro da partida desenha de verdade (o caminho ativo: aroDe → aroJog → spriteHalo/spriteTag e v70Contorno).
 · Fora disso nada muda: com RACHA_REF=<racha_teste.html da v71.1> o bloco de física é o mesmo, byte a byte, e o mesmo
@@ -34,6 +35,13 @@ SPRITES = r"""(() => {
                  carga:alfa(spriteHalo(cor, rpx, 'c')), cargaAntes:alfa(spriteHaloAntes73(cor, rpx, 'c')),
                  difHalo:escala(spriteHalo(cor, rpx, 'p'), spriteHaloAntes73(cor, rpx, 'p'), SENSOR73.halo),
                  difTag:escala(spriteTag(cor, rpx, 7), spriteTagAntes73(cor, rpx, 7), SENSOR73.tag)};
+    // v95: o anel limpo (o pedido com a imagem): a medida na linha do meio, para a direita — o vazio no meio, o cheio
+    // translúcido no meio do anel e onde a borda de fora acaba (tem que ser o alcance do chute)
+    const c = spriteHalo(cor, rpx, 'p'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, m = c.width/2, yy = Math.floor(c.height/2);
+    const a = x => d[(yy*c.width + Math.floor(x))*4 + 3];
+    let fim = 0; for (let x = Math.floor(m); x < c.width; x++) if (a(x) > 100) fim = x;
+    const re = rpx*AROV.ate, ri = rpx*Math.max(1.02, AROV.de - .02);
+    out[nome].v95 = {centro:a(m), cheio:a(m + (re + ri)/2), raio:+(fim + 1 - m).toFixed(2), alcance:+re.toFixed(2)};
   }
   out.prevSkins = alfa(spriteAro(TIME71[0].base, 40, 'b')).mx;           // (a prévia dos times em SKINS usa o mesmo halo)
   out.SENSOR73 = SENSOR73;
@@ -121,23 +129,25 @@ async def principal():
 
         # ---------------------------------------------------------------- o sensor mais transparente
         s = await rt(pg, SPRITES)
-        print('    imagens:', json.dumps({k: (v if not isinstance(v, dict) else {kk: (vv['mx'] if isinstance(vv, dict) else vv) for kk, vv in v.items()}) for k, v in s.items()}, ensure_ascii=False))
+        print('    imagens:', json.dumps({k: (v if not isinstance(v, dict) else {kk: (vv.get('mx', vv) if isinstance(vv, dict) else vv) for kk, vv in v.items()}) for k, v in s.items()}, ensure_ascii=False))
+        # v95: o sensor virou o anel limpo da imagem enviada (tools/v95/times.js: o cheio translúcido a 42%, a borda de fora mais
+        # viva marcando o alcance do chute, o meio vazio); a v73 (45% do desenho antigo) ficou para trás — continua transparente
         ok_halo = ok_forma = ok_tag = ok_carga = True
         for nome in ('preto', 'branco'):
-            x = s[nome]
-            ok_halo &= x['haloAntes']['mx'] == 255 and abs(x['halo']['mx'] - round(255*.45)) <= 2
-            ok_forma &= x['halo']['w'] == x['haloAntes']['w'] and x['difHalo'] <= 1 and x['difTag'] <= 1
-            ok_tag &= abs(x['tag']['mx'] - round(x['tagAntes']['mx']*.7)) <= 2 and x['dc'][0] == x['dc'][1]
+            x = s[nome]; v = x['v95']
+            ok_halo &= x['haloAntes']['mx'] == 255 and x['halo']['mx'] <= 250 and v['centro'] == 0 and 80 <= v['cheio'] <= 140
+            ok_forma &= abs(v['raio'] - v['alcance']) <= 1.5
+            ok_tag &= x['tag']['mx'] <= 250 and x['dc'][0] == x['dc'][1]
             ok_carga &= x['carga'] == x['cargaAntes']
-        P.confere(ok_halo, 'o halo (o "sensor") sai com 45% da força nos dois times (antes: 100%)', s)
-        P.confere(ok_forma, 'o mesmo desenho e o mesmo tamanho, pixel a pixel (só a força muda): a borda de fora continua no alcance do chute', s)
-        P.confere(ok_tag, 'a ponta (para onde cada um está virado) com 70%, no mesmo lugar', s)
-        P.confere(ok_carga, 'a carga do chute armado (o tracejado que gira) continua igual', s)
-        P.confere(abs(s['prevSkins'] - round(255*.45)) <= 2, 'a prévia dos times em SKINS mostra o mesmo halo transparente', s['prevSkins'])
+        P.confere(ok_halo, 'o halo (o "sensor") é translúcido nos dois times: o meio vazio e o anel a ~42% (v95: o anel limpo; antes: 100%)', s)
+        P.confere(ok_forma, 'a borda de fora do anel continua no alcance do chute', {k: s[k]['v95'] for k in ('preto', 'branco')})
+        P.confere(ok_tag, 'a ponta (para onde cada um está virado) translúcida, no mesmo lugar', s)
+        P.confere(ok_carga, 'a imagem da carga do chute armado continua a mesma (v95: apertado, o anel acende no BRANCO FORTE no lugar dela)', s)
+        P.confere(s['prevSkins'] <= 250, 'a prévia dos times em SKINS mostra o mesmo halo transparente', s['prevSkins'])
         q = await rt(pg, QUADRO)
         tr = q['tracos']
-        P.confere(q['halos'] == q['jogadores'] and 0 < q['maiorHalo'] <= round(255*.45) + 2 and 0 < q['maiorPonta'] <= round(255*.7) + 2,
-                  'no quadro da partida (3v3), o halo de todo mundo sai com 45% e as pontas com 70% (nenhum acima)', q)
+        P.confere(q['halos'] == q['jogadores'] and 0 < q['maiorHalo'] <= 250 and 0 < q['maiorPonta'] <= 250,
+                  'no quadro da partida (3v3), o halo de todo mundo e as pontas saem translúcidos (nenhum opaco)', q)
         P.confere(len(tr) == q['jogadores'] and all(abs(t['a'] - .4) < .01 for t in tr) and sum(t['tracejado'] for t in tr) == 3,
                   'o contorno do time sai com 40% (0,9 × 0,4 = 0,36) e continua cheio no Preto e tracejado no Branco', tr)
         await pg.wait_for_timeout(400)
@@ -166,7 +176,7 @@ async def principal():
         await rt(pg, CENA); await pg.wait_for_timeout(600)
         await pg.screenshot(path=str(SAIDA / 'v73_partida_844x390.png'))
         q = await rt(pg, QUADRO)
-        P.confere(q['halos'] == q['jogadores'] and 0 < q['maiorHalo'] <= round(255*.45) + 2 and len(q['tracos']) == q['jogadores'] and all(abs(t['a'] - .4) < .01 for t in q['tracos']),
+        P.confere(q['halos'] == q['jogadores'] and 0 < q['maiorHalo'] <= 250 and len(q['tracos']) == q['jogadores'] and all(abs(t['a'] - .4) < .01 for t in q['tracos']),
                   '844x390: o halo transparente e o contorno leve também no celular', q)
         rede = [e for e in erros if 'Failed to load resource' in e]
         P.confere(not [e for e in erros if e not in rede], '844x390: nenhum erro de JavaScript', [e for e in erros if e not in rede][:3])

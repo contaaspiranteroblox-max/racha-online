@@ -7,6 +7,7 @@ Rodar: python3 tests/polimento_test.py
 """
 import pathlib, re
 from comum import abre, rt, roda, Placar, async_playwright, RAIZ, HARNESS
+import comum; comum.SKINS_PRONTAS = True   # v101: este teste confere as tampinhas prontas (o interruptor as traz de volta)
 
 FOCO = """(() => { const a = document.activeElement; if (!a || a === document.body) return 'body';
   return (a.id ? '#' + a.id : '') + '.' + String(a.className).split(' ').slice(0, 2).join('.') + ' ' + (a.getAttribute('aria-label') || a.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 30); })()"""
@@ -51,12 +52,14 @@ async def principal():
         c = await cor('#lb-pop .lb-btn.vermelho')
         P.confere(c and c['meio'][0] > 180 and c['meio'][1] < 80 and c['cr'] >= 4, 'SAIR da sala = vermelho de verdade (era laranja)', c)
         await rt(pg, "(() => { fechaPop(); net49Send({type:'leave'}); fechaTela(); abrirLobby(); return true; })()"); await pg.wait_for_timeout(300)
-        # v71: a LOJA e os DESAFIOS são botões escuros com o desenho colorido (a barraca amarela, a medalha amarela) e a palavra branca
-        ic = await pg.evaluate("""(() => { const l = document.querySelector('#rx [data-loja]'), m = document.querySelector('#lb-missoes .v77-mi-ic');
-          const f = getComputedStyle(l).backgroundImage, rgb = (f.match(/rgb\\(\\d+, \\d+, \\d+\\)/g) || []).map(c => c.match(/\\d+/g).reduce((a, x) => a + +x, 0));
-          return {tile:l.classList.contains('v71-tile'), desenho:!!l.querySelector('i .v77-ic[data-ic=loja]') && getComputedStyle(l.querySelector('i .v77-ic')).backgroundImage.indexOf('data:image/webp') >= 0,
-            rotulo:getComputedStyle(l.querySelector('b')).color, fundo:rgb.length > 0 && Math.max(...rgb) < 200, medalha:!!m && m.dataset.ic === 'desafios'}; })()""")
-        P.confere(ic['tile'] and ic['desenho'] and ic['rotulo'] == 'rgb(255, 255, 255)' and ic['fundo'] and ic['medalha'], 'LOJA e DESAFIOS: o desenho da imagem no botão escuro, a palavra branca (v77)', ic)
+        # v71: a LOJA e os DESAFIOS são botões escuros com o desenho colorido e a palavra branca · v91: a LOJA amarela da imagem de
+        # referência (o desenho do carrinho) com a palavra branca numa placa escura; as MISSÕES com a prancheta
+        ic = await pg.evaluate("""(() => { const l = document.querySelector('#rx [data-loja]'), m = document.querySelector('#lb-missoes .v91-mi-ic'), b = l.querySelector(':scope > b');
+          // (v95: a palavra fica na placa escura do próprio botão — o fundo da palavra ou, sem ele, o do botão)
+          const fb = getComputedStyle(b).backgroundImage, f = fb && fb !== 'none' ? fb : getComputedStyle(l).backgroundImage, rgb = (f.match(/rgb\\(\\d+, \\d+, \\d+\\)/g) || []).map(c => c.match(/\\d+/g).reduce((a, x) => a + +x, 0));
+          return {tile:l.classList.contains('v71-tile'), desenho:!!l.querySelector(':scope > i.v91-tile-ic[data-ic=loja] svg use'),
+            rotulo:getComputedStyle(b).color, fundo:rgb.length > 0 && Math.max(...rgb) < 200, medalha:!!m && !!m.querySelector('svg use')}; })()""")
+        P.confere(ic['tile'] and ic['desenho'] and ic['rotulo'] == 'rgb(255, 255, 255)' and ic['fundo'] and ic['medalha'], 'LOJA e MISSÕES: o desenho novo (v91), a palavra branca na placa escura', ic)
         css = (RAIZ / 'app' / 'public' / 'game' / 'v70.css').read_text(encoding='utf-8')
         P.confere(':focus-visible' in css and 'outline:4px solid var(--v70-foco)' in css, 'foco visível: o mesmo anel em todo o jogo')
 
@@ -66,9 +69,9 @@ async def principal():
             await pg.wait_for_timeout(200)
             await pg.click(sel); await pg.wait_for_timeout(450)
             return await rt(pg, "(() => { const T = lobby.tela && TELAS[lobby.tela]; const h = T && T.el.querySelector('.tl-cab h2'); const a = T && T.el.querySelector('.tl-aba[aria-selected=true]'); return {tela:lobby.tela, h2:h && h.textContent, aba:a && a.textContent.replace(/\\d+$/, '')}; })()")
-        tile = await pg.evaluate("document.querySelector('#rx [data-rx=\"skins\"] b').textContent")
-        d = await destino('#rx [data-rx="skins"]')
-        P.confere(tile == 'TAMPINHA' and d['h2'] == 'SUA TAMPINHA', 'TAMPINHA → SUA TAMPINHA (era SKINS)', [tile, d])
+        tile = await pg.evaluate("document.querySelector('#rx [data-rx=\"cofre\"] b').textContent")   # (v90: o TAMPINHA virou COFRE)
+        d = await destino('#rx [data-rx="cofre"]')
+        P.confere(tile == 'COFRE' and d['h2'] == 'COFRE', 'COFRE → COFRE (v90: era TAMPINHA → SUA TAMPINHA; o editor abre pelo CRIAR TAMPINHA)', [tile, d])
         tile = await pg.evaluate("document.querySelector('#rx [data-rx=\"treino\"] b').textContent")
         d = await destino('#rx [data-rx="treino"]')
         P.confere(tile == 'TREINO' and d['h2'] == 'TREINO', 'TREINO → TREINO (v77: o mesmo nome do botão; era EXERCÍCIOS, depois TREINAMENTO)', [tile, d])
@@ -127,8 +130,8 @@ async def principal():
         P.confere(r['esp'] is False, 'quem assiste não ganha o VOCÊ', r)
         r = await rt(pg, """(() => { const l = [];
           const g = new Proxy({}, {get:(t, k) => k === 'arc' ? x => l.push(x) : k === 'setLineDash' ? d => { if (d && d.length) l.push('dash'); } : k === 'createLinearGradient' ? () => ({addColorStop(){}}) : () => {}, set:() => true});
-          try { v80PlacarCaixa(g, RachaPartida80.placarW(), 54, rqCor(0), rqCor(1), false); } catch (e) { return String(e); } return l; })()""")   # v80: o placar novo
-        P.confere(isinstance(r, list) and r.count('dash') == 1 and len([x for x in r if x != 'dash']) >= 2, 'o placar mostra o mesmo símbolo (cheio e tracejado) — v80: no placar novo, do lado do TIME A e do TIME B', r)
+          try { v95Contorno(g, W/2 - 115, 44, 0); v95Contorno(g, W/2 + 115, 44, 1); } catch (e) { return String(e); } return l; })()""")   # v95: o placar minimalista (embaixo de cada número)
+        P.confere(isinstance(r, list) and r.count('dash') == 1 and len([x for x in r if x != 'dash']) >= 2, 'o placar mostra o mesmo símbolo (cheio e tracejado) — v95: no placar minimalista, embaixo do número de cada time', r)
         r = await rt(pg, """(() => {
           const ditos = []; const txt0 = txt; txt = function(g, s){ ditos.push(s); return txt0.apply(this, arguments); };
           const T = window.__T, g = cv.getContext('2d'), saida = {};
@@ -193,6 +196,13 @@ async def principal():
         # v79: o JOGAR é só a ranqueada (o COMO JOGA era da CASUAL); a janela por cima dele agora é a das PATENTES
         await rt(pg, "(() => { ED.saindo = true; fechaTela(); ED.saindo = false; abreJogar('casual'); return true; })()"); await pg.wait_for_timeout(350)
         await pg.click('#lb-rq .v79-ver-pat'); await pg.wait_for_timeout(300)
+        # (v92 · a janela abre com a animação rua-tinta, 0,28 s de recorte da esquerda para a direita, que só começa depois de
+        #  desenhar as 8 patentes — ~0,15 s depois do toque: olhar o centro aos 0,30 s pegava a janela ainda recortada, com ou
+        #  sem a Oficina. Espera a animação de abrir terminar; a conferência continua a mesma)
+        try:
+            await pg.wait_for_function("() => { const e = document.getElementById('v79-pat'); return !!e && !e.hidden && !e.getAnimations().some(a => a.playState === 'running'); }", polling=50, timeout=3000)
+        except Exception:
+            pass
         t = await pg.evaluate("(() => { const e = document.getElementById('v79-pat'); const r = e.getBoundingClientRect(); const x = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2); return {vis:!e.hidden, topo:!!x && e.contains(x), foco:e.contains(document.activeElement), jogarInerte:!!document.getElementById('lb-rq').closest('[inert]') || !!document.getElementById('lb-rq').inert}; })()")
         P.confere(t['vis'] and t['topo'] and t['foco'] and t['jogarInerte'], 'as PATENTES aparecem por cima do JOGAR, com o foco dentro e o JOGAR inerte atrás (v79)', t)
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(250)
@@ -296,6 +306,8 @@ async def principal():
         await pg.evaluate("(() => { const o = document.getElementById('onb'); if (o) o.hidden = true; })()")
         await rt(pg, "(() => { X49.mode = 'casual'; X49.jogo = 'futebol'; x49Start(2, 1); rqVsComeca(); return true; })()")
         await pg.wait_for_timeout(1500)
+        if await rt(pg, "typeof V93P !== 'undefined' && !!V93P.contagem"):   # v93: a partida começa depois do 3, 2, 1, JÁ!
+            await pg.wait_for_timeout(3200)
         t = await rt(pg, "({tick:RQ.tick, on:RQ.on})")
         hosts = sorted(set(re.sub(r'^https?://([^/]+)/.*$', r'\1', u) for u in fora))
         P.confere(set(hosts) <= {'fonts.googleapis.com', 'fonts.gstatic.com'}, 'de fora, o jogo só pede as fontes (Google Fonts)', hosts)

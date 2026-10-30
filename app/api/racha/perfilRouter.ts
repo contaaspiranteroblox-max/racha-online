@@ -17,9 +17,10 @@ import {
 } from "@db/schema";
 import { autenticado, exigeLimite, ipDaRequisicao, sessaoDaRequisicao, type CtxAutenticado } from "./guard";
 import { paraPublico } from "./authRouter";
-import { estadoRanqueada, importaPatente, infoPatente, posicaoNoRanking, rankingPatentes } from "./ranqueada";
+import { estadoRanqueada, infoPatente, posicaoNoRanking, rankingPatentes } from "./ranqueada";
 import {
   itemPorCodigo,
+  CATALOGO_ITENS,
   formatarIdPublico,
   tituloPorNivel,
   progressoNivel,
@@ -120,6 +121,9 @@ function proximaRecompensa(nivelAtual: number) {
   return { nivel: prox.nivel, item: item ? { codigo: item.codigo, nome: item.nome, categoria: item.categoria, visual: item.visual } : null };
 }
 
+// v100 (segurança): o texto da busca sem curinga do LIKE (% e _ do que a pessoa digitou valem como letra)
+const semCuringa = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
+
 export const perfilRouter = createRouter({
   // ---------- 4. MEU CARTÃO ----------
   meuCartao: autenticado.query(async ({ ctx }) => {
@@ -194,14 +198,17 @@ export const perfilRouter = createRouter({
         if (input.tituloEquipado === null) updates.tituloEquipado = null;
         else {
           // Títulos válidos: faixa de carreira já alcançada ou título-item possuído
+          // v93: o título-item vem pelo código (titulo_…) ou pelo nome; antes, nenhum dos dois passava (o código era
+          // procurado e depois comparado com o nome), e nenhum título de nível ou de evento equipava. Guarda o nome (é o
+          // que o cartão mostra).
           const nivelOk = FAIXAS_TITULO.some((f) => f.titulo === input.tituloEquipado && c.usuario.nivel >= f.min);
-          const itemTitulo = itemPorCodigo(input.tituloEquipado.startsWith("titulo_") ? input.tituloEquipado : "");
-          const possuiTituloItem = itemTitulo ? await possui(itemTitulo.codigo) : false;
-          const nomeDeItemPossuido = itemTitulo?.nome === input.tituloEquipado && possuiTituloItem;
-          if (!nivelOk && !nomeDeItemPossuido) {
+          const t = input.tituloEquipado;
+          const itemTitulo = (t.startsWith("titulo_") ? itemPorCodigo(t) : CATALOGO_ITENS.find((i) => i.categoria === "titulo" && i.nome === t));
+          const possuiTituloItem = itemTitulo && itemTitulo.categoria === "titulo" ? await possui(itemTitulo.codigo) : false;
+          if (!nivelOk && !possuiTituloItem) {
             throw new TRPCError({ code: "FORBIDDEN", message: "Você ainda não desbloqueou esse título." });
           }
-          updates.tituloEquipado = input.tituloEquipado;
+          updates.tituloEquipado = possuiTituloItem && itemTitulo ? itemTitulo.nome : t;
         }
       }
 
@@ -364,7 +371,8 @@ export const perfilRouter = createRouter({
         equipado:
           c.usuario.skinEquipada === i.codigoItem ||
           c.usuario.bannerEquipado === i.codigoItem ||
-          c.usuario.molduraEquipada === i.codigoItem,
+          c.usuario.molduraEquipada === i.codigoItem ||
+          (cat?.categoria === "titulo" && !!cat && c.usuario.tituloEquipado === cat.nome),   // v93: o título-item equipado também
       };
     });
   }),
@@ -480,14 +488,15 @@ export const perfilRouter = createRouter({
     return { ...e, patente: infoPatente(e.pts), posicao: entra ? await posicaoNoRanking(e.pts) : null };
   }),
 
-  // A patente feita no aparelho antes da conta: uma vez por conta, com teto (contracts/patentes.ts: RQ_LIMITES)
+  // Compatibilidade com clientes antigos. Pontos locais não são prova de uma
+  // partida online; a operação deixa de creditá-los na patente oficial.
   importarPatente: autenticado
     .input(z.object({ pts: z.number().int().min(0).max(99999) }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx }) => {
       const c = ctx as unknown as CtxAutenticado;
       await exigeLimite(`rqimport:${c.usuario.id}`, 5, 60 * 60 * 1000, "Muitos pedidos seguidos.");
-      const r = await importaPatente(c.usuario.id, input.pts);
-      return { importou: r.importou, estado: r.estado, patente: infoPatente(r.estado.pts) };
+      const estado = await estadoRanqueada(c.usuario.id);
+      return { importou: 0, estado, patente: infoPatente(estado.pts) };
     }),
 
   // Busca rápida de jogadores (para amigos/admin) — com rate limit anti-varredura
@@ -507,7 +516,8 @@ export const perfilRouter = createRouter({
       }
       if (achados.length === 0) {
         achados = await db.query.usuarios.findMany({
-          where: or(like(usuarios.username, `${termo.toLowerCase()}%`), like(usuarios.nomeExibicao, `${termo}%`)),
+          // v100: % e _ do que a pessoa digitou valem como letra (não como curinga: "%" listava qualquer um)
+          where: or(like(usuarios.username, `${semCuringa(termo.toLowerCase())}%`), like(usuarios.nomeExibicao, `${semCuringa(termo)}%`)),
           limit: 10,
         });
       }

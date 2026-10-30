@@ -13,8 +13,8 @@ import CAT from "./catalogo88.json" with { type: "json" };
 import TAMPAS from "./catalogo_tampinhas.json" with { type: "json" };
 
 // ---------------------------------------------------------------- tipos do catálogo
-export type Raridade = "comum" | "raro" | "epico" | "lendario" | "exclusivo";
-export type TipoItem = "bola" | "efeito" | "comemoracao" | "gol" | "banner" | "avatar" | "tampinha" | "caixa";
+export type Raridade = "comum" | "raro" | "epico" | "lendario" | "exclusivo" | "fundador";   // v96: a dos 30 primeiros (não se vende)
+export type TipoItem = "bola" | "efeito" | "comemoracao" | "gol" | "banner" | "avatar" | "emoji" | "tampinha" | "caixa";   // v95: o emoji da tampinha
 export type ItemCat = {
   id: string; tipo: TipoItem; nome: string; raridade: Raridade; moedas?: number; gemas?: number;
   gratis?: boolean; venda?: boolean; desc?: string; visual?: Record<string, unknown>;
@@ -61,6 +61,7 @@ export const pacoteCat = (id: string): Pacote | undefined => PACOTES.get(id);
 export const codigoPeca = (k: string) => "peca:" + k;
 export const pecaDoCodigo = (codigo: string): Peca | undefined => (codigo.startsWith("peca:") ? PECAS_MAP.get(codigo.slice(5)) : undefined);
 export const ehPecaGratis = (p: Peca) => p.raridade === "gratis";
+export const ehPecaFundador = (p: Peca) => p.raridade === "fundador";   // v96: as peças dos fundadores não se compram (a plataforma entrega)
 
 // o que existe para ter (item do catálogo novo ou peça da tampinha): o servidor só grava código que exista aqui
 export function existeCodigo(codigo: string): boolean {
@@ -108,7 +109,7 @@ function escolhe<T>(lista: T[], n: number, semente: number): T[] {
 // ---------------------------------------------------------------- a loja: o que está à venda e por quanto
 export type Venda = { codigo: string; tipo: "item" | "peca" | "pacote"; nome: string; raridade: string; moedas: number; gemas: number; base: { moedas: number; gemas: number }; desconto: number; categoria: string };
 const vendivel = (i: ItemCat) => !i.gratis && i.venda !== false && ((i.moedas || 0) > 0 || (i.gemas || 0) > 0);
-const CAT_DO_TIPO: Record<string, string> = { bola: "bolas", efeito: "efeitos", comemoracao: "comemoracoes", gol: "gols", banner: "banners", avatar: "avatares" };
+const CAT_DO_TIPO: Record<string, string> = { bola: "bolas", efeito: "efeitos", comemoracao: "comemoracoes", gol: "gols", banner: "banners", avatar: "avatares", emoji: "emojis" };
 export function categoriaDoItem(i: ItemCat): string {
   return CAT_DO_TIPO[i.tipo] || "tampinhas";
 }
@@ -117,17 +118,17 @@ export function ofertasDaSemana(d: Date = new Date()): string[] {
   const candidatos = CATALOGO.itens.filter(vendivel).map((i) => i.id);
   return escolhe(candidatos, CATALOGO.ofertas.porSemana, 7000 + numeroDaSemana(d));
 }
-// os destaques do dia: um item de cada categoria (bola, efeito, comemoração, gol, banner, avatar) e peças da tampinha
+// os destaques do dia: um item de cada categoria (bola, efeito, comemoração, gol, banner, avatar e, v95, emoji) e peças da tampinha
 export function destaquesDoDia(d: Date = new Date()): string[] {
   const n = numeroDoDia(d);
   const out: string[] = [];
-  for (const tipo of ["bola", "efeito", "comemoracao", "gol", "banner", "avatar"]) {
+  for (const tipo of ["bola", "efeito", "comemoracao", "gol", "banner", "avatar", "emoji"]) {
     const l = CATALOGO.itens.filter((i) => i.tipo === tipo && vendivel(i)).map((i) => i.id);
     out.push(...escolhe(l, 1, 9100 + n * 13 + tipo.length));
   }
-  const pecas = PECAS.filter((p) => !ehPecaGratis(p)).map((p) => codigoPeca(p.k));
+  const pecas = PECAS.filter((p) => !ehPecaGratis(p) && !ehPecaFundador(p)).map((p) => codigoPeca(p.k));
   out.push(...escolhe(pecas, Math.max(0, CATALOGO.destaques.porDia - 4), 9900 + n));
-  return out.slice(0, Math.max(CATALOGO.destaques.porDia, 6) + 2);
+  return out.slice(0, Math.max(CATALOGO.destaques.porDia, 7) + 2);
 }
 // o preço de verdade de um código à venda (ou null: não está à venda). extraOfertas: as do evento temporário (RACHA CONTROL)
 export function precoDe(codigo: string, d: Date = new Date(), extraOfertas: Record<string, number> = {}): Venda | null {
@@ -142,7 +143,7 @@ export function precoDe(codigo: string, d: Date = new Date(), extraOfertas: Reco
   }
   const p = pecaDoCodigo(codigo);
   if (p) {
-    if (ehPecaGratis(p)) return null;
+    if (ehPecaGratis(p) || ehPecaFundador(p)) return null;
     const pct = Math.max(0, Math.min(90, extraOfertas[codigo] ?? 0));
     return { codigo, tipo: "peca", nome: p.tipoNome + " " + p.nome, raridade: p.raridade, moedas: aplica(p.moedas, pct), gemas: aplica(p.gemas, pct), base: { moedas: p.moedas, gemas: p.gemas }, desconto: pct, categoria: "tampinhas" };
   }
@@ -159,16 +160,34 @@ export function podeEquipar(tipo: string, codigo: string, tem: (c: string) => bo
 }
 
 // ---------------------------------------------------------------- as recompensas das partidas e do treino (as do jogo)
+// v95: a economia melhorada — a partida, a vitória e o gol rendem mais; a assistência, o craque da partida e a sequência de
+// vitórias passam a render; a 1ª vitória do dia dá moedas e gemas; o nível novo dá mais; o teto do dia subiu (as mesmas do jogo)
 export const PREMIO = {
-  golPartida: 10, partida: 25, vitoria: 60,           // moedas (o PREMIO do jogo)
+  golPartida: 12, partida: 30, vitoria: 70,           // moedas (o PREMIO do jogo)
+  assistPartida: 6, craque: 40,                       // v95: cada assistência (até 10) e o craque da partida (o melhor da partida)
+  sequencia: 10, sequenciaMax: 50,                    // v95: a vitória seguida (a 2ª +10, a 3ª +20… até +50)
+  primeiraVitoria: 150, primeiraVitoriaGemas: 10,     // v95: a 1ª vitória do dia (uma vez por dia, fora do teto)
   golLivre: 4, golLivreDia: 15,                       // treino livre: 4 por gol, até 15 gols por dia (o ECO_CAP do jogo)
   treino: [10, 30, 60, 100], recorde: 20, tresGemas: 10, exercicioCheio: 3, exercicioResto: 0.3,   // fim de exercício
-  nivelMoedas: 100, nivelGemas: 5, nivel5Gemas: 25,   // cada nível da conta (e mais a cada 5)
-  moedasDiaPartidas: 4000,                            // teto do dia (anti-farm) do que vem de partidas
+  nivelMoedas: 150, nivelGemas: 8, nivel5Gemas: 30,   // cada nível da conta (e mais a cada 5) · v95: 150 e 8 (eram 100 e 5; +30 a cada 5, eram +25)
+  moedasDiaPartidas: 6000,                            // teto do dia (anti-farm) do que vem de partidas (v95: era 4.000)
   moedasDiaTreino: 1500,                              // teto do dia do que vem do treino (gols e exercícios)
 } as const;
-export function moedasDaPartida(o: { resultado: "vitoria" | "derrota" | "empate"; gols: number }): number {
-  return PREMIO.partida + (o.resultado === "vitoria" ? PREMIO.vitoria : 0) + Math.max(0, Math.min(10, o.gols | 0)) * PREMIO.golPartida;
+export type PartidaPremio = { resultado: "vitoria" | "derrota" | "empate"; gols: number; assistencias?: number; mvp?: boolean; seq?: number };
+// v95: o que cada parte da partida rendeu (o jogo mostra a lista na tela do fim)
+export function detalheDaPartida(o: PartidaPremio): { rot: string; moedas: number }[] {
+  const L: { rot: string; moedas: number }[] = [{ rot: "Partida", moedas: PREMIO.partida }];
+  if (o.resultado === "vitoria") L.push({ rot: "Vitória", moedas: PREMIO.vitoria });
+  const g = Math.max(0, Math.min(10, o.gols | 0)), a = Math.max(0, Math.min(10, (o.assistencias ?? 0) | 0));
+  if (g) L.push({ rot: g === 1 ? "1 gol" : g + " gols", moedas: g * PREMIO.golPartida });
+  if (a) L.push({ rot: a === 1 ? "1 assistência" : a + " assistências", moedas: a * PREMIO.assistPartida });
+  if (o.mvp) L.push({ rot: "Craque da partida", moedas: PREMIO.craque });
+  const s = Math.max(0, (o.seq ?? 0) | 0);
+  if (o.resultado === "vitoria" && s >= 2) L.push({ rot: s + " vitórias seguidas", moedas: Math.min(PREMIO.sequenciaMax, (s - 1) * PREMIO.sequencia) });
+  return L;
+}
+export function moedasDaPartida(o: PartidaPremio): number {
+  return detalheDaPartida(o).reduce((t, x) => t + x.moedas, 0);
 }
 export function premioNivel(n: number): { moedas: number; gemas: number } {
   return { moedas: PREMIO.nivelMoedas, gemas: PREMIO.nivelGemas + (n % 5 === 0 ? PREMIO.nivel5Gemas : 0) };

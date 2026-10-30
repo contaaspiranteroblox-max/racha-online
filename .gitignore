@@ -6,3 +6,23 @@ tests/saida/*.png
 __pycache__/
 *.pyc
 tests/saida/plataforma.mjs
+tests/saida/logs*/
+tests/saida/logs*_resumo.txt
+# v100 (segurança): segredos, bancos e pacotes nunca entram no git nem nos ZIPs (tools/v92/pacote.py também recusa)
+.env
+.env.*
+!.env.example
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.zip
+*.pem
+*.key
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.bundle

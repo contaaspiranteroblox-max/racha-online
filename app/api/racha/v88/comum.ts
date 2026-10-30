@@ -4,8 +4,9 @@
 // da central de mensagens (com o aviso na hora pelo servidor das salas, quando ele está montado aqui) e a entrega de
 // prêmios (moedas, gemas, itens, XP do passe) dentro de uma transação.
 // ============================================================================
-import { eq, and, or, inArray, desc } from "drizzle-orm";
+import { eq, and, or, inArray } from "drizzle-orm";
 import { getDb } from "../../queries/connection";
+import { ehFundador, ITEM_FUNDADOR } from "../fundador";
 import { usuarios, amizades, bloqueios, mensagens, clubeMembros, selos, ranqueada, passeTemporada } from "@db/schema";
 import { avisaConta, relacoesMudaram, type RelacoesConta } from "../../lib/salas";
 import { formatarIdPublico, tituloPorNivel } from "@contracts/racha";
@@ -26,6 +27,7 @@ export const MAX_AMIGOS = 100;
 export type Cartao = {
   idPublico: string; nome: string; nivel: number; titulo: string; tampa: string | null; selos: string[];
   avatar: string; banner: string; patente: string | null; clube: string | null; bio: string | null;
+  emoji: string;                                                   // v95: o emoji da tampinha ("emoji_nenhum" = sem)
 };
 export function equipadosDe(u: { equipados?: Record<string, string> | null }): Record<string, string> {
   const e = (u.equipados && typeof u.equipados === "object" ? u.equipados : {}) as Record<string, string>;
@@ -45,7 +47,7 @@ export async function cartaoDe(u: UsuarioSessao, db: Conn = getDb(), extra?: { s
   return {
     idPublico: pub6(u.idPublico), nome: u.nomeExibicao, nivel: u.nivel, titulo: u.tituloEquipado || tituloPorNivel(u.nivel), tampa: u.tampa ?? null,
     selos: meusSelos, avatar: eq88.avatar, banner: eq88.banner, patente: pts === null ? null : patenteDe(pts).titulo,
-    clube: extra?.clube ?? null, bio: u.bio ?? null,
+    clube: extra?.clube ?? null, bio: u.bio ?? null, emoji: eq88.emoji || CATALOGO.padroes.emoji || "emoji_nenhum",
   };
 }
 export async function cartoesDe(ids: number[], db: Conn = getDb()): Promise<Map<number, Cartao>> {
@@ -78,7 +80,8 @@ export async function relacoesDe(usuarioId: number, db: Conn = getDb()): Promise
     mostraOnline: u.mostraOnline !== false,
     aceitaConvites: u.aceitaConvites !== false,
     clube: membro ? "p" + membro.clubeId : null,
-    cos: equipadosDe(u),
+    // v96: + o selo de fundador (assinado no bilhete: o servidor das salas só deixa a tampinha dos fundadores com quem é)
+    cos: Object.assign(equipadosDe(u), (await ehFundador(usuarioId, db)) ? { fundador: ITEM_FUNDADOR } : {}),
   };
 }
 export async function relacoesPorPub(pub: string): Promise<RelacoesConta | null> {

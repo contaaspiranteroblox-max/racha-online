@@ -30,7 +30,8 @@ dist-ssr
 *.db
 *.sqlite
 *.sqlite3
-db/migrations/*.sql
+# (v101: as migrações do banco ENTRAM no git — o deploy da VPS e o deploy/migracoes.conf usam os arquivos de app/db/migrations;
+#  antes elas ficavam de fora do git e, por isso, dos ZIPs)
 # TypeScript cache
 *.tsbuildinfo
 # Build outputs

@@ -60,8 +60,8 @@ async def principal():
         await toque(pg, 13)                                 # o direcional para baixo: sem foco, vai para o JOGAR
         r = await rt(pg, "({jogar:document.activeElement === LB.jogar, foco:document.body.classList.contains('v88-pad-foco')})")
         P.confere(r['jogar'] and r['foco'], 'o direcional acende um botão (o primeiro é o JOGAR) e o foco aparece', r)
-        await toque(pg, 14)                                 # para a esquerda: o MODO, colado no JOGAR
-        r = await rt(pg, "({modo:document.activeElement === LB.modo, nome:(document.activeElement && (document.activeElement.getAttribute('aria-label') || document.activeElement.textContent) || '').slice(0, 40)})")
+        await toque(pg, 14)                                 # para a esquerda: o MODO, colado no JOGAR (v101: o MODO novo, a bola e RANQUEADA; o #lb-modo virou o cartão do campo)
+        r = await rt(pg, "({modo:document.activeElement === LB.modo || !!(document.activeElement && document.activeElement.classList.contains('v101-modo')), nome:(document.activeElement && (document.activeElement.getAttribute('aria-label') || document.activeElement.textContent) || '').slice(0, 40)})")
         P.confere(r['modo'], 'para a esquerda: o MODO (o vizinho do JOGAR)', r)
         await rt(pg, "(() => { document.querySelector('#rx .rx-bt[data-loja]').focus(); return 1; })()")
         await toque(pg, 0)                                  # A confirma: abre a LOJA

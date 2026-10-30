@@ -344,7 +344,14 @@ function tpeFaixa(){
     b.append(box, nm, pr); f.appendChild(b);
   }
   tpeFaixaMarca(); tpeMinis(true);
-  const on = f.querySelector('.tpe-item.on'); if (on) requestAnimationFrame(() => { try { on.scrollIntoView({block:'nearest', inline:'center'}); } catch (_) {} });
+  // a escolhida no meio da faixa (só a faixa anda: o scrollIntoView também empurrava a tela inteira para o lado quando a
+  // escolhida era uma das últimas da faixa, que não tem mais para onde andar — v96)
+  const on = f.querySelector('.tpe-item.on'); if (on) requestAnimationFrame(() => { try {
+    const a = on.getBoundingClientRect(), c = f.getBoundingClientRect();
+    const kx = c.width / (f.offsetWidth || c.width) || 1, ky = c.height / (f.offsetHeight || c.height) || 1;   // (o lobby vem em escala)
+    f.scrollLeft += ((a.left + a.width / 2) - (c.left + c.width / 2)) / kx;
+    if (a.top < c.top) f.scrollTop -= (c.top - a.top) / ky; else if (a.bottom > c.bottom) f.scrollTop += (a.bottom - c.bottom) / ky;
+  } catch (_) {} });
 }
 function tpeFaixaMarca(){                                // a escolhida, os preços e o que já é seu
   const E = ED.el; if (!E) return;

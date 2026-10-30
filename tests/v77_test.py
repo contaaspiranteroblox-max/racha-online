@@ -45,13 +45,15 @@ FUNDO = r"""(() => {
 LOBBY = r"""(() => {
   const vis = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 2;
   const marca = document.querySelector('#rx .rx-marca'), let_ = marca && marca.querySelector('.v77-letreiro'), cap = LB.emblema.getBoundingClientRect(), lr = let_ && let_.getBoundingClientRect();
-  const tiles = [...document.querySelectorAll('#rx .v71-tile')].map(b => ({t:b.querySelector(':scope > b').textContent, ic:(b.querySelector('i .v77-ic') || {}).dataset ? b.querySelector('i .v77-ic').dataset.ic : null}));
-  const topo = [...document.querySelectorAll('#lb .lb-topo .tp-dir > *')].filter(vis).map(e => e.id || e.className.split(' ').filter(c => /tp-ic|hm-grana|v77-amg/.test(c)).join('.'));
+  const icDe = b => { const i = b.querySelector(':scope > i.v91-tile-ic[data-ic]') || b.querySelector('i .v77-ic'); return i ? i.dataset.ic : null; };   // (v91: o desenho novo no próprio <i>)
+  const tiles = [...document.querySelectorAll('#rx .v71-tile')].map(b => ({t:b.querySelector(':scope > b').textContent, ic:icDe(b)}));
+  const topo = [...document.querySelectorAll('#lb .lb-topo .tp-dir > *')].filter(e => vis(e) && !e.classList.contains('v101-sinal')).map(   // (v101: o sinal da conexão, depois dos ajustes como na imagem da noite, não conta)
+    e => e.id || e.className.split(' ').filter(c => /tp-ic|hm-grana|v77-amg/.test(c)).join('.'));
   const cvs = [...LB.palco.querySelectorAll('canvas')].filter(vis).map(c => c.id || c.className);
   return {let:vis(let_) && marca.classList.contains('v77-com-letreiro'), letEmCima:!!lr && lr.bottom <= cap.top + cap.height*.25 && Math.abs((lr.left + lr.right)/2 - (cap.left + cap.right)/2) < cap.width*.6,
     logoLido:document.querySelector('#rx .rx-logo').textContent, tiles, topo, cvs, xp:(document.getElementById('v77-xp') || {}).textContent,
     modo:[LB.modo.querySelector('.v71-modo-tx b').textContent, (LB.modo.querySelector('.v77-modo-nm') || {}).textContent],
-    premio:!!LB.missoes.querySelector('.mi-premio .v77-pilha') && /^\d/.test(LB.missoes.querySelector('.mi-premio b').textContent), estrela:!!LB.missoes.querySelector('.v77-mi-ic'),
+    premio:!!LB.missoes.querySelector('.mi-premio .v77-pilha') && /^\d/.test(LB.missoes.querySelector('.mi-premio b').textContent), estrela:!!LB.missoes.querySelector('.v77-mi-ic, .v91-mi-ic'),
     v77:LB.raiz.classList.contains('v77'), carrossel:document.querySelectorAll('#lb-palco .tp-carrossel, #lb-palco .v77-carrossel, #lb-palco [class*=carross]').length};
 })()"""
 
@@ -83,7 +85,7 @@ PERFIL = r"""(() => {
   const num = id => document.getElementById(id).textContent;
   return {abas, partes, nome:document.getElementById('lb-nome-txt').textContent, id:PF.uid.textContent, nv:P.nv.textContent.replace(/\s+/g, ''), xp:document.getElementById('pf-xp-tx').textContent,
     tempo:P.tTempo.textContent, seq:P.tSeq.textContent, gols:num('st-gols'), assist:num('st-assist'), vit:num('st-vitorias'), part:num('st-partidas'), aprov:num('st-aprov'),
-    banner:getComputedStyle(P.ban).backgroundImage.indexOf('data:image/webp') >= 0, letreiro:vis(P.ban.querySelector('.v77-pf-letreiro')), copia:vis(P.id.querySelector('.v77-pf-copia')),
+    banner:getComputedStyle(P.ban).backgroundImage.indexOf('data:image/webp') >= 0 || (c => !!c && c.width > 10 && !!c.dataset.k)(P.ban.querySelector(':scope > canvas.v91-pf-ban')), letreiro:vis(P.ban.querySelector('.v77-pf-letreiro')), copia:vis(P.id.querySelector('.v77-pf-copia')),
     lado:vis(document.querySelector('#tela-perfil .pf-lado')), pais:!!P.pais.firstChild, tits:P.tits.children.length};
 })()"""
 # os números de verdade: um jogo de partidas e gols gravado antes de abrir
@@ -116,7 +118,7 @@ CORES = r"""((n) => { __T.comeca('futebol', n, 0); __T.limpa(); cam.mode = 'fixa
   const px = (x, y) => [...g.getImageData(Math.round(x*k), Math.round(y*k), 1, 1).data].slice(0, 3);
   const media = (x, y, r) => { const d = g.getImageData(Math.round((x - r)*k), Math.round((y - r)*k), Math.max(1, Math.round(2*r*k)), Math.max(1, Math.round(2*r*k))).data; let s = [0, 0, 0], c = 0;
     for (let i = 0; i < d.length; i += 4){ s[0] += d[i]; s[1] += d[i + 1]; s[2] += d[i + 2]; c++; } return s.map(v => Math.round(v/c)); };
-  const r = {n, verde:media(CX - (CX - LINHAS.x0)*.45, CY + (LINHAS.y1 - CY)*.6, U(1.2)), amarelo:media(LINHAS.x0 + M.areaW*.78, CY + M.areaH*.3, U(.8)),
+  const r = {n, verde:media(CX - (CX - LINHAS.x0)*.45, CY + (LINHAS.y1 - CY)*.6, U(1.2)), amarelo:media(LINHAS.x0 + M.areaW*.45, CY + M.areaH*.15, U(.8)),   // (v95: dentro do D da área de futsal)
     azul:media(CX + M.circulo*.35, CY - M.circulo*.35, U(.8)), piso:media((GL + LINHAS.x0)/2, CY + (GB - CY)*.72, U(.6)),
     muro:media(CX - (GR - GL)*.32, GT*.55, U(.5)), lado:media(GL*.5, CY + U(9), U(.8)), err:window.RUA_QUADRA77_ERRO || null};
   rqSai(); return r; })"""
@@ -158,14 +160,15 @@ async def principal():
             P.confere(all(perto(a['tela'], a['imagem']) for a in f['amostras']) and f['cobre'], '%s: o fundo do lobby é a imagem limpa (6 amostras, cor a cor) e cobre a tela' % nome, f)
             l = await rt(pg, LOBBY)
             if (w, h) == (1280, 720):
-                P.confere(l['v77'] and l['let'] and l['letEmCima'] and l['logoLido'] == 'RACHA', 'o letreiro da imagem (RACHA, a coroa e FUTEBOL DE RUA) em cima da tampinha; o nome RACHA continua para o leitor de tela', l)
-                P.confere([t['t'] for t in l['tiles']] == ['LOJA', 'TAMPINHA', 'CLUBE', 'TREINO', 'SALAS', 'AMIGOS', 'RANKING', 'EVENTOS']
-                          and [t['ic'] for t in l['tiles']] == ['loja', 'tampinha', 'clube', 'treino', 'salas', 'amigos', 'ranking', 'eventos'],
-                          'os 8 botões dos lados com os desenhos da imagem (o EVENTOS entrou na coluna da direita)', l['tiles'])
-                # v88: entre os AMIGOS e os ajustes apareceu o CORREIO (o botão que já existia escondido: mensagens e correio)
-                P.confere(l['topo'][-4:] == ['lb-chat', 'tp-ic.v77-amg', 'lb-correio', 'lb-ajustes'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, o chat, os AMIGOS, (v88) o CORREIO e os ajustes', l['topo'])
+                # v90/v91: o letreiro saiu de cima da tampinha (v90: o RACHA no alto; v91: o RACHA grafitado no muro da imagem de referência)
+                P.confere(l['v77'] and not l['let'] and l['logoLido'] == 'RACHA', 'nada em cima da tampinha (v91: o RACHA está no muro do fundo); o nome RACHA continua para o leitor de tela', l)
+                P.confere([t['t'] for t in l['tiles']] == ['LOJA', 'COFRE', 'CLUBE', 'TREINO', 'SALAS', 'AMIGOS', 'RANKING', 'EVENTOS']
+                          and [t['ic'] for t in l['tiles']] == ['loja', 'cofre', 'clube', 'treino', 'salas', 'amigos', 'ranking', 'eventos'],
+                          'os 8 botões dos lados com os desenhos (v90: o COFRE no lugar da TAMPINHA; v91: os desenhos da imagem de referência; o EVENTOS na coluna da direita)', l['tiles'])
+                # v88: entre os AMIGOS e os ajustes apareceu o CORREIO · v90: os AMIGOS saíram do alto (são o botão AMIGOS da direita)
+                P.confere(l['topo'][-3:] == ['lb-chat', 'lb-correio', 'lb-ajustes'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, o chat, (v88) o CORREIO e os ajustes (v90: os AMIGOS ficam no botão da direita)', l['topo'])
                 P.confere(l['xp'] == '0 / 100' and l['modo'] == ['2 VS 2', 'RANQUEADA · ESTÁDIO'] and l['premio'] and l['estrela'],
-                          'você com o XP em números; o MODO com o tamanho grande (2 VS 2) e embaixo o que vai ser jogado (v79: RANQUEADA · ESTÁDIO); os DESAFIOS com a estrela e o prêmio na pilha de moedas', l)
+                          'você com o XP em números; o MODO com o tamanho grande (2 VS 2) e embaixo o que vai ser jogado (v79: RANQUEADA · ESTÁDIO); as MISSÕES com o desenho (v91: a prancheta) e o prêmio na pilha de moedas', l)
                 P.confere(l['carrossel'] == 0 and sorted(l['cvs']) == sorted(['lb-brilho', 'lb-eu-cv']) or l['carrossel'] == 0 and 'lb-brilho' in l['cvs'] and len(l['cvs']) <= 2,
                           'sem a fileira de tampinhas embaixo: no lobby só a sua tampinha (trocar é na TAMPINHA)', l['cvs'])
                 t = await rt(pg, TAMPA)
@@ -198,7 +201,7 @@ async def principal():
         P.confere(p['gols'] == '11' and p['assist'] == '4' and p['vit'] == '5' and p['part'] == '7' and p['aprov'] == '71%' and p['tempo'] == '1h 12min' and p['seq'].startswith('3'),
                   'VISÃO GERAL com os números de verdade: gols, assistências, vitórias, partidas, aproveitamento, tempo em campo e a melhor sequência', p)
         P.confere(p['banner'] and p['letreiro'] and p['copia'] and p['pais'] and p['nv'] == 'NV1' and (p['xp'].endswith('XP') or 'XP PARA O' in p['xp']) and p['id'] and p['tits'] == 7,   # (v78: o XP por extenso: NÍVEL 1 · FALTAM … XP PARA O 2)
-                  'o cartão da imagem: o banner com o letreiro, o nível no hexágono, o nome com a bandeira, o ID com o copiar, o XP e os 7 títulos', p)
+                  'o cartão da imagem: o banner (v91: o banner equipado) com o letreiro, o nível no hexágono, o nome com a bandeira, o ID com o copiar, o XP e os 7 títulos', p)
         t = await rt(pg, TAMPA_PERFIL)
         P.confere(t['giros'] == 0 and t['meio'] > 200 and t['canto'] == 0, 'a tampinha do perfil é reta como a do lobby (sem os raios girando) e fica na quadra', t)
         vistas = {}
@@ -232,7 +235,8 @@ async def principal():
         await rt(pg, "(() => { __T.comeca('futebol', 2, 0); __T.limpa(); cam.mode = 'fixa'; updateCamera(0, true); buildStatic(); return true; })()"); await pg.wait_for_timeout(300)
         await pg.screenshot(path=str(SAIDA / 'v77_quadra_ultraleve.png'))
         await rt(pg, "graf = GRAF_PADRAO; true")
-        P.confere(perto(lv['verde'], [53, 108, 60], 6) and perto(lv['amarelo'], [211, 150, 42], 6) and perto(lv['azul'], [42, 83, 117], 6) and not lv['err'], 'Ultra leve: as mesmas cores, lisas (sem textura nem cenário)', lv)
+        # (v95: as cores da quadra da imagem enviada depois — o verde #237d52, o amarelo #e6a41c e o azul #19618a)
+        P.confere(perto(lv['verde'], [35, 125, 82], 6) and perto(lv['amarelo'], [230, 164, 28], 6) and perto(lv['azul'], [25, 97, 138], 6) and not lv['err'], 'Ultra leve: as mesmas cores, lisas (sem textura nem cenário)', lv)
         fo = await rt(pg, FORA)
         P.confere(fo['usou'] >= 1 and fo['c'] and fo['visivel'] and fo['borda'] != [75, 61, 53], 'na Tela parada, onde a tela passa do mapa, entram as casas de fora (a imagem de fora do mundo)', fo)
         # (v79: o JOGAR é só a ranqueada, no Estádio: a prévia da Arena é desenhada com o botão dela à mostra, só para o teste)

@@ -1,8 +1,8 @@
 """v81 · O CHAT: a barra fixa embaixo (o menu, as telas, a sala e a partida), as abas BRASIL | SALA, o perfil pelo nome, o
 "digitando" com três pontinhos em cima da tampinha e a moderação.
 
-· A BARRA: no lobby (um bloco no vão da fileira de baixo, entre o DESAFIOS e o MODO, da altura deles: a tag BRASIL/SALA, o
-  contador, a seta e NOME: a mensagem mais recente), como um chip no canto nas telas do menu (perfil, salas, amigos, clube,
+· A BARRA: no lobby (v81: um bloco no vão da fileira de baixo; v90/v91: guardada — o chat abre pelo quadrado de cima — e
+  contando por trás: a tag BRASIL/SALA, o contador e NOME: a mensagem mais recente), como um chip no canto nas telas do menu (perfil, salas, amigos, clube,
   eventos, replays; não nas que têm o rodapé ocupado), na sala (embaixo, entre o CONVIDAR e o INICIAR) e na partida (menor e
   meio transparente, embaixo do campo: não cobre o placar nem os controles); toca para abrir, minimiza de novo; some com a
   chave "Chat na tela" dos Ajustes e com o OCULTAR do painel. No celular (o menu encolhido) a barra é maior em px do palco,
@@ -47,13 +47,14 @@ async def barra_painel(pw, P):
     await rt(pg, "(() => { ONB.aberto = false; return 1; })()"); await pg.wait_for_timeout(300)
     await rt(pg, MSGS); await pg.wait_for_timeout(250)
     r = await rt(pg, BARRA)
-    P.confere(r['onde'] == 'lobby' and not r['hidden'] and 'c81-lobby' in r['cls'] and r['vao'], 'no lobby a barra é um bloco no vão da fileira de baixo (a de antes, da v63, saiu)', r)
-    d, m = r['desafios'], r['modo']
-    P.confere(r['tag'] == 'BRASIL' and r['msg'] == 'Jogador: Bora!' and r['n'] == '2' and r['x'] > d[2] + 4 and r['x'] + r['w'] < m[0] - 4 and abs(r['y'] - min(d[1], m[1])) < 3 and abs(r['bottom'] - max(d[3], m[3])) < 3 and r['w'] > 300,
-              'o bloco: a tag BRASIL, o contador de não lidas e NOME: a mensagem mais recente; entre o DESAFIOS e o MODO, da altura deles', [r['x'], r['w'], r['y'], r['bottom'], d, m])
-    P.confere(r['bg'].startswith('rgba(22, 24, 29') and r['borda'] == '18px' and 44 <= r['h'] <= 120 and r['letra'] >= 18, 'grafite meio transparente, as bordas arredondadas, a letra legível (%.0f px)' % r['letra'], [r['bg'], r['borda'], r['h'], r['letra']])
-    tp = await rt(pg, "(() => { x49Toast('Conectado.'); const t = document.getElementById('x49-toast').getBoundingClientRect(), r = CB.el.getBoundingClientRect(); x49Toast(''); return {t:[t.top, t.bottom], r:[r.top, r.bottom]}; })()")
-    P.confere(tp['t'][1] <= tp['r'][0] + 1, 'o aviso de baixo (x49Toast) sobe para não cobrir o bloco do chat', tp)
+    # v90: o bloco do chat saiu da tela inicial (a fileira de baixo ficou com o PASSE, as MISSÕES, o MODO e o JOGAR; v91: a da imagem
+    # de referência, sem vão): no lobby o chat abre pelo quadrado do chat, em cima, e a barra continua viva por trás (as mensagens e o
+    # contador). O bloco no vão, o grafite dele e o aviso subindo por cima dele (v81) não existem mais.
+    vis = await rt(pg, "(() => { const c = document.getElementById('lb-chat'), q = c && c.getBoundingClientRect(); return {barra:getComputedStyle(CB.el).display, quadrado:!!c && c.offsetParent !== null && q.width >= 44 && q.height >= 44}; })()")
+    P.confere(r['onde'] == 'lobby' and vis['barra'] == 'none' and vis['quadrado'], 'no lobby a barra fica guardada (v90/v91: sem vão na fileira de baixo) e o chat abre pelo quadrado de cima (≥ 44 px)', [r['onde'], vis])
+    P.confere(r['tag'] == 'BRASIL' and r['msg'] == 'Jogador: Bora!' and r['n'] == '2', 'a barra continua contando por trás: a tag BRASIL, o contador de não lidas e NOME: a mensagem mais recente', [r['tag'], r['msg'], r['n']])
+    ab = await rt(pg, "(() => { document.getElementById('lb-chat').click(); const t = lobby.tela; if (lobby.tela) fechaTela(); return t; })()")
+    P.confere(ab == 'chat', 'o quadrado do chat abre o Chat do Brasil', ab)
     await rt(pg, "(() => { const m = BRASIL.msgs[0]; BRASIL.msgs.push({id:'m5', from:'u2', nome:'CRIA7', selo:'verificado', skin:'', texto:'bora!', t:Date.now()}); cbPinta(); return 1; })()")
     r = await rt(pg, BARRA)
     P.confere(r['msg'] == 'CRIA7: bora!' and r['selo'], 'a mensagem nova aparece na hora, com o V na frente do nome', r)
@@ -133,10 +134,9 @@ async def celular(pw, P):
     b, pg, erros = await abre(pw, 844, 390, config={'modo': 'producao', 'servidor': '127.0.0.1:1'})
     await rt(pg, "(() => { ONB.aberto = false; return 1; })()"); await pg.wait_for_timeout(300)
     await rt(pg, MSGS); await pg.wait_for_timeout(250)
-    r = await rt(pg, BARRA); d, m = r['desafios'], r['modo']
-    P.confere(r['onde'] == 'lobby' and r['vao'] and r['x'] > d[2] + 2 and r['x'] + r['w'] < m[0] - 2 and abs(r['y'] - min(d[1], m[1])) < 3 and abs(r['bottom'] - max(d[3], m[3])) < 3,
-              'no lobby o bloco entra no vão entre o DESAFIOS e o MODO, da altura deles', [r['x'], r['w'], r['y'], r['bottom'], d, m])
-    P.confere(r['h'] >= 36 and r['letra'] >= 14 and r['msg'] == 'Jogador: Bora!', 'legível e tocável no celular: %.0f px de altura, letra de %.1f px' % (r['h'], r['letra']), [r['h'], r['letra']])
+    r = await rt(pg, BARRA)
+    vis = await rt(pg, "(() => { const c = document.getElementById('lb-chat'), q = c && c.getBoundingClientRect(); return {barra:getComputedStyle(CB.el).display, quadrado:!!c && c.offsetParent !== null && q.width >= 28}; })()")
+    P.confere(r['onde'] == 'lobby' and vis['barra'] == 'none' and vis['quadrado'] and r['msg'] == 'Jogador: Bora!', 'no celular também: a barra guardada no lobby (v90/v91) e o quadrado do chat à vista', [r['onde'], vis, r['msg']])
     await rt(pg, "abreTela('amigos'); 1"); await pg.wait_for_timeout(300)
     c = await rt(pg, BARRA)
     P.confere(c['onde'] == 'chip' and c['h'] >= 34 and c['letra'] >= 13 and c['bottom'] <= 390 and c['x'] < 20, 'na tela SALAS o chip do canto também é maior (%.0f px, letra %.1f px)' % (c['h'], c['letra']), [c['onde'], c['h'], c['letra'], c['bottom']])

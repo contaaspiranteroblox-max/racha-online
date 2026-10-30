@@ -12,5 +12,7 @@ export * as schema from "../../app/db/schema";
 export { hashSenha } from "../../app/api/racha/security";
 export { assina, confere, garanteSegredoSalas, segredoSalas } from "../../app/api/lib/selo";
 export { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+export { registraOrigemDaRequisicao } from "../../app/api/racha/guard";   // v100: de onde veio o pedido (como o boot.ts da produção)
+export { ipDe, httpsDe } from "../../server/ip.js";
 export { _bancoDeTeste } from "drizzle-orm/mysql2";
 export { eq, and, or, desc, sql } from "drizzle-orm";   // (os operadores da MESMA cópia que o código usa: o servidor de teste e os testes montam consultas com eles)

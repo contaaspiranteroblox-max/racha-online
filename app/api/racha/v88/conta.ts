@@ -11,9 +11,10 @@ import { eq, and, or, isNull, desc } from "drizzle-orm";
 import { createRouter } from "../../middleware";
 import { getDb } from "../../queries/connection";
 import { usuarios, amizades, pedidosAmizade, bloqueios, sessoes, clubeMembros, clubes, progressoJogo, mensagens, correio, clubeConvites, clubePedidos, estatisticas, totp } from "@db/schema";
-import { autenticado, exigeLimite } from "../guard";
+import { autenticado, exigeLimite, atributosCookie } from "../guard";
 import { verificarSenha, novoToken, hashSenha } from "../security";
 import { contaDe, empurraRelacoes, idsAmigos } from "./comum";
+import { contaPunida } from "../../lib/salas"; // v100: a conta excluída cai das salas na hora
 
 export const contaRouter = createRouter({
   excluir: autenticado
@@ -55,7 +56,8 @@ export const contaRouter = createRouter({
       }).where(eq(usuarios.id, u.id));
       await db.update(estatisticas).set({ atualizadoEm: new Date() }).where(eq(estatisticas.usuarioId, u.id));
       await empurraRelacoes(...amigos);
-      ctx.resHeaders?.append?.("Set-Cookie", "racha_sessao=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+      contaPunida(Number(u.idPublico), Date.now() + 2 * 60 * 60 * 1000, "Esta conta foi excluída.");   // v100: cai das salas na hora (o bilhete de antes não volta)
+      ctx.resHeaders?.append?.("Set-Cookie", "racha_sessao=" + atributosCookie(ctx.req) + "; Max-Age=0");   // v100: + Secure por https
       return { ok: true };
     }),
 });

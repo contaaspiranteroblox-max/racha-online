@@ -34,7 +34,8 @@ def selo_confere(txt):
 proc = subprocess.Popen(
     ['node', os.path.join(RAIZ, 'server', 'servidor.js'), '--porta', str(PORTA), '--host', '127.0.0.1',
      '--memoria', '--segredo', SEGREDO, '--tempo-normal', '14', '--prorrogacao', '8'],
-    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    env=dict(os.environ, RACHA_CONTAGEM_MS=os.environ.get('RACHA_CONTAGEM_MS', '0'), RACHA_REPLAY=os.environ.get('RACHA_REPLAY', '0')))   # v93: sem a contagem e o replay
 time.sleep(2.5)
 
 try:

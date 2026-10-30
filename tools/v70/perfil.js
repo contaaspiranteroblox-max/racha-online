@@ -439,7 +439,7 @@ function pxZerarPop(){
     if (clubeLocal){ oC = pxOpcao('Apagar também o clube deste aparelho', '«' + clubeLocal.nome + '»'); ops.appendChild(oC); }
     c.appendChild(ops);
     if (pxConta()) c.appendChild(nodo('p', 'pop-txt v70-zerar-nota', 'A sua conta do RACHA (nível da conta, conquistas e o clube da conta) não muda: isto só zera o que fica neste aparelho.'));
-    c.appendChild(nodo('p', 'pop-txt v70-zerar-nota', 'Não dá para desfazer. Se quiser guardar uma cópia antes, use EXPORTAR PROGRESSO em Ajustes › Conta.'));
+    c.appendChild(nodo('p', 'pop-txt v70-zerar-nota', 'Não dá para desfazer. Se quiser guardar uma cópia antes, use EXPORTAR PROGRESSO em SUA CONTA (no Perfil, o selo ao lado do seu ID).'));
     const a = nodo('div', 'pop-acoes'), sim = botaoPop('ZERAR', 'vermelho', () => {
       if (!pxZerarT){ sim.textContent = 'TOQUE DE NOVO PARA ZERAR'; pxZerarT = setTimeout(() => { pxZerarT = 0; sim.textContent = 'ZERAR'; }, 3000); return; }
       clearTimeout(pxZerarT); pxZerarT = 0;

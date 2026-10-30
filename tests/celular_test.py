@@ -5,7 +5,7 @@
   computador com a janela em pé nada disso aparece (o lobby em pé continua valendo).
 · Deitado — 800×336 (o tamanho do app do Claude no iPhone deitado), 844×390, 740×360 e 667×375: cada tela, janela e aba dos
   Ajustes cabe sem rolar (fora a conversa do chat e as faixas que arrastam de lado) e nenhum botão fica fora da tela; o
-  lobby tem o JOGAR inteiro e (v71) o MODO colado à esquerda dele, sem se cobrirem; o perfil fica em sub-abas (v71.1: no computador também;
+  lobby tem o JOGAR inteiro e (v71) o MODO colado à esquerda dele, sem se cobrirem (v91: nas medidas da imagem nova); o perfil fica em sub-abas (v71.1: no computador também;
   v77: VISÃO GERAL · ESTATÍSTICAS · CONQUISTAS · PARTIDAS);
   os Ajustes ficam compactos (o cabeçalho numa linha e as opções em duas colunas).
 · Com o Tamanho da interface em 130% nada encolhe (a tela rola). No computador (1280×720) nada disso muda o que já havia.
@@ -15,6 +15,7 @@ Rodar:  python3 tests/celular_test.py            (as cópias de tela ficam em te
 """
 import json
 from comum import abre, rt, roda, Placar, async_playwright, RAIZ
+import comum; comum.SKINS_PRONTAS = True   # v101: este teste confere as tampinhas prontas (o interruptor as traz de volta)
 
 CABE = (RAIZ / 'tests' / 'cabe.js').read_text(encoding='utf-8')
 SAIDA = RAIZ / 'tests' / 'saida'; SAIDA.mkdir(exist_ok=True)
@@ -58,11 +59,23 @@ TELAS = [
 ]
 # v71: o JOGAR e o MODO (o modo, o tamanho e o campo; toque para trocar) colado à esquerda dele, na mesma linha de baixo, sem se
 # cobrirem; o título do JOGAR sem nada por cima · v77: as medidas da imagem enviada (o JOGAR 344 × 124 a 34 da borda, o MODO 292 × 118)
-JOGAR = """(() => { const J = document.getElementById('lb-jogar'), j = J.getBoundingClientRect(), M = document.getElementById('lb-modo'), m = M.getBoundingClientRect(), sc = PALCO.s;
+# · v91: as medidas da imagem de referência nova — o JOGAR maior (154 de altura, de 360 a 440 de largura conforme a largura da
+# tela, a 22 da borda) e o MODO (126 de altura, de 320 a 420 de largura) dentro da faixa de altura do JOGAR, centrado nele
+# · v101: as medidas da imagem da noite — o JOGAR com 140 de altura (de 360 a 460 de largura, a 22 da borda) e, colado nele, o
+# MODO novo (a bola e RANQUEADA: 116 de altura, de 240 a 360 de largura); o #lb-modo de sempre virou o cartão do campo, à esquerda
+JOGAR = """(() => { const J = document.getElementById('lb-jogar'), j = J.getBoundingClientRect(), v101 = LB.raiz.classList.contains('v101'), M = (v101 && document.querySelector('#lb .v101-modo')) || document.getElementById('lb-modo'), m = M.getBoundingClientRect(), sc = PALCO.s;
   const rg = document.createRange(); rg.selectNodeContents(J.querySelector('.lb-jogar-tit')); const tr = rg.getBoundingClientRect();
   const pts = [.1, .3, .5, .7, .9].map(f => document.elementFromPoint(tr.left + tr.width*f, tr.top + tr.height*.5));
   return {jw:Math.round(j.width/sc), jh:Math.round(j.height/sc), dir:Math.round((innerWidth - PALCO.sa.r - j.right)/sc), livre:pts.every(p => p && J.contains(p)),
-    mw:Math.round(m.width/sc), mh:Math.round(m.height/sc), esq:m.right <= j.left - 4, linha:Math.abs(m.bottom - j.bottom) < 2, mReal:Math.round(m.height), jReal:Math.round(j.height)}; })()"""
+    mw:Math.round(m.width/sc), mh:Math.round(m.height/sc), esq:m.right <= j.left - 4, linha:Math.abs(m.bottom - j.bottom) < 2,
+    dentro:m.top >= j.top - 2 && m.bottom <= j.bottom + 2 && Math.abs((m.top + m.bottom) - (j.top + j.bottom))/2 < 10*sc, mReal:Math.round(m.height), jReal:Math.round(j.height), v101}; })()"""
+
+
+def medidas_jogar(j):
+    """As medidas do JOGAR e do MODO colado nele (v91; v101: as da imagem da noite)."""
+    if j.get('v101'):
+        return 360 <= j['jw'] <= 460 and j['jh'] == 140 and 240 <= j['mw'] <= 360 and j['mh'] == 116
+    return 360 <= j['jw'] <= 440 and j['jh'] == 154 and 320 <= j['mw'] <= 420 and j['mh'] == 126
 # 30 partidas no histórico (a aba PARTIDAS cheia)
 HIST = """(() => { for (let i = 0; i < 30; i++) X49.history.push({at:Date.now() - i*3600e3, win:i%3 !== 0, emp:i%7 === 0, score:[3, i%4], n:2, jogo:['futebol', 'curva', 'ginga'][i%3], ctx:['casual', 'liga', 'online'][i%3]});
   X49.history = X49.history.slice(-30); renderPartidas(); return X49.history.length; })()"""
@@ -75,8 +88,8 @@ async def deitado(P, pw, w, h):
     r = await rt(pg, "({cabe:LB.raiz.classList.contains('v70-cabe'), s:+PALCO.s.toFixed(3), sc:+PALCO.sc.toFixed(3), gire:!V70G.el.hidden})")
     P.confere(r['cabe'] and not r['gire'], 'o lobby entra no modo em que tudo cabe (escala do palco %.3f, como na v69)' % r['s'], r)
     j = await rt(pg, JOGAR)
-    P.confere(j['jw'] == 344 and j['jh'] == 124 and j['dir'] == 34 and j['livre'] and j['mw'] == 292 and j['mh'] == 118 and j['esq'] and j['linha'] and min(j['mReal'], j['jReal']) >= 44,
-              'o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v77; os dois com mais de 44 px de altura)', j)
+    P.confere(medidas_jogar(j) and j['dir'] == 22 and j['livre'] and j['esq'] and j['dentro'] and min(j['mReal'], j['jReal']) >= 44,
+              'o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v91; v101: as medidas da imagem da noite; os dois com mais de 44 px de altura)', j)
     for nome, js in TELAS:
         await rt(pg, js); await pg.wait_for_timeout(420)
         m = await pg.evaluate(CABE + '(%s)' % json.dumps(RAIZES))
@@ -171,7 +184,7 @@ async def principal():
         print('\n· 1280x720 (computador)')
         b, pg, erros = await abre(pw, 1280, 720, toque=False)
         j = await rt(pg, JOGAR)
-        P.confere(j['jw'] == 344 and j['dir'] == 34 and j['livre'] and j['esq'] and j['linha'] and min(j['mReal'], j['jReal']) >= 44, 'no computador também: o JOGAR e o MODO colado nele (v77)', j)
+        P.confere(medidas_jogar(j) and j['dir'] == 22 and j['livre'] and j['esq'] and j['dentro'] and min(j['mReal'], j['jReal']) >= 44, 'no computador também: o JOGAR e o MODO colado nele (v91; v101)', j)
         await rt(pg, "abreTela('perfil'); true"); await pg.wait_for_timeout(400)
         r = await rt(pg, """({cabe:LB.raiz.classList.contains('v70-cabe'), z:document.querySelectorAll('[data-v70z]').length,
           nav:getComputedStyle(document.querySelector('#tela-perfil .v77-pf-abas')).display, est:document.querySelector('#tela-perfil .v77-pf-est').hidden})""")

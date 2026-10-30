@@ -38,7 +38,9 @@ async def patentes(pw, P):
     ordens = await rt(pg, "Array.from({length:24}, (_, i) => rqEloDaOrdem(i + 1).ordem)")
     P.confere(ordens == list(range(1, 25)), 'as 24 divisões em ordem (1 = Bronze III … 24 = Lendário I)', ordens)
     ins = await rt(pg, """(() => { const L = []; for (let o = 1; o <= 24; o++) L.push(rqInsignia(rqEloDaOrdem(o)).replace(/(p[gaiblc])\\d+/g, '$1'));
-      return {n:new Set(L).size, coroaL:L[23].indexOf('cy="4.5"') >= 0, semCoroaB:L[0].indexOf('cy="4.5"') < 0 && L[0].indexOf('cy="8.5"') < 0, svg:L.every(s => s.indexOf('<svg') === 0)}; })()""")
+      // (v91: as insígnias redesenhadas marcam a coroa com a classe ins-coroa — a grande do Lendário com ins-coroa-grande)
+      return {n:new Set(L).size, coroaL:L[23].indexOf('cy="4.5"') >= 0 || L[23].indexOf('ins-coroa-grande') >= 0,
+        semCoroaB:L[0].indexOf('cy="4.5"') < 0 && L[0].indexOf('cy="8.5"') < 0 && L[0].indexOf('ins-coroa') < 0, svg:L.every(s => s.indexOf('<svg') === 0)}; })()""")
     P.confere(ins['n'] == 24 and ins['svg'] and ins['coroaL'] and ins['semCoroaB'], 'as 24 insígnias são desenhos diferentes (o Lendário com a coroa grande, o Bronze sem coroa)', ins)
     conta = await rt(pg, """(() => { const C = CONTA.rq, salvo = JSON.stringify(C), r = [];
       const vai = (pts, R) => { C.pts = pts; C.seq = 0; const pr = rqPontua(Object.assign({n:2}, R)); return pr.depois; };
@@ -293,12 +295,21 @@ async def online(pw, P):
         segue = await rt(outro, "NET49.playing && NET49.room && NET49.room.state === 'playing' && LB.popCaixa.textContent.indexOf('A PARTIDA PAROU') < 0")
         P.confere(bool(segue), 'v83: para o outro a partida SEGUE no servidor (um bot assume a tampinha de quem saiu)', await rt(outro, ESTADO))
         await asyncio.sleep(max(0, 11.5 - (time.time() - t_saiu)))
-        for _ in range(3):
+        # (v92: o bot que assume a vaga joga contra o jogador parado do teste e às vezes faz gol; um gol pedido durante a
+        # comemoração do gol dele não vale — o motor ignora gol fora do jogo —, então os gols seguem até a partida acabar)
+        for _ in range(6):
+            if await rt(outro, "!!(fimAberto() && RQ.resultado)"):
+                break
             await rt(outro, "(() => { net49Send({type:'__teste_gol', time:Math.floor(NET49.localSlot / NET49.room.n)}); return 1; })()")
             await asyncio.sleep(2.4)
         fo = await espera(outro, "fimAberto() && RQ.resultado && RQ.resultado.pr && RQ.resultado.pr.delta", 8000)
         p_outro2 = await rt(outro, "CONTA.rq.pts")
-        P.confere(bool(fo) and p_outro2 == p_outro + 31, 'quem ficou termina a partida contra o bot e ganha os pontos da vitória (+31)', [p_outro, p_outro2, fo])
+        # v92: o bot que assume a vaga às vezes faz um gol no jogador parado do teste (3×1 em vez de 3×0); a conta da vitória
+        # sai do placar final pela regra (+22, +3 por gol de diferença até 3, +4 com 3 vitórias seguidas) — 3×0 continua +31
+        fim_rq = await rt(outro, "RQ.resultado ? {placar: RQ.resultado.placar, venceu: !!RQ.resultado.venceu, seq: CONTA.rq.seq} : null") or {}
+        pl = fim_rq.get('placar') or [0, 0]
+        esperado_rq = 22 + 3*min(3, abs(pl[0] - pl[1])) + (4 if (fim_rq.get('seq') or 0) >= 3 else 0)
+        P.confere(bool(fo) and fim_rq.get('venceu') and p_outro2 == p_outro + esperado_rq, 'quem ficou termina a partida contra o bot e ganha os pontos da vitória (+31 no 3×0; a regra pelo placar final)', [p_outro, p_outro2, esperado_rq, fim_rq, fo])
         await rt(outro, "(() => { fimEl('fim-lobby').click(); return 1; })()")
         await espera(outro, "!NET49.room && lobby.aberto", 6000)
         # 2v2: dois na fila, depois de 8 s jogam com 2 bots

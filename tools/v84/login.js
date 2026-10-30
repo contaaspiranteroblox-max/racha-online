@@ -101,7 +101,7 @@ function v84Form(aba){
       const lb = v84El('label', 'v84-cp'); lb.appendChild(v84El('span', null, rotulo));
       const i = document.createElement('input'); i.type = tipo || 'text'; lb.appendChild(i); return { el: lb, input: i };
     }
-    const cUsu = campo('Nome de usuário (login)'), cNom = campo('Nome de exibição'), cEm = campo('E-mail');
+    const cUsu = campo('Nome de usuário (login)'), cNom = campo('Nome de exibição'), cEm = campo('E-mail (opcional)');
     cUsu.input.autocomplete = 'off'; cEm.input.type = 'email'; cEm.input.autocomplete = 'email';
     const cS1 = v84CampoSenha('Senha'), cS2 = v84CampoSenha('Confirmar senha');
     const nt1 = v84El('p', 'v84-nota', 'Usuário: 3 a 20 caracteres, letras minúsculas, números e _. Senha: mínimo 8, com letra e número.');

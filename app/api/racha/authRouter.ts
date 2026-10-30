@@ -21,8 +21,13 @@ import {
   sessaoDaRequisicao,
   ipDaRequisicao,
   exigeLimite,
+  bateLimite,
+  atributosCookie,
   SESSAO_DIAS,
   type CtxAutenticado,
+  devolveTentativa,
+  parteDaChave,
+  enderecoConhecido,
 } from "./guard";
 import { formatarIdPublico, tituloPorNivel } from "@contracts/racha";
 import { estadoRanqueada } from "./ranqueada"; // v82: a patente da conta
@@ -60,9 +65,15 @@ async function criarSessao(usuarioId: number, req: Request, painelAdmin = false)
   return token;
 }
 
-function cookieSessao(token: string, maxAgeSeg: number): string {
-  return `racha_sessao=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeg}`;
+// v100 (segurança): + Secure quando o pedido chegou por https (guard.atributosCookie)
+function cookieSessao(token: string, maxAgeSeg: number, req: Request): string {
+  return `racha_sessao=${encodeURIComponent(token)}${atributosCookie(req)}; Max-Age=${maxAgeSeg}`;
 }
+// v100 (segurança): as tentativas ERRADAS de senha de cada conta, de qualquer endereço (o limite por IP sozinho não segura
+// quem troca de endereço a cada tentativa): passou de 10 em 15 minutos, a conta espera — vale igual para conta que não
+// existe (a mensagem não revela se ela existe)
+export const FALHAS_CONTA = { max: 10, janelaMs: 15 * 60 * 1000 };
+export const MSG_FALHAS_CONTA = "Muitas tentativas erradas nessa conta. Aguarde 15 minutos e tente de novo.";
 
 // Perfil público de um usuário (nunca expõe dados privados)
 export function paraPublico(u: typeof usuarios.$inferSelect, selosLista: string[] = []) {
@@ -94,7 +105,10 @@ export const authRouter = createRouter({
           nomeExibicao: z.string().trim().min(2).max(32),
           senha: senhaSchema,
           confirmacaoSenha: z.string().min(1).max(100), // v84
-          email: z.string().email("E-mail inválido.").max(120), // v84: obrigatório (recuperação segura por e-mail)
+          // v90.1: o e-mail é opcional (o login de teste: só o usuário e a senha). Com e-mail, a recuperação por e-mail funciona;
+          // sem ele, a conta se recupera pelo código de recuperação mostrado no cadastro.
+          // v92: a mensagem da união é a do e-mail (sem ela o zod 4 devolvia o genérico "Invalid input", em inglês)
+          email: z.union([z.literal(""), z.string().trim().email("E-mail inválido.").max(120)], { error: "E-mail inválido." }).optional(),
           aceiteTermos: z.literal(true, { error: "É preciso aceitar os termos e a política de privacidade." }), // v84
         })
         .refine((d) => d.senha === d.confirmacaoSenha, { message: "As senhas não são iguais.", path: ["confirmacaoSenha"] }),
@@ -108,7 +122,8 @@ export const authRouter = createRouter({
 
       const existe = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username) });
       if (existe) throw new TRPCError({ code: "CONFLICT", message: "Esse usuário já está em uso." });
-      const em = await db.query.usuarios.findFirst({ where: eq(usuarios.email, input.email.toLowerCase()) });
+      const email = input.email ? input.email.trim().toLowerCase() : null;
+      const em = email ? await db.query.usuarios.findFirst({ where: eq(usuarios.email, email) }) : null;
       if (em) throw new TRPCError({ code: "CONFLICT", message: "Esse email já está em uso." });
 
       // ID público: gerado SÓ pelo servidor, atômico (LAST_INSERT_ID numa transação: a mesma conexão do pool). v88.1: os
@@ -124,7 +139,7 @@ export const authRouter = createRouter({
           username: input.username,
           nomeExibicao: input.nomeExibicao,
           senhaHash: hashSenha(input.senha),
-          email: input.email.toLowerCase(),
+          email,
           aceiteTermosEm: new Date(), // v84
           codigoRecuperacaoHash: hashSenha(codigoRecuperacao),
           tituloEquipado: "Novato da Rua",
@@ -143,7 +158,7 @@ export const authRouter = createRouter({
 
       const token = await criarSessao(novoId, ctx.req);
       await db.update(usuarios).set({ ultimoLoginEm: new Date() }).where(eq(usuarios.id, novoId));
-      ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600));
+      ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600, ctx.req));
 
       const u = await db.query.usuarios.findFirst({ where: eq(usuarios.id, novoId) });
       return {
@@ -167,16 +182,24 @@ export const authRouter = createRouter({
       const ip = ipDaRequisicao(ctx.req);
       const ident = input.identificador.toLowerCase();
       await exigeLimite(`login:${ip}`, 15, 15 * 60 * 1000, "Muitas tentativas. Aguarde 15 minutos.");
-      await exigeLimite(`login:${ip}:${ident}`, 5, 15 * 60 * 1000, "Muitas tentativas nessa conta. Aguarde.");
+      await exigeLimite(`login:${ip}:${parteDaChave(ident)}`, 5, 15 * 60 * 1000, "Muitas tentativas nessa conta. Aguarde.");
 
       const ehEmail = ident.includes("@");
       const u = ehEmail
         ? await db.query.usuarios.findFirst({ where: eq(usuarios.email, ident) })
         : await db.query.usuarios.findFirst({ where: eq(usuarios.username, ident) });
+      // v100 (segurança): as senhas erradas de cada CONTA, de qualquer endereço (pelo número da conta: o usuário e o e-mail
+      // contam juntos). A tentativa é reservada antes de conferir a senha (uma rajada ao mesmo tempo não passa do limite) e
+      // devolvida quando a senha estava certa. Com a conta travada, nem a senha certa entra — a não ser de um endereço que já
+      // entrou nesta conta (quem tenta adivinhar não tranca o dono fora).
+      const chaveFalhas = `login-falhas:${u ? "c" + u.id : parteDaChave(ident)}`;
+      const travada = await bateLimite(chaveFalhas, FALHAS_CONTA.max, FALHAS_CONTA.janelaMs);
+      if (travada && !(u && (await enderecoConhecido(u.id, ip)))) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: MSG_FALHAS_CONTA });
       // Mesma mensagem para conta inexistente e senha errada: não revela se o e-mail/usuário existe
       if (!u || !verificarSenha(input.senha, u.senhaHash)) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "E-mail/usuário ou senha incorretos." });
       }
+      if (!travada) await devolveTentativa(chaveFalhas);
       // v88.1: a senha do manual (pública no repositório) não abre a conta do Dono — nem no jogo, nem no RACHA CONTROL
       if (ehSenhaDoManual(input.senha) && (ehContaDoDono(u) || (await db.query.cargos.findFirst({ where: eq(cargos.usuarioId, u.id) }))?.cargo === "dono")) {
         throw new TRPCError({ code: "FORBIDDEN", message: AVISO_SENHA_DO_MANUAL });
@@ -191,7 +214,7 @@ export const authRouter = createRouter({
 
       const token = await criarSessao(u.id, ctx.req);
       await db.update(usuarios).set({ ultimoLoginEm: new Date() }).where(eq(usuarios.id, u.id));
-      ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600));
+      ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600, ctx.req));
       // v88.1: + quando as contas foram zeradas (o jogo confere o que o aparelho guardava para este número)
       return { token, conta: { ...paraPublico(u), ...(await marcaZerar(u)) } };
     }),
@@ -226,7 +249,7 @@ export const authRouter = createRouter({
   sair: autenticado.mutation(async ({ ctx }) => {
     const c = ctx as unknown as CtxAutenticado;
     await getDb().update(sessoes).set({ revogadaEm: new Date() }).where(eq(sessoes.id, c.sessao.id));
-    ctx.resHeaders.append("set-cookie", cookieSessao("", 0));
+    ctx.resHeaders.append("set-cookie", cookieSessao("", 0, ctx.req));
     return { ok: true };
   }),
 
@@ -335,7 +358,7 @@ export const authRouter = createRouter({
             `Olá, ${u.nomeExibicao}!`,
             "",
             "Recebemos um pedido para redefinir a senha da sua conta do RACHA.",
-            `Link (vale por 1 hora): ${base}/redefinir?token=${encodeURIComponent(token)}`,
+            `Link (vale por 1 hora): ${base}/redefinir#token=${encodeURIComponent(token)}`,   // v100: depois do # (não vai para o servidor, os registros nem o Referer)
             "",
             "Se não foi você, ignore este e-mail: sua senha continua a mesma.",
           ].join("\n"),

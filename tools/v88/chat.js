@@ -251,7 +251,7 @@ document.addEventListener('click', e => {
 const abreTelaAntes88ch = abreTela;
 abreTela = function(id, volta){
   if (id !== 'v88chat') return abreTelaAntes88ch.apply(this, arguments);
-  if (c81Oculto()){ v88Aviso('O chat está oculto: ligue em Ajustes › Conta › Chat na tela.'); return; }
+  if (c81Oculto()){ v88Aviso('O chat está oculto: ligue em Ajustes › Privacidade › Chat na tela.'); return; }
   try { if (lobby.tela) fechaTela(); } catch (_) {}
   try { cbLugar(); } catch (_) {}
   const aba = V88.chatAba && V88CH.abas.indexOf(V88.chatAba) >= 0 ? V88.chatAba : 'amigos'; V88.chatAba = '';   // (o CHAT DO CLUBE abre na aba CLUBE)

@@ -46,12 +46,13 @@ const LIMIAR_QUIQUE = U(1);       // batida mais lenta que isso não quica
 const ALCANCE_CHUTE = RAIO_CHUTE + R_BOLA;   // 3,5 u entre os centros
 const ZONA_MORTA = 0.00001;
 
-// Os tamanhos de campo (u), os mesmos do jogo — o índice é o tamanho do time menos 1 (1v1 … 4v4)
+// Os tamanhos de campo (u), os mesmos do jogo — o índice é o tamanho do time menos 1 (1v1 … 4v4) · v95: o campo 30% maior (a área
+// da bola e as marcas × 1,3; a faixa de fora igual); o gol é o de antes
 const MODOS = [
-  { nome: '1v1', jog: [71, 50],   bola: [56, 40],  gol: [6.6, 12.8], trave: 0.5, rede: 0.4 },
-  { nome: '2v2', jog: [86, 60],   bola: [71, 50],  gol: [6.6, 16],   trave: 0.5, rede: 0.4 },
-  { nome: '3v3', jog: [101, 80],  bola: [86, 70],  gol: [7, 20.5],   trave: 0.5, rede: 0.4 },
-  { nome: '4v4', jog: [124, 100], bola: [108, 90], gol: [7, 24.5],   trave: 0.5, rede: 0.4 },
+  { nome: '1v1', jog: [87.8, 62],   bola: [72.8, 52],   gol: [6.6, 12.8], trave: 0.5, rede: 0.4 },
+  { nome: '2v2', jog: [107.3, 75],  bola: [92.3, 65],   gol: [6.6, 16],   trave: 0.5, rede: 0.4 },
+  { nome: '3v3', jog: [126.8, 101], bola: [111.8, 91],  gol: [7, 20.5],   trave: 0.5, rede: 0.4 },
+  { nome: '4v4', jog: [156.4, 127], bola: [140.4, 117], gol: [7, 24.5],   trave: 0.5, rede: 0.4 },
 ];
 const MARGEM_X = 206, MARGEM_Y = 59;   // px do canto do mundo até a grama (Arena/Estádio — o mapa da ranqueada)
 

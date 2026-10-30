@@ -7,6 +7,8 @@
 //   · o resultado que o servidor conferiu sai com o selo (assinado com o segredo das salas), que o
 //     jogo.encerrarPartida confere antes de dar XP da partida online.
 // Desligar: RACHA_SALAS=0. Guardar os troféus/clubes da turma: RACHA_DADOS=/caminho/turma.json (padrão: memória).
+// v92 · OFICINA: o catálogo dos mapas da comunidade grava em RACHA_MAPAS (padrão: "mapas" ao lado do RACHA_DADOS, ou
+// server/dados/mapas) — sempre em disco.
 // ============================================================================
 import type { IncomingMessage, Server } from "http";
 import type { Duplex } from "stream";
@@ -49,6 +51,11 @@ export function relacoesMudaram(idPublico: number | string, r: RelacoesConta | n
 }
 // v88.1: o Dono zerou as contas (RACHA CONTROL › Contas): o servidor das salas montado aqui esquece as contas apagadas (os
 // números voltam a ser usados) e passa a recusar o bilhete assinado antes disso. `manter`: os números que continuam.
+// v100 (segurança): a conta foi suspensa/banida/excluída — as conexões dela nas salas caem na hora e, até `ate`, o bilhete de
+// antes não abre outra (Infinity = até o servidor reiniciar: aí o bilhete já venceu e a plataforma não dá outro)
+export function contaPunida(idPublico: number | string, ate: number, motivo?: string): number {
+  try { return (turmaAtual as (Turma & { derrubaConta?: (p: string, a: number, m?: string) => number }) | null)?.derrubaConta?.(String(idPublico), ate, motivo) ?? 0; } catch (_) { return 0; }
+}
 export function contasZeradas(manter: string[], em: number): number {
   try { return (turmaAtual as TurmaV88 | null)?.v88ZeraContas?.(manter, em)?.caiu ?? 0; } catch (_) { return 0; }
 }
@@ -75,6 +82,11 @@ export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
     p2p: process.env.RACHA_P2P !== "0",
     relacoesDe: opcoes.relacoesDe,
     denuncia: opcoes.denuncia,
+    // v92 · OFICINA: os mapas da comunidade (curtidas, favoritos, denúncias e versões) ficam gravados numa pasta mesmo com o
+    // resto da turma na memória: RACHA_MAPAS (padrão: a pasta "mapas" ao lado do RACHA_DADOS — no VPS, /var/lib/racha/mapas —;
+    // sem RACHA_DADOS, server/dados/mapas). A denúncia de mapa vai para a mesma tabela (canal "mapa").
+    mapas: process.env.RACHA_MAPAS || undefined,
+    moderadores: process.env.RACHA_MODERADORES || "",
   } as ConstructorParameters<typeof Turma>[0]);
   turmaAtual = turma;
   const origens = (process.env.RACHA_ORIGENS || "").split(",").map((s) => s.trim()).filter(Boolean);

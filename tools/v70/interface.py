@@ -117,7 +117,7 @@ function hudEditVisivel(k){                            // v70: o editor mostra o
    "  HUDM.todos = false; HUDM.editaGinga = RQ.on && RQ.jogo === 'ginga';   // v70: começa com os controles do modo atual\n"
    "  snapEdicao = JSON.stringify(estadoHud());           // para o Cancelar\n  editing = true; limparEntrada(); hudModoConfere();"),
   ("  if (ok) salvar();\n  else if (snapEdicao){\n    restauraHud(JSON.parse(snapEdicao));\n  }\n  editing = false;",
-   "  if (ok){ salvar(); hudAvisoSalvo(); }\n  else if (snapEdicao){\n    restauraHud(JSON.parse(snapEdicao));\n  }\n  editing = false; HUDM.editaGinga = false; hudModoConfere();"),
+   "  if (ok){ if (!salvar()){ try { x49Toast('Não foi possível salvar os controles. Libere espaço no aparelho e tente de novo.'); } catch (_) {} return; } hudAvisoSalvo(); }\n  else if (snapEdicao){\n    restauraHud(JSON.parse(snapEdicao));\n  }\n  editing = false; HUDM.editaGinga = false; hudModoConfere();"),
   # soltar um botão no editor: se encostou em outro (ou na pausa/placar), ele escorrega para o lugar livre mais perto
   ("  else if (role === 'drag'){ if (drag.id === e.pointerId) drag.id = null; ui.painel.classList.remove('arrastando'); }",
    "  else if (role === 'drag'){ if (drag.id === e.pointerId){ hudSolta(drag.k); drag.id = null; } ui.painel.classList.remove('arrastando'); }   // v70: hudSolta"),

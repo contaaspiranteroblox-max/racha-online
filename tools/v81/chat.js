@@ -357,7 +357,7 @@ brasilMsg = function(m){
   C81.tudo = novoBotao('c81-ic', 'Abrir o Chat do Brasil completo'); C81.tudo.innerHTML = C81_SVG.tudo; C81.tudo.hidden = true;
   C81.tudo.addEventListener('click', () => { som.clique(); cbFecha(); if (lobby.aberto) abreTela('chat'); });
   const oculta = novoBotao('c81-ic', 'Ocultar o chat'); oculta.innerHTML = C81_SVG.olho;
-  oculta.addEventListener('click', () => { som.clique(); c81Oculta(true); (lobby.aberto ? aviso : x49Toast)('Chat oculto. Para voltar: Ajustes › Conta › Chat na tela.'); });
+  oculta.addEventListener('click', () => { som.clique(); c81Oculta(true); (lobby.aberto ? aviso : x49Toast)('Chat oculto. Para voltar: Ajustes › Privacidade › Chat na tela.'); });
   const min = novoBotao('c81-ic c81-min', 'Minimizar o chat'); min.innerHTML = C81_SVG.baixo; min.addEventListener('click', () => { som.clique(); cbFecha(); });
   cab.append(CB.abas, C81.online, C81.tudo, oculta, min);
   CB.lista = nodo('div', 'c81-lista'); CB.lista.setAttribute('aria-live', 'polite');

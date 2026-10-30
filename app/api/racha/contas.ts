@@ -19,6 +19,7 @@ import {
   aprovacoes, clubePedidos, mensagens, correio, missoesProgresso, eventosProgresso, passeTemporada,
 } from "@db/schema";
 import { hashSenha, verificarSenha, novoUuid } from "./security";
+import { refazFundadores } from "./fundador";
 
 type Db = ReturnType<typeof getDb>;
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -222,6 +223,9 @@ export async function zerarContas(donoId: number): Promise<ResultadoZerar> {
     await tx.update(usuarios).set({ idPublico: ID_DONO }).where(eq(usuarios.id, donoId));
     await poeContador("id_publico", ID_DONO, tx);
     await poeContador("contas_zeradas_em", Date.now(), tx);
+    // 6) a tampinha dos FUNDADORES (v96): as vagas das contas apagadas voltam para os jogadores de verdade (o Dono, se era
+    //    fundador, fica com o nº 1)
+    await refazFundadores(donoId, tx);
   });
   // a hora que vale para o bilhete das salas: depois do commit (+1 s), para o bilhete assinado DURANTE o zerar também cair
   const em = Date.now() + 1000;

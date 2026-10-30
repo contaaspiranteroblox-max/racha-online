@@ -3,7 +3,8 @@ ADVERSÁRIOS SEM OS INDICADORES A MAIS, A ANIMAÇÃO GOOOL! E OS CONTROLES NOVOS
 
 · OS TIMES: Time A #FF6A00 (o 0, à esquerda) e Time B #7A3FC4 (o 1) no halo, no placar, na sala e na tela do fim; os nomes
   novos nas telas e nas mensagens (nada de preto × branco).
-· A TAMPINHA: a padrão é o modelo Listras, metade laranja (esquerda) e metade roxa (direita), divisão vertical no meio, sem
+· A TAMPINHA (v95: agora as listras em pé roxo, branco e laranja — no time, a cor do time dos lados e o branco no meio;
+  antes): a padrão era o modelo Listras, metade laranja (esquerda) e metade roxa (direita), divisão vertical no meio, sem
   branco, com a borda de sempre; no Time A toda laranja, no Time B toda roxa; sem time (lobby, treino, assistindo) metade/
   metade; as outras tampinhas não mudam; quem estava com a padrão da v71 passa para a nova (uma vez).
 · O PLACAR: o Time A à esquerda (laranja), o Time B à direita (roxo), os gols e o relógio no meio (pixels conferidos); cabe no
@@ -27,6 +28,7 @@ Rodar: python3 tests/v80_test.py
 """
 import asyncio, colorsys, json, math, subprocess, sys, time
 from comum import abre, rt, roda, Placar, async_playwright, RAIZ
+import comum; comum.SKINS_PRONTAS = True   # v101: este teste confere as tampinhas prontas (o interruptor as traz de volta)
 from online_test import porta_livre, sessao, espera
 
 LARANJA, ROXO = (255, 106, 0), (122, 63, 196)
@@ -45,41 +47,45 @@ def matiz(c):
 
 
 async def times_tampinha(pw, P):
-    print('\n1) os times laranja × roxo e a tampinha Listras')
+    print('\n1) os times laranja × roxo e a tampinha inicial (v95: as listras roxo, branco e laranja)')
     b, pg, erros = await abre(pw, 1280, 720)
     c = await rt(pg, "({c:[0, 1].map(t => [rqCor(t).base, rqCor(t).nome]), sk:[skinDoTime(0).cor, skinDoTime(1).cor], sala:SALA_COR.map(s => s.nome + ' ' + s.cor)})")
     P.confere(c['c'] == [['#ff6a00', 'Time A'], ['#7a3fc4', 'Time B']] and c['sk'] == ['#ff6a00', '#7a3fc4'] and c['sala'] == ['Time A #ff6a00', 'Time B #7a3fc4'],
               'as cores oficiais: Time A #FF6A00 e Time B #7A3FC4 (halo, placar, sala)', c)
-    d = await rt(pg, """(() => { const L = c => { const D = tpLe(c); return {p:D.p, pc:D.pc.slice(0, 2), pp:D.pp, b:D.b, bc:D.bc[0], i:D.i}; };
-      return {padrao:L(TP_PADRAO_COD), a:L(TP_TIME_COD[0]), b:L(TP_TIME_COD[1]), velha:L(RachaTimes80.antiga()), lista:TP_PADROES.find(x => x.id === 'ls').nome, gratis:TP_PADROES.find(x => x.id === 'ls').pr}; })()""")
+    # (v95: a inicial virou as listras em pé ROXO, BRANCO e LARANJA — o Tricolor; no time, a cor do time dos lados e o branco no meio)
+    d = await rt(pg, """(() => { const L = c => { const D = tpLe(c); return {p:D.p, pc:D.pc.slice(0, 3), pp:D.pp, b:D.b, bc:D.bc[0], i:D.i}; };
+      return {padrao:L(TP_PADRAO_COD), a:L(TP_TIME_COD[0]), b:L(TP_TIME_COD[1]), velha:L(RachaTimes80.antiga()), v80:L(RachaTimes95.antiga()), lista:TP_PADROES.find(x => x.id === 'tc').nome,
+        livre:tpFaltam(tpLe(TP_PADRAO_COD)).length + tpFaltam(tpLe(TP_TIME_COD[0])).length + tpFaltam(tpLe(TP_TIME_COD[1])).length}; })()""")
     pd = d['padrao']
-    P.confere(pd['p'] == 'ls' and d['lista'] == 'Listras' and d['gratis'] == 'gratis' and pd['pc'][0] == '#ff6a00' and pd['pc'][1] in ('#7a3ec5', '#7a3fc4') and pd['pp'] == [76, 50, 84, 0],
-              'a padrão é o modelo Listras (grátis): fundo laranja e a listra roxa, uma só, do meio para a direita', d['padrao'])
+    rox = lambda c: c in ('#7a3ec5', '#7a3fc4')
+    bra = lambda c: c in ('#f5f3ed', '#f4f2ec')
+    P.confere(pd['p'] == 'tc' and d['lista'] == 'Tricolor' and bra(pd['pc'][0]) and rox(pd['pc'][1]) and pd['pc'][2] == '#ff6a00' and pd['pp'] == [50, 50, 50, 0] and d['livre'] == 0,
+              '(v95) a inicial é o Tricolor: as listras em pé roxo, branco e laranja (de graça, sem cobrar a peça)', d['padrao'])
     P.confere(pd['b'] == d['velha']['b'] and pd['bc'] == d['velha']['bc'] and pd['i'] == '--', 'a borda e os detalhes são os de sempre (a mesma saia da padrão de antes, sem ícone)', [pd, d['velha']])
-    P.confere(d['a']['pc'] == ['#ff6a00', '#ff6a00'] and d['b']['pc'][0] == d['b']['pc'][1] and d['b']['pc'][0] in ('#7a3ec5', '#7a3fc4') and d['a']['b'] == pd['b'],
-              'no time ela fica de uma cor só: toda laranja (A) e toda roxa (B), com a mesma borda', [d['a'], d['b']])
-    # o desenho: metade/metade na vertical, no meio, sem branco; toda laranja; toda roxa
+    P.confere(d['a']['pc'][1:] == ['#ff6a00', '#ff6a00'] and bra(d['a']['pc'][0]) and all(rox(x) for x in d['b']['pc'][1:]) and bra(d['b']['pc'][0]) and d['a']['b'] == pd['b'],
+              '(v95) no time: laranja, branco e laranja (A); roxo, branco e roxo (B), com a mesma borda', [d['a'], d['b']])
+    # o desenho: as três listras em pé (a do meio branca); no time, a cor do time dos dois lados
     px = await rt(pg, """(() => { const r = 60, f = cod => { const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d');
         drawBotao(g, 80, 80, r, tpSkin(cod), null, false, EST0);
         const p = (x, y) => Array.from(g.getImageData(80 + x*r, 80 + y*r, 1, 1).data);
-        let branco = 0, n = 0; for (let y = -26; y <= 26; y += 2) for (let x = -26; x <= 26; x += 2){ if (x*x + y*y > 26*26) continue; const q = g.getImageData(80 + x, 80 + y, 1, 1).data; n++; if (q[0] > 225 && q[1] > 225 && q[2] > 225) branco++; }
-        return {ec:p(-.4, -.4), eb:p(-.4, .4), dc:p(.4, -.4), db:p(.4, .4), me:p(-.06, 0), md:p(.06, 0), branco:branco/n}; };
-      return {padrao:f(TP_PADRAO_COD), a:f(TP_TIME_COD[0]), b:f(TP_TIME_COD[1]), velha:f(RachaTimes80.antiga())}; })()""")
+        return {ec:p(-.5, -.35), eb:p(-.5, .35), dc:p(.5, -.35), db:p(.5, .35), mc:p(0, -.35), mb:p(0, .35)}; };
+      return {padrao:f(TP_PADRAO_COD), a:f(TP_TIME_COD[0]), b:f(TP_TIME_COD[1]), velha:f(RachaTimes80.antiga()), v80:f(RachaTimes95.antiga())}; })()""")
     pp = px['padrao']
-    P.confere([matiz(pp[k]) for k in ('ec', 'eb', 'dc', 'db')] == ['laranja', 'laranja', 'roxo', 'roxo'],
-              'desenhada: a metade da esquerda laranja e a da direita roxa, em cima e embaixo (a divisão é vertical)', pp)
-    P.confere(matiz(pp['me']) == 'laranja' and matiz(pp['md']) == 'roxo' and pp['branco'] < .03, 'a divisão fica no meio (logo à esquerda do centro é laranja, logo à direita é roxo) e não tem branco', pp)
-    P.confere(all(matiz(px['a'][k]) == 'laranja' for k in ('ec', 'eb', 'dc', 'db', 'me', 'md')) and all(matiz(px['b'][k]) == 'roxo' for k in ('ec', 'eb', 'dc', 'db', 'me', 'md')),
-              'no Time A ela fica toda laranja; no Time B, toda roxa', [px['a'], px['b']])
-    P.confere(px['velha'] == pp, 'a padrão da v71 (de um jogo antigo de outra pessoa) aparece como a nova', [px['velha']['ec'], pp['ec']])
+    claro = lambda c: c[0] > 200 and c[1] > 200 and c[2] > 195
+    P.confere([matiz(pp[k]) for k in ('ec', 'eb', 'dc', 'db')] == ['roxo', 'roxo', 'laranja', 'laranja'] and claro(pp['mc']) and claro(pp['mb']),
+              '(v95) desenhada: roxo à esquerda, branco no meio e laranja à direita, em cima e embaixo (as listras em pé)', pp)
+    P.confere(all(matiz(px['a'][k]) == 'laranja' for k in ('ec', 'eb', 'dc', 'db')) and all(matiz(px['b'][k]) == 'roxo' for k in ('ec', 'eb', 'dc', 'db'))
+              and all(claro(px[t][k]) for t in ('a', 'b') for k in ('mc', 'mb')),
+              '(v95) no Time A: laranja, branco e laranja; no Time B: roxo, branco e roxo', [px['a'], px['b']])
+    P.confere(px['velha'] == pp and px['v80'] == pp, 'a padrão da v71 e a da v80 (de um jogo antigo de outra pessoa) aparecem como a nova', [px['velha']['ec'], px['v80']['ec'], pp['ec']])
     t = await rt(pg, """(() => { const outra = tpCodigo(Object.assign(tpLe(TP_PADRAO_COD), {pc:['#22aa44', '#ffffff', '#000000'], p:'me'}));
       return {a:tpNoTime(TP_PADRAO_COD, 0) === TP_TIME_COD[0], b:tpNoTime(TP_PADRAO_COD, 1) === TP_TIME_COD[1], sem:tpNoTime(TP_PADRAO_COD, -1) === TP_PADRAO_COD && tpNoTime(TP_PADRAO_COD, undefined) === TP_PADRAO_COD,
-        outra:[0, 1, -1].every(k => tpNoTime(outra, k) === outra), velhaA:tpNoTime(RachaTimes80.antiga(), 0) === TP_TIME_COD[0],
+        outra:[0, 1, -1].every(k => tpNoTime(outra, k) === outra), velhaA:tpNoTime(RachaTimes80.antiga(), 0) === TP_TIME_COD[0] && tpNoTime(RachaTimes95.antiga(), 1) === TP_TIME_COD[1],
         minha:tpMinha() === TP_PADRAO_COD, perfil:perfil.skin === TP_PADRAO_COD, treino:tpNoTimeSk(skinAtual(), -1).id === TP_PADRAO_COD}; })()""")
-    P.confere(t['a'] and t['b'] and t['sem'] and t['velhaA'], 'a troca: no Time A a do A, no Time B a do B, sem time a metade/metade (a da v71 também segue o time)', t)
+    P.confere(t['a'] and t['b'] and t['sem'] and t['velhaA'], 'a troca: no Time A a do A, no Time B a do B, sem time a inicial (as da v71 e da v80 também seguem o time)', t)
     P.confere(t['outra'], 'uma tampinha personalizada (ou comprada, ou modelo pronto) não muda com o time', t)
     P.confere(t['minha'] and t['perfil'], 'quem não escolheu nenhuma joga com a padrão nova (lobby, perfil e o que vai para a sala)', t)
-    P.confere(t['treino'], 'no treino você não está num time: a tampinha fica metade/metade', t)
+    P.confere(t['treino'], 'no treino você não está num time: a tampinha fica a inicial (roxo, branco e laranja)', t)
     # na partida: você e os bots com a do time; o seu modelo pronto continua o seu
     m = await rt(pg, """(() => { __T.comeca('futebol', 2, 4); const r = {eu:tpNoTimeSk(skinAtual(), P.time).id === TP_TIME_COD[P.time], bots:RQ.jog.filter(q => q !== P).map(q => skinDoBot(q).id === TP_TIME_COD[q.time ? 1 : 0])};
       const zebra = tpCodigo(Object.assign(tpLe(TP_PADRAO_COD), {p:'ze', pc:['#f3efe4', '#171a1c', '#000000']})); const eq = TP.equipada; TP.equipada = zebra; perfil.skin = tpMinha();
@@ -100,6 +106,14 @@ async def times_tampinha(pw, P):
     mg = await rt(pg, "({eq:TP.equipada, skin:perfil.skin === TP_PADRAO_COD, flag:localStorage.getItem('racha-v80-padrao'), salvo:JSON.parse(localStorage.getItem('racha-tampa-v1')).equipada})")
     P.confere(mg['eq'] == '' and mg['skin'] and mg['flag'] == '1' and mg['salvo'] == '', 'quem estava com a padrão da v71 equipada passa para a nova (uma vez, e fica salvo)', mg)
     await b.close()
+    # (v95) e quem estava com a da v80 (metade laranja, metade roxa) equipada também passa para a nova
+    b0, pg0, _ = await abre(pw, 1280, 720)
+    v80 = await rt(pg0, "RachaTimes95.antiga()")
+    await b0.close()
+    b, pg, erros = await abre(pw, 1280, 720, armazenamento={'racha-tampa-v1': json.dumps({'itens': [], 'salvas': [], 'equipada': v80})})
+    mg = await rt(pg, "({eq:TP.equipada, skin:perfil.skin === TP_PADRAO_COD, salvo:JSON.parse(localStorage.getItem('racha-tampa-v1')).equipada})")
+    P.confere(mg['eq'] == '' and mg['skin'] and mg['salvo'] == '', '(v95) quem estava com a inicial da v80 equipada passa para a nova (e fica salvo)', mg)
+    await b.close()
 
 
 async def placar_regras(pw, P):
@@ -113,11 +127,23 @@ async def placar_regras(pw, P):
     rel = await rt(pg, """(() => { const r = {}; RQ.estado = 'saida'; RQ.saidaT0 = RQ.tick; RQ.t = 0; __T.passos(60); r.saida = Math.round(RQ.t*100)/100; r.tela1 = RachaPartida80.tela().s;
       RQ.estado = 'jogo'; __T.passos(61); r.jogo = Math.round(RQ.t*100)/100; r.tela2 = RachaPartida80.tela().s; return r; })()""")
     P.confere(abs(rel['saida'] - 1) < .05 and abs(rel['jogo'] - 121/60) < .05 and rel['tela1'] == '02:59' and rel['tela2'] == '02:58', 'o relógio corre na saída de bola e no jogo, segundo a segundo (02:59 com 1 s, 02:58 com 2 s)', rel)
-    # pixels do placar: o laranja à esquerda, o roxo à direita, o relógio no meio
-    pix = await rt(pg, """(() => { RQ.estado = 'jogo'; RQ.t = 41; render(0); const k = K, g = ctx, hk = HUDX.k, y = (10 + 27)*k*hk, p = x => Array.from(g.getImageData(Math.round((W/2 + (x - W/2)*hk)*k), Math.round(y), 1, 1).data);
-      return {a:p(W/2 - 190), b:p(W/2 + 190), meio:p(W/2 - 52), tela:RachaPartida80.tela()}; })()""")
-    P.confere(perto(pix['a'], LARANJA, 70) and perto(pix['b'], ROXO, 70) and sum(pix['meio'][:3]) < 200 and pix['tela']['s'] == '02:19',
-              'o placar desenhado: o Time A em laranja à esquerda, o Time B em roxo à direita, o relógio no meio (02:19)', pix)
+    # o placar desenhado (v95: o minimalista — as abas de vidro escuro penduradas na borda de cima, os números na cor de cada
+    # time e o relógio na aba do meio): o número do Time A em laranja à esquerda, o do Time B em roxo à direita, o relógio no meio
+    pix = await rt(pg, """(() => { RQ.estado = 'jogo'; RQ.t = 41; const ditos = [], t0 = txt;
+      txt = function(g, s, x, y, size, cor){ ditos.push({s:String(s), x:Math.round(x), y:Math.round(y), cor:String(cor)}); return t0.apply(this, arguments); };
+      try { render(0); } finally { txt = t0; }
+      const k = K, g = ctx, hk = HUDX.k, p = (x, y) => Array.from(g.getImageData(Math.round((W/2 + (x - W/2)*hk)*k), Math.round(y*k*hk), 1, 1).data);
+      const num = ditos.filter(d => /^[0-9]+$/.test(d.s) && d.y < 60 && Math.abs(d.x - W/2) < 260), tela = RachaPartida80.tela();
+      const r = {a:num.find(d => d.x < W/2), b:num.find(d => d.x > W/2), relogio:ditos.find(d => d.s === tela.s && d.y < 60) || null, meio:p(W/2 - 52, 52), abaA:p(W/2 - 140, 46), tela};
+      // (o fundo do mesmo ponto sem o placar: o campo embaixo muda com a câmera — compara a aba com ele mesmo, sem a aba)
+      const v0 = v80Placar; v80Placar = function(){}; try { render(0); } finally { v80Placar = v0; }
+      r.fora = p(W/2 - 140, 46); r.meioFundo = p(W/2 - 52, 52); render(0);
+      return r; })()""")
+    hexa = lambda c: tuple(int(c[i:i + 2], 16) for i in (1, 3, 5)) if isinstance(c, str) and len(c) == 7 and c[0] == '#' else (0, 0, 0)
+    ok = pix['a'] and pix['b'] and pix['relogio'] and perto(hexa(pix['a']['cor']), LARANJA, 70) and perto(hexa(pix['b']['cor']), ROXO, 70)
+    escurece = lambda com, sem, f: sum(com[:3]) < f*sum(sem[:3]) + 1 or sum(sem[:3]) < 60   # (o vidro escurece o que está embaixo; num fundo quase preto não dá para medir)
+    ok = ok and abs(pix['relogio']['x'] - 960) <= 1 and sum(pix['meio'][:3]) < 200 and escurece(pix['meio'], pix['meioFundo'], .7) and escurece(pix['abaA'], pix['fora'], .85) and pix['tela']['s'] == '02:19'
+    P.confere(ok, 'o placar desenhado (v95: o minimalista): o número do Time A em laranja à esquerda, o do Time B em roxo à direita, o relógio na aba escura do meio (02:19)', pix)
     t10 = await rt(pg, "(() => { RQ.t = 171.4; return RachaPartida80.tela(); })()")
     P.confere(t10['s'] == '00:09' and t10['cor'] == '#ffd23f', 'os 10 últimos segundos em amarelo', t10)
     # 2 × 1 no fim: vence; 1 × 1: empate (sem prorrogação)
@@ -177,7 +203,7 @@ async def sala_local(pw, P):
       const op = Array.from(document.querySelectorAll('#sl-ops .sl-op')).map(o => o.textContent.replace(/\\s+/g, ' ').trim());
       return {a:cx('.sl-verm'), b:cx('.sl-azul'), op:op.filter(t => /TEMPO/.test(t)), tampa:(() => { const r = NET49.room, m = r.members[0]; return m.skin === TP_PADRAO_COD && m.slot < 0; })()}; })()""")
     P.confere('255, 138, 51' in s['a'] and '149, 96, 218' in s['b'], 'a sala: a coluna do Time A laranja e a do Time B roxa', [s['a'][-90:], s['b'][-90:]])
-    P.confere(any('3 min' in t for t in s['op']) and s['tampa'], 'o TEMPO da sala cabe no quadro (3 min) e quem assiste fica com a metade/metade', s)
+    P.confere(any('3 min' in t for t in s['op']) and s['tampa'], 'o TEMPO da sala cabe no quadro (3 min) e quem assiste fica com a inicial', s)
     # entra no Time A e começa: o placar novo com a contagem da sala (3:00), o GOL DE OURO dela no empate (sem limite)
     await rt(pg, "(() => { slocEnvia ? 0 : 0; net49Send({type:'seat', team:0}); return 1; })()")
     await pg.wait_for_timeout(300)
@@ -368,7 +394,7 @@ async def online(pw, P):
         await rt(B, "net49Send({type:'seat', team:0})")
         r2 = await espera(A, "(() => { const v = window.__tampaB(); return v && v.t === 0 ? v : null; })()", 5000)
         P.confere(r0 and r0['cod'] == 'metade' and r1 and r1['cod'] == 'B' and r1['carta'] and r2 and r2['cod'] == 'A',
-                  'na sala: quem assiste aparece com a metade/metade; foi para o Time B, toda roxa; para o Time A, toda laranja (na tela do outro, na hora)', [r0, r1, r2])
+                  'na sala: quem assiste aparece com a inicial (roxo, branco e laranja); foi para o Time B, roxo e branco; para o Time A, laranja e branco (na tela do outro, na hora)', [r0, r1, r2])
         for pg in sess:
             errs = [e for e in pg.erros if 'Failed to load resource' not in e and 'favicon' not in e]
             P.confere(not errs, 'nenhum erro de JavaScript na sessão de ' + pg.nome, errs[:3])
@@ -382,7 +408,7 @@ async def online(pw, P):
 
 
 async def principal():
-    P = Placar('v80 · laranja × roxo, a tampinha Listras, o placar com 3:00, a prorrogação, o GOOOL! e o treino')
+    P = Placar('v80 · laranja × roxo, a tampinha inicial (v95: listras), o placar com 3:00, a prorrogação, o GOOOL! e o treino')
     async with async_playwright() as pw:
         if '--so-online' not in sys.argv:                   # (--so-online: só a parte com o servidor)
             await times_tampinha(pw, P)

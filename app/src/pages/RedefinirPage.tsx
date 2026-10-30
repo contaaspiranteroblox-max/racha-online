@@ -7,7 +7,14 @@ import { trpc } from "@/providers/trpc";
 export default function RedefinirPage() {
   const nav = useNavigate();
   const [busca] = useSearchParams();
-  const token = busca.get("token") || "";
+  // v100 (segurança): o token vem depois do # (o link novo: não vai para o servidor, os registros nem o Referer) ou no ?token=
+  // (os links de antes); lido uma vez e tirado da barra de endereço
+  const [token] = useState(() => {
+    const h = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const t = h.get("token") || busca.get("token") || "";
+    if (t) { try { window.history.replaceState(null, "", window.location.pathname); } catch { /* (sem history: fica como está) */ } }
+    return t;
+  });
   const redefinir = trpc.auth.redefinirSenha.useMutation();
   const [senha, definirSenha] = useState("");
   const [senha2, definirSenha2] = useState("");

@@ -31,25 +31,29 @@ EDITOR = r"""(() => {
   T.comeca('ginga', 2, 0); T.limpa();
   abrirEdicao();
   const r = {conjNaGinga:HUDM.atual, visiveis:ORDEM_TOQUE.filter(k => controleVisivel(k))};
-  const vol0 = som.volume, x0 = hud.kick.x;
-  som.setVolume(15); hud.kick.x = 900;                 // mexe no volume e num botão durante a edição
-  fecharEdicao(false);                                  // Cancelar
-  r.cancelVolume = som.volume === vol0; r.cancelBotao = hudObj('ginga', 'kick').x === x0;
+  const x0 = hud.kick.x;
+  hud.kick.x = 900; heMudou();                          // mexe num botão durante a edição
+  fecharEdicao(false);                                  // SAIR SEM SALVAR (v92 Fase 1: o editor novo não tem o volume)
+  r.cancelBotao = hudObj('ginga', 'kick').x === x0;
   rqSai();
   T.comeca('futebol', 2, 0); abrirEdicao();
   r.conjNoFutebol = HUDM.atual; r.visFut = ORDEM_TOQUE.filter(k => controleVisivel(k));
-  document.getElementById('hed-todos').click(); r.visTodos = ORDEM_TOQUE.filter(k => controleVisivel(k));
-  document.querySelector('#hp [data-molde=canhoto]').click();
+  HUDM.todos = true; hudModoConfere(); r.visTodos = ORDEM_TOQUE.filter(k => controleVisivel(k));   // (CONTROLES › Mostrar todos)
+  heAcao('molde Canhoto', () => hudAplicaMolde('canhoto'));                                      // (LAYOUTS › MOLDES › Canhoto)
   r.joyCanhoto = hud.joy.x > W/2 && hud.kick.x < W/2;
   fecharEdicao(true);                                   // Salvar
   const salvo = JSON.parse(localStorage.getItem('racha-treino-hud-v11') || '{}');
   r.salvoMolde = salvo.molde; r.salvoJoyX = salvo.hud && salvo.hud.joy && salvo.hud.joy.x; r.salvoGinga = !!salvo.hudGinga;
   abrirEdicao(); ui.rest.click(); r.restDestro = hud.joy.x < W/2 && HUDM.molde === 'destro'; fecharEdicao(false);
   r.cancelDepoisRest = hud.joy.x > W/2;                 // o Restaurar só vale ao Salvar
-  // soltar um botão em cima do outro: ele escorrega para fora
+  // v92 Fase 1: soltar em cima de outro botão (ou da pausa) não empurra mais — ele fica onde o dedo deixou, o editor avisa
+  // (o contorno vermelho e a tira da barra) e o ARRUMAR afasta
   abrirEdicao(); HUDM.todos = false; hudModoConfere();
-  hud.kick.x = hud.power.x; hud.kick.y = hud.power.y - 30; hudSolta('kick'); r.soltouLivre = hudConflitos(HUDM.atual).length === 0;
-  hud.power.x = BTN_PAUSA.x + 30; hud.power.y = BTN_PAUSA.y + 30; hudSolta('power'); r.pausaLivre = hudConflitos(HUDM.atual).length === 0;
+  const ax = hud.power.x, ay = hud.power.y - 30; hud.kick.x = ax; hud.kick.y = ay; hudSolta('kick');
+  const ficou = hud.kick.x === ax && hud.kick.y === ay, n1 = hudConflitos(HUDM.atual).length;
+  hudArruma(HUDM.atual); r.soltouLivre = ficou && n1 > 0 && hudConflitos(HUDM.atual).length === 0;
+  hud.power.x = BTN_PAUSA.x + 30; hud.power.y = BTN_PAUSA.y + 30; hudSolta('power'); const n2 = hudConflitos(HUDM.atual).length;
+  hudArruma(HUDM.atual); r.pausaLivre = n2 > 0 && hudConflitos(HUDM.atual).length === 0;
   fecharEdicao(false); hudAplicaMolde('destro'); salvar();
   rqSai(); T.enxuto();
   return r;
@@ -70,13 +74,13 @@ async def principal():
         r = await rt(pg, EDITOR)
         print('    editor:', json.dumps(r))
         P.confere(r['conjNaGinga'] == 'ginga' and set(r['visiveis']) == {'joy', 'kick', 'power', 'finta', 'drible'}, '(guardado) na GINGA o editor abre com os controles dela')
-        P.confere(r['cancelVolume'] and r['cancelBotao'], 'Cancelar volta o volume e os botões (70% → 15% → Cancelar = 70%)', r)
+        P.confere(r['cancelBotao'], 'SAIR SEM SALVAR volta os botões', r)
         P.confere(r['conjNoFutebol'] == 'base' and set(r['visFut']) == {'joy', 'kick', 'power'}, 'no futebol o editor mostra só os do futebol', r['visFut'])
         P.confere('curva' in r['visTodos'], 'Mostrar todos mostra também a CURVA', r['visTodos'])
         P.confere(r['joyCanhoto'], 'molde Canhoto: analógico à direita, botões à esquerda')
         P.confere(r['salvoMolde'] == 'canhoto' and r['salvoJoyX'] and r['salvoJoyX'] > 960 and r['salvoGinga'], 'Salvar guarda o molde, os lugares e o layout da GINGA', r)
         P.confere(r['restDestro'] and r['cancelDepoisRest'], 'Restaurar mostra o padrão, mas só vale ao Salvar (Cancelar desfaz)', r)
-        P.confere(r['soltouLivre'] and r['pausaLivre'], 'soltar em cima de outro botão (ou da pausa) escorrega para um lugar livre', r)
+        P.confere(r['soltouLivre'] and r['pausaLivre'], 'soltar em cima de outro botão (ou da pausa): fica onde soltou, o editor avisa e o ARRUMAR afasta', r)
         print('\n· teclado: trocar teclas (Ajustes › Controles)')
         await rt(pg, "rqSai(); if (!lobby.aberto) abrirLobby(); localStorage.removeItem('racha-teclas-v1'); TECLA.acoes = teclaPadrao(); teclaMonta(); teclaSync(); true")
         await rt(pg, "ajxAbre('controles'); true"); await pg.wait_for_timeout(150)

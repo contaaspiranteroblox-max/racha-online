@@ -22,11 +22,15 @@ Confere no jogo de verdade (a cópia de teste do build):
     cara nova; o PERFIL em partes também no computador (era uma página de 6 telas de altura); a tampinha padrão com o nome
     PADRÃO; a cor da raridade nas peças da loja; os desenhos da pausa e das abas dos Ajustes; o JOGAR DE NOVO amarelo; as
     escolhas da sala sem o nome cortado; no celular deitado nenhuma tela encolhe abaixo de 0,72 para caber.
+  · v90/v91: o TAMPINHA virou COFRE (v90: abre o COFRE, como a tampinha do meio), o PASSE foi para a fileira de baixo (v90),
+    a LIGA continua colada no cartão mas escondida (v90) e a PATENTE da faixa de cima (v91) abre as PATENTES; as telas de
+    dentro voltam ao azul-marinho da imagem de referência (v91: o v71-tema.css fica desligado) com o contorno de sempre.
 Isto não prova se o novo visual agrada nem a leitura em cada celular de verdade: é a inspeção do que abre e responde.
 Rodar: python3 tests/v71_test.py
 """
 import json
 from comum import abre, rt, roda, Placar, async_playwright
+import comum; comum.SKINS_PRONTAS = True   # v101: este teste confere as tampinhas prontas (o interruptor as traz de volta)
 
 # o que a partida desenha: troca o drawPlayer por um espião durante um quadro do render
 DESENHO = """(() => {
@@ -39,13 +43,13 @@ DESENHO = """(() => {
   const b1 = RQ.jog.find(q => q.time === 1);
   return {vistos, quem, t0:TP_TIME_COD[0], t1:TP_TIME_COD[1], replay:[rpSkinDe(P, true) === TP_TIME_COD[0], rpSkinDe(b1, false) === TP_TIME_COD[1]]};
 })()"""
-LUGARES = [('loja', '#rx .v71-tile[data-loja]', "tela", 'loja'), ('tampinha', '#rx .v71-tile[data-rx="skins"]', "tela", 'skins'),
+LUGARES = [('loja', '#rx .v71-tile[data-loja]', "tela", 'loja'), ('cofre', '#rx .v71-tile[data-rx="cofre"]', "tela", 'cofre'),   # (v90: o TAMPINHA virou COFRE)
            ('clube', '#rx .v71-tile[data-rx="clube"]', "tela", 'clube'), ('treino', '#rx .v71-tile[data-rx="treino"]', "tela", 'treino'),
            ('salas', '#rx .v71-tile[data-rx="salas"]', "tela", 'amigos'), ('amigos', '#rx .v71-tile[data-rx="amigos"]', "tela", 'comunidade'),
-           ('ranking', '#rx .v71-tile[data-rx="ranking"]', "tela", 'ranking'), ('liga', '.lb-topo .v71-liga', "pat", True),
+           ('ranking', '#rx .v71-tile[data-rx="ranking"]', "tela", 'ranking'), ('patente', '.lb-topo .v91-pat', "pat", True),   # (v91: a PATENTE da faixa de cima)
            ('modo', '#lb-modo', "rq", 'ranked'), ('desafios', '#lb-missoes', "pop", True), ('chat', '#lb-chat', "tela", 'chat'),
            ('perfil', '#lb-eu', "tela", 'perfil'), ('moedas', '.lb-topo .hm-grana', "tela", 'loja'), ('ajustes', '#lb-ajustes', "aj", True),
-           ('tampinha do meio', '#lb-emblema', "tela", 'skins'), ('jogar', '#lb-jogar', "busca", True)]
+           ('tampinha do meio', '#lb-emblema', "tela", 'cofre'), ('jogar', '#lb-jogar', "busca", True)]   # (v90: tocar na tampinha do meio abre o COFRE)
 ESTADO = "(() => ({tela:lobby.tela, rq:RQP.raiz.hidden ? null : JG.aba, pop:!LB.pop.hidden, aj:!LB.aj.hidden, partida:RQ.on && !lobby.aberto, pat:!!(V79P.el && !V79P.el.hidden), busca:!!RachaRanqueada79.busca() || (RQ.on && !lobby.aberto)}))()"
 FECHA = """(() => { v79PatentesFecha(); v79BuscaCancela(); if (!LB.pop.hidden) fechaPop(); if (!LB.aj.hidden) LB.aj.hidden = true; if (!RQP.raiz.hidden) fechaRanqueada();
   if (lobby.tela){ ED.saindo = true; fechaTela(); ED.saindo = false; } if (!lobby.aberto){ if (RQ.on) rqSai(); abrirLobby(); } return true; })()"""
@@ -58,6 +62,21 @@ TELAS71 = [('perfil', "abreTela('perfil'); true"), ('ranking', "abreTela('rankin
 LIMPA71 = """(() => { try { if (!LB.pop.hidden) fechaPop(); } catch (_) {} try { ajxFecha(); } catch (_) {} try { if (!RQP.raiz.hidden) fechaRanqueada(); } catch (_) {}
   try { if (NET49.room) net49Send({type:'leave'}); } catch (_) {} try { if (lobby.tela){ ED.saindo = true; fechaTela(); ED.saindo = false; } } catch (_) {}
   if (!lobby.aberto){ try { if (RQ.on) rqSai(); } catch (_) {} abrirLobby(); } return true; })()"""
+# v91: o carvão da v71.1 (cinza escuro sem cor) nos fundos e nas bordas grossas — o que sobrou dele numa tela é o que não ganhou o azul-marinho
+CARVAO = r"""(() => {
+  const hsl = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn)/2, d = mx - mn; const s = !d ? 0 : l > .5 ? d/(2 - mx - mn) : d/(mx + mn); return {l, s}; };
+  const cinza = t => [...String(t).matchAll(/rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/g)].filter(m => !(m[4] !== undefined && +m[4] < .5)).filter(m => { const c = hsl(+m[1], +m[2], +m[3]); return c.s < .12 && c.l >= .09 && c.l <= .34; }).map(m => m[0]);
+  const raizes = [...document.querySelectorAll('#lb-camada > :not([hidden]), #pop-ajustes:not([hidden]), #pausa:not([hidden]), #fim:not([hidden])')];
+  const L = new Set();
+  for (const R of raizes) for (const e of [R, ...R.querySelectorAll('*')]){
+    if (e.closest('svg') || e.closest('canvas') || e.matches('.tpe-ok.volta')) continue;   // (o VOLTAR do editor é o neutro grafite de propósito: polimento)
+    const r = e.getBoundingClientRect(); if (r.width < 6 || r.height < 6) continue;
+    const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity < .2) continue;
+    const c = [...cinza(cs.backgroundColor), ...cinza(cs.backgroundImage), ...(parseFloat(cs.borderTopWidth) >= 2 ? cinza(cs.borderTopColor) : [])];
+    if (c.length) L.add((e.id ? '#' + e.id : e.tagName.toLowerCase()) + '.' + String(e.className).split(' ')[0] + ' ' + c[0]);
+  }
+  return [...L].slice(0, 6);
+})()"""
 MARINHO = r"""(() => {
   const hue = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn)/2, d = mx - mn; if (!d) return null;
     const s = l > .5 ? d/(2 - mx - mn) : d/(mx + mn); let h = mx === r ? (g - b)/d + (g < b ? 6 : 0) : mx === g ? (b - r)/d + 2 : (r - g)/d + 4; return {h:h*60, s}; };
@@ -76,7 +95,7 @@ MARINHO = r"""(() => {
 
 # as caixas de tudo que se toca no lobby (deitado): visível, dentro da tela, sem cobrir outra, e o tamanho de verdade
 CAIXAS = """(() => {
-  const sel = ['#lb-eu', '.lb-topo .v71-liga', '.lb-topo .hm-grana', '#lb-chat', '#lb-ajustes', '#rx .v71-tile', '#lb-missoes', '#lb-modo', '#lb-jogar'];
+  const sel = ['#lb-eu', '.lb-topo .v71-liga', '.lb-topo .v91-pat', '.lb-topo .hm-grana', '#lb-chat', '.lb-topo .v88-caixa', '#lb-ajustes', '#rx .v71-tile', '#lb .v88-passe', '#lb-missoes', '#lb-modo', '#lb-jogar'];   // (v91: + a PATENTE, o CORREIO e o PASSE)
   const L = [];
   for (const s of sel) for (const e of document.querySelectorAll(s)){
     const cs = getComputedStyle(e); if (cs.display === 'none' || e.closest('[hidden]')) continue;
@@ -87,7 +106,7 @@ CAIXAS = """(() => {
   for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++){ const a = L[i], b = L[j];
     if (a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1) cobre.push(a.n + ' × ' + b.n); }
   const pequenos = L.filter(c => c.w < 43.5 || c.h < 43.5).map(c => c.n + ' ' + Math.round(c.w) + 'x' + Math.round(c.h));
-  const tiles = L.filter(c => /^(Loja|Tampinha|Clube|Treino|Salas|Amigos|Ranking)$/.test(c.n));
+  const tiles = L.filter(c => /^(Loja|Tampinha|Cofre|Clube|Treino|Salas|Amigos|Ranking)(:|$)/.test(c.n));
   return {n:L.length, fora, cobre, pequenos, menorTile:Math.round(Math.min(...tiles.map(c => Math.min(c.w, c.h)))),
     jogar:Math.round(document.getElementById('lb-jogar').getBoundingClientRect().height), cabe:LB.raiz.classList.contains('v70-cabe')};
 })()"""
@@ -108,13 +127,13 @@ async def principal():
         velhos = [p for p in ('Equipe Azul', 'EQUIPE AZUL', 'Time Vermelho', 'TIME VERMELHO') if p in txt]
         P.confere(not velhos, 'nenhum "Time Vermelho" ou "Equipe Azul" na página', velhos)
 
-        print('\n2) a tampinha padrão: metade/metade (v80: laranja e roxo, na Listras); na partida, a do time')
+        print('\n2) a tampinha padrão (v95: as listras roxo, branco e laranja); na partida, a do time')
         r = await rt(pg, """(() => { const D = tpLe(TP_PADRAO_COD), A = tpLe(TP_TIME_COD[0]), B = tpLe(TP_TIME_COD[1]);
-          return {minha:tpMinha() === TP_PADRAO_COD, perfil:perfil.skin === TP_PADRAO_COD, p:D.p, pc:D.pc.slice(0, 2), a:[A.p, A.pc[0]], b:[B.p, B.pc[0]], icone:[D.i, A.i, B.i]}; })()""")
+          return {minha:tpMinha() === TP_PADRAO_COD, perfil:perfil.skin === TP_PADRAO_COD, p:D.p, pc:D.pc.slice(0, 3), a:[A.p, A.pc[1], A.pc[2]], b:[B.p, B.pc[1], B.pc[2]], icone:[D.i, A.i, B.i]}; })()""")
         lar = lambda c: c == '#ff6a00'                                      # (o código guarda a cor arredondada: o roxo vira #7a3ec5)
         rox = lambda c: c in ('#7a3fc4', '#7a3ec5')
-        P.confere(r['minha'] and r['perfil'] and r['p'] == 'ls' and lar(r['pc'][0]) and rox(r['pc'][1]), '(v80) a padrão (a de quem não escolheu outra) é a Listras: laranja e roxo', r)
-        P.confere(r['a'][0] == 'ls' and lar(r['a'][1]) and r['b'][0] == 'ls' and rox(r['b'][1]) and r['icone'] == ['--', '--', '--'], '(v80) as duas do time: toda laranja e toda roxa, sem ícone', r)
+        P.confere(r['minha'] and r['perfil'] and r['p'] == 'tc' and rox(r['pc'][1]) and lar(r['pc'][2]), '(v95) a padrão (a de quem não escolheu outra) é o Tricolor: roxo, branco e laranja', r)
+        P.confere(r['a'][0] == 'tc' and lar(r['a'][1]) and lar(r['a'][2]) and r['b'][0] == 'tc' and rox(r['b'][1]) and rox(r['b'][2]) and r['icone'] == ['--', '--', '--'], '(v95) as duas do time: laranja e branco (A), roxo e branco (B), sem ícone', r)
         for n in (1, 3):
             await rt(pg, "__T.comeca('futebol', %d, 0); true" % n)
             d = await rt(pg, DESENHO)
@@ -182,15 +201,16 @@ async def principal():
         b, pg, erros = await abre(pw, 1280, 720)
         r = await rt(pg, """(() => { const nomes = s => [...document.querySelectorAll(s)].map(b => b.querySelector(':scope > b').textContent);
           const fora = ['[data-rx="comunidade"]', '.rx-bt[data-rx="chat"]', '.rx-amg'].map(s => { const e = document.querySelector('#lb ' + s); return e && getComputedStyle(e).display === 'none' && e.tabIndex === -1; });
-          const pa = document.querySelector('#lb [data-rx="passe"]'), passe = !!pa && !!pa.closest('.lb-topo') && getComputedStyle(pa).display !== 'none' && pa.tabIndex === 0;   // (v88: o PASSE voltou, no topo, para o Passe RACHA)
-          const liga = document.querySelector('.lb-topo .v71-liga');
-          return {esq:nomes('#rx .v71-esq > .rx-bt'), dir:nomes('#rx .v71-dir > .rx-bt'), fora, passe, liga:!!liga && liga.previousElementSibling === LB.eu, elo:document.getElementById('lb-rq-elo').textContent === rqElo(CONTA.rq.pts).nome,
+          const pa = document.querySelector('#lb [data-rx="passe"]'), passe = !!pa && !pa.closest('.lb-topo') && !!pa.closest('#lb-palco') && getComputedStyle(pa).display !== 'none' && pa.tabIndex === 0;   // (v88: o PASSE voltou, para o Passe RACHA · v90: na fileira de baixo)
+          const liga = document.querySelector('.lb-topo .v71-liga'), pat = document.querySelector('.lb-topo .v91-pat');   // (v91: a PATENTE da faixa de cima, logo depois da LIGA)
+          return {esq:nomes('#rx .v71-esq > .rx-bt'), dir:nomes('#rx .v71-dir > .rx-bt'), fora, passe, liga:!!liga && liga.previousElementSibling === LB.eu && !!pat && liga.nextElementSibling === pat && pat.querySelector('b').textContent === rqElo(CONTA.rq.pts).nome,
+            elo:document.getElementById('lb-rq-elo').textContent === rqElo(CONTA.rq.pts).nome,
             nv:document.getElementById('v71-nv').textContent === String(nivelInfo(CONTA.xp).n), pronto:getComputedStyle(document.querySelector('.rx-pronto')).display,
             rotulos:[...document.querySelectorAll('#rx .v71-tile')].every(b => (b.getAttribute('aria-label') || '').toUpperCase().indexOf(b.querySelector(':scope > b').textContent) >= 0)}; })()""")
-        P.confere(r['esq'] == ['LOJA', 'TAMPINHA', 'CLUBE', 'TREINO'] and r['dir'] == ['SALAS', 'AMIGOS', 'RANKING', 'EVENTOS'], 'os botões quadrados: LOJA, TAMPINHA, CLUBE, TREINO à esquerda; SALAS, AMIGOS, RANKING e (v77) EVENTOS à direita', r)
+        P.confere(r['esq'] == ['LOJA', 'COFRE', 'CLUBE', 'TREINO'] and r['dir'] == ['SALAS', 'AMIGOS', 'RANKING', 'EVENTOS'], 'os botões quadrados: LOJA, COFRE (v90: era TAMPINHA), CLUBE, TREINO à esquerda; SALAS, AMIGOS, RANKING e (v77) EVENTOS à direita', r)
         P.confere(all(r['fora']) and r['pronto'] == 'none', 'saíram da tela e do Tab: COMUNIDADE, o CHAT grande e o ícone repetido das SALAS (e o "Pronto, fulano!")', r['fora'])
-        P.confere(r['passe'], 'v88: o PASSE (o botão de sempre, que estava escondido) voltou no topo, para o Passe RACHA, e entra no Tab', r['passe'])
-        P.confere(r['liga'] and r['elo'] and r['nv'], 'a LIGA no topo, do lado do seu cartão (o elo certo); o nível no selo da tampinha', r)
+        P.confere(r['passe'], 'v88: o PASSE (o botão de sempre, que estava escondido) voltou, para o Passe RACHA (v90: na fileira de baixo), e entra no Tab', r['passe'])
+        P.confere(r['liga'] and r['elo'] and r['nv'], 'a LIGA no topo, do lado do seu cartão (o elo certo; v91: a PATENTE com o mesmo elo logo depois dela); o nível no selo da tampinha', r)
         P.confere(r['rotulos'], 'o nome lido de cada botão contém a palavra escrita nele (TREINO, não "Treinamento")', r)
         r = await rt(pg, """(() => { CONTA.rq.n = 3; lbRender();
           const t = LB.modo.querySelector('.v71-modo-tx b').textContent, s = LB.modo.querySelector('.v77-modo-nm').textContent, ic = LB.modo.querySelector('.v71-modo-ic .v77-ic').dataset.ic, j = LB.jogar.getAttribute('aria-label');
@@ -228,24 +248,30 @@ async def principal():
 
         print('\n7) v71.1 · as telas de dentro no estilo do lobby')
         b, pg, erros = await abre(pw, 1280, 720, toque=False)
-        r = await rt(pg, "({tema:!!document.querySelector('link[href=\"./v71-tema.css\"]'), sx:getComputedStyle(document.documentElement).getPropertyValue('--k').trim(), var:getComputedStyle(LB.raiz).getPropertyValue('--sx-azul').trim()})")
-        P.confere(r['tema'] and r['var'] == '#23272d', 'o v71-tema.css (gerado no build) está na página e o tema das telas é o carvão (--sx-azul #23272d)', r)
+        # v91: as telas voltam ao azul-marinho da imagem de referência — o v71-tema.css continua no build, mas desligado, e o
+        # que se confere agora é o contrário: nenhum carvão da v71.1 sobrando nas telas e janelas
+        r = await rt(pg, "({tema:!!document.querySelector('link[href=\"./v71-tema.css\"]'), desligado:!!(document.querySelector('link[href=\"./v71-tema.css\"]') || {}).disabled, var:getComputedStyle(LB.raiz).getPropertyValue('--sx-azul').trim()})")
+        P.confere(r['tema'] and r['desligado'] and r['var'] != '#23272d', 'o v71-tema.css (gerado no build) está na página, desligado pela v91: o tema das telas é o azul-marinho (não o carvão --sx-azul #23272d)', r)
         sobra = {}
         for nome, js in TELAS71:
             await rt(pg, LIMPA71); await pg.wait_for_timeout(200)
             await rt(pg, js); await pg.wait_for_timeout(450)
-            m = await rt(pg, MARINHO)
+            m = await rt(pg, CARVAO)
             if m: sobra[nome] = m
-        P.confere(not sobra, '%d telas e janelas sem azul-marinho (fundo, borda e letra)' % len(TELAS71), sobra)
+        P.confere(not sobra, '%d telas e janelas sem o carvão da v71.1 (v91: os painéis no azul-marinho; o neutro de propósito, como o VOLTAR do editor, fica)' % len(TELAS71), sobra)
         await rt(pg, LIMPA71)
         cabs = {}
         for nome, js in [('perfil', "abreTela('perfil'); true"), ('loja', "abreTela('loja'); true"), ('treino', "abreTela('treino'); true"), ('comunidade', "abreTela('comunidade'); true"), ('ranking', "abreTela('ranking'); true")]:
             await rt(pg, LIMPA71); await rt(pg, js); await pg.wait_for_timeout(300)
             cabs[nome] = await rt(pg, """(() => { const T = TELAS[lobby.tela].el, v = T.querySelector('.tl-voltar'), on = T.querySelector('.tl-aba.on, .tl-aba[aria-selected=true]'), cv = getComputedStyle(v);
-              const escuro = c => (c.match(/\\d+/g) || [255, 255, 255]).slice(0, 3).reduce((a, x) => a + +x, 0) < 40;
-              return {voltar:parseFloat(cv.borderTopWidth) >= 3 && escuro(cv.borderTopColor) && v.getBoundingClientRect().height >= 44, aba:!on, abas:!T.querySelector('.tl-abas'),
-                h2:/rgb\\(6, 6, 7\\)/.test(getComputedStyle(T.querySelector('.tl-cab h2')).textShadow), carteira:T.querySelectorAll('.tl-cab .lb-grana').length === 2, icones:T.querySelectorAll('.tl-cab .v77-cab-bt').length === 3}; })()""")
-        P.confere(all(all(v.values()) for v in cabs.values()), 'cabeçalhos (v77): o VOLTAR quadrado de contorno grosso (≥ 44 px), o título com contorno, sem abas de outras telas, as moedas e os 3 ícones', cabs)
+              const escuro = c => (c.match(/\\d+/g) || [255, 255, 255]).slice(0, 3).reduce((a, x) => a + +x, 0) < 40, cb = getComputedStyle(v, '::before');   // (v91: o contorno mora no ::before inclinado)
+              // (v101: o estilo da imagem da noite — o VOLTAR no vidro com o contorno fino e claro, o título com a sombra escura embaixo)
+              const v101 = document.documentElement.classList.contains('v101'), claro = c => (c.match(/\\d+/g) || [0, 0, 0]).slice(0, 3).reduce((a, x) => a + +x, 0) > 300;
+              const contorno = v101 ? parseFloat(cb.borderTopWidth) >= 1 && claro(cb.borderTopColor) : ((parseFloat(cv.borderTopWidth) >= 3 && escuro(cv.borderTopColor)) || (parseFloat(cb.borderTopWidth) >= 3 && escuro(cb.borderTopColor)));
+              const sombra = getComputedStyle(T.querySelector('.tl-cab h2')).textShadow;
+              return {voltar:contorno && v.getBoundingClientRect().height >= 44, aba:!on, abas:!T.querySelector('.tl-abas'),
+                h2:v101 ? /rgba\\(4, 3, 20/.test(sombra) : /rgb\\((6, 6, 7|5, 6, 12)\\)/.test(sombra), carteira:T.querySelectorAll('.tl-cab .lb-grana').length === 2, icones:T.querySelectorAll('.tl-cab .v77-cab-bt').length === 3}; })()""")
+        P.confere(all(all(v.values()) for v in cabs.values()), 'cabeçalhos (v77; v91: a faixa azul; v101: a faixa escura com o fio do pôr do sol): o VOLTAR quadrado com contorno (≥ 44 px), o título com contorno, sem abas de outras telas, as moedas e os 3 ícones', cabs)
         await rt(pg, LIMPA71); await rt(pg, "abreTela('perfil'); true"); await pg.wait_for_timeout(300)
         partes = {}
         for p in ('geral', 'est', 'conq', 'hist'):
@@ -264,7 +290,7 @@ async def principal():
         P.confere(ok, 'LOJA: as 4 peças do dia com a faixa da cor da raridade certa', r)
         await rt(pg, LIMPA71); await rt(pg, "ajxAbre('audio'); true"); await pg.wait_for_timeout(300)
         r = await rt(pg, "[...document.querySelectorAll('#pop-ajustes .ajx-aba')].map(b => !!b.querySelector('.v71-ic svg') && getComputedStyle(b.querySelector('.v71-ic')).display !== 'none')")
-        P.confere(len(r) == 7 and all(r), 'AJUSTES: as 7 abas com o desenho delas (no computador; v88: + PRIVACIDADE)', r)
+        P.confere(len(r) == 6 and all(r), 'AJUSTES: as 6 abas com o desenho delas (no computador; v88: + PRIVACIDADE; v96: a CONTA saiu)', r)
         await rt(pg, "ajxFecha(); jogar(); true"); await pg.wait_for_timeout(700)
         await rt(pg, "pausaAbre(); true"); await pg.wait_for_timeout(300)
         r = await rt(pg, """[...document.querySelectorAll('#pausa .pa-acoes > .pa-bt')].map(b => ({t:b.textContent.trim(), ic:!!b.querySelector('.v71-ic svg'), h:Math.round(b.getBoundingClientRect().height)}))""")

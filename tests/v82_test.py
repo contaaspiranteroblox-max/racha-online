@@ -213,21 +213,23 @@ async def principal():
             pf = await A.rt("""(() => { abreTela('perfil'); const s = document.querySelector('#tela-perfil .pf-ident');
               return {role:s.getAttribute('role'), cls:s.classList.contains('c82-entrar'), conta:s.classList.contains('conta')}; })()""")
             await A.rt("document.querySelector('#tela-perfil .pf-ident').click()")
-            pp = await A.rt(POP)
-            await A.clica_pop('ENTRAR')
+            # (v96: a conta saiu dos Ajustes — o selo do perfil abre a janela SUA CONTA, com o mesmo cartão SEM CONTA)
+            pp = await A.rt("(() => ({aberta: RachaConta96.aberta(), h2: document.getElementById('ajx-tit').textContent, bts: [...AJX.secs.conta.querySelector('.c82-card').querySelectorAll('button')].map(b => b.textContent)}))()")
+            await A.rt("AJX.secs.conta.querySelector('.c82-entrar').click()")
             rotas = await A.mae('() => P.rotas.slice()')
-            P.confere(pf['role'] == 'button' and pf['cls'] and not pf['conta'] and pp['h2'] == 'ENTRE NA SUA CONTA' and pp['bts'] == ['ENTRAR', 'CRIAR CONTA'] and rotas[-1] == '/entrar',
-                      'sem conta, o "NESTE APARELHO" do perfil abre ENTRE NA SUA CONTA (ENTRAR → /entrar)', [pf, pp['h2'], rotas[-1:]])
+            await A.rt("ajxFecha()")
+            P.confere(pf['role'] == 'button' and pf['cls'] and not pf['conta'] and pp['aberta'] and pp['h2'] == 'SUA CONTA' and pp['bts'] == ['ENTRAR', 'CRIAR CONTA'] and rotas[-1] == '/entrar',
+                      'sem conta, o "NESTE APARELHO" do perfil abre a SUA CONTA (v96) com ENTRAR e CRIAR CONTA (ENTRAR → /entrar)', [pf, pp, rotas[-1:]])
             mi = await A.rt("(() => { missoesAbre(); const t = Array.from(LB.popCaixa.querySelectorAll('.v70-mi-pr')).slice(0, 3).map(e => e.textContent); fechaPop(); return t; })()")
             P.confere(len(mi) == 3 and all(' XP' in t for t in mi), 'sem conta, as missões mostram o XP do aparelho (como sempre)', mi)
-            rk = await A.rt("""(() => { abreTela('ranking'); const s = document.querySelector('#tela-ranking .c82-rk-abas'), box = document.querySelector('#tela-ranking .c82-rk');
-              return {abas:s ? Array.from(s.querySelectorAll('button')).map(b => [b.textContent, b.classList.contains('on')]) : null, box:box ? box.hidden : null}; })()""")
-            P.confere(rk['abas'] == [['PATENTES', False], ['LIGA DA SEMANA', True]] and rk['box'], 'o RANKING tem PATENTES | LIGA DA SEMANA; sem conta, abre na LIGA DA SEMANA (a de sempre)', rk)
-            await A.rt("document.querySelector('#tela-ranking .c82-rk-abas [data-aba=patentes]').click()")
+            # v90: o RANKING virou a tela da temporada (GOLS, ASSISTÊNCIAS, PONTOS RANQUEADOS e CRAQUE DO JOGO) e o PATENTES | LIGA DA
+            # SEMANA da v82 saiu do jogo; a lista das patentes de todos continua vindo da plataforma (conferida pelos dados que chegam)
+            rk = await A.rt("""(() => { abreTela('ranking'); const T = TELAS.ranking.el; return {v90:T.classList.contains('rk90-tela'), cats:Array.from(T.querySelectorAll('.rk90-aba')).map(b => b.textContent.trim())}; })()""")
+            P.confere(rk['v90'] and len(rk['cats']) == 4, 'o RANKING abre a tela da temporada (v90: as 4 categorias)', rk)
+            await A.rt("(() => { C82.rk.dados = null; C82.rk.carregando = false; c82RkBusca(); return 1; })()")
             await A.espera("!!C82.rk.dados")
-            rk = await A.rt("(() => { const box = document.querySelector('#tela-ranking .c82-rk'); return {box:box.hidden, txt:Array.from(box.querySelectorAll('.c82-rk-txt')).map(p => p.textContent), bt:(box.querySelector('.c82-rk-btn') || {}).textContent}; })()")
-            P.confere(not rk['box'] and any('Ninguém jogou' in t for t in rk['txt']) and any('sem conta' in t for t in rk['txt']) and rk['bt'] == 'ENTRAR NA CONTA',
-                      'RANKING › PATENTES sem conta: a lista da plataforma (vazia ainda), "você está sem conta" e ENTRAR NA CONTA', rk)
+            rk = await A.rt("(() => { const d = C82.rk.dados; return {n:Array.isArray(d.lista) ? d.lista.length : -1}; })()")
+            P.confere(rk['n'] == 0, 'sem conta: a lista das patentes da plataforma (vazia ainda) chega ao jogo', rk)
             await A.rt("fechaTela()")
             # o progresso de quem joga sem conta (como se tivesse jogado) e o empate da ranqueada, que sumia
             prog = await A.rt("""(() => { abrirLobby(); CONTA.moedas = 4321; CONTA.gemas = 21; Object.assign(CONTA.rq, {pts:950, melhor:950, jogos:12, vit:8, emp:3, seq:0}); contaSalvar();
@@ -270,8 +272,11 @@ async def principal():
                       and card['est'].startswith('Progresso salvo na conta') and card['bt'] == 'SALVAR AGORA', 'Ajustes › Conta: a conta (ID, nome, nível, patente) e o progresso salvo na conta', card)
             mi = await A.rt("(() => { missoesAbre(); const t = Array.from(LB.popCaixa.querySelectorAll('.v70-mi-pr')).slice(0, 3).map(e => e.textContent); fechaPop(); return t; })()")
             P.confere(len(mi) == 3 and not any('XP' in t for t in mi), 'com a conta, as missões não mostram o XP do aparelho (quem dá XP da conta é o servidor)', mi)
-            pf = await A.rt("(() => { abreTela('perfil'); const s = document.querySelector('#tela-perfil .pf-ident'); const r = {role:s.getAttribute('role'), cls:s.classList.contains('c82-entrar')}; fechaTela(); return r; })()")
-            P.confere(pf['role'] is None and not pf['cls'], 'com a conta, o perfil não oferece ENTRAR', pf)
+            # (v96: com a conta, o selo do perfil abre a SUA CONTA — o cartão da conta, não o ENTRAR)
+            pf = await A.rt("""(() => { abreTela('perfil'); const s = document.querySelector('#tela-perfil .pf-ident'); const r = {role:s.getAttribute('role'), cls:s.classList.contains('c82-entrar')};
+              s.click(); const c = AJX.secs.conta.querySelector('.c82-card'); r.aberta = RachaConta96.aberta(); r.small = c && (c.querySelector('small') || {}).textContent; r.entrar = !!(c && c.querySelector('.c82-entrar'));
+              ajxFecha(); fechaTela(); return r; })()""")
+            P.confere(pf['role'] == 'button' and not pf['cls'] and pf['aberta'] and (pf['small'] or '').startswith('CONTA DO RACHA') and not pf['entrar'], 'com a conta, o perfil não oferece ENTRAR: o selo abre a SUA CONTA com o cartão da conta', pf)
 
             # ---------------------------------------------------------------------------------------------------- 3) o nível da conta
             print('\n3) o nível e o XP da conta')
@@ -281,12 +286,13 @@ async def principal():
             n5 = await A.espera("(() => { const n = nivelInfo(CONTA.xp); return n.n === 5 ? {n:n.n, atual:n.atual, prox:n.prox, conta:!!n.conta, nv:document.getElementById('v71-nv').textContent, xp:document.getElementById('v77-xp').textContent, m:CONTA.moedas, g:CONTA.gemas, nc:CONTA.nivelConta} : null; })()")
             P.confere(n5 and n5['atual'] == 234 and n5['prox'] == 500 and n5['conta'] and n5['nv'] == '5' and n5['xp'] == '234 / 500',
                       'o lobby mostra o nível 5 da conta e o XP dentro dele (234 / 500: a curva da conta, 50·n·(n−1))', n5)
-            P.confere(a0['nc'] == 1 and n5 and n5['m'] - a0['m'] == 400 and n5['g'] - a0['g'] == 45 and n5['nc'] == 5,
-                      'os níveis 2 a 5 da conta deram os prêmios de sempre (4 × 100 moedas; 4 × 5 + 25 gemas no 5), uma vez', [a0, n5])
+            # v95: a economia nova — cada nível 150 moedas e 8 gemas (eram 100 e 5); a cada 5 níveis +30 gemas (eram 25)
+            P.confere(a0['nc'] == 1 and n5 and n5['m'] - a0['m'] == 600 and n5['g'] - a0['g'] == 62 and n5['nc'] == 5,
+                      'os níveis 2 a 5 da conta deram os prêmios (v95: 4 × 150 moedas; 4 × 8 + 30 gemas no 5), uma vez', [a0, n5])
             await A.api('teste/ajusta', {'conta': 123, 'campos': {'xp': 3100}}); await A.mae('() => recarrega()')
             n8 = await A.espera("(() => nivelInfo(CONTA.xp).n === 8 ? {m:CONTA.moedas, g:CONTA.gemas, nc:CONTA.nivelConta, pf:(abreTela('perfil'), (document.querySelector('#tela-perfil .v77-pf-nv b') || {}).textContent)} : null)()")
             await A.rt("fechaTela()")
-            P.confere(n8 and n8['m'] - n5['m'] == 300 and n8['g'] - n5['g'] == 15 and n8['nc'] == 8, 'do 5 ao 8: +300 moedas e +15 gemas, uma vez', [n5, n8])
+            P.confere(n8 and n8['m'] - n5['m'] == 450 and n8['g'] - n5['g'] == 24 and n8['nc'] == 8, 'do 5 ao 8: +450 moedas e +24 gemas (v95: 3 × 150 e 3 × 8), uma vez', [n5, n8])
             P.confere(n8 and n8['pf'] == '8', 'o perfil mostra o nível da conta (8)', n8 and n8['pf'])
             await A.mae('() => recarrega()'); await asyncio.sleep(0.6)
             n8b = await A.rt("({m:CONTA.moedas, nc:CONTA.nivelConta})")
@@ -454,26 +460,16 @@ async def principal():
             P.confere(not g['primeira'] and not g['pop'], 'abrir de novo na conta 000124: a pergunta não volta', g)
 
             # ---------------------------------------------------------------------------------------------------- 6) o ranking das patentes
-            print('\n6) RANKING › PATENTES')
+            print('\n6) o ranking das patentes (os dados da plataforma; v90: a tela RANKING é a da temporada)')
             await A.api('teste/ajusta', {'conta': 125, 'rq': {'pts': 1500, 'melhor': 1500, 'jogos': 10, 'vit': 9}})
             await A.api('teste/ajusta', {'conta': 126, 'rq': {'pts': 300, 'melhor': 300, 'jogos': 5, 'vit': 2}})
             await A.monta(123); await A.limpa()
-            await A.rt("(() => { C82.rk.dados = null; C82.rk.aba = ''; abreTela('ranking'); return 1; })()")
+            # (v90: a lista da v82 saiu da tela RANKING; os dados da plataforma continuam: a ordem, a sua conta e quem fica de fora)
+            await A.rt("(() => { C82.rk.dados = null; C82.rk.carregando = false; c82RkBusca(); return 1; })()")
             await A.espera("!!C82.rk.dados")
-            rk = await A.rt("""(() => { const t = document.querySelector('#tela-ranking'), box = t.querySelector('.c82-rk');
-              return {abas:Array.from(t.querySelectorAll('.c82-rk-abas button')).map(b => [b.textContent, b.classList.contains('on')]), box:box.hidden,
-                lin:Array.from(box.querySelectorAll('.c82-rk-lin')).map(l => [l.querySelector('.lb-pos').textContent, l.querySelector('.nm-t').textContent, l.querySelector('.c82-pts b').textContent, l.classList.contains('voce'), l.querySelector('small').textContent]),
-                esc:Array.from(t.querySelectorAll('.rk-corpo > [data-c82-escondido]')).length, timer:LB.rkT.hidden,
-                corPts:(() => { const v = box.querySelector('.c82-rk-lin.voce .c82-pts b'); return v ? getComputedStyle(v).color : ''; })()}; })()""")
-            esp = await A.rt("[rqElo(1500).nome, rqElo(925).nome + ' · você', rqElo(300).nome, fmtNum(1500)]")
-            P.confere(rk['abas'] == [['PATENTES', True], ['LIGA DA SEMANA', False]] and not rk['box'] and rk['esc'] > 0 and rk['timer'], 'com a conta, o RANKING abre em PATENTES (a liga e o "termina em" dela ficam escondidos)', rk)
-            P.confere(rk['corPts'] == 'rgb(23, 25, 28)', 'na sua linha (amarela) os pontos ficam escuros, para ler', rk['corPts'])
-            P.confere([x[:4] for x in rk['lin']] == [['1', 'Conta125', esp[3], False], ['2', 'CONTA123', '925', True], ['3', 'Conta126', '300', False]] and [x[4] for x in rk['lin']] == esp[:3],
-                      'as contas pela patente (1500, 925, 300); a sua linha marcada (você); a conta sem pontos (000124) fica de fora', rk['lin'])
-            await A.rt("document.querySelector('#tela-ranking .c82-rk-abas [data-aba=liga]').click()")
-            rk2 = await A.rt("(() => { const t = document.querySelector('#tela-ranking'); return {box:t.querySelector('.c82-rk').hidden, esc:t.querySelectorAll('.rk-corpo > [data-c82-escondido]').length, vis:Array.from(t.querySelectorAll('.rk-corpo > :not(.c82-rk-abas):not(.c82-rk)')).some(e => !e.hidden), timer:LB.rkT.hidden}; })()")
-            P.confere(rk2['box'] and rk2['esc'] == 0 and rk2['vis'] and not rk2['timer'], 'LIGA DA SEMANA: a liga de sempre volta, com o "termina em" (e a lista das patentes sai)', rk2)
-            await A.rt("fechaTela()")
+            rk = await A.rt("(() => { const d = C82.rk.dados, l = Array.isArray(d.lista) ? d.lista : [], meu = C82.conta ? String(C82.conta.idPublico) : ''; return {lin:l.map(j => [String(j.posicao), String(j.nomeExibicao || '').toLowerCase(), j.pts | 0, j.idPublico === meu])}; })()")
+            P.confere(rk['lin'] == [['1', 'conta125', 1500, False], ['2', 'conta123', 925, True], ['3', 'conta126', 300, False]],
+                      'as contas pela patente (1500, 925, 300); a sua marcada (você); a conta sem pontos (000124) fica de fora', rk['lin'])
 
             # ---------------------------------------------------------------------------------------------------- 7) as regras
             print('\n7) as regras: o jogo × a plataforma')
@@ -512,12 +508,13 @@ async def principal():
             print('\n8) no celular (844 × 390)')
             C = await Aparelho().abre(pw, plat, 844, 390)
             await C.monta(126); await C.limpa()
-            await C.rt("(() => { C82.rk.dados = null; C82.rk.aba = ''; abreTela('ranking'); return 1; })()")
-            await C.espera("!!C82.rk.dados")
-            m = await C.rt("""(() => { const s = document.querySelector('#tela-ranking .c82-rk-abas').getBoundingClientRect(), l = Array.from(document.querySelectorAll('#tela-ranking .c82-rk-lin')).map(e => e.getBoundingClientRect());
-              return {W:innerWidth, H:innerHeight, s:[s.left, s.top, s.right, s.bottom], l:l.map(r => [r.left, r.right, r.height]), sw:document.documentElement.scrollWidth}; })()""")
-            P.confere(m['s'][0] >= 0 and m['s'][2] <= m['W'] and m['s'][1] >= 0 and all(x[0] >= 0 and x[1] <= m['W'] + 0.5 and x[2] > 20 for x in m['l']) and len(m['l']) == 3 and m['sw'] <= m['W'],
-                      'as abas e as linhas do RANKING › PATENTES cabem na tela do celular', m)
+            # (v90: a tela RANKING é a da temporada: as 4 categorias cabem no celular; a lista PATENTES da v82 saiu do jogo)
+            await C.rt("(() => { abreTela('ranking'); return 1; })()")
+            await C.espera("!!TELAS.ranking.el.querySelector('.rk90-aba')")
+            m = await C.rt("""(() => { const T = TELAS.ranking.el, l = Array.from(T.querySelectorAll('.rk90-aba')).map(e => e.getBoundingClientRect());
+              return {W:innerWidth, H:innerHeight, l:l.map(r => [r.left, r.right, r.height]), sw:document.documentElement.scrollWidth}; })()""")
+            P.confere(len(m['l']) == 4 and all(x[0] >= 0 and x[1] <= m['W'] + 0.5 and x[2] > 20 for x in m['l']) and m['sw'] <= m['W'],
+                      'as 4 categorias do RANKING (v90) cabem na tela do celular', m)
             await C.rt("fechaTela()")
             await C.sair(); await C.limpa()
             await C.rt("(() => { perfil.st.partidas = 4; perfilSalvar(); CONTA.rq.pts = 1200; contaSalvar(); return 1; })()")

@@ -4,12 +4,13 @@
 // o melhor da partida. Nada aqui confia no aparelho além do que o jogoRouter já validou; na online, quem jogou junto e o
 // melhor da partida vêm do selo assinado pelo servidor das salas.
 // ============================================================================
-import { sql } from "drizzle-orm";
+import { sql, and, eq, desc } from "drizzle-orm";
 import { getDb } from "../../queries/connection";
+import { partidas } from "@db/schema";
 import { movimentar, garanteCarteira } from "../economia";
 import { contaMissoes } from "./missoes";
 import { daXpPasse, idsAmigos, usuarioPorPub, pub6 } from "./comum";
-import { moedasDaPartida, xpPasseDaPartida, mvpPlausivel, premioExercicio, premioNivel, PREMIO, CATALOGO, temporadaAtiva, EVENTO_VAZIO } from "@contracts/v88";
+import { moedasDaPartida, detalheDaPartida, xpPasseDaPartida, mvpPlausivel, premioExercicio, premioNivel, PREMIO, CATALOGO, temporadaAtiva, EVENTO_VAZIO, diaUtc } from "@contracts/v88";
 
 const linhas = <T>(r: unknown): T[] => ((r as unknown as [unknown])[0] as T[]) || [];
 async function moedasHoje(usuarioId: number, tipos: string[]): Promise<number> {
@@ -26,7 +27,17 @@ export type Resultado88 = {
   carteira: { moedas: number; gemas: number } | null; moedas: number; tetoMoedas: boolean;
   missoes: { id: string; nome: string }[]; passe: { xp: number; nivel: number; subiu: boolean } | null;
   mvp: boolean; jogadores: string[] | null; amigoNaPartida: boolean; temporada: string | null;
+  detalhe: { rot: string; moedas: number }[]; seq: number; primeiraVitoria: { moedas: number; gemas: number } | null;   // v95
 };
+// v95: quantas vitórias seguidas (contando esta): as partidas encerradas de antes, da mais nova para trás, até a 1ª que não foi vitória
+async function vitoriasSeguidas(usuarioId: number, resultado: string): Promise<number> {
+  if (resultado !== "vitoria") return 0;
+  try {
+    const l = await getDb().query.partidas.findMany({ where: and(eq(partidas.usuarioId, usuarioId), eq(partidas.estado, "encerrada")), orderBy: desc(partidas.encerradaEm), limit: 8, columns: { resultado: true } });
+    let n = 1; for (const x of l) { if (x.resultado === "vitoria") n++; else break; }
+    return n;
+  } catch (_) { return 1; }
+}
 
 export async function recompensaPartida(usuarioId: number, idPublico: number, matchId: string, o: {
   resultado: "vitoria" | "derrota" | "empate"; gols: number; assistencias: number; placarNosso: number; ranqueada: boolean; online: boolean; mvp?: boolean; selo: Selo88;
@@ -40,8 +51,10 @@ export async function recompensaPartida(usuarioId: number, idPublico: number, ma
     for (const pj of jogadores) { const x = await usuarioPorPub(pj); if (x && meus.has(x.id)) { amigo = true; break; } }
   }
   const mvp = o.online ? !!(o.selo && Number(o.selo.v) === 1) : mvpPlausivel({ mvp: !!o.mvp, gols: o.gols, assistencias: o.assistencias, resultado: o.resultado, placarNosso: o.placarNosso });
-  // as moedas (o teto do dia das partidas)
-  const cheio = moedasDaPartida({ resultado: o.resultado, gols: o.gols });
+  // as moedas (o teto do dia das partidas) · v95: com a assistência, o craque e a sequência
+  const seq = await vitoriasSeguidas(usuarioId, o.resultado);
+  const base = { resultado: o.resultado, gols: o.gols, assistencias: o.assistencias, mvp, seq };
+  const cheio = moedasDaPartida(base), detalhe = detalheDaPartida(base);
   const ja = await moedasHoje(usuarioId, ["partida"]);
   const moedas = Math.max(0, Math.min(cheio, PREMIO.moedasDiaPartidas - ja));
   let carteira: Resultado88["carteira"] = null;
@@ -49,11 +62,17 @@ export async function recompensaPartida(usuarioId: number, idPublico: number, ma
     const r = await movimentar({ usuarioId, moedasDelta: moedas, tipo: "partida", motivo: "Partida " + (o.resultado === "vitoria" ? "vencida" : o.resultado === "empate" ? "empatada" : "jogada") + (o.gols ? " · " + o.gols + " gol(s)" : ""), refTipo: "partida", refId: matchId, operacaoId: "partida:" + matchId });
     if (r.ok) carteira = { moedas: r.moedas, gemas: r.gemas };
   }
+  // v95: a 1ª vitória do dia (uma vez por dia na conta: a operação do dia não grava duas vezes; fora do teto das partidas)
+  let primeiraVitoria: Resultado88["primeiraVitoria"] = null;
+  if (o.resultado === "vitoria") {
+    const r = await movimentar({ usuarioId, moedasDelta: PREMIO.primeiraVitoria, gemasDelta: PREMIO.primeiraVitoriaGemas, tipo: "bonus", motivo: "1ª vitória do dia", refTipo: "partida", refId: matchId, operacaoId: "pvit:" + usuarioId + ":" + diaUtc() });
+    if (r.ok && !r.duplicada) { primeiraVitoria = { moedas: PREMIO.primeiraVitoria, gemas: PREMIO.primeiraVitoriaGemas }; carteira = { moedas: r.moedas, gemas: r.gemas }; }
+  }
   if (!carteira) { const c = await garanteCarteira(usuarioId); carteira = { moedas: c.moedas, gemas: c.gemas }; }
   // as missões e o passe
   const missoes = await contaMissoes(usuarioId, { ...EVENTO_VAZIO, partida: 1, vitoria: o.resultado === "vitoria" ? 1 : 0, gols: o.gols, assistencias: o.assistencias, ranqueada: o.ranqueada ? 1 : 0, amigo: amigo ? 1 : 0 });
   const passe = temporadaAtiva() ? await daXpPasse(usuarioId, xpPasseDaPartida(o.resultado)) : null;
-  return { carteira, moedas, tetoMoedas: moedas < cheio, missoes, passe, mvp, jogadores, amigoNaPartida: amigo, temporada: temporadaAtiva() ? CATALOGO.temporada.id : null };
+  return { carteira, moedas, tetoMoedas: moedas < cheio, missoes, passe, mvp, jogadores, amigoNaPartida: amigo, temporada: temporadaAtiva() ? CATALOGO.temporada.id : null, detalhe, seq, primeiraVitoria };
 }
 
 // o gol do treino que conta (o mesmo teto do XP do treino): as moedas do treino livre, a missão e o XP do passe

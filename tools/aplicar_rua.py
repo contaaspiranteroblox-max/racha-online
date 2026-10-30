@@ -45,6 +45,16 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
      menus — amigos com status e convites em tempo real, mensagens, correio, carteira e inventário na conta, a loja por
      categorias, missões, eventos, Passe RACHA, chat por canais, denúncias, estatísticas da conta, espectador, treinos novos,
      a tela de modo e mapa, os ajustes que faltavam e o controle Bluetooth (o catálogo vem de app/contracts/catalogo88.json).
+ 21. v90 (tools/v90/v90.py + tools/v90/*.js + app/public/game/v90.css): a temática preta, roxa e laranja, a tela inicial
+     reorganizada, o COFRE, a roda das favoritas e a tela do RANKING da temporada.
+ 22. v91 (tools/v91/v91.py + tools/v91/*.js + app/public/game/v91.css, aplicados por último): o visual da imagem de referência
+     em todas as telas — o fundo da tela inicial tirado da própria imagem (tools/v91/fundo.py → fundo.webp, fundo_telas.webp e
+     fundo.json, embutidos), a faixa azul, os botões quadrados, a tampinha em pé no meio, as telas com a mesma faixa e os
+     mesmos painéis, os banners de perfil (tools/v91/banners.py → banners.webp) e as patentes novas (só o desenho).
+ (…) as etapas v92 a v100 estão na lista V70_ETAPAS, com uma linha cada.
+ v101 (tools/v101/v101.py + tools/v101/*.js + app/public/game/v101.css, por último): o lobby e as telas no estilo da imagem da
+     noite (a arte desenhada em código em tools/v101/arte: o fundo, o das telas, os ícones e a ilustração da OFICINA) e as
+     tampinhas prontas escondidas (fica só o CRIAR TAMPINHA; V101_SKINS_PRONTAS religa).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -70,7 +80,21 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v82/conta',                                                                # v82: as contas (o script de entrada, a exportação, o XP das missões)
               'v84/v84',                                                                  # v83/v84: os textos das salas no servidor e o login obrigatório (eram editados direto no gerado)
               'v87/v87',                                                                  # v87: tudo dentro do jogo (o login com a cara do jogo, a sessão do site, as páginas da conta por cima do jogo)
-              'v88/v88']                                                                  # v88: a atualização completa dos menus (amigos, mensagens, correio, loja, missões, eventos, passe, chat, espectador…)
+              'v88/v88',                                                                  # v88: a atualização completa dos menus (amigos, mensagens, correio, loja, missões, eventos, passe, chat, espectador…)
+              'v90/v90',                                                                  # v90: a nova temática e o ranking da temporada (o v90.css e tools/v90/*.js)
+              'v91/v91',                                                                  # v91: o visual da imagem de referência em todas as telas (o v91.css, tools/v91/*.js e as peças)
+              'v92/v92',                                                                  # v92: a mecânica (a cadência, o desenho, o toque armado, a previsão do online com o núcleo do servidor) e o painel de testes
+              'v93/v93',                                                                  # v93: a atualização completa por fases (o editor de HUD da v92 preservado; os efeitos ao pressionar, os itens, o tutorial, as partidas, o social, as bolas, os sons)
+              'v94/v94',                                                                  # v94: o motor próprio (a jogabilidade reconstruída pela especificação de docs/v94; o motor antigo fica para comparar)
+              'ajustes/ajustes',                                                          # os AJUSTES FINOS (o que o painel de testes tinha, na versão oficial) e as LINHAS DA BOLA (a do chute e o caminho), com a extrapolação do online
+              'oficina/oficina',                                                          # v92 · OFICINA DE CRIAÇÃO 2.0: o editor de mapas, a central, o TESTAR e a sala com mapa (tools/oficina/*.js, o oficina.css e o server/partida/mapa.js) — por último, depois da v94
+              'v95/v95',                                                                   # v95: o fim da partida no estilo da imagem, os emojis na tampinha, as patentes e a ranqueada novas, o chat, o perfil, os campos 30% maiores e a economia
+              'v96/v96',                                                                   # v96: o online com a sensação do treino (as correções lisas, o recomeço do servidor, o desenho que bate nas traves), as tampinhas animadas novas e a dos 30 primeiros
+              'v97/v97',                                                                   # v97: o Rachão na Oficina (a página do Rachão gerada de backup/rachao.html, a Oficina de estádios e a aba RACHÃO)
+              'v98/v98',                                                                   # v98: o RACHA e o Rachão separados na Oficina e as salas online do Rachão (o motor do Rachão no servidor, gerado da página)
+              'v99/v99',                                                                   # v99: os chutes do Rachão (cavadinha, curva e super chute) nas salas personalizadas do RACHA (no núcleo, no servidor e na sala neste aparelho)
+              'v100/v100',                                                                 # v100: a revisão de segurança (o convite com outro servidor pergunta antes; o bilhete da conta só vai para o servidor do jogo e vale 15 min)
+              'v101/v101']                                                                 # v101: o lobby e as telas no estilo da imagem da noite (a arte em código em tools/v101/arte) e só o CRIAR TAMPINHA (as prontas escondidas)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

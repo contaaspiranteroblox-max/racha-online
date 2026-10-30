@@ -9,14 +9,13 @@
 //   · recalcula o resultado a partir do placar (não confia no campo "resultado");
 //   · aplica tetos de XP por partida e por dia (anti-farm);
 //   · rejeita qualquer pedido de "adicionar XP" direto — esse endpoint NÃO EXISTE.
-// Por isso rankings competitivos importantes devem, no futuro, esperar partidas
-// com validação servidor-a-servidor (online autoritativo).
+// A patente, o XP e as estatísticas da conta exigem resultados confirmados
+// pelo motor do servidor. A liga contra bots permanece no aparelho.
 // v70: a partida ONLINE (sala do servidor da turma) só rende com o SELO do servidor: ele conferiu o resultado
 // (mandado pelo anfitrião, da rodada certa, placar igual ao dos quadros, placar e tempo possíveis) e assinou
 // para esta conta; aqui o selo é conferido (assinatura, conta, lado, placar, modo, validade) e usado uma vez só.
-// v82: A PATENTE NA CONTA. A partida diz no começo se é da ranqueada (contra os bots ou online) e o tamanho do time; no
-// fim, o servidor faz a conta dos pontos (contracts/patentes.ts, as regras do jogo) e guarda na conta (ranqueada.ts):
-// online, só com o selo que diz "ranqueada" e o mesmo tamanho; contra os bots, com o teto do dia; a desistência tira 25.
+// A patente da conta exige partida online com selo ranqueado e tamanho correto;
+// a liga contra bots continua local.
 // A resposta leva a patente nova (o jogo acerta a tela do fim e a cópia dele pelo que vem daqui).
 // A ranqueada que passa da validade (30 min) sem o fim — o jogo fechou, a rede caiu no meio — conta como desistência: na
 // próxima partida que a conta começar (iniciarPartida) ou se o fim chegar depois da validade (encerrarPartida). Sem isso,
@@ -24,19 +23,21 @@
 // ============================================================================
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { eq, and, desc, lt } from "drizzle-orm";
+import { eq, and, desc, lt, isNotNull } from "drizzle-orm";
 import { createRouter } from "../middleware";
 import { getDb } from "../queries/connection";
-import { partidas, xpDiario, estatisticas, selos } from "@db/schema";
-import { autenticado, exigeLimite, bateLimite, type CtxAutenticado } from "./guard";
+import { partidas, xpDiario, selos } from "@db/schema";
+import { autenticado, exigeLimite, type CtxAutenticado, consomeUmaVez } from "./guard";
 import { novoToken, sha256 } from "./security";
 import { concederXp, aplicarEstatisticasPartida, verificarConquistas } from "./progressao";
 import { XP, formatarIdPublico } from "@contracts/racha";
-import { bilheteDaConta, confereSelo } from "../lib/selo";
+import { bilheteDaConta, confereSelo, corpoDoSelo, type Selo } from "../lib/selo";
 import { aplicaRanqueada, type RespostaRanqueada } from "./ranqueada";
 import { motivoResultadoOnline, acaoRanqueada } from "@contracts/partida";
 import { relacoesDe } from "./v88/comum";
-import { recompensaPartida, recompensaGolTreino, recompensaExercicio, premiosDeNivel, type Selo88 } from "./v88/partida";
+import { registraPartidaRanking } from "./v90/ranking";
+import { recompensaPartida, premiosDeNivel } from "./v88/partida";
+import { garanteCarteira } from "./economia";
 
 const MODOS = ["futebol", "curva", "ginga", "volei", "americano", "basquete"];
 const NIVEIS_BOT = ["facil", "medio", "dificil", "lenda"];
@@ -136,7 +137,9 @@ export const jogoRouter = createRouter({
         modo: input.modo,
         mapa: input.mapa ?? null,
         nivelBots: input.nivelBots ?? null,
-        ranqueada: input.ranqueada,
+        // A liga local contra bots continua jogável, mas não altera a patente
+        // oficial: o navegador sozinho não comprova o resultado.
+        ranqueada: input.ranqueada && input.online,
         online: input.online,
         tamanho: input.tamanho ?? null,
       });
@@ -210,10 +213,10 @@ export const jogoRouter = createRouter({
 
       // v70: partida online sem o selo do servidor da turma (ou que ele não validou) não rende: não dá para conferir
       // (v82: as regras em contracts/partida.ts; na ranqueada, o selo precisa dizer "ranqueada" e o mesmo tamanho)
-      let seloOk: Selo88 = null;                                 // v88: o selo conferido (quem jogou junto e o melhor da partida)
+      let seloOk: Selo | null = null;                            // o selo conferido (quem jogou junto e o melhor da partida)
       if (input.online && !input.abandonada) {
         const selo = input.valida ? confereSelo(input.selo) : null;
-        seloOk = selo as Selo88;
+        seloOk = selo;
         const motivo = motivoResultadoOnline(selo, {
           valida: input.valida,
           idPublico: formatarIdPublico(Number(c.usuario.idPublico)),
@@ -224,11 +227,18 @@ export const jogoRouter = createRouter({
           tamanho: p.tamanho ?? null,
           agora: Date.now(),
         });
-        if (motivo || (selo && (await bateLimite(`selo:${sha256(input.selo ?? "")}`, 1, 45 * 60 * 1000)))) {
+        if (motivo) {
           await db.update(partidas).set({ estado: "encerrada", encerradaEm: new Date(), xpConcedido: 0 }).where(eq(partidas.id, p.id));
-          return { ok: true as const, duplicada: false as const, xpConcedido: 0, motivo: motivo || "Esse resultado online já foi usado.", rq: null };
+          return { ok: true as const, duplicada: false as const, xpConcedido: 0, motivo, rq: null };
         }
         input.duracaoSeg = Math.max(input.duracaoSeg, Math.min(XP.PARTIDA_MAX_SEG, Math.round(selo!.d)));   // (o tempo de verdade, medido pelo servidor)
+        // O aparelho não é a fonte de gols e assistências pessoais. Salas antigas
+        // sem apuração autoritativa ainda contam a partida, mas não esses bônus.
+        const conferidos = selo?.h === 1 && Number.isInteger(selo.gl) && Number.isInteger(selo.as) &&
+          selo.gl! >= 0 && selo.as! >= 0 && selo.gl! <= input.placarNosso && selo.as! <= input.placarNosso;
+        input.gols = conferidos ? selo!.gl! : 0;
+        input.assistencias = conferidos ? selo!.as! : 0;
+        input.golsGinga = 0; // o selo atual não contém este tipo de gol
       }
 
       // Partidas abandonadas não rendem (evita farm de participação) · v82: na ranqueada, a desistência tira 25 da patente
@@ -262,9 +272,28 @@ export const jogoRouter = createRouter({
       if (input.golsGinga > input.gols) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Gols de ginga não podem passar dos seus gols." });
       }
+      // Só marca o selo como consumido depois de validar todos os campos. Uma
+      // falha de persistência posterior ainda requer uma transação única.
+      // v100 (segurança): a trava pelo corpo assinado do selo (qualquer escrita aceita do mesmo selo é o mesmo selo)
+      const idSelo = input.online && seloOk ? sha256(corpoDoSelo(input.selo ?? "")) : null;
+      if (idSelo && !(await consomeUmaVez(`selo:${idSelo}`))) {   // v100: atômico (vários envios juntos do mesmo selo: só um passa)
+        await db.update(partidas).set({ estado: "encerrada", encerradaEm: new Date(), xpConcedido: 0 }).where(eq(partidas.id, p.id));
+        return { ok: true as const, duplicada: false as const, xpConcedido: 0, motivo: "Esse resultado online já foi usado.", rq: null };
+      }
 
       // Resultado recalculado NO SERVIDOR a partir do placar
       const resultado = input.placarNosso > input.placarDeles ? "vitoria" : input.placarNosso < input.placarDeles ? "derrota" : "empate";
+      if (!input.online || seloOk?.h !== 1) {
+        // Guarda o fechamento para impedir reenvio, mas sem resultado oficial.
+        // Resumo e histórico da conta só consideram partidas com resultado.
+        await db.update(partidas).set({ estado: "encerrada", encerradaEm: new Date(),
+          placarNosso: input.placarNosso, placarDeles: input.placarDeles,
+          resultado: null, gols: 0, assistencias: 0, golsGinga: 0,
+          duracaoSeg: input.duracaoSeg, xpConcedido: 0 }).where(eq(partidas.id, p.id));
+        return { ok: true as const, duplicada: false as const, resultado, xpConcedido: 0,
+          moedasGanhas: 0, rq: null,
+          motivo: "Resultado sem simulação autoritativa: permanece no aparelho, sem histórico, estatísticas ou prêmios oficiais na conta." };
+      }
 
       // ---------- Cálculo de XP (regras do servidor, com tetos) ----------
       let xp = XP.PARTICIPACAO + input.gols * XP.GOL + input.assistencias * XP.ASSISTENCIA + input.golsGinga * XP.GOL_GINGA;
@@ -292,11 +321,18 @@ export const jogoRouter = createRouter({
         .where(and(eq(xpDiario.usuarioId, c.usuario.id), eq(xpDiario.dia, hojeUTC())));
       const conquistasNovas = await verificarConquistas(c.usuario.id);
       // v82: a patente (depois do XP: se algo acima falhar, a partida não mexe na patente)
-      const rqRes: RespostaRanqueada | null = acaoFim("") === "partida" ? await aplicaRanqueada(c.usuario.id, p.id, partidaRq(false), extraRq) : null;
+      // (v100: online, a patente anda uma vez por selo — a referência é o selo, não a partida que o aparelho abriu)
+      // (v100: a ranqueada online só mexe na patente com gente do outro lado — o:1 no selo; contra os bots que a fila pôs no
+      //  outro time, a partida vale como uma online comum, sem pontos de patente)
+      const contraGente = !input.online || seloOk?.o === 1;
+      const rqRes: RespostaRanqueada | null = acaoFim("") === "partida" && contraGente ? await aplicaRanqueada(c.usuario.id, idSelo ? "selo:" + idSelo.slice(0, 59) : p.id, partidaRq(false), extraRq) : null;
       // v88: as moedas da partida (na carteira da conta), as missões, o XP do passe e o melhor da partida
       const r88 = await recompensaPartida(c.usuario.id, Number(c.usuario.idPublico), p.id, {
         resultado, gols: input.gols, assistencias: input.assistencias, placarNosso: input.placarNosso, ranqueada: rq, online: !!input.online, mvp: input.mvp, selo: seloOk,
       });
+      // v90: o ranking da temporada (gols, assistências e Craque do Jogo): só a partida que o servidor das salas simulou e
+      // assinou (h:1 no selo), com os números que o MOTOR contou — nada que o aparelho mandou; cada partida conta uma vez
+      const rk90 = input.online && seloOk ? await registraPartidaRanking(c.usuario.id, seloOk, p.id) : null;
       await db
         .update(partidas)
         .set({
@@ -343,66 +379,57 @@ export const jogoRouter = createRouter({
         passe: r88.passe,
         mvp: r88.mvp,
         comAmigo: r88.amigoNaPartida,
+        ranking: rk90, // v90: o que esta partida somou no ranking da temporada (null = não entra)
+        moedasDetalhe: r88.detalhe, // v95: o que cada parte rendeu (partida, vitória, gols, assistências, craque, sequência)
+        sequencia: r88.seq, // v95: as vitórias seguidas, contando esta
+        primeiraVitoria: r88.primeiraVitoria, // v95: a 1ª vitória do dia (moedas e gemas), quando foi esta
       };
     }),
 
-  // ---------- Gols de treino (livre/exercícios): teto diário, espelha o jogo ----------
+  // O treino roda no navegador. Até que haja verificação no servidor, eventos
+  // declarados pelo aparelho não criam XP, moedas, gemas ou estatísticas oficiais.
   golTreino: autenticado
     .input(z.object({ quantidade: z.number().int().min(1).max(3), origem: z.enum(["livre", "treino"]) }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx }) => {
       const c = ctx as unknown as CtxAutenticado;
-      const db = getDb();
       await exigeLimite(`treino:${c.usuario.id}`, 40, 10 * 60 * 1000, "Muitos gols de treino seguidos.");
-      const hoje = await xpDiarioDe(c.usuario.id);
-      const restante = Math.max(0, XP.TREINO_MAX_DIARIO - hoje.golsTreino);
-      const validos = Math.min(input.quantidade, restante);
-
-      await db
-        .update(estatisticas)
-        .set({ golsTreino: (await db.query.estatisticas.findFirst({ where: eq(estatisticas.usuarioId, c.usuario.id) }))!.golsTreino + input.quantidade, atualizadoEm: new Date() })
-        .where(eq(estatisticas.usuarioId, c.usuario.id));
-      await db
-        .update(xpDiario)
-        .set({ golsTreino: hoje.golsTreino + validos })
-        .where(and(eq(xpDiario.usuarioId, c.usuario.id), eq(xpDiario.dia, hojeUTC())));
-
-      let prog = null;
-      if (validos > 0) {
-        prog = await concederXp(c.usuario.id, validos * XP.TREINO_GOL, "treino", `${hojeUTC()}:${hoje.golsTreino}`);
-      }
-      const niveis88 = prog?.subiuNivel ? await premiosDeNivel(c.usuario.id, prog.nivelAntes, prog.nivelDepois) : null;
-      const r88 = await recompensaGolTreino(c.usuario.id, validos, input.origem, `${hojeUTC()}:${hoje.golsTreino}`);   // v88
+      const carteira = await garanteCarteira(c.usuario.id);
       return {
-        carteira: r88.carteira,
-        moedasGanhas: r88.moedas,
-        missoesCompletas: r88.missoes,
-        passe: r88.passe,
-        niveisPremiados: niveis88?.niveis ?? [],
+        carteira,
+        moedasGanhas: 0,
+        missoesCompletas: [],
+        passe: null,
+        niveisPremiados: [],
         ok: true as const,
-        validos,
-        restanteHoje: XP.TREINO_MAX_DIARIO - hoje.golsTreino - validos,
-        xpConcedido: prog?.xpConcedido ?? 0,
-        subiuNivel: prog?.subiuNivel ?? false,
-        nivel: prog?.nivelDepois,
-        itensNovos: prog?.itensNovos ?? [],
-        conquistasNovas: prog?.conquistasNovas ?? [],
+        validos: 0,
+        restanteHoje: 0,
+        xpConcedido: 0,
+        subiuNivel: false,
+        nivel: c.usuario.nivel,
+        itensNovos: [],
+        conquistasNovas: [],
       };
     }),
 
-  // ---------- v88: o fim de um exercício do treino (as moedas e gemas do jogo, na carteira da conta, com o teto do dia) ----------
+  // Fim de exercício local: somente informativo até existir comprovação no servidor.
   treinoConcluido: autenticado
     .input(z.object({ exercicio: z.string().regex(/^[a-z0-9_-]{2,30}$/), estrelas: z.number().int().min(0).max(3), recorde: z.boolean().default(false), nonce: z.string().min(8).max(40) }))
     .mutation(async ({ ctx, input }) => {
       const c = ctx as unknown as CtxAutenticado;
       await exigeLimite(`treino-fim:${c.usuario.id}`, 30, 10 * 60 * 1000, "Muitos exercícios seguidos.");
-      return recompensaExercicio(c.usuario.id, input.exercicio, input.estrelas, input.recorde, input.nonce);
+      if (!["cruz", "dom", "passe", "tabela", "final", "cond", "posic", "defesa", "goleiro"].includes(input.exercicio)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Exercício desconhecido." });
+      }
+      const carteira = await garanteCarteira(c.usuario.id);
+      return { moedas: 0, gemas: 0, cheio: false, carteira,
+        nota: "O treino continua disponível. Prêmios na conta exigem validação pelo servidor e estão suspensos." };
     }),
 
   // ---------- Histórico recente de partidas ----------
   minhasPartidas: autenticado.query(async ({ ctx }) => {
     const c = ctx as unknown as CtxAutenticado;
     const lista = await getDb().query.partidas.findMany({
-      where: and(eq(partidas.usuarioId, c.usuario.id), eq(partidas.estado, "encerrada")),
+      where: and(eq(partidas.usuarioId, c.usuario.id), eq(partidas.estado, "encerrada"), isNotNull(partidas.resultado)),
       orderBy: [desc(partidas.encerradaEm)],
       limit: 20,
     });

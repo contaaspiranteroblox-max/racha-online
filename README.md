@@ -1,6 +1,114 @@
-# RACHA · Futebol de Rua — v88.2
+# RACHA · Futebol de Rua — v101
 
-O jogo de futebol de rua com tampinhas, na versão **v88.2**: **jogar online sem conta, só com o nome** — na tela de entrada,
+> **Novo · v101 (30/10/2026)** — o **lobby no estilo da imagem da noite**: a quadra da quebrada no pôr do sol desenhada em
+> código (o Cristo, a favela acesa, o grafite RACHA, o bar do Seu Zé, o chão molhado) cobrindo a tela toda, os cartões de vidro
+> flutuando por cima (o perfil com o ID, a patente com os pontos, o sinal), os botões baixos dos lados, o cartão dourado da
+> OFICINA, a tampinha no círculo aceso com as **três vagas do grupo**, o CAMPO, o MODO e o JOGAR com a coroa — e **as telas no
+> mesmo estilo** (o vidro azul-noite, a escolhida no roxo do neon). E **só o CRIAR TAMPINHA, por enquanto**: as tampinhas
+> prontas saíram de cena (nada é apagado; `skinsProntas: true` no `config.js` traz de volta). A partida e a física não mudam.
+> O detalhe está no [`CHANGELOG.md`](CHANGELOG.md).
+>
+> **v100 (30/10/2026)** — a **revisão de segurança** antes do lançamento no Android, sem mudar a jogabilidade, a
+> física, os controles nem os menus: o resultado online vale uma vez só e a patente online só anda contra gente; os limites
+> de tentativa de senha pelo endereço certo e por conta; o convite com outro servidor pergunta antes (e o bilhete da conta
+> só vai para o servidor do jogo); o cookie da conta com `Secure` por https e a sessão de no máximo 90 dias; a conta banida
+> cai das salas na hora; os cabeçalhos de proteção; o pacote sem segredo, banco ou chave e o `--lancamento` sem o presente de
+> teste; o instalador com `DOMINIO=` (o HTTPS). Para valer, a **plataforma e o servidor das salas precisam ser atualizados
+> juntos**. O detalhe está no [`CHANGELOG.md`](CHANGELOG.md).
+>
+> **v99 (29/10/2026)** — os **chutes do Rachão nas salas personalizadas**: no CRIAR SALA de FUTEBOL, **CHUTES DO
+> RACHÃO** — **CAVADINHA** (a bola sobe por cima de quem está na frente; o travessão segura a bola alta), **CURVA** (↶ ou ↷:
+> o próximo chute sai girando) e **SUPER CHUTE** (segure, carregue e solte: mais forte que o CHUTE, pegando fogo). Cada um
+> liga e desliga; nenhum ligado é só o chutar, como sempre. Na partida aparecem só os botões dos chutes da sala (as teclas
+> Q, Z, X e V), com a bola no alto desenhada com a sombra no chão; os bots usam os três. A física é a do núcleo das salas
+> (a mesma conta no servidor e na previsão do aparelho) e a sala neste aparelho joga no motor das salas. A ranqueada, o COM
+> CURVA e as salas sem os chutes não mudam. Para valer online, o **servidor das salas precisa ser atualizado**. O detalhe
+> está no [`CHANGELOG.md`](CHANGELOG.md).
+>
+> **v98 (29/10/2026)** — o **RACHA e o Rachão separados** na Oficina e as **salas online do Rachão**. A central da
+> Oficina tem a chave **RACHA | RACHÃO** no topo: no RACHA, os mapas de sempre (Meus mapas, Comunidade, Populares…); no
+> RACHÃO, os **Estádios** e as **Salas online**. O **CRIAR** pergunta o que criar: um **mapa do RACHA** ou um **estádio do
+> Rachão**. E o Rachão ganhou o online: **CRIAR SALA** abre a tela do Rachão (um dos 17 campos ou um estádio seu, 1x1 a
+> 7x7, Partida ou Caos, os bots completando ou só gente, o tempo, os gols, a corrida, os chutes, aberta ou fechada), a
+> galera entra pela lista ou pelo **código**, e a partida roda no **servidor das salas** com o motor do Rachão (o mesmo
+> código da página) — cada um joga do seu aparelho, que prevê a própria tampinha. O admin tem os AJUSTES (a mesma tela),
+> passa o admin, mexe nos times e encerra. Para o online do Rachão funcionar, o **servidor das salas precisa ser
+> atualizado** (a demonstração não tem servidor). O detalhe está no [`CHANGELOG.md`](CHANGELOG.md).
+>
+> **v97 (29/10/2026)** — o **Rachão na Oficina**: a aba **Rachão** da Oficina de criação abre o Rachão (o futebol de
+> física enviado pelo dono do jogo, com o motor dele: 17 campos, contra bots, caos, 2 jogadores, treino, pênaltis,
+> cabeçada, vôlei e minigolfe) por cima da Oficina, e a **oficina de estádios** dele: criar do zero ou a partir de um dos 17
+> campos e mudar o formato (retângulo, oval ou rinque), o tamanho, os cantos, os gols, o piso (17), a física (11 prontas e 18
+> valores), as peças no campo (poste, para-choque, vaso, cerca viva, lama e poça, com espelho e ímã), o vento e os poderes —
+> e jogar contra bots ou em 2 no estádio. Sem online: tudo no aparelho (para levar a outro, o código do estádio). O RACHA não
+> muda (a física oficial é a mesma). Depois do teste: a aba **Chutes** do editor de estádios (a cavadinha, a curva e o super
+> chute; **Só o Chutar** tira os três) e a **física misturada** entre os dois jogos — a bola, o jogador e o chute de um no
+> outro, cada um sozinho (no Rachão, MISTURAR COM O RACHA; na Oficina do RACHA, MISTURAR COM O RACHÃO no mapa e na sala). Para
+> a tampinha com o embalo do Rachão valer igual online, o **servidor das salas precisa ser atualizado**. O detalhe está no
+> [`CHANGELOG.md`](CHANGELOG.md) e no [`LEIA-ME-OFICINA.md`](LEIA-ME-OFICINA.md).
+>
+> **v96 (29/10/2026)** — o **online liso como o treino**: as correções da previsão viram um deslize (a mola sem tranco
+> e com limite de velocidade) em vez do pulo, o desenho bate nas traves e na rede (nada aparece dentro da trave ou do outro
+> lado da rede), o recomeço depois do gol vem do servidor e, no servidor das salas, os comandos que chegam juntos depois de um
+> apagão do 4G andam em vez de ir para o lixo (medido no simulador do Brasil até a Virgínia: os pulos da bola e do outro
+> jogador caíram de 21 e 26 por minuto para 0; a sua tampinha dentro da trave, de 12 quadros por minuto para 0). Para valer
+> online, o **servidor das salas precisa ser atualizado** junto com o jogo. E as **tampinhas animadas novas** (as caras PIPA NO
+> CÉU, BAILE, MARÉ, TEMPESTADE, IPÊ AMARELO e LAVA e as bordas ARCO-ÍRIS VIVO, OURO LÍQUIDO e COMETA) e a **tampinha dos
+> FUNDADORES**, ultra rara: só as **30 primeiras contas que entrarem no jogo** ganham, numeradas ("Fundador nº 7 de 30"); não
+> está à venda, ninguém mais consegue usar (o servidor das salas confere) e o ZERAR CONTAS do Dono devolve as vagas. Depois
+> do teste: a **conta saiu dos Ajustes** (a janela SUA CONTA abre pelo selo ao lado do seu ID no Perfil; o chat foi para
+> Ajustes › Privacidade) e o **anel do chute** acende num branco suave. A física oficial é a mesma. O detalhe está no
+> [`CHANGELOG.md`](CHANGELOG.md).
+>
+> **v95 (28/10/2026)** — o **fim da partida** no estilo da imagem (os dois times nas cores deles, VITÓRIA DO LARANJA, o
+> placar pendurado com os gols), os **emojis da tampinha** (102, na LOJA › EMOJIS por raridade, no meio da tampinha em todo
+> lugar), as **patentes** novas (cada uma com a sua forma), a **ranqueada ao vivo** (online, jogando e procurando em cada
+> tamanho; a PARTIDA ENCONTRADA), o **chat** com os emojis e as frases prontas, o **perfil** com o cartão do craque e a vitrine,
+> os **campos 30% maiores** (o gol do tamanho de antes), a **economia** nova (a assistência, o craque, a sequência e a 1ª vitória
+> do dia rendem; a tela do fim mostra parte por parte), o **placar minimalista** (as abas de vidro penduradas em cima; o nome e o
+> escudo do clube do lado quando o time todo é do mesmo clube), o **painel dos jogadores** com a foto de perfil cheia e o clube
+> embaixo do nome, o **sensor** verde (o dos parceiros na cor do time; apertou, acende num branco forte — segurando fica, soltou
+> some rápido), a **tampinha inicial** roxo, branco e laranja
+> (no time, a cor do time dos lados), as **linhas da bola** em pontinhos **só na Oficina com o RANK OFF** (ou, se o criador do
+> mapa ligar, para todos com aquele mapa) e o **visual sem cara de IA** (a arte toda desenhada em código, os botões em placa).
+> Depois do segundo teste: o **grupo na ranqueada** (no lobby, PRONTO e o dono joga; no fim, o JOGAR DE NOVO do grupo com 10 s
+> para todos tocarem, senão todo mundo volta para o lobby) e, na Oficina, o **menu que não pula** para cima ao mudar um valor, a
+> **tampinha grande que chuta** e o **deslize da tampinha**. E as **cores dos dois campos** das imagens enviadas: o Estádio
+> com o gramado listrado escuro dentro das linhas e a Arena virando a quadra de futsal verde, com as áreas amarelas em "D" e o
+> círculo azul (gasta, com as rachaduras). A física oficial é a mesma. O detalhe está no
+> [`CHANGELOG.md`](CHANGELOG.md); de onde vem a arte, no [`PROVENIENCIA.md`](PROVENIENCIA.md).
+>
+> **28/10/2026 · a v93 e a v94 com a OFICINA** — este pacote junta tudo o que veio na **v93** (a atualização por fases: o HUD,
+> as bolas lisas, a contagem 3, 2, 1, JÁ!, o replay e o painel online, o perfil de quem faz o gol, as salas e o admin, o grupo,
+> as falas rápidas e os sons — ver o [`LEIA-ME-v93.md`](LEIA-ME-v93.md)) e na **v94** (o motor próprio, **em testes e
+> desligado**, como no ZIP das etapas 1 a 7: o jogo e as salas usam o motor de sempre; para ligar para todo mundo,
+> `motor: 'v94',` no `app/public/game/config.js` e `RACHA_MOTOR_JOGO=v94` no servidor — ver o
+> [`docs/v94/RELATORIO.md`](docs/v94/RELATORIO.md)) com a Oficina. E traz os **AJUSTES FINOS** (Ajustes › Visual: o que o painel de testes tinha — a fluidez, a extrapolação do online,
+> o analógico e a câmera — na versão oficial) e as **LINHAS DA BOLA** (para onde a bola vai se você chutar agora e o caminho
+> dela andando, pela conta da física de verdade). Na Oficina: a contagem, o cartão de quem fez o gol, as falas e o craque nas
+> partidas, a bola equipada, o **CRIAR SALA** com a **física da sala** (o tamanho da bola, os chutes, as tampinhas — a física
+> só se ajusta aí), **3 mapas públicos** por jogador, curtir e favoritar no cartão e o fim do exportar/importar (só editar,
+> salvar e publicar).
+>
+> **Novo · v92 · OFICINA DE CRIAÇÃO 2.0** — o editor de mapas dentro do jogo (o botão **OFICINA** na tela inicial): criar
+> do zero ou de um dos 15 modelos, editar pelo toque, testar na hora, salvar no aparelho (automático, versões, recuperação),
+> publicar para a comunidade (código de 7 letras, curtir, favoritar, denunciar, moderação) e jogar online em salas com o seu
+> mapa (até 4 times). A física oficial, a ranqueada e as salas de sempre não mudam. O manual inteiro está no
+> [`LEIA-ME-OFICINA.md`](LEIA-ME-OFICINA.md); o que mudou, no [`CHANGELOG.md`](CHANGELOG.md).
+> **27/10/2026:** só a **v92 oficial** (sem a aba TESTES v92 nos Ajustes), a bola da Oficina **branca de contorno preto** e
+> o editor com **lançar a bola**, **copiar para o outro lado**, **repetir**, as **medidas**, as **guias**, a **vibração** e as
+> **sombras** das peças.
+
+O jogo de futebol de rua com tampinhas, na versão **v91**: **o visual da imagem de referência em todas as telas** — a tela
+inicial com a própria quadra da imagem no fundo (o alambrado, o RACHA grafitado, a bandeira e o Cristo), a faixa azul em
+cima, os botões quadrados dos lados, a sua tampinha em pé e em destaque no meio e o JOGAR amarelo grande; o perfil, o cofre,
+a loja, o ranking, as salas, os eventos, o Passe RACHA, os amigos, o clube, o treino e o chat com a mesma faixa e os mesmos
+painéis; os banners de perfil e as 8 patentes redesenhados. Só a cara mudou: a física, as regras, o online, as contas, as
+moedas e as gemas são os mesmos (o build confere a física) — o que mudou está no [`CHANGELOG.md`](CHANGELOG.md) e de onde
+vem cada imagem, no [`PROVENIENCIA.md`](PROVENIENCIA.md). Por baixo continuam a **v90** (o COFRE, a roda das favoritas e o
+RANKING da temporada) e a **v88.2**:
+
+A **v88.2**: **jogar online sem conta, só com o nome** — na tela de entrada,
 **JOGAR ONLINE SEM CONTA**: escreva o seu nome e toque em JOGAR ONLINE; as salas abrem na hora (criar sala, JOGAR AGORA,
 jogar e conversar), sem criar conta. E a v88.1, **as contas pelo Dono** — o cadastro fechado (só o Dono cria
 contas, no RACHA CONTROL › 👤 Contas), o ZERAR CONTAS (os IDs voltam a contar do 000002) e o login do Dono pela variável
@@ -39,7 +147,7 @@ Detalhes em [`app/DEPLOY.md`](app/DEPLOY.md#v881--as-contas-pelo-dono-racha-cont
 
 Desde a v87 a raiz do site abre o jogo em tela cheia: o login é o do jogo, e quem já estava logado no site entra direto.
 O jogo dentro do site, com a barra e as abas (o jeito de antes), ficou em `/jogo-no-site`; o painel da equipe continua em
-`/admin` (e no jogo, em Ajustes › Conta › RACHA CONTROL). Para o servidor pegar a versão nova:
+`/admin` (e no jogo, no Perfil: o selo da conta ao lado do ID abre a SUA CONTA, com o RACHA CONTROL). Para o servidor pegar a versão nova:
 
 ```bash
 git pull
@@ -129,10 +237,15 @@ na carteira do servidor (`app/api/racha/economia.ts`), e o jogo só mostra.
 
 ```
 ├── app/public/game/       o jogo (racha.html + estilos, scripts, fontes) — gerado pelo build
+├── app/public/game/rachao/  o Rachão (v97: a página gerada de backup/rachao.html e a oficina de estádios, estadios.js/.css;
+│                            v98: o quadro da partida online, quadro.js, e o online da página, rede.js)
 ├── server/                o servidor da turma (salas, chat, clubes, copa, partida no servidor) — Node puro
-├── server/partida/        a física no servidor (fisica.js) e o motor das salas (sala.js), com os números do jogo
+├── server/partida/        a física no servidor (fisica.js) e o motor das salas (sala.js), com os números do jogo;
+│                            v98: as salas do Rachão (rachao.js) e o motor dele, gerado da página (rachao_motor.js);
+│                            v99: os chutes do Rachão nas salas (no núcleo, nucleo.js: a parte cr*)
 ├── app/                   a plataforma RACHA 2.0 (contas, XP, ranking) — precisa de MySQL
 ├── backup/racha.html      o jogo-base (os AJUSTES e a física)   ·   tools/   o build e as camadas   ·   tests/   os testes
+├── backup/rachao.html     o Rachão como chegou (v97; o build gera a página dele com tools/v97/rachao.py)
 ├── server.js              atalho do site de teste (sobe o server/servidor.js com o modo visitantes)
 └── render.yaml · Dockerfile · INICIAR-NO-WINDOWS.bat
 ```

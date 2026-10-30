@@ -1,0 +1,158 @@
+{
+ "motor": "atual",
+ "medidas": {
+  "arrancada": {
+   "vmax_d_s": 3.525,
+   "t50_s": 0.016666666666666666,
+   "t90_s": 0.016666666666666666,
+   "t99_s": 0.016666666666666666,
+   "dist_05s_d": 1.7625000000000117
+  },
+  "frenagem": {
+   "v0_d_s": 3.525,
+   "t_parar_s": 0.016666666666666666,
+   "dist_parar_d": 0
+  },
+  "inversao": {
+   "t_zero_s": 0.016666666666666666,
+   "t90_s": 0.03333333333333333,
+   "deslize_d": 0
+  },
+  "virada90": {
+   "t_direcao10_s": 0.06666666666666667,
+   "avanco_lateral_d": 0.08701168276085003
+  },
+  "analogico": {
+   "diagonal_sobre_reta": 0.9999999999999999,
+   "meia_0_5": 1,
+   "pouco_0_15": 1,
+   "quase_nada_0_02": 1
+  },
+  "passe_parado": {
+   "chutou": true,
+   "v0_d_s": 5.2593749999999995,
+   "v_1s_d_s": 2.877701966073907,
+   "fator_por_s": 0.5471566423907608,
+   "dist_d": 8.608256116577461,
+   "t_parar_s": 8
+  },
+  "chute_parado": {
+   "chutou": true,
+   "v0_d_s": 8.415,
+   "v_1s_d_s": 4.604323145718253,
+   "fator_por_s": 0.547156642390761,
+   "dist_d": 13.773209786523935,
+   "t_parar_s": 8
+  },
+  "chute_correndo": {
+   "chutou": true,
+   "v_d_s": 8.415,
+   "v_jog_d_s": 3.525
+  },
+  "chute_bola_vindo_3": {
+   "chutou": true,
+   "v_d_s": 5.445
+  },
+  "chute_bola_indo_3": {
+   "chutou": true,
+   "v_d_s": 11.385
+  },
+  "alcance": {
+   "centro_a_centro_d": 0.875,
+   "folga_alem_do_contato_d": 0.125,
+   "raio_bola_sobre_tampinha": 0.5
+  },
+  "direcao_chute": {
+   "bola_a_30_graus": 29.999999999999986,
+   "bola_a_60_graus": 60.00000000000002
+  },
+  "rebote_parede_90_8": {
+   "e_normal": 0.6435,
+   "retem_tangente": 0.6599999999999999
+  },
+  "rebote_parede_45_8": {
+   "e_normal": 0.6434999999999998,
+   "retem_tangente": 0.6599999999999999
+  },
+  "rebote_parede_90_3": {
+   "e_normal": 0.6435000000000001,
+   "retem_tangente": 0.6600000000000001
+  },
+  "rebote_trave_8": {
+   "e_normal": 0.594
+  },
+  "conducao": {
+   "vao_mediano_d": -0.0026318239482057137,
+   "vao_max_d": -0.002631823764183139,
+   "toques_em_1_5s": 0,
+   "bola_sobre_jog": 1
+  },
+  "disputa": {
+   "bola_deslocou_d": 0.000001823316411350549,
+   "jogadores_d": [
+    -0.7473484467287341,
+    0.7473601650686479
+   ]
+  },
+  "combo_parada": {
+   "k0": {
+    "chutes": "chute@0",
+    "v_d_s": 8.33085
+   },
+   "k1": {
+    "chutes": "passe@0 chute@1",
+    "v_d_s": 11.570625000000001
+   },
+   "k2": {
+    "chutes": "passe@0",
+    "v_d_s": 5.103166303125
+   },
+   "k3": {
+    "chutes": "passe@0",
+    "v_d_s": 5.052134640093749
+   },
+   "k5": {
+    "chutes": "passe@0",
+    "v_d_s": 4.951597160755884
+   }
+  },
+  "combo_vindo_3": {
+   "k0": {
+    "chutes": "chute@0",
+    "v_d_s": 5.39055
+   },
+   "k1": {
+    "chutes": "passe@0 chute@1",
+    "v_d_s": 10.5746664375
+   },
+   "k2": {
+    "chutes": "passe@0 chute@2",
+    "v_d_s": 10.552228273125001
+   },
+   "k3": {
+    "chutes": "passe@0",
+    "v_d_s": 2.1991644903937497
+   },
+   "k5": {
+    "chutes": "passe@0",
+    "v_d_s": 2.155401117034914
+   }
+  },
+  "segurando_chega": {
+   "chutes": 1,
+   "primeiro_s": 0.9166666666666666
+  },
+  "toque_antecipado": {
+   "antes_0ms": true,
+   "antes_33ms": true,
+   "antes_67ms": true,
+   "antes_100ms": false,
+   "antes_150ms": false,
+   "antes_200ms": false
+  },
+  "intervalo_chutes": {
+   "chutes_em_1s": 30,
+   "menor_intervalo_s": 0.03333333333333333
+  }
+ }
+}

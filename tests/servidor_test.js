@@ -7,6 +7,9 @@ const EventEmitter = require('events');
 const {fork} = require('child_process');
 const http = require('http');
 const RAIZ = path.resolve(__dirname, '..');
+// v93: os testes escritos antes da contagem (3, 2, 1, JÁ!) e do replay online começam na hora e sem o replay; os da v93 ligam
+if (process.env.RACHA_CONTAGEM_MS == null) process.env.RACHA_CONTAGEM_MS = '0';
+if (process.env.RACHA_REPLAY == null) process.env.RACHA_REPLAY = '0';
 const {Turma, origemPermitida} = require(path.join(RAIZ, 'server', 'turma'));
 const {assina, confere} = require(path.join(RAIZ, 'server', 'banco'));
 
@@ -221,9 +224,10 @@ function regras(){
   Cx.manda({type:'leave'});
   confira(Cx.ult('left') && D.sala().admin !== Cx.id, 'o admin saiu: left para ele e a sala passa para outro');
   const B2v = Cx === B2 ? C0 : B2;
-  D.manda({type:'profile', name:'Dudinha', skin:'T.NOVA1234'});
+  // (v96: o código de antes, T.NOVA1234, cai na borda 26 — a Aura dos Fundadores, que o servidor tira de quem não é fundador)
+  D.manda({type:'profile', name:'Dudinha', skin:'T.LOVA1234'});
   const eD2 = B2v.sala().members.find(m => m.id === D.id);
-  confira(eD2 && eD2.name === 'Dudinha' && eD2.skin === 'T.NOVA1234', 'trocou o nome e a tampinha: o cartão da sala atualiza para todos', eD2);
+  confira(eD2 && eD2.name === 'Dudinha' && eD2.skin === 'T.LOVA1234', 'trocou o nome e a tampinha: o cartão da sala atualiza para todos', eD2);
 
   console.log('\n4) A COPA DOS AMIGOS (1v1 com 4; cada duelo hospedado no servidor)');
   const t2 = novaTurma();

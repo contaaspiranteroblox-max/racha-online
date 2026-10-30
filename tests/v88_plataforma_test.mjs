@@ -24,7 +24,7 @@ const banco = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'racha88-')), 'pla
 
 function sobe() {
   return new Promise((res, rej) => {
-    const p = fork(path.join(RAIZ, 'tests', 'plataforma', 'servidor.mjs'), ['--porta', '0', '--teste', '--banco', banco, '--sem-compilar'], { silent: true, env: { ...process.env, RACHA_PRESENTE_TESTE: '1', RACHA_CADASTRO: 'aberto', RACHA_OWNER_PASSWORD: 'Dono-Teste-88v' } });   // v88.1: o cadastro aberto (as contas pelo jogo) e a senha do Dono pela variável
+    const p = fork(path.join(RAIZ, 'tests', 'plataforma', 'servidor.mjs'), ['--porta', '0', '--teste', '--banco', banco, '--sem-compilar', '--segredo', 'segredo-suite-v88'], { silent: true, env: { ...process.env, RACHA_PRESENTE_TESTE: '1', RACHA_CADASTRO: 'aberto', RACHA_OWNER_PASSWORD: 'Dono-Teste-88v' } });   // v88.1: o cadastro aberto (as contas pelo jogo) e a senha do Dono pela variável
     let log = '';
     p.stdout.on('data', (d) => { log += d; }); p.stderr.on('data', (d) => { log += d; });
     p.on('message', (m) => { if (m && m.pronto) res({ p, porta: m.porta, log: () => log }); });
@@ -61,10 +61,14 @@ async function conta(nome) {
   const r = await m('auth.registrar', { username: nome, nomeExibicao: nome, senha: 'senha1234', confirmacaoSenha: 'senha1234', email: nome + '@x.com', aceiteTermos: true });
   return { token: r.token, pub: r.conta.idPublico, nome };
 }
-async function partida(token, o) {
+async function partida(token, pub, o) {
   const id = crypto.randomUUID();
-  const ini = await m('jogo.iniciarPartida', { matchId: id, modo: 'futebol', mapa: 'estadio', nivelBots: 'medio', ranqueada: !!o.ranqueada, online: false, tamanho: 1 }, token);
-  return m('jogo.encerrarPartida', { matchId: id, matchToken: ini.matchToken, placarNosso: o.nosso, placarDeles: o.deles, gols: o.gols, assistencias: o.assist || 0, duracaoSeg: 150, mvp: !!o.mvp }, token);
+  const ini = await m('jogo.iniciarPartida', { matchId: id, modo: 'futebol', mapa: 'estadio', ranqueada: !!o.ranqueada, online: true, tamanho: 1 }, token);
+  const { assina } = await import('./saida/plataforma.mjs');
+  const agora = Date.now();
+  const selo = assina('segredo-suite-v88', { s: 'suite', r: 1, j: pub, l: 0, p: [o.nosso, o.deles], m: 'futebol', d: 150,
+    t: agora, e: agora + 60000, h: 1, pid: 'p' + crypto.randomBytes(8).toString('hex'), gl: o.gols, as: o.assist || 0, v: o.mvp ? 1 : 0, g: [] });
+  return m('jogo.encerrarPartida', { matchId: id, matchToken: ini.matchToken, placarNosso: o.nosso, placarDeles: o.deles, gols: o.gols, assistencias: o.assist || 0, duracaoSeg: 150, online: true, selo }, token);
 }
 
 async function principal() {
@@ -171,8 +175,14 @@ async function principal() {
 
     console.log('\n6) as partidas rendem na conta: moedas, missões e o passe');
     const cAntes = (await q('loja.carteira', undefined, A.token)).moedas;
-    const p1r = await partida(A.token, { nosso: 2, deles: 1, gols: 2, mvp: true });
-    confere(p1r.moedasGanhas === 25 + 60 + 20 && p1r.carteira.moedas === cAntes + 105 + (p1r.niveisPremiados || []).reduce((a, n) => a + n.moedas, 0), 'vitória com 2 gols: +105 moedas na carteira (as regras do jogo: 25 + 60 + 10 por gol)', p1r);
+    const p1r = await partida(A.token, A.pub, { nosso: 2, deles: 1, gols: 2, mvp: true });
+    // v95: a economia nova — partida 30 + vitória 70 + 12 por gol + 40 do craque; a 1ª vitória do dia (+150 moedas e +10 gemas) entra à parte
+    const pvit = p1r.primeiraVitoria || {};
+    confere(p1r.moedasGanhas === 30 + 70 + 24 + 40 && pvit.moedas === 150 && pvit.gemas === 10
+      && p1r.carteira.moedas === cAntes + 164 + 150 + (p1r.niveisPremiados || []).reduce((a, n) => a + n.moedas, 0),
+      'vitória com 2 gols e o craque: +164 moedas (30 + 70 + 12 por gol + 40 do craque) e a 1ª vitória do dia (+150 moedas e +10 gemas) na carteira', p1r);
+    confere(Array.isArray(p1r.moedasDetalhe) && p1r.moedasDetalhe.map((x) => x.rot + ':' + x.moedas).join('|') === 'Partida:30|Vitória:70|2 gols:24|Craque da partida:40' && p1r.sequencia === 1,
+      'o detalhe das moedas (parte por parte) e a sequência (1 vitória)', [p1r.moedasDetalhe, p1r.sequencia]);
     confere(p1r.passe && p1r.passe.xp === 100 && p1r.mvp === true, 'o passe ganha 100 de XP (partida + vitória) e o melhor da partida conta', [p1r.passe, p1r.mvp]);
     let ms = await q('missoes.listar', undefined, A.token);
     const dia = ms.find((g) => g.grupo === 'diarias'), sem = ms.find((g) => g.grupo === 'semanais'), temp = ms.find((g) => g.grupo === 'temporada'), esp = ms.find((g) => g.grupo === 'especiais');
@@ -180,8 +190,9 @@ async function principal() {
     confere(dia.missoes.length === 4 && sem.missoes.length === 4 && temp && esp && d3.progresso === 1, 'as missões: 4 diárias, 4 semanais, as da temporada e as especiais (do evento); "Jogue 3 partidas" em 1/3', [dia.missoes.map((x) => x.id + ':' + x.progresso), esp && esp.evento]);
     const naoPronta = await erro(m('missoes.coletar', { missao: 'd_partidas3', periodo: dia.periodo }, A.token));
     confere(naoPronta && naoPronta.code === 'PRECONDITION_FAILED', 'COLETAR antes de cumprir: recusado', naoPronta && naoPronta.message);
-    await partida(A.token, { nosso: 0, deles: 1, gols: 0 });
-    await partida(A.token, { nosso: 1, deles: 1, gols: 1, assist: 1 });
+    const p2r = await partida(A.token, A.pub, { nosso: 0, deles: 1, gols: 0 });
+    const p3r = await partida(A.token, A.pub, { nosso: 1, deles: 1, gols: 1, assist: 1 });
+    confere(p2r.moedasGanhas === 30 && !p2r.primeiraVitoria && p3r.moedasGanhas === 30 + 12 + 6 && !p3r.primeiraVitoria, 'a derrota rende a partida (30); o empate com gol e assistência, 30 + 12 + 6 (sem 1ª vitória do dia)', [p2r.moedasDetalhe, p3r.moedasDetalhe]);
     ms = await q('missoes.listar', undefined, A.token);
     const d3b = ms.find((g) => g.grupo === 'diarias').missoes.find((x) => x.id === 'd_partidas3');
     const colM = await m('missoes.coletar', { missao: 'd_partidas3', periodo: dia.periodo }, A.token);
@@ -190,9 +201,11 @@ async function principal() {
     const desafio = (await q('eventos.listar', undefined, A.token)).find((e) => e.slug === 'desafio-da-favela');
     confere(desafio && desafio.progresso.missoes.find((x) => x.id.endsWith('gols10')).progresso === 3, 'o desafio do evento conta os gols das partidas válidas (3 de 10)', desafio && desafio.progresso);
     const treino = await m('jogo.golTreino', { quantidade: 2, origem: 'livre' }, A.token);
-    confere(treino.validos === 2 && treino.moedasGanhas === 8, 'gol no treino livre: 4 moedas por gol (o teto do dia do jogo)', treino);
-    const ex1 = await m('jogo.treinoConcluido', { exercicio: 'finalizacao', estrelas: 3, recorde: true, nonce: crypto.randomUUID() }, A.token);
-    confere(ex1.moedas === 120 && ex1.gemas === 10 && ex1.cheio, 'fim do exercício com 3 estrelas e recorde: 100 + 20 moedas e 10 gemas (a primeira vez)', ex1);
+    confere(treino.validos === 0 && treino.moedasGanhas === 0 && treino.xpConcedido === 0, 'gol de treino declarado pelo aparelho não gera recompensa oficial', treino);
+    const ex1 = await m('jogo.treinoConcluido', { exercicio: 'final', estrelas: 3, recorde: true, nonce: crypto.randomUUID() }, A.token);
+    confere(ex1.moedas === 0 && ex1.gemas === 0 && !ex1.cheio, 'exercício local não gera moedas e gemas na conta até ser verificável', ex1);
+    const inexistente = await erro(m('jogo.treinoConcluido', { exercicio: 'inventado99', estrelas: 3, recorde: true, nonce: crypto.randomUUID() }, A.token));
+    confere(inexistente && inexistente.code === 'BAD_REQUEST', 'exercício inexistente é recusado pelo servidor');
 
     console.log('\n7) o passe: grátis, premium, coletar tudo');
     await sqlT('UPDATE passe_temporada SET xp = 1350 WHERE usuario_id = (SELECT id FROM usuarios WHERE username = ?)', ['kauazin7']);
@@ -282,6 +295,19 @@ async function principal() {
     confere(JSON.stringify(antes) === JSON.stringify(depois) && depois.amigos === 1, 'depois de reiniciar: a mesma sessão, a mesma carteira, o mesmo inventário e os mesmos amigos', [antes, depois]);
     const col3 = await erro(m('correio.coletar', { id: presente.id }, A.token));
     confere(col3 && col3.code === 'CONFLICT', 'e o que foi coletado continua coletado (não paga de novo depois de reiniciar)', col3 && col3.message);
+
+    console.log('\n14) v95: a sequência de vitórias e a 1ª vitória do dia (uma vez só)');
+    const s1 = await partida(B.token, B.pub, { nosso: 2, deles: 0, gols: 1 });
+    const s2 = await partida(B.token, B.pub, { nosso: 3, deles: 1, gols: 0 });
+    const s3 = await partida(B.token, B.pub, { nosso: 1, deles: 0, gols: 0 });
+    const gB = s1.primeiraVitoria || {};
+    confere(gB.moedas === 150 && gB.gemas === 10 && !s2.primeiraVitoria && !s3.primeiraVitoria, 'a 1ª vitória do dia paga uma vez (+150 moedas e +10 gemas); as seguintes, não', [s1.primeiraVitoria, s2.primeiraVitoria]);
+    confere(s1.sequencia >= 1 && s2.sequencia === s1.sequencia + 1 && s3.sequencia === s2.sequencia + 1
+      && s3.moedasDetalhe.some((x) => x.rot === s3.sequencia + ' vitórias seguidas' && x.moedas === Math.min(50, (s3.sequencia - 1) * 10)),
+      'as vitórias seguidas contam (+10 por vitória a mais, até +50)', [s1.sequencia, s2.sequencia, s3.sequencia, s3.moedasDetalhe]);
+    const s4 = await partida(B.token, B.pub, { nosso: 0, deles: 2, gols: 0 });
+    const s5 = await partida(B.token, B.pub, { nosso: 2, deles: 1, gols: 0 });
+    confere(s4.sequencia === 0 && s5.sequencia === 1 && !s5.moedasDetalhe.some((x) => /seguidas/.test(x.rot)), 'a derrota zera a sequência', [s4.sequencia, s5.sequencia]);
   } catch (e) {
     falhou++; console.log('  FALHOU (erro) ' + (e && e.stack || e) + (e && e.code ? ' [' + e.code + ']' : ''));
     console.log(S.log().slice(-3000));

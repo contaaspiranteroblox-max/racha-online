@@ -23,12 +23,15 @@ export interface OpcoesTurma {
   // v88: os amigos, os bloqueios e a privacidade da conta (a plataforma lê do banco) e a denúncia do chat (vai para o banco)
   relacoesDe?: (idPublico: string) => Promise<RelacoesTurma | null>;
   denuncia?: (d: { autor: string; alvo: string; motivo: string; texto: string; canal: string; mid?: string; sala?: string }) => Promise<void>;
+  // v92 · OFICINA: a pasta do catálogo dos mapas (padrão: RACHA_MAPAS ou server/dados/mapas; null = só na memória) e quem modera
+  mapas?: string | null;
+  moderadores?: string;
 }
 export interface RelacoesTurma { amigos: string[]; bloqueios: string[]; mostraOnline: boolean; aceitaConvites: boolean; clube: string | null; cos: Record<string, string> }
 export class Turma {
   constructor(opcoes?: OpcoesTurma);
   conecta(ws: ConexaoWs, req: IncomingMessage & { racha?: { idPublico: string | number; nome: string } | null }): unknown;
-  status(): { ok: boolean; nome: string; salas: number; online: number; chat: number; clubes: number };
+  status(): { ok: boolean; nome: string; salas: number; online: number; chat: number; clubes: number; mapas?: { mapas: number; pasta: string } };
   fecha(): void;
   avisaConta(pub: string, msg: Record<string, unknown>): boolean;              // v88: o aviso da plataforma na hora (pedido, carta, convite…)
   atualizaRelacoes(pub: string, r: RelacoesTurma | null): void;              // v88: amizade/bloqueio/privacidade mudaram

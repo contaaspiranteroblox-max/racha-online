@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# RACHA · AS MIGRAÇÕES DO BANCO (root; chamado pelo racha-deploy com a pasta da versão nova).
+#   · a lista e a ordem vêm de deploy/migracoes.conf da versão nova; o que já foi aplicado fica na tabela racha_migracoes;
+#   · um banco que já tinha a migração antes do deploy automático (a tabela que ela cria já existe) é reconhecido e só marcado;
+#   · se faltar alguma: BACKUP do banco inteiro antes (mysqldump, guardado em /var/backups/racha) — sem backup, nada roda;
+#   · cada migração roda uma vez; a primeira que falhar para tudo (o site continua na versão de antes, que funciona com o
+#     banco como ele está, porque as migrações só acrescentam).
+# A senha do banco vem do DATABASE_URL de /etc/racha/racha.env e vai para um arquivo temporário só do root (nunca na linha
+# de comando, onde outro usuário da máquina poderia ver).
+set -Eeuo pipefail
+umask 077
+NOVA=${1:?uso: racha-migra <pasta da versão>}
+ENV=/etc/racha/racha.env; BACKUPS=/var/backups/racha
+LISTA="$NOVA/deploy/migracoes.conf"; PASTA="$NOVA/app/db/migrations"
+[ -f "$LISTA" ] || { echo "sem $LISTA: nenhuma migração a conferir"; exit 0; }
+URL=$(grep -E '^DATABASE_URL=' "$ENV" | head -1 | cut -d= -f2- | sed -e 's/^["'\'']//' -e 's/["'\'']$//')
+[[ "$URL" =~ ^mysql://([^:@/]+)(:([^@]*))?@([^:/]+)(:([0-9]+))?/([^?]+) ]] || { echo "DATABASE_URL (mysql://usuario:senha@host:porta/banco) não encontrado em $ENV"; exit 5; }
+U=${BASH_REMATCH[1]}; S=${BASH_REMATCH[3]}; H=${BASH_REMATCH[4]}; P=${BASH_REMATCH[6]:-3306}; DB=${BASH_REMATCH[7]}
+S=$(printf '%b' "${S//%/\\x}")   # (a senha pode vir com %40 etc. na URL)
+CNF=$(mktemp); trap 'rm -f "$CNF"' EXIT
+q(){ local v=${1//\\/\\\\}; printf '"%s"' "${v//\"/\\\"}"; }   # (entre aspas: a senha pode ter # ; " e \)
+printf '[client]\nuser=%s\npassword=%s\nhost=%s\nport=%s\n' "$(q "$U")" "$(q "$S")" "$H" "$P" > "$CNF"
+sq(){ mysql --defaults-extra-file="$CNF" --batch --skip-column-names "$DB" -e "$1"; }
+sq "CREATE TABLE IF NOT EXISTS racha_migracoes (nome VARCHAR(100) NOT NULL PRIMARY KEY, aplicada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, como VARCHAR(20) NOT NULL DEFAULT 'deploy')"
+FALTA=()
+while read -r arq tabela _; do
+  [[ -z "${arq:-}" || "$arq" == \#* ]] && continue
+  [[ "$arq" =~ ^[A-Za-z0-9_.-]+\.sql$ && "$tabela" =~ ^[a-z0-9_]+$ ]] || { echo "linha estranha no migracoes.conf: $arq $tabela"; exit 5; }
+  [ -f "$PASTA/$arq" ] || { echo "falta o arquivo $PASTA/$arq"; exit 5; }
+  [ "$(sq "SELECT COUNT(*) FROM racha_migracoes WHERE nome='$arq'")" = 0 ] || continue
+  if [ "$(sq "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='$tabela'")" != 0 ]; then
+    sq "INSERT INTO racha_migracoes (nome, como) VALUES ('$arq', 'ja_existia')"; echo "  $arq: já estava no banco (marcada)"; continue
+  fi
+  FALTA+=("$arq")
+done < "$LISTA"
+[ ${#FALTA[@]} -eq 0 ] && { echo "  o banco está em dia"; exit 0; }
+echo "  faltam: ${FALTA[*]}"
+mkdir -p "$BACKUPS"; chmod 700 "$BACKUPS"
+B="$BACKUPS/$DB-$(date +%Y%m%d-%H%M%S)-antes-${FALTA[0]%.sql}.sql.gz"
+echo "  backup do banco → $B"
+if ! mysqldump --defaults-extra-file="$CNF" --single-transaction --routines --triggers --no-tablespaces "$DB" | gzip > "$B" || ! [ -s "$B" ] || ! gzip -t "$B"; then
+  echo "✖ o backup falhou: nenhuma migração foi aplicada"; rm -f "$B"; exit 6
+fi
+ls -1t "$BACKUPS"/*.sql.gz 2>/dev/null | tail -n +16 | xargs -r rm -f    # guarda os 15 mais novos
+for arq in "${FALTA[@]}"; do
+  echo "  aplicando $arq"
+  mysql --defaults-extra-file="$CNF" "$DB" < "$PASTA/$arq" || { echo "✖ $arq falhou. O backup de antes está em $B (racha-restaura-banco $B)"; exit 7; }
+  sq "INSERT INTO racha_migracoes (nome) VALUES ('$arq')"
+done
+echo "  migrações aplicadas: ${FALTA[*]}"

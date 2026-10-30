@@ -11,6 +11,9 @@ import fs from 'fs';
 import os from 'os';
 import http from 'http';
 const require = createRequire(import.meta.url);
+// v93: os testes escritos antes da contagem (3, 2, 1, JÁ!) e do replay online começam na hora e sem o replay; os da v93 ligam
+if (process.env.RACHA_CONTAGEM_MS == null) process.env.RACHA_CONTAGEM_MS = '0';
+if (process.env.RACHA_REPLAY == null) process.env.RACHA_REPLAY = '0';
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let esbuild;
 for (const p of [path.join(RAIZ, 'app', 'node_modules', 'esbuild'), '/opt/npm-tools/node_modules/esbuild']) { try { esbuild = require(p); break; } catch (_) {} }

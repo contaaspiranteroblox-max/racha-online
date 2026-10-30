@@ -11,6 +11,10 @@ var eq = (col, val) => ({ valor: val });
 var and = (...a) => a;
 var gt = (a, b) => ({ gt: [a, b] });
 var isNull = (a) => ({ isNull: a });
+var gte = (a, b) => ({ gte: [a, b] });
+var lt = (a, b) => ({ lt: [a, b] });
+var lte = (a, b) => ({ lte: [a, b] });
+var sql = (partes, ...v) => ({ sql: partes.join("?"), v });
 
 // stub:stub-db
 function getDb() {
@@ -81,6 +85,24 @@ var publicQuery = { use: (fn) => ({ use: (fn2) => fn2, fn }) };
 // app/api/racha/guard.ts
 var SESSAO_DIAS = 30;
 var SESSAO_ADMIN_HORAS = 8;
+var SESSAO_MAX_DIAS = 90;
+var ORIGENS = /* @__PURE__ */ new WeakMap();
+function registraOrigemDaRequisicao(req, o) {
+  ORIGENS.set(req, o);
+}
+function httpsDaRequisicao(req) {
+  if (process.env.RACHA_COOKIE_SEGURO === "1") return true;
+  const o = ORIGENS.get(req);
+  if (o) return o.https;
+  try {
+    return new URL(req.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+function atributosCookie(req) {
+  return "; Path=/; HttpOnly; SameSite=Lax" + (httpsDaRequisicao(req) ? "; Secure" : "");
+}
 async function sessaoDaRequisicao(req, opcoes = {}) {
   const auth = req.headers.get("authorization");
   const cookie = req.headers.get("cookie") || "";
@@ -104,10 +126,14 @@ async function sessaoDaRequisicao(req, opcoes = {}) {
   if (!s.painelAdmin) {
     const restante = s.expiraEm.getTime() - Date.now();
     const metade = SESSAO_DIAS * 24 * 60 * 60 * 1e3 / 2;
+    const teto = s.criadaEm.getTime() + SESSAO_MAX_DIAS * 24 * 60 * 60 * 1e3;
+    if (Date.now() >= teto) return null;
     if (restante < metade) {
-      const novoPrazo = new Date(Date.now() + SESSAO_DIAS * 24 * 60 * 60 * 1e3);
-      await db.update(sessoes).set({ expiraEm: novoPrazo }).where(eq(sessoes.id, s.id));
-      s.expiraEm = novoPrazo;
+      const novoPrazo = new Date(Math.min(Date.now() + SESSAO_DIAS * 24 * 60 * 60 * 1e3, teto));
+      if (novoPrazo.getTime() > s.expiraEm.getTime()) {
+        await db.update(sessoes).set({ expiraEm: novoPrazo }).where(eq(sessoes.id, s.id));
+        s.expiraEm = novoPrazo;
+      }
     }
   }
   return { usuario: u, sessao: s };
@@ -122,20 +148,57 @@ async function cargoDo(usuarioId) {
   const conjunto = new Set(ajuste ?? base);
   return { cargo: c.cargo, permissoes: [...conjunto] };
 }
+var ehDuplicado = (e) => /duplicate|ER_DUP_ENTRY|1062/i.test(String(e?.message ?? e));
+var linhas = (r) => Number((Array.isArray(r) ? r[0] : r)?.affectedRows) || 0;
 async function bateLimite(chave, max, janelaMs) {
   const db = getDb();
-  const agora = /* @__PURE__ */ new Date();
+  const agora = /* @__PURE__ */ new Date(), corte = new Date(agora.getTime() - janelaMs);
+  const soma = async () => linhas(await db.update(limites).set({ contagem: sql`${limites.contagem} + 1` }).where(and(eq(limites.chave, chave), gt(limites.janelaInicio, corte), lt(limites.contagem, max)))) > 0;
+  if (await soma()) return false;
   const l = await db.query.limites.findFirst({ where: eq(limites.chave, chave) });
-  if (!l || agora.getTime() - l.janelaInicio.getTime() > janelaMs) {
-    await db.insert(limites).values({ chave, contagem: 1, janelaInicio: agora }).onDuplicateKeyUpdate({ set: { contagem: 1, janelaInicio: agora } });
-    return false;
+  if (l && l.janelaInicio.getTime() > corte.getTime()) return true;
+  if (l) {
+    if (linhas(await db.update(limites).set({ contagem: 1, janelaInicio: agora }).where(and(eq(limites.chave, chave), lte(limites.janelaInicio, corte)))) > 0) return false;
+    return !await soma();
   }
-  if (l.contagem >= max) return true;
-  await db.update(limites).set({ contagem: l.contagem + 1 }).where(eq(limites.chave, chave));
-  return false;
+  try {
+    await db.insert(limites).values({ chave, contagem: 1, janelaInicio: agora });
+    return false;
+  } catch (e) {
+    if (!ehDuplicado(e)) throw e;
+    return !await soma();
+  }
+}
+async function devolveTentativa(chave) {
+  await getDb().update(limites).set({ contagem: sql`${limites.contagem} - 1` }).where(and(eq(limites.chave, chave), gt(limites.contagem, 0)));
+}
+async function consomeUmaVez(chave) {
+  try {
+    await getDb().insert(limites).values({ chave, contagem: 1, janelaInicio: /* @__PURE__ */ new Date() });
+    return true;
+  } catch (e) {
+    if (ehDuplicado(e)) return false;
+    throw e;
+  }
+}
+function parteDaChave(s) {
+  return s.length <= 40 ? s : "h" + sha256(s).slice(0, 32);
+}
+async function enderecoConhecido(usuarioId, ip) {
+  if (!ip || ip === "desconhecido") return false;
+  const s = await getDb().query.sessoes.findFirst({
+    where: and(eq(sessoes.usuarioId, usuarioId), eq(sessoes.ip, ip), gte(sessoes.criadaEm, new Date(Date.now() - 30 * 24 * 3600 * 1e3)))
+  });
+  return !!s;
 }
 function ipDaRequisicao(req) {
-  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "desconhecido";
+  const o = ORIGENS.get(req);
+  if (o && o.ip) return o.ip;
+  return "desconhecido";
+}
+async function estaNoLimite(chave, max, janelaMs) {
+  const l = await getDb().query.limites.findFirst({ where: eq(limites.chave, chave) });
+  return !!l && Date.now() - l.janelaInicio.getTime() <= janelaMs && l.contagem >= max;
 }
 async function exigeLimite(chave, max, janelaMs, msg) {
   if (await bateLimite(chave, max, janelaMs)) {
@@ -193,14 +256,23 @@ async function exigeAlvoPermitido(ctx, alvoId, acao) {
 export {
   SESSAO_ADMIN_HORAS,
   SESSAO_DIAS,
+  SESSAO_MAX_DIAS,
   adminAutenticado,
+  atributosCookie,
   auditar,
   autenticado,
   bateLimite,
   cargoDo,
+  consomeUmaVez,
+  devolveTentativa,
+  enderecoConhecido,
+  estaNoLimite,
   exigeAlvoPermitido,
   exigeLimite,
   exigePermissao,
+  httpsDaRequisicao,
   ipDaRequisicao,
+  parteDaChave,
+  registraOrigemDaRequisicao,
   sessaoDaRequisicao
 };

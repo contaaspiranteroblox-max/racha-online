@@ -34,6 +34,9 @@ process.env.RACHA_SALAS_NOME = process.env.RACHA_SALAS_NOME || 'Plataforma de te
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 if (ARG['tempo-normal']) process.env.RACHA_TEMPO_NORMAL = String(ARG['tempo-normal']);
 if (ARG.prorrogacao) process.env.RACHA_PRORROGACAO = String(ARG.prorrogacao);
+// v93: os testes escritos antes da contagem (3, 2, 1, JÁ!) e do replay online começam na hora e sem o replay; os da v93 ligam
+if (process.env.RACHA_CONTAGEM_MS == null) process.env.RACHA_CONTAGEM_MS = '0';
+if (process.env.RACHA_REPLAY == null) process.env.RACHA_REPLAY = '0';
 
 const { compila, SAIDA } = req('./compila.cjs');
 if (!ARG['sem-compilar'] || !fs.existsSync(SAIDA)) await compila();
@@ -80,6 +83,10 @@ async function api(r, res) {
   if (!cab.get('x-forwarded-for')) cab.set('x-forwarded-for', r.socket.remoteAddress || '127.0.0.1');
   const corpo = r.method === 'GET' || r.method === 'HEAD' ? undefined : await corpoDe(r);
   const pedido = new Request('http://' + (r.headers.host || 'localhost') + r.url, { method: r.method, headers: cab, body: corpo });
+  // v100: como o boot.ts da produção — de onde veio o pedido (server/ip.js: o socket, ou o fim do X-Forwarded-For quando quem
+  // conectou é um proxy confiável) e se chegou por https (aqui: só pelo X-Forwarded-For/Proto de um proxy confiável)
+  const sock = r.socket.remoteAddress || '127.0.0.1';
+  P.registraOrigemDaRequisicao(pedido, { ip: P.ipDe(sock, r.headers['x-forwarded-for'], r.headers['x-real-ip'], r.headers['cf-connecting-ip']) || 'desconhecido', https: P.httpsDe(sock, r.headers['x-forwarded-proto'], false) });
   const resp = await P.fetchRequestHandler({ endpoint: '/api/trpc', req: pedido, router: P.appRouter, createContext: P.createContext });
   const h = {};
   resp.headers.forEach((v, k) => { if (k !== 'set-cookie') h[k] = v; });

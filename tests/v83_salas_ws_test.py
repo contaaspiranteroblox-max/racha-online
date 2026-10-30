@@ -39,7 +39,8 @@ def proc_stat(pid):
 proc = subprocess.Popen(
     ['node', os.path.join(RAIZ, 'server', 'servidor.js'), '--porta', str(PORTA), '--host', '127.0.0.1',
      '--memoria', '--segredo', SEGREDO, '--tempo-normal', '14', '--prorrogacao', '8'],
-    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    env=dict(os.environ, RACHA_CONTAGEM_MS=os.environ.get('RACHA_CONTAGEM_MS', '0'), RACHA_REPLAY=os.environ.get('RACHA_REPLAY', '0')))   # v93: sem a contagem e o replay
 time.sleep(2.5)
 
 try:
@@ -169,7 +170,9 @@ try:
           await espera(800);
           L.fim = await (async () => {
             const t3 = Date.now();
-            while (!B.result && Date.now() - t3 < 240000) { await espera(500); }
+            // (v95: o campo 30% maior com o gol de antes — o bot sozinho leva mais para fazer os 3: até 7 min; nas simulações
+            //  do mesmo roteiro, até ~4 min e meio)
+            while (!B.result && Date.now() - t3 < 420000) { await espera(500); }
             return B.result;
           })();
           L.golPayload = B.snaps.some(s => s.data.goal && typeof s.data.goal.name === 'string');

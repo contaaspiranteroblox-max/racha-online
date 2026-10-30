@@ -163,7 +163,7 @@ async def principal():
     P.confere(r['trocaRapida'] == 1 and r['trocaDepois'] == 3 and r['estadoSolto'] == 1,
               'os botões 1/2/3 da v84: do PASSE para o CHUTE em menos de 0,02 s o aperto ainda não vale; depois vale; soltou, volta ao 1',
               {k2: r[k2] for k2 in ('trocaRapida', 'trocaDepois', 'estadoSolto')})
-    P.confere(perto(r['quadra'][0], U(56)) and perto(r['quadra'][1], U(40)) and perto(r['quadra'][2], U(12.8)), 'a quadra do 1v1 é a da v84 (56 × 40 u, gol de 12,8 u)', r['quadra'])
+    P.confere(perto(r['quadra'][0], U(72.8)) and perto(r['quadra'][1], U(52)) and perto(r['quadra'][2], U(12.8)), 'a quadra do 1v1 é a da v95 (30% maior: 72,8 × 52 u; o gol, o de antes: 12,8 u)', r['quadra'])
     P.confere(not [x for x in erros if 'Failed to load resource' not in x], 'nenhum erro de JavaScript', erros[:3])
     return P.fim()
 

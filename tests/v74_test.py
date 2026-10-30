@@ -2,7 +2,7 @@
 
 · O kit da imagem (os 6 carros, as 2 árvores e as 2 faixas de casas, recortados por tools/v74/campo_kit.py) vai embutido
   no jogo e abre; o desenho novo (tools/v74/campo.js) é o que vale no Estádio, do 1v1 ao 4v4.
-· O desenho segue a geometria do jogo: as 13 faixas do corte entre as linhas de fundo (a do meio clara, claras e escuras
+· O desenho segue a geometria do jogo: as faixas do corte entre as linhas de fundo (v95: 11, nas cores da imagem; a do meio clara, claras e escuras
   alternando, a de fora da linha de fundo escura), a grama até a beira da área do jogador, o alambrado logo depois, o
   calçamento por fora; os bancos na cor de cada time; o gol de cada tamanho (o desenho do gol do jogo, por cima da bola).
 · A física não muda: as medidas, as paredes, as traves, as redes e as marcas do Estádio continuam iguais às da Arena
@@ -35,7 +35,7 @@ AMOSTRAS = r"""((n) => {
     for (let i = 0; i < d.length; i += 4){ r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const k = d.length/4; return [r/k, gg/k, b/k].map(Math.round); };
   const sw = (LX1 - LX0)/CN.faixas, M = MARCAS, yf = CY + (M.areaH/2 + (LY1 - CY))/2;   // (entre a grande área e a linha lateral: sem linha nenhuma)
   const faixas = [];
-  for (let k = -6; k <= 6; k++) faixas.push(am(CX + k*sw + (k === 0 ? sw*.3 : 0), yf));
+  for (let k = -(CN.faixas >> 1); k <= CN.faixas >> 1; k++) faixas.push(am(CX + k*sw + (k === 0 ? sw*.3 : 0), yf));   // (v95: 11 faixas)
   const fora = am(LX0 - Math.min(sw, LX0 - GL)*.5, CY + (LY1 - CY)*.8);                    // depois da linha de fundo (ainda dentro da área do jogador)
   const c = CN.cerca, P = CN.piso, rgb = h => { const s = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(s.slice(i, i + 2), 16)); };
   const yt = GT - c, hb = Math.min(U(1.85), yt - U(.5)), yb0 = yt - U(.3) - hb, nb = Math.max(3, Math.round(U(10)/U(2))), sb = (U(10) - U(.3) - U(.16)*(nb - 1))/nb;
@@ -108,11 +108,14 @@ async def principal():
         for n in (1, 2, 3, 4):
             a = await rt(pg, '(%s)(%d)' % (AMOSTRAS, n))
             f = a['faixas']
-            alterna = all((f[i][1] > f[i + 1][1] + 25) if i % 2 == 0 else (f[i + 1][1] > f[i][1] + 25) for i in range(12))
+            # (v95: as cores da imagem enviada, dentro das linhas: 11 faixas — as das pontas escuras #244a22, a do meio clara #386c33)
+            alterna = all((f[i + 1][1] > f[i][1] + 25) if i % 2 == 0 else (f[i][1] > f[i + 1][1] + 25) for i in range(len(f) - 1))
+            perto = lambda c, alvo: all(abs(x - y) <= 8 for x, y in zip(c, alvo))
+            cores = all(perto(c, (36, 74, 34) if i % 2 == 0 else (56, 108, 51)) for i, c in enumerate(f) if abs(i - len(f) // 2) > 1)
             P.confere(a['campo'] == 'gramado' and not a['err'] and a['kit'] >= 4 and a['redes'] == 2,
                       '%dv%d: o Estádio desenha com o desenho novo, sem erro, com as peças do kit e os 2 gols' % (n, n), {k: a[k] for k in ('campo', 'err', 'kit', 'redes', 'stat')})
-            P.confere(len(f) == 13 and all(verde(c) for c in f) and alterna and f[0][1] > a['fora'][1] + 25 and verde(a['fora']),
-                      '%dv%d: 13 faixas entre as linhas de fundo, claras e escuras alternando (a do meio e as das pontas claras) e escura depois da linha' % (n, n), {'faixas': f, 'fora': a['fora']})
+            P.confere(len(f) == 11 and all(verde(c, 20) for c in f) and alterna and cores and verde(a['fora']),
+                      '%dv%d: 11 faixas entre as linhas de fundo, nas cores da imagem enviada (a escura e a clara alternando: as das pontas escuras, a do meio clara)' % (n, n), {'faixas': f, 'fora': a['fora']})
             P.confere(verde(a['dentro']) and not verde(a['cerca'], 15) and not verde(a['piso'], 10),
                       '%dv%d: a grama vai até a beira da área do jogador; ali começa o alambrado e, por fora, o calçamento' % (n, n), {k: a[k] for k in ('dentro', 'cerca', 'piso')})
             ok = all(all(abs(x - y) <= 14 for x, y in zip(a['bancos'][t], a['cores'][t])) for t in (0, 1))
@@ -173,7 +176,7 @@ async def principal():
         r = await rt(pg, """(() => { const c = RQP.mapas.querySelector('[data-m="4"] canvas'), g = c.getContext('2d');
           const px = (fx, fy) => [...g.getImageData(Math.round(c.width*fx), Math.round(c.height*fy), 1, 1).data].slice(0, 3);
           const key = [...PREV_MORRO.keys()].find(k => k.startsWith('4-'));
-          return {meio:px(.32, .3), lado:px(.015, .5), key:key || null}; })()""")
+          return {meio:px(.2, .75), lado:px(.015, .5), key:key || null}; })()""")   # (v95: a grama, longe das linhas)
         await pg.screenshot(path=str(SAIDA / 'v74_jogar_previa.png'))
         await rt(pg, 'fechaRanqueada(); true')
         P.confere(verde(r['meio'], 20) and not verde(r['lado'], 10) and r['key'], 'a prévia do ESTÁDIO no JOGAR: a grama no meio e o estacionamento na beira', r)

@@ -76,7 +76,7 @@ async def principal():
         P.confere(r['modos'] == [] and sorted(r['mapas']) == ['ARENASALAS · TREINO', 'ESTÁDIORANQUEADA · SALAS · TREINO'] and r['aba'] == 'ranked',
                   'JOGAR (v79: só a ranqueada, mesmo pedindo a casual): sem os chips de modo; (v88) a Arena e o Estádio com os modos de cada um, a ranqueada só no Estádio', r)
         await rt(pg, "RQP.mapas.querySelector('[data-m=\"4\"]').click(); true"); await pg.wait_for_timeout(600)
-        r = await rt(pg, """(() => { const c = RQP.mapas.querySelector('[data-m="4"] canvas'), g = c.getContext('2d'), d = g.getImageData(Math.round(c.width*.32), Math.round(c.height*.3), 4, 4).data;
+        r = await rt(pg, """(() => { const c = RQP.mapas.querySelector('[data-m="4"] canvas'), g = c.getContext('2d'), d = g.getImageData(Math.round(c.width*.2), Math.round(c.height*.75), 4, 4).data;   // (v95: na grama, longe das linhas)
           return {x49:X49.map, desc:RQP.desc.textContent, px:[d[0], d[1], d[2]], on:RQP.mapas.querySelector('[data-m="4"]').classList.contains('on')}; })()""")
         P.confere(r['x49'] == 4 and r['on'] and 'Gramado' in r['desc'], 'tocar no ESTÁDIO escolhe ele (e a descrição fala do gramado)', r)
         P.confere(r['px'][1] > r['px'][0] + 20 and r['px'][1] > r['px'][2] + 20, 'a prévia do ESTÁDIO no JOGAR é verde (o gramado desenhado)', r['px'])

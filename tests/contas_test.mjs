@@ -2,6 +2,7 @@
 // (app/contracts/progresso.ts). Roda com o Node 22.18+ (lê o TypeScript direto, sem compilar):  node tests/contas_test.mjs
 // A comparação com o jogo (o rqPontua de verdade, no navegador) fica no tests/v82_test.py.
 import { patenteDe, pontuaRanqueada, patenteImportada, normalizaEstado, PATENTES, RQ_LIMITES, ESTADO_RQ_INICIAL } from '../app/contracts/patentes.ts';
+import fs from 'node:fs';
 import { validaProgresso, PROGRESSO_CHAVES, PROGRESSO_MAX_BYTES } from '../app/contracts/progresso.ts';
 
 let ok = 0, falhou = 0;
@@ -81,7 +82,9 @@ const muitas = {}; for (const k of PROGRESSO_CHAVES.slice(0, 2)) muitas[k] = 'y'
 v = validaProgresso({v:1, chaves:muitas});
 confere(!v.ok && /tamanho/.test(v.erro), 'a cópia inteira tem teto (' + PROGRESSO_MAX_BYTES/1024 + ' KB)', v.erro);
 confere(!validaProgresso(null).ok && !validaProgresso([]).ok && !validaProgresso({v:1, chaves:[]}).ok, 'lixo é recusado');
-confere(!PROGRESSO_CHAVES.some(k => /server|token|replays|som|hud|teclas|ui-v1|sala-pref|brasil/.test(k)), 'as configurações do aparelho, os tokens e os replays não vão para a conta');
+confere(!PROGRESSO_CHAVES.some(k => k !== 'racha-hud-layouts-v1' && /server|token|replays|som|hud|teclas|ui-v1|sala-pref|brasil/.test(k)), 'as configurações do aparelho, os tokens e os replays não vão para a conta (v92 Fase 1: só os layouts dos controles, a pedido)');
+{ const inicio = fs.readFileSync(new URL('../tools/v82/inicio.js', import.meta.url), 'utf8'); const c = inicio.slice(inicio.indexOf('CHAVES'), inicio.indexOf(']', inicio.indexOf('CHAVES')));
+  confere(PROGRESSO_CHAVES.every(k => c.indexOf("'" + k + "'") >= 0), 'as chaves que o jogo manda (tools/v82/inicio.js) são as que a plataforma aceita (PROGRESSO_CHAVES)'); }
 
 console.log('\ncontas (regras): ' + ok + ' ok, ' + falhou + ' falharam');
 process.exit(falhou ? 1 : 0);

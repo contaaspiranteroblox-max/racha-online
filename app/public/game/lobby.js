@@ -317,6 +317,7 @@
   function ajustaLegendas() {
     [].forEach.call(document.querySelectorAll('#lb .rx-bt > small'), function (el) {
       if (!el.offsetParent) return;
+      if (el.dataset && el.dataset.v70fs) return;   // v101: o piso do texto (12 px de verdade, a v70) já aumentou esta legenda: o piso manda (antes, o 1,5 s daqui apagava o piso e a legenda voltava miúda)
       el.style.fontSize = '';
       var fs = parseFloat(getComputedStyle(el).fontSize) || 20, min = Math.round(fs * .72);
       while (el.scrollWidth > el.clientWidth + 1 && fs > min) { fs -= 1; el.style.fontSize = fs + 'px'; }

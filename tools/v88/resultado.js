@@ -71,6 +71,7 @@ function v88FimConta(r){                                    // o que a conta rec
     for (const x of el.querySelectorAll('.v88-fim')) x.remove();
     if (r.moedasGanhas > 0){ const s = nodo('span', 'pm v88-fim'); s.append(nodo('i', 'ic-moeda'), '+' + fmtNum(r.moedasGanhas)); el.appendChild(s); }
     else if (r.tetoMoedas) el.appendChild(nodo('span', 'v88-fim v88-fim-nota', 'Moedas de partida: o teto de hoje acabou'));
+    if (r.motivo && !r.xpConcedido && !r.moedasGanhas) el.appendChild(nodo('span', 'v88-fim v88-fim-nota', r.motivo));
     if (r.mvp) el.appendChild(nodo('span', 'v88-fim v88-fim-mvp', 'MELHOR DA PARTIDA'));
     if (r.comAmigo) el.appendChild(nodo('span', 'v88-fim v88-fim-nota', 'Jogou com amigo'));
     if (notas.length) el.appendChild(nodo('span', 'v88-fim v88-fim-nota', notas.join(' · ')));

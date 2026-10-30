@@ -79,14 +79,19 @@ async def principal():
             await pg.wait_for_selector('#v84auth .v84-abas', timeout=8000)
             info = await pg.evaluate("""() => ({url:location.pathname, topo:window.top === window, larg:document.documentElement.clientWidth, alt:document.documentElement.clientHeight,
               abas:[...document.querySelectorAll('#v84auth .v84-abas button')].map(b => b.textContent),
-              go:getComputedStyle(document.querySelector('#v84auth .v84-go')).backgroundColor,
+              go:getComputedStyle(document.querySelector('#v84auth .v84-go')).backgroundColor, goImg:getComputedStyle(document.querySelector('#v84auth .v84-go')).backgroundImage,
+              v91:document.documentElement.classList.contains('v91'), logoSombra:getComputedStyle(document.querySelector('#v84auth .v84-logo')).textShadow,
+              logoImg:getComputedStyle(document.querySelector('#v84auth .v84-logo')).backgroundImage, logoTx:document.querySelector('#v84auth .v84-logo').textContent,
               card:getComputedStyle(document.querySelector('#v84auth .v84-card')).backgroundImage,
               logo:getComputedStyle(document.querySelector('#v84auth .v84-logo')).color,
               offline:!![...document.querySelectorAll('#v84auth button')].find(b => /TREINAR OFFLINE/.test(b.textContent))})""")
             P.confere(info['url'] == '/game/racha.html' and info['topo'], 'a raiz do site leva ao jogo, aberto na página inteira (não dentro do site)', info)
             P.confere(info['abas'] == ['ENTRAR', 'CRIAR CONTA', 'RECUPERAR'] and info['offline'], 'o login é o do jogo: ENTRAR, CRIAR CONTA, RECUPERAR e o SÓ TREINAR OFFLINE', info['abas'])
-            P.confere(info['go'] == 'rgb(244, 189, 50)' and 'linear-gradient' in info['card'] and info['logo'] == 'rgb(244, 189, 50)',
-                      'o login tem a cara do jogo (o amarelo dos botões, o cinza-carvão das janelas)', {k: info[k] for k in ('go', 'card', 'logo')})
+            # v91: a cara do jogo agora é a da imagem de referência — o cartão azul-marinho, o ENTRAR no amarelo dos botões (degradê) e o
+            # RACHA branco com o contorno preto (era o amarelo chapado e o cinza-carvão da v87)
+            cara87 = info['go'] == 'rgb(244, 189, 50)' and 'linear-gradient' in info['card'] and info['logo'] == 'rgb(244, 189, 50)'
+            cara91 = info['v91'] and 'rgb(255, 210, 31)' in info['goImg'] and 'linear-gradient' in info['card'] and ('rgb(5, 6, 12)' in info['logoSombra'] or 'url(' in info['logoImg']) and 'RACHA' in info['logoTx']
+            P.confere(cara87 or cara91, 'o login tem a cara do jogo (v91: o amarelo dos botões e o painel azul-marinho da imagem de referência)', {k: info[k] for k in ('go', 'goImg', 'card', 'logo', 'v91')})
             l0 = log(B)
             P.confere(any(x['proc'] == 'auth.eu' and x['via'] == 'nada' for x in l0), 'sem sessão no aparelho, o jogo pergunta a sessão do site antes de mostrar o formulário', l0)
 
@@ -127,7 +132,7 @@ async def principal():
             print('\n3) os amigos da conta no jogo; as páginas do site por cima do jogo')
             # v88: os amigos da conta ficam no próprio jogo (a tela AMIGOS da v88, com os dados da plataforma): o AMIGOS do lobby
             # abre essa tela, sem o painel do site por cima
-            await pg.click('.v77-amg')
+            await pg.click('#rx [data-rx="amigos"]')         # (v90: o AMIGOS de cima saiu; o AMIGOS da coluna da direita faz o mesmo)
             await pg.wait_for_timeout(400)
             t = await rt(pg, "({tela:lobby.tela, painel:!!document.getElementById('v87site')})")
             P.confere(t['tela'] == 'v88amigos' and not t['painel'], 'v88: com a conta, o AMIGOS do lobby abre os amigos da conta dentro do jogo (sem o painel do site)', t)

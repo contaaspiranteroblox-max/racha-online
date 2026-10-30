@@ -12675,7 +12675,8 @@ ui.desl.min = 0; ui.desl.max = DESL_MAX;
 const CHAVE = 'racha-treino-hud-v11';
 const estadoHud = () => ({cameraRevision:19, hud:hud, cam:{mode:cam.mode, zoom:cam.zoom, desl:cam.desl}, graf:graf, opc:opc, fps:FPS.alvo});
 function salvar(){
-  try { localStorage.setItem(CHAVE, JSON.stringify(estadoHud())); } catch (_) {}
+  try { localStorage.setItem(CHAVE, JSON.stringify(estadoHud())); return true; }
+  catch (_) { return false; }
 }
 const ZOOM_ABS_MIN = 40, ZOOM_ABS_MAX = 250;
 function carregar(){

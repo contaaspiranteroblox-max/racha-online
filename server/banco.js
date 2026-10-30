@@ -86,8 +86,9 @@ function assina(segredo, obj){
 function confere(segredo, txt, agora){
   if (!segredo || typeof txt !== 'string' || txt.length > 8000) return null;   // v88: o bilhete leva os amigos e os bloqueios
   const i = txt.indexOf('.'); if (i < 1) return null;
-  const corpo = txt.slice(0, i), sig = deB64u(txt.slice(i + 1));
-  const certo = crypto.createHmac('sha256', segredo).update(corpo).digest();
+  // v100 (segurança): a assinatura só na escrita canônica (o base64 do Node aceita várias escritas dos mesmos bytes)
+  const corpo = txt.slice(0, i), sig = Buffer.from(txt.slice(i + 1));
+  const certo = Buffer.from(b64u(crypto.createHmac('sha256', segredo).update(corpo).digest()));
   if (sig.length !== certo.length || !crypto.timingSafeEqual(sig, certo)) return null;
   let o; try { o = JSON.parse(deB64u(corpo).toString('utf8')); } catch (_) { return null; }
   if (!o || typeof o !== 'object') return null;

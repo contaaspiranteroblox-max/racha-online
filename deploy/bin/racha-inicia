@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# RACHA · como o serviço sobe (o ExecStart do racha.service; roda como o usuário racha, na pasta da versão no ar).
+#   plataforma: app/dist/boot.js (as contas, o MySQL, o site e as salas no mesmo endereço)
+#   salas:      server.js (o jogo e as salas, sem a plataforma de contas)
+set -euo pipefail
+. /etc/racha/deploy.conf
+cd /opt/racha/current
+export PORT="$PORTA" NODE_ENV=production
+if [ "$MODO" = plataforma ]; then cd app && exec node dist/boot.js; fi
+exec node server.js

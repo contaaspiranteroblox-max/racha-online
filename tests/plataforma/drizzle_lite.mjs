@@ -11,6 +11,7 @@
 // acento: só maiúscula/minúscula), as travas de linha (aqui uma transação por vez) e as mensagens de erro (só as que o
 // código confere). Por isso os testes dizem "plataforma de teste (SQLite)" — o MySQL de verdade só roda na produção.
 import { DatabaseSync } from 'node:sqlite';
+const LATENCIA = process.env.RACHA_TESTE_LATENCIA === '1';   // v100 (ver o _espera)
 
 const INFO = Symbol.for('racha.drizzleLite.tabela');
 const ehTabela = (x) => !!(x && typeof x === 'object' && x[INFO]);
@@ -309,6 +310,9 @@ class Db {
     }
   }
   async _espera() {
+    // v100: RACHA_TESTE_LATENCIA=1 imita a rede do MySQL — cada consulta espera a vez no laço de eventos, e os pedidos que
+    // chegam juntos se intercalam entre as consultas (é assim que as corridas aparecem na produção; o SQLite daqui é síncrono)
+    if (LATENCIA) await new Promise((r) => setImmediate(r));
     while (this._b.trava && this._b.trava.token !== this._token) await this._b.trava.promessa;
   }
   _roda(texto, params, info, modo) {

@@ -30,13 +30,19 @@ import {
   auditar,
   ipDaRequisicao,
   exigeLimite,
+  bateLimite,
+  atributosCookie,
   cargoDo,
   sessaoDaRequisicao,
   type CtxAdmin,
+  devolveTentativa,
+  parteDaChave,
+  enderecoConhecido,
 } from "./guard";
 import { verificarSenha, novoToken, sha256, gerarSegredoTotp, verificarTotp, urlTotp } from "./security";
 import { ajustaPatente, estadoRanqueada, infoPatente } from "./ranqueada"; // v82: a patente na conta
 import { ehSenhaDoManual, AVISO_SENHA_DO_MANUAL } from "./contas"; // v88.1: a senha do manual não abre o painel
+import { contaPunida } from "../lib/salas"; // v100: a conta suspensa/banida cai das salas na hora
 import {
   PERMISSOES_PADRAO,
   CARGO_PESO,
@@ -108,6 +114,9 @@ async function entregarComRegistro(usuarioId: number, codigoItem: string, origem
   return "entregue" as const;
 }
 
+// v100 (segurança): o texto da busca sem curinga do LIKE (% e _ do que a pessoa digitou valem como letra)
+const semCuringa = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
+
 export const adminRouter = createRouter({
   // ==========================================================================
   // LOGIN DO PAINEL — separado do jogo, com 2FA obrigatório
@@ -118,11 +127,17 @@ export const adminRouter = createRouter({
       const db = getDb();
       const ip = ipDaRequisicao(ctx.req);
       await exigeLimite(`painel:${ip}`, 10, 15 * 60 * 1000, "Muitas tentativas no painel. Aguarde.");
-
       const u = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username.toLowerCase()) });
+      // v100 (segurança): as tentativas erradas da conta, de qualquer endereço (o limite por IP sozinho não segura quem troca):
+      // reservada antes de conferir a senha, devolvida quando estava certa; travada, só entra de um endereço que já entrou nesta
+      // conta (quem tenta adivinhar não tranca o Dono fora do RACHA CONTROL)
+      const chaveFalhas = `painel-falhas:${u ? "c" + u.id : parteDaChave(input.username.toLowerCase())}`;
+      const travada = await bateLimite(chaveFalhas, 5, 15 * 60 * 1000);
+      if (travada && !(u && (await enderecoConhecido(u.id, ip)))) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Muitas tentativas erradas nessa conta. Aguarde 15 minutos." });
       if (!u || !verificarSenha(input.senha, u.senhaHash)) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Credenciais inválidas." });
       }
+      if (!travada) await devolveTentativa(chaveFalhas);
       const papel = await cargoDo(u.id);
       if (!papel) {
         await auditar({ operadorId: u.id, cargo: "nenhum", acao: "login_painel", resultado: "negado", ip });
@@ -190,7 +205,7 @@ export const adminRouter = createRouter({
       await auditar({ operadorId: s.usuarioId, cargo: papel?.cargo ?? "?", acao: "2fa_ok", resultado: "ok", ip });
       ctx.resHeaders.append(
         "set-cookie",
-        `racha_admin=${encodeURIComponent(input.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSAO_ADMIN_MS / 1000}`,
+        `racha_admin=${encodeURIComponent(input.token)}${atributosCookie(ctx.req)}; Max-Age=${SESSAO_ADMIN_MS / 1000}`,   // v100: + Secure por https
       );
       return { ok: true, cargo: papel?.cargo };
     }),
@@ -215,7 +230,7 @@ export const adminRouter = createRouter({
     if (s && s.sessao.painelAdmin) {
       await getDb().update(sessoes).set({ revogadaEm: new Date() }).where(eq(sessoes.id, s.sessao.id));
     }
-    ctx.resHeaders.append("set-cookie", "racha_admin=; Path=/; HttpOnly; Max-Age=0");
+    ctx.resHeaders.append("set-cookie", "racha_admin=" + atributosCookie(ctx.req) + "; Max-Age=0");   // v100: + Secure por https
     return { ok: true };
   }),
 
@@ -258,7 +273,7 @@ export const adminRouter = createRouter({
       }
       if (achados.length === 0) {
         const lista = await db.query.usuarios.findMany({
-          where: or(like(usuarios.username, `${termo.toLowerCase()}%`), like(usuarios.nomeExibicao, `${termo}%`)),
+          where: or(like(usuarios.username, `${semCuringa(termo.toLowerCase())}%`), like(usuarios.nomeExibicao, `${semCuringa(termo)}%`)),   // v100: sem curinga
           limit: 10,
         });
         achados.push(...lista);
@@ -475,10 +490,12 @@ export const adminRouter = createRouter({
       });
       if (input.tipo === "suspensao") {
         await db.update(usuarios).set({ estado: "suspenso", suspensoAte: expira }).where(eq(usuarios.id, alvo.id));
+        contaPunida(Number(alvo.idPublico), expira!.getTime(), "Esta conta foi suspensa no RACHA.");   // v100: cai das salas na hora
       } else if (input.tipo === "banimento") {
         await db.update(usuarios).set({ estado: "banido", suspensoAte: null }).where(eq(usuarios.id, alvo.id));
         // Revoga todas as sessões do banido
         await db.update(sessoes).set({ revogadaEm: new Date() }).where(eq(sessoes.usuarioId, alvo.id));
+        contaPunida(Number(alvo.idPublico), Infinity, "Esta conta foi banida do RACHA.");               // v100: cai das salas na hora
       }
       await auditar({
         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: `punir_${input.tipo}`, alvoId: alvo.id,

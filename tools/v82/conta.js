@@ -151,7 +151,7 @@ v70EvInicio = function(d, chave){
   let novo = false;
   try {
     d = Object.assign({}, d);
-    d.ranqueada = NET49.playing && NET49.room ? !!NET49.room.ranked : !!(RQ.on && X49.matchMode === 'ranked');
+    d.ranqueada = !!(NET49.playing && NET49.room && NET49.room.ranked && !NET49.room.local);
     novo = !V70ON.ev || V70ON.ev.chave !== chave;
   } catch (_) {}
   const r = v70EvInicioAntes82.call(this, d, chave);      // (se a anterior ficou aberta, ela fecha antes, com o que era dela)
@@ -256,15 +256,14 @@ function c82Primeira(conv){                                // a conta é nova e 
     c.append(nodo('span', 'pop-tag', 'CONTA NOVA'), nodo('h2', null, 'LEVAR O PROGRESSO PARA A CONTA?'),
       nodo('p', 'pop-txt', 'Este aparelho tem o progresso de quem jogava sem conta. Ele pode ir para a sua conta (sai daqui e passa a valer em qualquer aparelho em que você entrar).'));
     const um = nodo('div', 'c82-dois um'); um.appendChild(c82ResumoNos('NESTE APARELHO (SEM CONTA)', r)); c.appendChild(um);
-    if (r.pts > teto) c.appendChild(nodo('p', 'pop-txt c82-obs', 'A patente entra até ' + rqElo(teto).nome + ' (' + teto + ' pontos): a ranqueada contra os bots feita sem conta não tem conferência. Daí para cima, é jogando com a conta.'));
+    if (r.pts > teto) c.appendChild(nodo('p', 'pop-txt c82-obs', 'A liga contra bots fica neste aparelho. A patente oficial é conquistada em partidas online conferidas pelo servidor.'));
     const a = nodo('div', 'pop-acoes');
     a.append(botaoPop('LEVAR PARA A CONTA', 'verde', () => {
       som.clique(); c82Ocupado(c, 'Levando o progresso para a sua conta…'); C82.primeiraRespondida = true;
       // (entra antes do jogo abrir de novo; o hash vazio: vai para a conta. A patente vai antes — a conta já chega com ela —
       // e, se a rede falhar agora, vai de novo quando o jogo abrir)
       const pl = c82Pl(), vai = imp => { R82.prepara(conv, {versao:R82.meta.versao | 0, hash:'', primeira:true, importar:imp | 0}, {limpaConvidado:true}); c82Recarrega('O progresso deste aparelho foi para a sua conta.'); };
-      if (pl && pl.patente && r.pts > 0) Promise.resolve().then(() => pl.patente.importar(r.pts)).then(() => vai(0), () => vai(r.pts));
-      else vai(0);
+      vai(0);
     }), botaoPop('COMEÇAR DO ZERO', '', () => {
       som.clique(); C82.primeiraRespondida = true;
       let onb = false; try { onb = onbPrecisaAntes82(); } catch (_) {}
@@ -468,7 +467,7 @@ function c82RkPinta(M){
     const b = novoBotao('lb-btn verde c82-rk-btn'); b.textContent = 'ENTRAR NA CONTA'; b.addEventListener('click', () => { som.clique(); c82Abre('entrar'); });
     box.append(p, b);
   }
-  box.appendChild(nodo('p', 'tl-nota c82-rk-nota', 'As contas com perfil público, pela patente da ranqueada. A online é conferida pelo servidor das salas; contra os bots, os pontos ganhos por dia têm teto.'));
+  box.appendChild(nodo('p', 'tl-nota c82-rk-nota', 'A patente oficial das contas com perfil público vem de partidas online conferidas pelo servidor. A liga contra bots é local.'));
 }
 const renderRankingAntes82 = renderRanking;
 renderRanking = function(){

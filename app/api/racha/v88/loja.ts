@@ -15,6 +15,7 @@ import { autenticado, exigeLimite } from "../guard";
 import { contaDe, equipadosDe, empurraRelacoes } from "./comum";
 import { garanteCarteira, movimentar, entregarItens } from "../economia";
 import { CATALOGO, precoDe, ofertasDaSemana, destaquesDoDia, podeEquipar, pacoteCat, pecaDoCodigo, codigoPeca, itemCat, nomeDoCodigo, segundaUtc, diaUtc, type Venda } from "@contracts/v88";
+import { garanteFundador } from "../fundador";
 
 // as ofertas que o RACHA CONTROL pôs num evento temporário ativo (config.ofertas: {"codigo": desconto%})
 export async function ofertasDosEventos(): Promise<Record<string, number>> {
@@ -31,12 +32,21 @@ export async function ofertasDosEventos(): Promise<Record<string, number>> {
 async function inventarioDe(usuarioId: number): Promise<Set<string>> {
   return new Set((await getDb().query.itensUsuario.findMany({ where: eq(itensUsuario.usuarioId, usuarioId), columns: { codigoItem: true } })).map((i) => i.codigoItem));
 }
+// v93: o equipado só vale se a conta ainda tem o item (um item retirado pela equipe volta ao padrão, em vez de ficar equipado)
+function equipadosValidos(u: { equipados?: Record<string, string> | null }, inv: Set<string>): Record<string, string> {
+  const e = equipadosDe(u);
+  for (const tipo of Object.keys(e)) if (!podeEquipar(tipo, e[tipo], (c) => inv.has(c))) e[tipo] = CATALOGO.padroes[tipo];
+  return e;
+}
 
 export const lojaRouter = createRouter({
   // a carteira, o que você tem, o que está equipado e a vitrine de hoje (destaques e ofertas com o preço de verdade)
   estado: autenticado.query(async ({ ctx }) => {
     const u = contaDe(ctx);
     const carteira = await garanteCarteira(u.id);
+    // v96: a entrada no jogo — as 30 primeiras contas viram FUNDADORAS (a tampinha ultra rara, numerada)
+    let fundador: { numero: number; vagas: number; novo: boolean } | null = null;
+    try { fundador = await garanteFundador(u.id); if (fundador && fundador.novo) await empurraRelacoes(u.id); } catch (e) { console.error("[fundador]", e); }
     const inv = await inventarioDe(u.id);
     const extra = await ofertasDosEventos();
     const agora = new Date();
@@ -45,11 +55,12 @@ export const lojaRouter = createRouter({
     return {
       carteira: { moedas: carteira.moedas, gemas: carteira.gemas },
       inventario: [...inv],
-      equipados: equipadosDe(u),
+      equipados: equipadosValidos(u, inv),
       destaques: vendas(destaquesDoDia(agora)),
       ofertas: vendas(ofertas),
       trocas: CATALOGO.trocas,
       dia: diaUtc(agora), semana: segundaUtc(agora), versaoCatalogo: CATALOGO.versao,
+      fundador,
     };
   }),
 
@@ -137,12 +148,14 @@ export const lojaRouter = createRouter({
     }),
 
   equipar: autenticado
-    .input(z.object({ tipo: z.enum(["bola", "efeito", "comemoracao", "gol", "banner", "avatar"]), codigo: z.string().min(2).max(40) }))
+    .input(z.object({ tipo: z.enum(["bola", "efeito", "comemoracao", "gol", "banner", "avatar", "emoji"]), codigo: z.string().min(2).max(40) }))
     .mutation(async ({ ctx, input }) => {
       const u = contaDe(ctx);
       const inv = await inventarioDe(u.id);
       if (!podeEquipar(input.tipo, input.codigo, (c) => inv.has(c))) throw new TRPCError({ code: "FORBIDDEN", message: "Você ainda não tem esse item." });
-      const e = { ...equipadosDe(u), [input.tipo]: input.codigo };
+      // v93: parte do que está no banco AGORA (a sessão pode ter vindo antes de outro equipar: dois equipares seguidos não se desfazem)
+      const agora = await getDb().query.usuarios.findFirst({ where: eq(usuarios.id, u.id), columns: { equipados: true } });
+      const e = { ...equipadosValidos(agora ?? u, inv), [input.tipo]: input.codigo };
       await getDb().update(usuarios).set({ equipados: e }).where(eq(usuarios.id, u.id));
       await empurraRelacoes(u.id);                             // (o servidor das salas mostra o cosmético certo para os outros)
       return { ok: true, equipados: e };

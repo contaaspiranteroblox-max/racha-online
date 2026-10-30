@@ -12,6 +12,55 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
+## v93 · as partidas, o placar e o social (`turma.js`, `partida/sala.js`)
+
+**Fase 2 (as partidas):** cliente → servidor: `hello {…, v93:1}` (o aparelho conhece a contagem e o replay) ·
+`ping {time, ms}` (o ping que o aparelho mede: o painel de jogadores) · `replay_pula {round}` (o voto no PULAR) ·
+`banco {on}` (quem assiste pede para entrar: RESERVA). Servidor → cliente: `contagem {round, ms}` (o 3, 2, 1, JÁ!: o motor fica
+parado, sem os comandos de antes, e anda junto para todos) · `replay {round, ms, votos, precisa}` · `replay_votos {round,
+votos, precisa}` · `replay_fim {round, porque}` (`votos` ou `tempo`) · `painel {round, j:[{i, id, nome, st, ms, ate, e}], fora}`
+(a cada 2 s e a cada gol; `st`: `ativo`, `caiu`, `bot`). No `result`, `estat` (os números de cada um) e `craque {k, nome,
+pts, …}` (o Craque da Partida, calculado aqui); online, o `melhor` do selo da conta é o craque. A contagem e o replay só
+esperam por quem mandou o `v93:1` (a página antiga guardada num aparelho não trava ninguém; numa sala só com páginas
+antigas, a partida começa e recomeça na hora, como antes).
+
+| Variável | Para quê | Padrão |
+|---|---|---|
+| `RACHA_CONTAGEM_MS` | o tempo do 3, 2, 1, JÁ! (0 = começa na hora) | 3000 |
+| `RACHA_REPLAY` | `0` desliga o replay do gol online | ligado |
+| `RACHA_REPLAY_MS` | o máximo do replay (sem os votos de todos) | 7000 |
+
+Os testes escritos antes da v93 sobem o servidor com `RACHA_CONTAGEM_MS=0` e `RACHA_REPLAY=0` (nos arneses de teste);
+`tests/v93_fase2_test.py` e `tests/v93_mista_test.js` testam os dois ligados.
+
+**Fase 3 (o admin da sala):** `adm {acao, id?, slot?, time?}` — `acao`: `mover` (para o `time` 0/1, na vaga livre; ou para o
+`slot`, trocando com quem está lá), `reserva` (para o banco; na partida o bot segura o lugar), `admin` (passa a
+administração), `expulsar`, `encerrar` (o apito final agora; o resultado não vale prêmio: `valida:false`) e `reiniciar` (uma
+rodada nova, 0 × 0, os mesmos times). Só o admin (`room.admin`), só nas salas personalizadas (a ranqueada e a copa não têm
+admin), no máximo 3 ações por segundo; as recusas voltam em `error {codigo:'adm', message}`. Na partida hospedada, o motor
+troca quem joga em cada tampinha (`admPoe`, `admTira`, `admTroca`): o placar, o relógio, as tampinhas no campo e os números
+de cada um continuam, e ninguém fica em dois lugares (a volta de quem caiu também não pega um segundo lugar). Cada ação vai
+para o log do servidor e para o chat da sala (`say {sys:true}`). Se o admin cai, a administração passa para quem está há
+mais tempo na sala (como sempre) e a partida continua.
+
+**Fase 4 (o grupo com líder, `grupo93.js`):** cliente → servidor: `grupo_cria {n, pts}` · `grupo_estado` ·
+`grupo_convida {para, n, pts}` · `grupo_resposta {id, aceita, pts}` · `grupo_sai` · `grupo_expulsa {id}` · `grupo_lider {id}` ·
+`grupo_modo {n}` · `grupo_pts {pts}`; a busca do grupo é o `fila {n, pts}` de sempre, mandado pelo líder (e o `fila_sai` de
+qualquer um cancela para todos). Servidor → cliente: `grupo {g}` (`g:null` quando sai; `motivo`: `expulso`, `caiu`) com
+`g = {id, lider, modo, max, busca, membros:[{id, p, nome, skin, st, lider}], convites:[{p, nome, resta}]}` (`st`:
+`disponivel`, `ocupado`, `buscando`, `partida`, `offline`) · `grupo_convite {id, de, lider, gente, max, expira}` ·
+`grupo_aviso {txt}` · `grupo_erro {motivo}` · `fila {on, n, grupo, lider}` (a busca do grupo abriu ou fechou) e
+`error {codigo:'fila_grupo'}` (a busca não começou: quem não é o líder, o grupo maior que o time, alguém offline ou numa
+partida). Só contas, até 4 pessoas; os convites seguem as regras dos convites da sala (só amigos dos dois lados, sem
+bloqueio, quem recebe convites; valem 60 s); quem aceita numa sala personalizada esperando começar sai dela (`left`)
+quando o servidor aceita. O grupo fica no MESMO time na ranqueada (`filaSala(g, n, times)`); quem cai
+continua no grupo por 60 s (`RACHA_GRUPO_FORA_MS`) e o líder que cai passa a coroa em 20 s (`RACHA_GRUPO_LIDER_MS`).
+
+**Fase 5 (as falas rápidas):** cliente → servidor: `fala {i}` (`i` de 0 a 7: Golaço!, Que defesa!, Passa!, Boa!, Foi mal!,
+Obrigado!, Sem problemas!, Minha culpa!). Servidor → cliente: `fala {id, slot, i}` para todos da sala (menos quem fala e
+quem tem bloqueio com ele). Só as frases prontas (nada de texto livre), só de quem está jogando (quem assiste não fala no
+campo) e no ritmo (uma a cada 1,5 s, até 3 seguidas: o resto é ignorado).
+
 ## v88.2 · jogar online sem conta (só o nome)
 
 O jogo ganhou na tela de entrada o **JOGAR ONLINE SEM CONTA**: o nome e pronto — ele manda o `hello` de sempre com o nome

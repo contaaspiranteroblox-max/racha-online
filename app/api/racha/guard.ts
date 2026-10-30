@@ -3,7 +3,7 @@
 // A segurança mora NO SERVIDOR. O cargo nunca vem do navegador.
 // ============================================================================
 import { TRPCError } from "@trpc/server";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import { getDb } from "../queries/connection";
 import { sessoes, usuarios, cargos, auditoria, limites } from "@db/schema";
 import { sha256 } from "./security";
@@ -16,6 +16,31 @@ export type Sessao = typeof sessoes.$inferSelect;
 
 export const SESSAO_DIAS = 30;
 export const SESSAO_ADMIN_HORAS = 8;
+// v100 (segurança): a sessão do jogo renova com o uso, mas não passa disto contado do login (depois, entra de novo). Antes ela
+// renovava para sempre: um token roubado e usado a cada 15 dias nunca vencia.
+export const SESSAO_MAX_DIAS = 90;
+
+// ---------- v100 (segurança): de onde veio o pedido ----------
+// O servidor de produção (boot.ts) registra, para cada pedido, o endereço de quem conectou (o socket; atrás do Caddy/nginx,
+// o que o NOSSO proxy acrescentou no X-Forwarded-For — server/ip.js) e se ele chegou por https. Os limites por IP e o
+// cookie Secure leem daqui. Sem o registro (pedidos montados à mão), vale o fim da lista do X-Forwarded-For — nunca o
+// começo, que o próprio cliente escreve (era assim que dava para trocar de "IP" a cada tentativa de senha).
+type Origem = { ip: string; https: boolean };
+const ORIGENS = new WeakMap<Request, Origem>();
+export function registraOrigemDaRequisicao(req: Request, o: Origem): void {
+  ORIGENS.set(req, o);
+}
+export function httpsDaRequisicao(req: Request): boolean {
+  if (process.env.RACHA_COOKIE_SEGURO === "1") return true;   // (o https termina num proxy que não diz o X-Forwarded-Proto)
+  const o = ORIGENS.get(req);
+  if (o) return o.https;
+  try { return new URL(req.url).protocol === "https:"; } catch { return false; }
+}
+// os atributos do cookie da sessão: HttpOnly e SameSite=Lax sempre; Secure quando o pedido chegou por https (ou com
+// RACHA_COOKIE_SEGURO=1) — o cookie da conta não viaja aberto por http
+export function atributosCookie(req: Request): string {
+  return "; Path=/; HttpOnly; SameSite=Lax" + (httpsDaRequisicao(req) ? "; Secure" : "");
+}
 
 // ---------- Sessão ----------
 // v88.1: `painel` — as rotas do RACHA CONTROL leem o cookie do painel (racha_admin, gravado no verificar2fa). Antes elas
@@ -46,13 +71,18 @@ export async function sessaoDaRequisicao(req: Request, opcoes: { painel?: boolea
   // v84 — renovação deslizante (spec 1.4: "Renovar a sessão quando permitido"):
   // sessão de jogo com menos da metade da vida restante ganha um novo prazo cheio
   // a cada uso. Sessão do painel administrativo NÃO renova (8 h fixas por segurança).
+  // v100: até SESSAO_MAX_DIAS depois do login, no máximo (depois disso a sessão vence e o jogo pede para entrar de novo)
   if (!s.painelAdmin) {
     const restante = s.expiraEm.getTime() - Date.now();
     const metade = (SESSAO_DIAS * 24 * 60 * 60 * 1000) / 2;
+    const teto = s.criadaEm.getTime() + SESSAO_MAX_DIAS * 24 * 60 * 60 * 1000;
+    if (Date.now() >= teto) return null;
     if (restante < metade) {
-      const novoPrazo = new Date(Date.now() + SESSAO_DIAS * 24 * 60 * 60 * 1000);
-      await db.update(sessoes).set({ expiraEm: novoPrazo }).where(eq(sessoes.id, s.id));
-      s.expiraEm = novoPrazo;
+      const novoPrazo = new Date(Math.min(Date.now() + SESSAO_DIAS * 24 * 60 * 60 * 1000, teto));
+      if (novoPrazo.getTime() > s.expiraEm.getTime()) {
+        await db.update(sessoes).set({ expiraEm: novoPrazo }).where(eq(sessoes.id, s.id));
+        s.expiraEm = novoPrazo;
+      }
     }
   }
   return { usuario: u, sessao: s };
@@ -75,28 +105,73 @@ export async function cargoDo(usuarioId: number): Promise<{ cargo: Cargo; permis
 }
 
 // ---------- Rate limit persistente (janela deslizante simples por chave) ----------
+// v100 (segurança): a contagem é atômica — o próprio banco soma (contagem = contagem + 1) só enquanto não chegou no máximo.
+// Antes a conta era lida e escrita de volta: pedidos ao mesmo tempo liam o mesmo número e passavam todos (uma rajada de
+// tentativas de senha, o mesmo resultado mandado várias vezes de uma vez).
+const ehDuplicado = (e: unknown) => /duplicate|ER_DUP_ENTRY|1062/i.test(String((e as { message?: string })?.message ?? e));
+const linhas = (r: unknown) => Number((Array.isArray(r) ? (r[0] as { affectedRows?: number }) : (r as { affectedRows?: number }))?.affectedRows) || 0;
 export async function bateLimite(chave: string, max: number, janelaMs: number): Promise<boolean> {
   const db = getDb();
-  const agora = new Date();
+  const agora = new Date(), corte = new Date(agora.getTime() - janelaMs);
+  const soma = async () => linhas(await db.update(limites).set({ contagem: sql`${limites.contagem} + 1` })
+    .where(and(eq(limites.chave, chave), gt(limites.janelaInicio, corte), lt(limites.contagem, max)))) > 0;
+  if (await soma()) return false;                                  // (contou, dentro do limite)
   const l = await db.query.limites.findFirst({ where: eq(limites.chave, chave) });
-  if (!l || agora.getTime() - l.janelaInicio.getTime() > janelaMs) {
-    await db
-      .insert(limites)
-      .values({ chave, contagem: 1, janelaInicio: agora })
-      .onDuplicateKeyUpdate({ set: { contagem: 1, janelaInicio: agora } });
-    return false;
+  if (l && l.janelaInicio.getTime() > corte.getTime()) return true; // (na janela e já no máximo)
+  if (l) {                                                          // (a janela venceu: recomeça — só um pedido recomeça)
+    if (linhas(await db.update(limites).set({ contagem: 1, janelaInicio: agora }).where(and(eq(limites.chave, chave), lte(limites.janelaInicio, corte)))) > 0) return false;
+    return !(await soma());
   }
-  if (l.contagem >= max) return true;
-  await db.update(limites).set({ contagem: l.contagem + 1 }).where(eq(limites.chave, chave));
-  return false;
+  try {                                                             // (a primeira vez: a linha nova; outro pedido criou junto: conta nela)
+    await db.insert(limites).values({ chave, contagem: 1, janelaInicio: agora });
+    return false;
+  } catch (e) {
+    if (!ehDuplicado(e)) throw e;
+    return !(await soma());
+  }
+}
+// v100 (segurança): a tentativa que deu certo não conta (o limite das senhas ERRADAS reserva a tentativa antes de conferir a
+// senha — assim uma rajada ao mesmo tempo não passa do limite — e devolve quando a senha estava certa)
+export async function devolveTentativa(chave: string): Promise<void> {
+  await getDb().update(limites).set({ contagem: sql`${limites.contagem} - 1` }).where(and(eq(limites.chave, chave), gt(limites.contagem, 0)));
+}
+// v100 (segurança): uma chave que só vale UMA vez (o selo do resultado online): só um pedido consegue criar a linha, mesmo com
+// vários chegando juntos; os outros recebem "já usado"
+export async function consomeUmaVez(chave: string): Promise<boolean> {
+  try {
+    await getDb().insert(limites).values({ chave, contagem: 1, janelaInicio: new Date() });
+    return true;
+  } catch (e) {
+    if (ehDuplicado(e)) return false;
+    throw e;
+  }
+}
+// v100 (segurança): a parte variável de uma chave de limite, curta (a coluna tem 120 letras; o e-mail pode ter 120 sozinho)
+export function parteDaChave(s: string): string {
+  return s.length <= 40 ? s : "h" + sha256(s).slice(0, 32);
+}
+// v100 (segurança): este endereço já entrou nesta conta (uma sessão criada daqui nos últimos 30 dias)? — com a conta travada
+// por senhas erradas (alguém tentando adivinhar), quem entra sempre do mesmo lugar ainda entra
+export async function enderecoConhecido(usuarioId: number, ip: string): Promise<boolean> {
+  if (!ip || ip === "desconhecido") return false;
+  const s = await getDb().query.sessoes.findFirst({
+    where: and(eq(sessoes.usuarioId, usuarioId), eq(sessoes.ip, ip), gte(sessoes.criadaEm, new Date(Date.now() - 30 * 24 * 3600 * 1000))),
+  });
+  return !!s;
 }
 
 export function ipDaRequisicao(req: Request): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("x-real-ip") ||
-    "desconhecido"
-  );
+  const o = ORIGENS.get(req);
+  if (o && o.ip) return o.ip;
+  // (sem o registro do servidor não há como saber: um endereço só para todos esses — nunca o que os cabeçalhos dizem, que o
+  //  cliente escreve quando o servidor está exposto direto)
+  return "desconhecido";
+}
+
+// v100 (segurança): já passou do limite? (sem contar este pedido) — para contar só as tentativas ERRADAS de senha
+export async function estaNoLimite(chave: string, max: number, janelaMs: number): Promise<boolean> {
+  const l = await getDb().query.limites.findFirst({ where: eq(limites.chave, chave) });
+  return !!l && Date.now() - l.janelaInicio.getTime() <= janelaMs && l.contagem >= max;
 }
 
 export async function exigeLimite(chave: string, max: number, janelaMs: number, msg: string) {
