@@ -1,0 +1,418 @@
+diff --git a/app/api/boot.ts b/app/api/boot.ts
+index 087f948..b9c9fd8 100644
+--- a/app/api/boot.ts
++++ b/app/api/boot.ts
+@@ -10,11 +10,12 @@ const app = new Hono<{ Bindings: HttpBindings }>();
+ 
+ app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
+ app.use("/api/trpc/*", async (c) => {
++  const ipConexao = c.env.incoming?.socket?.remoteAddress || undefined;   // v88.1-site: IP real da conexão (sem proxy na frente, o x-forwarded-for vinha vazio)
+   return fetchRequestHandler({
+     endpoint: "/api/trpc",
+     req: c.req.raw,
+     router: appRouter,
+-    createContext,
++    createContext: (opts) => createContext(opts, ipConexao),
+   });
+ });
+ app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
+diff --git a/app/api/context.ts b/app/api/context.ts
+index 62a55e1..e228e29 100644
+--- a/app/api/context.ts
++++ b/app/api/context.ts
+@@ -2,11 +2,13 @@ import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
+ 
+ export type TrpcContext = {
+   req: Request;
++  ipConexao?: string;   // v88.1-site: o IP do socket (quem entrega é o boot.ts)
+   resHeaders: Headers;
+ };
+ 
+ export async function createContext(
+   opts: FetchCreateContextFnOptions,
++  ipConexao?: string,
+ ): Promise<TrpcContext> {
+-  return { req: opts.req, resHeaders: opts.resHeaders };
++  return { req: opts.req, ipConexao, resHeaders: opts.resHeaders };
+ }
+diff --git a/app/api/lib/vite.ts b/app/api/lib/vite.ts
+index aacc84a..1ea823f 100644
+--- a/app/api/lib/vite.ts
++++ b/app/api/lib/vite.ts
+@@ -11,7 +11,19 @@ export function serveStaticFiles(app: App) {
+ 
+   // v87: a raiz abre o JOGO em tela cheia — o login e as coisas da conta ficam nos botões do jogo (as páginas da conta
+   // continuam aqui: /perfil, /amigos… — o jogo as abre por cima dele, num painel)
+-  app.get("/", (c) => c.redirect("/game/racha.html" + new URL(c.req.url).search, 302));
++  // v88.1-site: a URL ganha ?v=VERSAO — quem entra pelo link raiz sempre furta o cache da versão velha
++  // (atualizar junto com VERSAO_JOGO no racha.html). O redirect também vai sem cache.
++  app.get("/", (c) => {
++    c.header("Cache-Control", "no-cache");
++    const q = new URL(c.req.url).search;
++    return c.redirect("/game/racha.html?v=88.1-site" + (q ? "&" + q.slice(1) : ""), 302);
++  });
++
++  // html sempre fresco — o celular não pode ficar preso numa versão velha do jogo por cache do navegador
++  app.use("*", async (c, next) => {
++    await next();
++    if (c.req.path.endsWith(".html")) c.header("Cache-Control", "no-cache");
++  });
+ 
+   app.use("*", serveStatic({ root: "./dist/public" }));
+ 
+diff --git a/app/api/racha/adminRouter.ts b/app/api/racha/adminRouter.ts
+index b1cdf4d..c474b80 100644
+--- a/app/api/racha/adminRouter.ts
++++ b/app/api/racha/adminRouter.ts
+@@ -116,7 +116,7 @@ export const adminRouter = createRouter({
+     .input(z.object({ username: z.string().trim().min(1).max(24), senha: z.string().min(1).max(100) }))
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       await exigeLimite(`painel:${ip}`, 10, 15 * 60 * 1000, "Muitas tentativas no painel. Aguarde.");
+ 
+       const u = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username.toLowerCase()) });
+@@ -168,7 +168,7 @@ export const adminRouter = createRouter({
+     .input(z.object({ token: z.string().min(20).max(100), codigo: z.string().trim().min(6).max(8) }))
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       const s = await db.query.sessoes.findFirst({
+         where: and(
+           eq(sessoes.tokenHash, sha256(input.token)),
+@@ -312,7 +312,7 @@ export const adminRouter = createRouter({
+       const resultado = await entregarComRegistro(alvo.id, item.codigo, `Entregue pela equipe (${c.usuario.username})`);
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "conceder_item", alvoId: alvo.id,
+-        detalhes: { item: item.codigo, resultado }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { item: item.codigo, resultado }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true, resultado, jogador: alvo.nomeExibicao, item: item.nome };
+     }),
+@@ -330,7 +330,7 @@ export const adminRouter = createRouter({
+       await db.delete(itensUsuario).where(and(eq(itensUsuario.usuarioId, alvo.id), eq(itensUsuario.codigoItem, input.codigoItem)));
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "revogar_item", alvoId: alvo.id,
+-        detalhes: { item: input.codigoItem }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { item: input.codigoItem }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true };
+     }),
+@@ -364,7 +364,7 @@ export const adminRouter = createRouter({
+       }
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: `${input.acao}_selo`, alvoId: alvo.id,
+-        detalhes: { selo: input.selo }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { selo: input.selo }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true };
+     }),
+@@ -427,7 +427,7 @@ export const adminRouter = createRouter({
+         .where(eq(denuncias.id, d.id));
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "atualizar_denuncia", alvoId: d.alvoId,
+-        detalhes: { denuncia: d.id, estado: input.estado }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { denuncia: d.id, estado: input.estado }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true };
+     }),
+@@ -482,7 +482,7 @@ export const adminRouter = createRouter({
+       }
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: `punir_${input.tipo}`, alvoId: alvo.id,
+-        detalhes: { motivo: input.motivo, horas: input.horas ?? null }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { motivo: input.motivo, horas: input.horas ?? null }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true, jogador: alvo.nomeExibicao };
+     }),
+@@ -508,7 +508,7 @@ export const adminRouter = createRouter({
+       const depois = await ajustaPatente(alvo.id, input.pts, c.usuario.id);
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "ajustar_patente", alvoId: alvo.id,
+-        detalhes: { motivo: input.motivo, antes: antes.pts, depois: depois.pts }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { motivo: input.motivo, antes: antes.pts, depois: depois.pts }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true, jogador: alvo.nomeExibicao, antes: antes.pts, depois: depois.pts, patente: infoPatente(depois.pts).titulo };
+     }),
+@@ -528,7 +528,7 @@ export const adminRouter = createRouter({
+       }
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "revogar_punicao", alvoId: p.usuarioId,
+-        detalhes: { punicao: p.id }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { punicao: p.id }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true };
+     }),
+@@ -627,7 +627,7 @@ export const adminRouter = createRouter({
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: `distribuir_${input.tipo}`, detalhes: {
+           item: item.codigo, total: alvos.length, entregues, jaPossuiam, falhas, distribuicao: distId,
+-        }, resultado: falhas === 0 ? "ok" : "erro", ip: ipDaRequisicao(c.req),
++        }, resultado: falhas === 0 ? "ok" : "erro", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true as const, idempotent: false as const, distribuicaoId: distId, total: alvos.length, entregues, jaPossuiam, falhas };
+     }),
+@@ -720,7 +720,7 @@ export const adminRouter = createRouter({
+       await db.delete(totp).where(eq(totp.usuarioId, alvo.id));
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "definir_cargo", alvoId: alvo.id,
+-        detalhes: { cargo: input.cargo, antes: papelAlvo?.cargo ?? null }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { cargo: input.cargo, antes: papelAlvo?.cargo ?? null }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true, jogador: alvo.nomeExibicao };
+     }),
+@@ -746,7 +746,7 @@ export const adminRouter = createRouter({
+       await db.update(sessoes).set({ revogadaEm: new Date() }).where(and(eq(sessoes.usuarioId, alvo.id), eq(sessoes.painelAdmin, true)));
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "remover_cargo", alvoId: alvo.id,
+-        detalhes: { cargo: papelAlvo.cargo }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { cargo: papelAlvo.cargo }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true };
+     }),
+@@ -777,7 +777,7 @@ export const adminRouter = createRouter({
+       await db.update(cargos).set({ permissoes: validas }).where(eq(cargos.usuarioId, alvo.id));
+       await auditar({
+         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "definir_permissoes", alvoId: alvo.id,
+-        detalhes: { permissoes: validas }, resultado: "ok", ip: ipDaRequisicao(c.req),
++        detalhes: { permissoes: validas }, resultado: "ok", ip: ipDaRequisicao(c.req, c.ipConexao),
+       });
+       return { ok: true, aplicadas: validas };
+     }),
+diff --git a/app/api/racha/authRouter.ts b/app/api/racha/authRouter.ts
+index 76e9094..d5bfeff 100644
+--- a/app/api/racha/authRouter.ts
++++ b/app/api/racha/authRouter.ts
+@@ -45,7 +45,7 @@ const usernameSchema = z
+ 
+ const senhaSchema = z.string().min(8, "Senha precisa de 8+ caracteres").max(100);
+ 
+-async function criarSessao(usuarioId: number, req: Request, painelAdmin = false) {
++async function criarSessao(usuarioId: number, req: Request, painelAdmin = false, ipConexao?: string) {   // v88.1-site
+   const db = getDb();
+   const token = novoToken();
+   const duracao = painelAdmin ? 8 * 60 * 60 * 1000 : SESSAO_DIAS * 24 * 60 * 60 * 1000;
+@@ -53,7 +53,7 @@ async function criarSessao(usuarioId: number, req: Request, painelAdmin = false)
+     usuarioId,
+     tokenHash: sha256(token),
+     painelAdmin,
+-    ip: ipDaRequisicao(req),
++    ip: ipDaRequisicao(req, ipConexao),   // v88.1-site
+     agente: (req.headers.get("user-agent") || "").slice(0, 200),
+     expiraEm: new Date(Date.now() + duracao),
+   });
+@@ -101,10 +101,10 @@ export const authRouter = createRouter({
+     )
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       // v88.1: com o cadastro fechado (o padrão), as contas novas só saem do RACHA CONTROL › Contas (o Dono)
+       if (!(await cadastroAberto()).aberto) throw new TRPCError({ code: "FORBIDDEN", message: MSG_CADASTRO_FECHADO });
+-      await exigeLimite(`registro:${ip}`, 5, 60 * 60 * 1000, "Muitos registros. Tente mais tarde.");
++      await exigeLimite(`registro:${ip}`, 20, 60 * 60 * 1000, "Muitos registros. Tente mais tarde.");   // v88.1-site: era 5 — com o IP de verdade por visitante, 20/hora por IP (CGNAT da operadora junta gente no mesmo IP)
+ 
+       const existe = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username) });
+       if (existe) throw new TRPCError({ code: "CONFLICT", message: "Esse usuário já está em uso." });
+@@ -141,7 +141,7 @@ export const authRouter = createRouter({
+         { usuarioId: novoId, codigoItem: "banner_laje_noturna", origem: "inicial" },
+       ]);
+ 
+-      const token = await criarSessao(novoId, ctx.req);
++      const token = await criarSessao(novoId, ctx.req, false, ctx.ipConexao);   // v88.1-site
+       await db.update(usuarios).set({ ultimoLoginEm: new Date() }).where(eq(usuarios.id, novoId));
+       ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600));
+ 
+@@ -164,7 +164,7 @@ export const authRouter = createRouter({
+     )
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       const ident = input.identificador.toLowerCase();
+       await exigeLimite(`login:${ip}`, 15, 15 * 60 * 1000, "Muitas tentativas. Aguarde 15 minutos.");
+       await exigeLimite(`login:${ip}:${ident}`, 5, 15 * 60 * 1000, "Muitas tentativas nessa conta. Aguarde.");
+@@ -189,7 +189,7 @@ export const authRouter = createRouter({
+         });
+       }
+ 
+-      const token = await criarSessao(u.id, ctx.req);
++      const token = await criarSessao(u.id, ctx.req, false, ctx.ipConexao);   // v88.1-site
+       await db.update(usuarios).set({ ultimoLoginEm: new Date() }).where(eq(usuarios.id, u.id));
+       ctx.resHeaders.append("set-cookie", cookieSessao(token, SESSAO_DIAS * 24 * 3600));
+       // v88.1: + quando as contas foram zeradas (o jogo confere o que o aparelho guardava para este número)
+@@ -287,7 +287,7 @@ export const authRouter = createRouter({
+     )
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       await exigeLimite(`recuperar:${ip}`, 5, 60 * 60 * 1000, "Muitas tentativas de recuperação.");
+ 
+       const u = await db.query.usuarios.findFirst({ where: eq(usuarios.username, input.username.toLowerCase()) });
+@@ -310,7 +310,7 @@ export const authRouter = createRouter({
+     .input(z.object({ email: z.string().email("E-mail inválido.").max(120) }))
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       await exigeLimite(`recup-email:${ip}`, 5, 60 * 60 * 1000, "Muitas tentativas. Tente mais tarde.");
+       const email = input.email.toLowerCase();
+ 
+@@ -349,7 +349,7 @@ export const authRouter = createRouter({
+     .input(z.object({ token: z.string().trim().min(20).max(200), novaSenha: senhaSchema }))
+     .mutation(async ({ ctx, input }) => {
+       const db = getDb();
+-      const ip = ipDaRequisicao(ctx.req);
++      const ip = ipDaRequisicao(ctx.req, ctx.ipConexao);
+       await exigeLimite(`redefinir:${ip}`, 10, 60 * 60 * 1000, "Muitas tentativas. Tente mais tarde.");
+ 
+       const t = await db.query.recuperacaoTokens.findFirst({
+diff --git a/app/api/racha/guard.ts b/app/api/racha/guard.ts
+index 9d62b89..a9d560a 100644
+--- a/app/api/racha/guard.ts
++++ b/app/api/racha/guard.ts
+@@ -91,8 +91,13 @@ export async function bateLimite(chave: string, max: number, janelaMs: number):
+   return false;
+ }
+ 
+-export function ipDaRequisicao(req: Request): string {
++export function ipDaRequisicao(req: Request, ipConexao?: string): string {
++  // v88.1-site: sem proxy na frente, o x-forwarded-for vinha vazio e TODO MUNDO caía no balde
++  // "desconhecido" — o limite de registros virava global (5/hora pro site inteiro). O IP da
++  // conexão (socket) é o que separa um visitante do outro de verdade.
++  const conexao = (ipConexao || "").replace(/^::ffff:/, "");
+   return (
++    conexao ||
+     req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+     req.headers.get("x-real-ip") ||
+     "desconhecido"
+diff --git a/app/api/racha/perfilRouter.ts b/app/api/racha/perfilRouter.ts
+index 8895298..b6399ea 100644
+--- a/app/api/racha/perfilRouter.ts
++++ b/app/api/racha/perfilRouter.ts
+@@ -216,7 +216,7 @@ export const perfilRouter = createRouter({
+     .query(async ({ ctx, input }) => {
+       // Limitação de buscas: evita varredura automatizada de IDs
+       const s = ctx as unknown as { req: Request };
+-      await exigeLimite(`busca:${ipDaRequisicao(s.req)}`, 30, 60 * 1000, "Muitas buscas. Aguarde um minuto.");
++      await exigeLimite(`busca:${ipDaRequisicao(s.req, s.ipConexao)}`, 30, 60 * 1000, "Muitas buscas. Aguarde um minuto.");
+ 
+       const u = await acharUsuario(input.termo);
+       if (!u) throw new TRPCError({ code: "NOT_FOUND", message: "Jogador não encontrado." });
+diff --git a/app/public/game/controle.html b/app/public/game/controle.html
+new file mode 100644
+index 0000000..ab20c7a
+--- /dev/null
++++ b/app/public/game/controle.html
+@@ -0,0 +1,41 @@
++<!DOCTYPE html>
++<html lang="pt-BR">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<title>Teste de controle — RACHA</title>
++<style>
++  body { background:#12102b; color:#fff; font-family:system-ui,sans-serif; text-align:center; padding:24px; }
++  h1 { color:#ffd23f; font-size:22px; }
++  .pad { background:#1b1540; border:2px solid #33286b; border-radius:14px; padding:14px; margin:14px auto; max-width:560px; }
++  .grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:10px; }
++  .b { background:#0c0a20; border:2px solid #33286b; border-radius:10px; padding:10px 4px; font-size:13px; }
++  .b.on { background:#2f9e44; border-color:#7be04a; font-weight:bold; }
++  .axes { font-family:monospace; margin-top:10px; color:#b0a6e8; }
++  .dica { color:#b0a6e8; font-size:14px; }
++</style>
++</head>
++<body>
++<h1>🎮 Teste de controle</h1>
++<p class="dica">Aperte qualquer botão do controle para ele aparecer.<br>Depois aperte <b>X</b> e <b>quadrado</b> (ou A e X no Xbox) e veja quais números acendem.</p>
++<div id="saida"><p class="dica">Nenhum controle detectado ainda…</p></div>
++<script>
++const saida = document.getElementById('saida');
++function desenhar(){
++  const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(p => p && p.connected) : [];
++  if (!pads.length){ saida.innerHTML = '<p class="dica">Nenhum controle detectado ainda…</p>'; }
++  else {
++    saida.innerHTML = pads.map(p => `
++      <div class="pad">
++        <div><b>${p.id}</b></div>
++        <div class="dica">mapping: "${p.mapping || 'vazio (não-padrão)'}" · ${p.buttons.length} botões · ${p.axes.length} eixos</div>
++        <div class="axes">analógico: ${p.axes.map(a => a.toFixed(2)).join(' · ')}</div>
++        <div class="grid">${p.buttons.map((b, i) => `<div class="b ${b.pressed ? 'on' : ''}">${i}</div>`).join('')}</div>
++      </div>`).join('');
++  }
++  requestAnimationFrame(desenhar);
++}
++desenhar();
++</script>
++</body>
++</html>
+diff --git a/app/public/game/racha.html b/app/public/game/racha.html
+index 01728fc..e2bdd42 100644
+--- a/app/public/game/racha.html
++++ b/app/public/game/racha.html
+@@ -2885,6 +2885,24 @@
+ <script>
+ (function(){
+ 'use strict';
++/* ---------- v88.1-site: versão visível + anti-cache + fullscreen do navegador ----------
++   O Chrome do celular "congela" a aba e volta com a versão VELHA sem baixar nada (bfcache):
++   ao voltar pra aba congelada, recarrega de verdade. A versão aparece no título da aba e na
++   URL (?v=), pra conferir num relance. No 1º toque pede fullscreen: a barra do Chrome some e
++   o celular ultra-largo (Redmi 13 e cia) fica tela cheia sem distorcer. */
++const VERSAO_JOGO = '88.1-site';
++document.title = 'RACHA · v' + VERSAO_JOGO;
++window.addEventListener('pageshow', function(e){ if (e.persisted) location.reload(); });
++let _fsPedido = false;
++function _fsTenta(){
++  if (_fsPedido) return; _fsPedido = true;
++  try {
++    const el = document.documentElement;
++    const p = el.requestFullscreen ? el.requestFullscreen() : (el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null);
++    if (p && p.catch) p.catch(function(){});
++  } catch(_){}
++}
++window.addEventListener('pointerdown', _fsTenta);
+ /* v62: O SERVIDOR DO JOGO (salas, clubes, copa e Chat do Brasil).
+    Vazio = o mesmo endereço de onde o jogo abriu (o server.js entrega o jogo e as salas juntos: não precisa mexer).
+    Só preencha se publicar o jogo num lugar e o servidor em outro. Ex.: const SERVIDOR_DO_JOGO = 'meu-racha.onrender.com'; */
+@@ -15045,10 +15063,18 @@ function resize(){
+   const s = Math.min(Math.max(200, r.width)/W, Math.max(120, r.height)/H);
+   const dpr = G().dpr(window.devicePixelRatio || 1);   // v25: depende da qualidade (Suave desenha menos pixels, Max mais)
+   const cw = Math.max(1, Math.floor(W*s*dpr)), ch = Math.max(1, Math.floor(H*s*dpr));
+-  const key = cw + 'x' + ch + '@' + Math.floor(W*s) + 'x' + Math.floor(H*s);
++  // v88.1-site: tela cheia de verdade — quando a barrinha cinza é pequena, o CSS estica até 15% por eixo
++  // (distorção leve; o toque já converte por eixo em vpos). Barra grande demais: letterbox fica.
++  // (15% cobre celular ultra-largo com a barra do navegador visível — proporção até ~2,49:1)
++  const fw = Math.max(200, r.width), fh = Math.max(120, r.height);
++  let cssW = Math.floor(W*s), cssH = Math.floor(H*s);
++  if (fw/cssW > 1 && fw/cssW <= 1.15) cssW = Math.floor(fw);
++  if (fh/cssH > 1 && fh/cssH <= 1.15) cssH = Math.floor(fh);
++  HUDX.cssX = cssW/W; HUDX.cssY = cssH/H;
++  const key = cw + 'x' + ch + '@' + cssW + 'x' + cssH;
+   if (key === tamKey) return;                          // nada mudou: não refaz o cenário à toa
+   tamKey = key;
+-  cv.style.width = Math.floor(W*s) + 'px'; cv.style.height = Math.floor(H*s) + 'px';
++  cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+   cv.width = cw; cv.height = ch;
+   K = cv.width/W; HUDX.css = s; hudAplica();          // v70: a escala do HUD (placar, pausa, setinhas) acompanha o tamanho de verdade da tela
+   SPR_HUD.clear(); SPR_TXT.clear();                   // v48: outra resolução, outras imagens prontas
+@@ -22174,13 +22200,13 @@ function tuPainel(esconde){                              // o painel do passo (e
+ }
+ function tuLugar(el){                                   // o painel no maior vão livre do alto da tela (sem cobrir pausa, PASSE, CHUTE...); sem vão, embaixo
+   try {
+-    const css = HUDX.css || 1, r0 = cv.getBoundingClientRect(), vw = innerWidth, alt = el.offsetHeight || 140;
++    const cssX = HUDX.cssX || HUDX.css || 1, cssY = HUDX.cssY || HUDX.css || 1, r0 = cv.getBoundingClientRect(), vw = innerWidth, alt = el.offsetHeight || 140;   // v88.1-site: certo mesmo com a tela esticada
+     const obst = (yTopo, yFim) => {                       // os pedaços [x0, x1] ocupados entre yTopo e yFim (px da tela)
+-      const l = [[r0.left + (BTN_PAUSA.x - 16)*css, r0.left + (BTN_PAUSA.x + BTN_PAUSA.w + 16)*css, r0.top + BTN_PAUSA.y*css, r0.top + (BTN_PAUSA.y + BTN_PAUSA.h)*css]];
++      const l = [[r0.left + (BTN_PAUSA.x - 16)*cssX, r0.left + (BTN_PAUSA.x + BTN_PAUSA.w + 16)*cssX, r0.top + BTN_PAUSA.y*cssY, r0.top + (BTN_PAUSA.y + BTN_PAUSA.h)*cssY]];
+       for (const k of ORDEM_TOQUE.concat(['joy'])){
+         const e = hud[k]; if (!e || !controleVisivel(k)) continue;
+         const r = (k === 'joy' ? JOY.aro*hud.joy.al + JOY.knob*hud.joy.km : BASE[k].r)*(e.s || 1);
+-        l.push([r0.left + (e.x - r - 12)*css, r0.left + (e.x + r + 12)*css, r0.top + (e.y - r)*css, r0.top + (e.y + r)*css]);
++        l.push([r0.left + (e.x - r - 12)*cssX, r0.left + (e.x + r + 12)*cssX, r0.top + (e.y - r)*cssY, r0.top + (e.y + r)*cssY]);
+       }
+       return l.filter(o => o[3] > yTopo && o[2] < yFim).map(o => [o[0], o[1]]).sort((a, b) => a[0] - b[0]);
+     };

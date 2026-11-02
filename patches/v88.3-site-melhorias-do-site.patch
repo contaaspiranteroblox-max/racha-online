@@ -1,0 +1,96 @@
+diff --git a/app/api/lib/vite.ts b/app/api/lib/vite.ts
+index 9a22b63..ba82718 100644
+--- a/app/api/lib/vite.ts
++++ b/app/api/lib/vite.ts
+@@ -16,7 +16,7 @@ export function serveStaticFiles(app: App) {
+   app.get("/", (c) => {
+     c.header("Cache-Control", "no-cache");
+     const q = new URL(c.req.url).search;
+-    return c.redirect("/game/racha.html?v=88.2-site" + (q ? "&" + q.slice(1) : ""), 302);
++    return c.redirect("/game/racha.html?v=88.3-site" + (q ? "&" + q.slice(1) : ""), 302);
+   });
+ 
+   // html sempre fresco — o celular não pode ficar preso numa versão velha do jogo por cache do navegador
+diff --git a/app/public/game/racha.html b/app/public/game/racha.html
+index 67882c9..db07794 100644
+--- a/app/public/game/racha.html
++++ b/app/public/game/racha.html
+@@ -2885,12 +2885,12 @@
+ <script>
+ (function(){
+ 'use strict';
+-/* ---------- v88.2-site: versão visível + anti-cache + fullscreen do navegador ----------
++/* ---------- v88.3-site: versão visível + anti-cache + fullscreen do navegador ----------
+    O Chrome do celular "congela" a aba e volta com a versão VELHA sem baixar nada (bfcache):
+    ao voltar pra aba congelada, recarrega de verdade. A versão aparece no título da aba e na
+    URL (?v=), pra conferir num relance. No 1º toque pede fullscreen: a barra do Chrome some e
+    o celular ultra-largo (Redmi 13 e cia) fica tela cheia sem distorcer. */
+-const VERSAO_JOGO = '88.2-site';
++const VERSAO_JOGO = '88.3-site';
+ document.title = 'RACHA · v' + VERSAO_JOGO;
+ window.addEventListener('pageshow', function(e){ if (e.persisted) location.reload(); });
+ let _fsPedido = false;
+@@ -29664,7 +29664,7 @@ function v84Codigo(codigo){
+   box.append(cp, go);
+ }
+ function v84BotaoOffline(box){                          // v85: o mesmo SÓ TREINAR OFFLINE da tela sem plataforma
+-  const nt = v84El('p', 'v84-nota', 'Sem conta dá para treinar contra os bots neste aparelho. O online, o chat e o ranking precisam da conta.');
++  const nt = v84El('p', 'v84-nota', 'Sem conta você joga com o nome do aparelho. Amigos, mensagens e a economia guardada no servidor pedem a conta.');   // v88.3-site
+   const b = v84El('button', 'v84-alt', 'SÓ TREINAR OFFLINE'); b.type = 'button';
+   b.addEventListener('click', () => { som.clique(); v84Fecha(); });
+   box.append(nt, b);
+@@ -29689,6 +29689,43 @@ function v84Estado(qual){
+   b.addEventListener('click', () => { som.clique(); v84Fecha(); });
+   box.append(v, b);
+ }
++// v88.3-site: entrada sem login — o visitante bota o nome e joga (salas online, treino, tudo o que não
++// precisa de conta no servidor). O dono e a equipe entram pela conta no link discreto (o login continua existindo).
++function v882Nome(){
++  v84Monta();
++  const box = V84.caixa; if (!box) return;
++  const sub = V84.tela && V84.tela.querySelector('.v84-sub');
++  if (sub) sub.textContent = 'O futebol de rua — bote o seu nome e já era: é só jogar.';
++  box.textContent = '';
++  const form = document.createElement('form'); form.noValidate = true;
++  const lb = v84El('label', 'v84-cp'); lb.appendChild(v84El('span', null, 'Seu nome de jogador'));
++  const inp = document.createElement('input'); inp.type = 'text'; inp.maxLength = 12; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.spellcheck = false;
++  lb.appendChild(inp);
++  const erro = v84El('div', 'v84-erro'); erro.hidden = true;
++  const nt = v84El('p', 'v84-nota', 'Sem cadastro e sem senha: o nome aparece no placar e nas salas online.');
++  const go = v84El('button', 'v84-go', 'JOGAR'); go.type = 'submit';
++  const adm = v84El('button', 'v84-link', 'Entrar na conta (dono e equipe)'); adm.type = 'button';
++  adm.addEventListener('click', () => { som.clique(); v84Form('entrar'); });
++  form.append(lb, erro, nt, go);
++  form.addEventListener('submit', ev => {
++    ev.preventDefault();
++    const nm = limpaNome(inp.value);
++    if (!nm){ erro.textContent = 'Bota um nome com letras ou números para jogar.'; erro.hidden = false; return; }
++    som.clique(); perfil.nome = nm; perfilSalvar();
++    try { localStorage.setItem('racha882-nomeado', '1'); } catch (_) {}
++    try { const on = $('onb-nome'); if (on) on.value = nm; } catch (_) {}   // a primeira vez continua com o nome que ele acabou de botar (não apaga)
++    try { lbRender(); } catch (_) {}                                        // o lobby já mostra o nome novo
++    v84Fecha();
++  });
++  box.append(form, adm);
++  setTimeout(() => { try { inp.focus(); } catch (_) {} }, 120);
++}
++// v88.3-site: sem sessão — quem já botou o nome entra direto; quem é novo, pede o nome (nunca o login)
++function v882Entrada(){
++  let nomeado = false;
++  try { nomeado = localStorage.getItem('racha882-nomeado') === '1'; } catch (_) {}
++  if (nomeado || (perfil.nome && perfil.nome !== 'Jogador')) v84Fecha(); else v882Nome();
++}
+ function v84Inicia(){
+   const R = window.RACHA84;
+   if (!R || R.embutido) return;                          // dentro do site: quem pede o login é o site
+@@ -29717,8 +29754,8 @@ function v84Inicia(){
+       R.entrou({ conta: res.conta, cookie: true });
+       if ('c' + String(Number(res.conta.idPublico)) !== R82.dono){ location.reload(); return; }
+       v84Fecha(); v84DepoisDoLogin();
+-    } else v84Form('entrar');
+-  }).catch(() => { if (V84.tela) v84Form('entrar'); });
++    } else v882Entrada();   // v88.3-site: sem sessão — o nome, não o login
++  }).catch(() => { if (V84.tela) v882Entrada(); });   // v88.3-site
+ }
+ // depois do login: o RACHA_EVT (a ponte dos eventos) chega com o racha-bridge.js — espera e engancha
+ function v84DepoisDoLogin(){
