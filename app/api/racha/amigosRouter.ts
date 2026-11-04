@@ -15,6 +15,7 @@ import { autenticado, exigeLimite, type CtxAutenticado } from "./guard";
 import { paraPublico } from "./authRouter";
 import { MAX_AMIGOS, notifica, empurraRelacoes, pub6 } from "./v88/comum";
 import { MOTIVOS_DENUNCIA, MOTIVO_ANTIGO, MOTIVO_TEXTO, DENUNCIA, chaveDenuncia, type MotivoDenuncia } from "@contracts/v88";
+import { ehDuplicado } from "./erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 async function acharPorIdOuNome(termo: string) {
   const db = getDb();
@@ -291,7 +292,7 @@ export const amigosRouter = createRouter({
           chave,
         });
       } catch (e) {
-        if (/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) {
+        if (ehDuplicado(e)) {
           return { ok: true, repetida: true, aviso: "Você já denunciou esse jogador por esse motivo hoje. A equipe já está com a sua denúncia." };
         }
         throw e;

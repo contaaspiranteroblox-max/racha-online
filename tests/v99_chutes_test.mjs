@@ -448,7 +448,10 @@ console.log('\n6) as salas sem os chutes são as mesmas da v98 (quadro por quadr
     let ag = 1000; const h = crypto.createHash('sha256'); let nq = 0;
     try {
       const jog = []; for (let i = 0; i < 2 * n; i++) jog.push(i === 0 && cenario === 'humano' ? { netId: 'H', nome: 'H' } : { netId: null, nome: 'Bot', bot: 'dificil' });
-      const o = { n, jogo, map: 0, tempo: 1, jogadores: jog, agora: () => ag, onSnapshot: d => { h.update(JSON.stringify(d)); nq++; } };
+      // (v102: o quadro leva também as direções e o crédito de cada um — Q.ent e Q.cred, para a previsão do aparelho; o resto
+      //  tem de ser o da v98, byte a byte · v103: o CHUTE padrão ficou mais forte, 340 → 360 — a comparação com a v98 roda com o
+      //  perfil da v98: o que se confere aqui é que os chutes do Rachão desligados não mudam a sala)
+      const o = { n, jogo, map: 0, tempo: 1, jogadores: jog, agora: () => ag, onSnapshot: d => { const { ent, cred, ...q } = d; h.update(JSON.stringify(q)); nq++; }, fisica: Object.assign({}, N.PERFIL_V92, { forcaChute: 340 }) };
       if (chutes !== undefined) o.chutes = chutes;
       const P = new PartidaSala(o); let sq = 0;
       for (let t = 0; t < 60 * 70 && !P.encerrado; t++) {

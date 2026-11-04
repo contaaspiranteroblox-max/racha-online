@@ -63,19 +63,26 @@ TELAS = [
 # tela, a 22 da borda) e o MODO (126 de altura, de 320 a 420 de largura) dentro da faixa de altura do JOGAR, centrado nele
 # · v101: as medidas da imagem da noite — o JOGAR com 140 de altura (de 360 a 460 de largura, a 22 da borda) e, colado nele, o
 # MODO novo (a bola e RANQUEADA: 116 de altura, de 240 a 360 de largura); o #lb-modo de sempre virou o cartão do campo, à esquerda
-JOGAR = """(() => { const J = document.getElementById('lb-jogar'), j = J.getBoundingClientRect(), v101 = LB.raiz.classList.contains('v101'), M = (v101 && document.querySelector('#lb .v101-modo')) || document.getElementById('lb-modo'), m = M.getBoundingClientRect(), sc = PALCO.s;
+JOGAR = """(() => { const J = document.getElementById('lb-jogar'), j = J.getBoundingClientRect(), v101 = LB.raiz.classList.contains('v101'), v102 = LB.raiz.classList.contains('v102'), M = (v101 && !v102 && document.querySelector('#lb .v101-modo')) || document.getElementById('lb-modo'), m = M.getBoundingClientRect(), sc = PALCO.s;
   const rg = document.createRange(); rg.selectNodeContents(J.querySelector('.lb-jogar-tit')); const tr = rg.getBoundingClientRect();
   const pts = [.1, .3, .5, .7, .9].map(f => document.elementFromPoint(tr.left + tr.width*f, tr.top + tr.height*.5));
   return {jw:Math.round(j.width/sc), jh:Math.round(j.height/sc), dir:Math.round((innerWidth - PALCO.sa.r - j.right)/sc), livre:pts.every(p => p && J.contains(p)),
     mw:Math.round(m.width/sc), mh:Math.round(m.height/sc), esq:m.right <= j.left - 4, linha:Math.abs(m.bottom - j.bottom) < 2,
-    dentro:m.top >= j.top - 2 && m.bottom <= j.bottom + 2 && Math.abs((m.top + m.bottom) - (j.top + j.bottom))/2 < 10*sc, mReal:Math.round(m.height), jReal:Math.round(j.height), v101}; })()"""
+    dentro:m.top >= j.top - 2 && m.bottom <= j.bottom + 2 && Math.abs((m.top + m.bottom) - (j.top + j.bottom))/2 < 10*sc, mReal:Math.round(m.height), jReal:Math.round(j.height), v101,
+    v102, acima:m.bottom <= j.top - 4, alinhado:Math.abs(m.left - j.left) < 2 && Math.abs(m.right - j.right) < 2}; })()"""
 
 
 def medidas_jogar(j):
-    """As medidas do JOGAR e do MODO colado nele (v91; v101: as da imagem da noite)."""
+    """As medidas do JOGAR e do MODO colado nele (v91; v101: as da imagem da noite; v102: o MODO em cima do JOGAR, da mesma largura)."""
+    if j.get('v102'):
+        return j['jw'] == 404 and j['jh'] == 140 and j['mw'] == 404 and 88 <= j['mh'] <= 124   # (o MODO cresce no celular: nunca menos de 44 px de verdade)
     if j.get('v101'):
         return 360 <= j['jw'] <= 460 and j['jh'] == 140 and 240 <= j['mw'] <= 360 and j['mh'] == 116
     return 360 <= j['jw'] <= 440 and j['jh'] == 154 and 320 <= j['mw'] <= 420 and j['mh'] == 126
+def jogar_ok(j):
+    """O JOGAR inteiro, a 22 da borda, e o MODO sem cobrir: colado à esquerda (v91, v101) ou em cima, alinhado com ele (v102)."""
+    lugar = (j['acima'] and j['alinhado']) if j.get('v102') else (j['esq'] and j['dentro'])
+    return medidas_jogar(j) and j['dir'] == 22 and j['livre'] and lugar and min(j['mReal'], j['jReal']) >= 44
 # 30 partidas no histórico (a aba PARTIDAS cheia)
 HIST = """(() => { for (let i = 0; i < 30; i++) X49.history.push({at:Date.now() - i*3600e3, win:i%3 !== 0, emp:i%7 === 0, score:[3, i%4], n:2, jogo:['futebol', 'curva', 'ginga'][i%3], ctx:['casual', 'liga', 'online'][i%3]});
   X49.history = X49.history.slice(-30); renderPartidas(); return X49.history.length; })()"""
@@ -88,8 +95,8 @@ async def deitado(P, pw, w, h):
     r = await rt(pg, "({cabe:LB.raiz.classList.contains('v70-cabe'), s:+PALCO.s.toFixed(3), sc:+PALCO.sc.toFixed(3), gire:!V70G.el.hidden})")
     P.confere(r['cabe'] and not r['gire'], 'o lobby entra no modo em que tudo cabe (escala do palco %.3f, como na v69)' % r['s'], r)
     j = await rt(pg, JOGAR)
-    P.confere(medidas_jogar(j) and j['dir'] == 22 and j['livre'] and j['esq'] and j['dentro'] and min(j['mReal'], j['jReal']) >= 44,
-              'o JOGAR inteiro e o MODO colado à esquerda dele, sem se cobrirem (v91; v101: as medidas da imagem da noite; os dois com mais de 44 px de altura)', j)
+    P.confere(jogar_ok(j),
+              'o JOGAR inteiro e o MODO junto dele, sem se cobrirem (v91; v101: as medidas da imagem da noite; v102: em cima; os dois com mais de 44 px de altura)', j)
     for nome, js in TELAS:
         await rt(pg, js); await pg.wait_for_timeout(420)
         m = await pg.evaluate(CABE + '(%s)' % json.dumps(RAIZES))
@@ -184,7 +191,7 @@ async def principal():
         print('\n· 1280x720 (computador)')
         b, pg, erros = await abre(pw, 1280, 720, toque=False)
         j = await rt(pg, JOGAR)
-        P.confere(medidas_jogar(j) and j['dir'] == 22 and j['livre'] and j['esq'] and j['dentro'] and min(j['mReal'], j['jReal']) >= 44, 'no computador também: o JOGAR e o MODO colado nele (v91; v101)', j)
+        P.confere(jogar_ok(j), 'no computador também: o JOGAR e o MODO junto dele (v91; v101; v102)', j)
         await rt(pg, "abreTela('perfil'); true"); await pg.wait_for_timeout(400)
         r = await rt(pg, """({cabe:LB.raiz.classList.contains('v70-cabe'), z:document.querySelectorAll('[data-v70z]').length,
           nav:getComputedStyle(document.querySelector('#tela-perfil .v77-pf-abas')).display, est:document.querySelector('#tela-perfil .v77-pf-est').hidden})""")

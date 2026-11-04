@@ -487,7 +487,8 @@ async def principal():
         await pg.click('.rc-mistura button[data-parte="chute"][data-jogo="racha"]'); await pg.wait_for_timeout(200)
         e = await ed(pg)
         r = await pg.evaluate("[...document.querySelectorAll('.rc-mistura-l')].map(l => (l.querySelector('button.on') || {}).textContent || '')")
-        P.confere(r == ['RACHA', 'RACHA', 'RACHA'] and e['doc']['fisica'].get('kickForce') == 4.25 and e['doc']['fisica'].get('kickAccel') == 1 and 'bola, o jogador e o chute do RACHA' in e['mapa']['desc'],
+        # (v103: o CHUTE do RACHA 340 → 360: no motor do Rachão o chute do RACHA é o kickForce 4,5 — era 4,25)
+        P.confere(r == ['RACHA', 'RACHA', 'RACHA'] and e['doc']['fisica'].get('kickForce') == 4.5 and e['doc']['fisica'].get('kickAccel') == 1 and 'bola, o jogador e o chute do RACHA' in e['mapa']['desc'],
                   'tudo do RACHA (bola, jogador e chute): os três reconhecidos e a descrição do estádio conta', [r, e['mapa']['desc']])
         await pg.screenshot(path=str(SAIDA / 'v97_rachao_mistura.png'))
         await pg.click('.rc-t-testar'); await pg.wait_for_timeout(300)
@@ -608,8 +609,8 @@ async def principal():
           return { linhas, preset: I.OFE.M.fisica.preset, partes, rBola: F.perfil.rBola, dv, sala, depois, acel }; })()""")
         await pg.wait_for_timeout(300)
         P.confere(r['linhas'] == [['Bola', 'RACHA'], ['Tampinha', 'RACHA'], ['Chute', 'RACHA']] and r['preset'] == 'personalizado' and r['partes'] == ['rachao', 'racha', 'racha']
-                  and abs(r['rBola'] - 4 / 3) < 0.001 and abs(r['dv'] - 34) < 0.05,
-                  'na Oficina do RACHA, o MISTURAR COM O RACHÃO da física do mapa: a bola do Rachão entra (maior e leve) e o chute continua o do RACHA (34 u/s)', r)
+                  and abs(r['rBola'] - 4 / 3) < 0.001 and abs(r['dv'] - 36) < 0.05,
+                  'na Oficina do RACHA, o MISTURAR COM O RACHÃO da física do mapa: a bola do Rachão entra (maior e leve) e o chute continua o do RACHA (36 u/s; v103: era 34)', r)
         P.confere(r['sala'] == {'pre': ['Personalizada'], 'on': ['bola:rachao', 'jogador:rachao', 'chute:racha']},
                   'e na FÍSICA DA SALA (CRIAR SALA): a tampinha do Rachão por cima da bola do mapa, a predefinição vira Personalizada', r['sala'])
         P.confere(r['depois'] == ['bola:rachao', 'chute:racha'] and r['acel'] == 1,

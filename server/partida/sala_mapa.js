@@ -107,7 +107,10 @@ class PartidaMapa {
   sai(netId) {
     const q = this.P.jog.find(x => x.netId === netId); if (!q) return;
     this.fecha(q);
-    q.reserva = q.netId; RachaMapa.botAssume(this.P, q); q.fila = null; q.ritmo = [];
+    q.reserva = q.netId;
+    if (this.bots) RachaMapa.botAssume(this.P, q);
+    else { q.netId = null; q.bot = null; q.ai = null; q.vazio = true; q.fora = true; q.nome = ''; q.mx = q.my = 0; q.vx = q.vy = 0; q.netButton = null; }   // v103: sem bots, quem cai deixa a vaga vazia (volta nela se reconectar)
+    q.fila = null; q.ritmo = [];
   }
   gente() { return this.P.jog.filter(q => q.netId).length; }
 

@@ -10,6 +10,7 @@ import { sha256 } from "./security";
 import { PERMISSOES_PADRAO, CARGO_PESO, type Cargo, type Permissao } from "@contracts/racha";
 import type { TrpcContext } from "../context";
 import { publicQuery } from "../middleware";
+import { ehDuplicado } from "./erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 export type UsuarioSessao = typeof usuarios.$inferSelect;
 export type Sessao = typeof sessoes.$inferSelect;
@@ -108,7 +109,6 @@ export async function cargoDo(usuarioId: number): Promise<{ cargo: Cargo; permis
 // v100 (segurança): a contagem é atômica — o próprio banco soma (contagem = contagem + 1) só enquanto não chegou no máximo.
 // Antes a conta era lida e escrita de volta: pedidos ao mesmo tempo liam o mesmo número e passavam todos (uma rajada de
 // tentativas de senha, o mesmo resultado mandado várias vezes de uma vez).
-const ehDuplicado = (e: unknown) => /duplicate|ER_DUP_ENTRY|1062/i.test(String((e as { message?: string })?.message ?? e));
 const linhas = (r: unknown) => Number((Array.isArray(r) ? (r[0] as { affectedRows?: number }) : (r as { affectedRows?: number }))?.affectedRows) || 0;
 export async function bateLimite(chave: string, max: number, janelaMs: number): Promise<boolean> {
   const db = getDb();

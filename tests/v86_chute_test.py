@@ -2,10 +2,10 @@
 
 Confere no jogo de verdade (tests/build/racha_teste.html) e no servidor (server/partida/fisica.js e o motor das salas,
 server/partida/sala.js — o que roda as salas hospedadas):
-  1. os números: PASSE 212,5 e CHUTE 340 (eram 250 e 400; na v86, 275 e 440) e o teto da bola 46,75 u/s (era 55; na v86,
+  1. os números: PASSE 212,5 e CHUTE 360 (v103; era 340 — eram 250 e 400; na v86, 275 e 440) e o teto da bola 46,75 u/s (era 55; na v86,
      60), iguais no jogo e no servidor;
      o resto da física igual ao da v84 (corrida, raios, massas, bola, materiais, alcance, quadras);
-  2. a bola parada depois do PASSE e do CHUTE: Δv = força ÷ massa da bola = 21,25 e 34 u/s (15% a menos que os 25 e 40
+  2. a bola parada depois do PASSE e do CHUTE: Δv = força ÷ massa da bola = 21,25 e 36 u/s (v103; o CHUTE era 34 — 15% a menos que os 25 e 40
      da v84) — no kickBall, pelos botões de verdade (Espaço e K), na partida autoritativa e no motor das salas (pelo chute e
      pelo comando da rede, o mesmo valor do aparelho);
   3. o teto: o CHUTE numa bola que já corre na mesma direção para em 46,75 u/s (jogo, partida autoritativa e sala);
@@ -122,7 +122,7 @@ async def principal():
     perto = lambda a, c, tol=1e-6: abs(a - c) <= tol*max(1, abs(c))
 
     print('\n1) os números')
-    P.confere(k['FORCA_KICK'] == 212.5 and k['FORCA_POWER'] == 340, 'no jogo: PASSE 212,5 e CHUTE 340 (v84: 250 e 400 — 15% a menos; na v86, 275 e 440)', k)
+    P.confere(k['FORCA_KICK'] == 212.5 and k['FORCA_POWER'] == 360, 'no jogo: PASSE 212,5 e CHUTE 360 (v103: o CHUTE era 340; v84: 250 e 400; na v86, 275 e 440)', k)
     P.confere(perto(k['LIMITE_VEL_BOLA'], U(46.75)), 'no jogo: o teto da bola é 46,75 u/s = %.2f px/s (v84: 55 — 15%% a menos)' % U(46.75), k['LIMITE_VEL_BOLA'])
     iguais = {n: (k[n], s['k'][n]) for n in s['k'] if json.dumps(k[n]) != json.dumps(s['k'][n])}
     P.confere(not iguais, 'o servidor usa os MESMOS números do jogo (%d constantes, as quadras inclusive)' % len(s['k']), iguais)
@@ -133,7 +133,7 @@ async def principal():
 
     print('\n2) a bola parada depois do PASSE e do CHUTE')
     P.confere(perto(r['passe'], dv_passe) and perto(r['chute'], dv_chute),
-              'kickBall: o PASSE sai a %.2f px/s (21,25 u/s) e o CHUTE a %.1f px/s (34 u/s)' % (r['passe'], r['chute']), r)
+              'kickBall: o PASSE sai a %.2f px/s (21,25 u/s) e o CHUTE a %.1f px/s (36 u/s)' % (r['passe'], r['chute']), r)
     P.confere(perto(r['botaoChute'], dv_chute*k['FATOR_BOLA']) and perto(r['botaoPasse'], dv_passe*k['FATOR_BOLA']) and r['estadoChute'] == 3 and r['estadoPasse'] == 2,
               'pelos botões de verdade (K e Espaço): o chute sai no mesmo passo (%.1f e %.1f px/s depois do 0,99 do passo)' % (r['botaoChute'], r['botaoPasse']),
               {k2: r[k2] for k2 in ('botaoChute', 'botaoPasse', 'estadoChute', 'estadoPasse')})
@@ -143,11 +143,11 @@ async def principal():
               'pelo comando da rede (button 3 e 2), a sala do servidor dá o MESMO chute do aparelho (%.3f / %.3f px/s)' % (s['sala_cmd_chute'], s['sala_cmd_passe']),
               {'sala': [s['sala_cmd_chute'], s['sala_cmd_passe']], 'jogo': [r['botaoChute'], r['botaoPasse']]})
     dist = dv_chute/k['TICKS_POR_S']/(1 - k['FATOR_BOLA'])/k['PX_POR_U']
-    print('  (o CHUTE da bola parada rola uns %.0f u até parar sem bater em nada; na v84, %.0f u)' % (dist, dist*40/34))
+    print('  (o CHUTE da bola parada rola uns %.0f u até parar sem bater em nada; na v84, %.0f u)' % (dist, dist*40/36))
 
     print('\n3) o teto')
     teto = U(46.75)
-    P.confere(perto(r['antesTeto'], U(74)) and perto(r['teto'], teto), 'no jogo: a bola a 40 u/s leva o CHUTE (vai a 74 u/s) e no passo para em 46,75 u/s (%.2f px/s)' % r['teto'], r)
+    P.confere(perto(r['antesTeto'], U(76)) and perto(r['teto'], teto), 'no jogo: a bola a 40 u/s leva o CHUTE (vai a 76 u/s) e no passo para em 46,75 u/s (%.2f px/s)' % r['teto'], r)
     P.confere(r['maxV'] <= teto + 1e-6 and r['chutesTeto'] >= 3, 'chutando atrás da bola por 3 s (%d chutes), ela nunca passa do teto (máx. %.1f px/s)' % (r['chutesTeto'], r['maxV']), r)
     P.confere(perto(s['auto_teto'], teto) and perto(s['sala_teto'], teto), 'no servidor também: %.1f (autoritativa) e %.1f px/s (sala)' % (s['auto_teto'], s['sala_teto']), s)
 

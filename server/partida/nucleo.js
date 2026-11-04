@@ -12,7 +12,8 @@
        contador de toques no comando, que não deixa um toque se perder na rede).
    Os números vêm de um PERFIL (em u, as unidades do jogo; 1 u = 19 px). PERFIL_V91 reproduz a v91 exatamente;
    PERFIL_V92 é o padrão novo (os mesmos números de física + o toque armado e a rede do gol segurando a tampinha também
-   no servidor, como no jogo offline). O painel de testes da versão experimental troca o perfil; a versão oficial usa o
+   no servidor, como no jogo offline; desde a v103, o CHUTE uns 6% mais forte: 360, era 340).
+   O painel de testes da versão experimental troca o perfil; a versão oficial usa o
    padrão e o servidor só aceita perfil de fora com RACHA_EXPERIMENTAL=1.
    Determinístico: nada de Math.random aqui (o servidor e a previsão precisam dar o mesmo resultado).
    ===================================================================================================================== */
@@ -74,7 +75,12 @@
     dbJanelaMs: 5,        // ms: o CHUTE até aqui completa o DB; depois, a bola parada "já saiu do alcance" (só com dbRelogio)
   });
   // v92: o padrão novo — a física de números é a MESMA; só o toque armado (100 ms) e a rede do gol igual ao offline.
-  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1 }));
+  // v103 (a pedido: "aumentar bem pouco a força do chute e do passe — o chute sem DB é relativamente fraco"): o CHUTE uns 6%
+  // mais forte (a bola parada sai a 36 u/s, era 34). O teto da bola não muda (46,75 u/s): o DB (PASSE + CHUTE) continua no
+  // teto, então o chute sozinho fica um pouco mais perto dele. O PASSE fica em 212,5: ele decide o DB com a bola rolando (a
+  // bola não pode sair do alcance antes do CHUTE do passo seguinte) e qualquer aumento derruba o DB — no laboratório
+  // (tests/v92_db/lab.cjs, o cenário "normal"), com o PASSE a 213 a chance cai de 76% para 31%; a 220, para 0%.
+  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360 }));
 
   // os limites que o painel e o servidor aceitam (o servidor corta qualquer coisa fora disto)
   const LIMITES = Object.freeze({
@@ -638,9 +644,13 @@
     else { q.x = G.CX; if (s < 0 ? q.vx > 0 : q.vx < 0) q.vx = 0; }
   }
 
+  // v103 · a vaga vazia (as salas personalizadas sem bots: quem saiu deixa o time com um a menos): a tampinha com fora = true
+  // não anda, não bate em nada e não toca na bola. Sem ninguém fora, a lista é a mesma de sempre (o passo não muda nada).
+  function presentes(J) { for (let i = 0; i < J.length; i++) if (J[i].fora) return J.filter(q => !q.fora); return J; }
+
   /* ---------- as colisões de um subpasso (a ordem do motor das salas) ---------- */
   function colide(M, C) {
-    const B = M.B, G = M.G, J = M.jog, lq = C.LIMIAR_QUIQUE, alta = M.cr ? crAlta(M, C) : false;
+    const B = M.B, G = M.G, J = presentes(M.jog), lq = C.LIMIAR_QUIQUE, alta = M.cr ? crAlta(M, C) : false;
     for (const q of J) {
       if (!alta) hitBodies(q, B, C.QUIQUE_BOLA, C.ATRITO_JOG_BOLA);   // (v99: a bola alta passa por cima)
       hitBox(q, G.GL, G.GT, G.GR, G.GB, C.Q_JOG_PAREDE, 0, lq);
@@ -686,8 +696,8 @@
        cb.gol(lado) → 'para'?   — a bola cruzou a linha num subpasso (devolver 'para' interrompe o passo).
      Tampinha cinemática (a previsão do aparelho para os outros jogadores): não usa entrada nem é empurrada. */
   function passo(M, C, cb) {
-    const B = M.B, CR = M.cr ? C.CR : null;
-    for (const q of M.jog) {
+    const B = M.B, CR = M.cr ? C.CR : null, J = presentes(M.jog);   // (v103: sem as vagas vazias)
+    for (const q of J) {
       if (q.cinematico) continue;
       const d = direcao(q.mx, q.my, C.DIRECOES);
       if (d.mx || d.my) {
@@ -704,12 +714,12 @@
     if (speed > teto) { B.vx *= teto / speed; B.vy *= teto / speed; }
     if (CR && B.teto && speed <= C.LIMITE_VEL_BOLA) B.teto = 0;
     let relative = 0;
-    for (const q of M.jog) { const r = Math.hypot(B.vx - q.vx, B.vy - q.vy); if (r > relative) relative = r; }
+    for (const q of J) { const r = Math.hypot(B.vx - q.vx, B.vy - q.vy); if (r > relative) relative = r; }
     const steps = Math.max(2, Math.min(12, Math.ceil(Math.max(speed, relative) * DT / (C.R_BOLA * 0.3))));
     const sub = DT / steps;
     for (let i = 0; i < steps; i++) {
       const bx0 = B.x, by0 = B.y;
-      for (const q of M.jog) { q.x += q.vx * sub; q.y += q.vy * sub; }
+      for (const q of J) { q.x += q.vx * sub; q.y += q.vy * sub; }
       B.x += B.vx * sub; B.y += B.vy * sub;
       if (M.jogo === 'curva') curvaNoAr(B, sub);
       colide(M, C); colide(M, C);
@@ -752,7 +762,7 @@
   }
 
   return {
-    VERSAO: 'v92.1', PX_POR_U, U, TPS, DT, PERFIL_V91, PERFIL_V92, LIMITES, FOLGA_CHUTE, perfilLimpo, resolve,
+    VERSAO: 'v92.1', PX_POR_U, U, TPS, DT, PERFIL_V91, PERFIL_V92, LIMITES, FOLGA_CHUTE, perfilLimpo, resolve, presentes,
     reflect, hitPoint, hitSeg, hitBox, hitBodies, MODOS, MARGEM_X, MARGEM_Y, novoCampo, direcao,
     chute, novoBotao, botaoComando, botaoTick, curvaTick, curvaNoAr, cvSinal, cvMarca, CV_CARGA_S, CV_ARMA_S,
     dbContexto, dbFolga, dbPack, dbUnpack,

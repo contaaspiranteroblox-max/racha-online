@@ -73,13 +73,14 @@ async def principal():
         print('\n1) o botão OFICINA na tela inicial e a central (vários tamanhos de tela)')
         for (w, h) in [(568, 320), (640, 360), (844, 390), (1024, 768), (1280, 720), (1920, 1080)]:
             b, pg, erros = await abre(pw, w, h, toque=True)
-            r = await ev(pg, """() => { const b = document.getElementById('ofi-lobby'); if (!b) return null; const r = b.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+            # (v102: o lobby com menos coisa na tela — a OFICINA é o botão da barra de atalhos, que toca o de sempre)
+            r = await ev(pg, """() => { const b = (document.querySelector('#lb.v102') && [...document.querySelectorAll('#lb .v102-doca-bt')].find(x => /OFICINA/.test(x.textContent))) || document.getElementById('ofi-lobby'); if (!b) return null; const r = b.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
               const dentro = r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
               const outros = [...document.querySelectorAll('#lb button, #lb .rx-bt')].filter(x => x !== b && x.offsetParent && !b.contains(x)).map(x => x.getBoundingClientRect()).filter(q => q.width > 4 && q.height > 4);
               const cobre = outros.some(q => !(q.right <= r.left + 2 || q.left >= r.right - 2 || q.bottom <= r.top + 2 || q.top >= r.bottom - 2));
               return { dentro, clica: !!e && (e === b || b.contains(e)), cobre, w: Math.round(r.width), h: Math.round(r.height) }; }""")
             P.confere(r and r['dentro'] and r['clica'] and not r['cobre'] and r['h'] >= 30, '%dx%d: o botão OFICINA aparece inteiro, sem cobrir outro botão, e recebe o toque' % (w, h), r)
-            box = await ev(pg, "() => { const r = document.getElementById('ofi-lobby').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }")
+            box = await ev(pg, "() => { const b = (document.querySelector('#lb.v102') && [...document.querySelectorAll('#lb .v102-doca-bt')].find(x => /OFICINA/.test(x.textContent))) || document.getElementById('ofi-lobby'); const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }")
             await pg.touchscreen.tap(box[0], box[1])
             ok = await espera(pg, "OFI.aberta && OFI.tela === 'hub' && !OFI.raiz.hidden", 3000)
             sem_rolar = await ev(pg, "() => document.scrollingElement.scrollWidth <= innerWidth + 1 && [...document.querySelectorAll('.ofi-hub-topo .ofi-bt')].every(b => b.getBoundingClientRect().right <= innerWidth + 1)")

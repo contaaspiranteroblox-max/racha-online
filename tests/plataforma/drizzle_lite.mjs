@@ -222,6 +222,15 @@ function erroMysql(e, tabelaInfo) {
   return err;
 }
 
+// v102: como o drizzle-orm de verdade (0.44+, o da produção é o 0.45): todo erro de consulta vem embrulhado no "Failed query"
+// (DrizzleQueryError), com o erro do MySQL em .cause. Antes o banco de teste entregava o erro do MySQL direto, e o código que
+// procurava "Duplicate entry" só na mensagem de cima passava aqui e quebrava na produção (o correio e as mensagens).
+function erroDrizzle(e, texto, params) {
+  const w = new Error('Failed query: ' + texto + '\nparams: ' + (params || []).map(String).join(','));
+  w.name = 'DrizzleQueryError'; w.query = texto; w.params = params; w.cause = e;
+  return w;
+}
+
 function ddlTabela(info) {
   const defs = [];
   const pkComposta = info.indices.find((i) => i.tipo === 'pk');
@@ -321,7 +330,7 @@ class Db {
       if (modo === 'todas') return st.all(...params);
       return st.run(...params);
     } catch (e) {
-      throw erroMysql(e, info);
+      throw erroDrizzle(erroMysql(e, info), texto, params);
     }
   }
   async _consultaRel(t, o) {

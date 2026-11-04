@@ -160,7 +160,7 @@ done
 # teleportes, as traves, o atraso, a fila do servidor; no navegador: duas sessões na sala de verdade, a rede lenta e os
 # apagões), a tampinha dos FUNDADORES na plataforma (as 30 primeiras contas, o número, não vende, o bilhete) e as tampinhas
 # animadas novas no jogo (o desenho, o editor, a dos fundadores só para quem tem, a partida e o custo); ~3 min.
-for t in v96_rede_test.mjs v96_fundador_test.mjs; do
+for t in v96_rede_test.mjs v96_fundador_test.mjs v102_rede_test.mjs; do
   printf '%-12s ' "${t%%_test*}"
   if out=$(node "tests/$t" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU|falhou' | head -4; echo "$out" | tail -1; fi
 done
@@ -229,6 +229,31 @@ done
 # botões abrindo o que já abriam, as telas no estilo novo e as tampinhas prontas escondidas (o interruptor as traz de volta).
 # Os testes que conferem as prontas (v71, v76, v80, v96_skins, polimento, celular, v93_itens) ligam o interruptor (comum.SKINS_PRONTAS).
 for t in v101; do
+  printf '%-12s ' "$t"
+  if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
+done
+# v102: A BORDA BOTÃO, O ANEL, O LOBBY MAIS LIMPO E O CORREIO (ver o CHANGELOG.md, v102). O v102_correio (Node) roda a plataforma
+# de teste com o banco embrulhando os erros como o drizzle da produção (o "Failed query" com a chave repetida dentro): a carta
+# para todo mundo chega uma vez e o correio continua abrindo, COLETAR paga uma vez, APAGAR não traz a carta nem o prêmio de
+# volta. O v102 (Python) confere o lobby com menos coisa na tela em cinco tamanhos (o MENU com o resto, os mesmos botões de
+# sempre por trás, os números e os pontos), a borda BOTÃO (o lugar 27, o desenho, o editor) e o anel novo; ~2,5 min.
+printf '%-12s ' "v102_correio"
+if out=$(node tests/v102_correio_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+for t in v102; do
+  printf '%-12s ' "$t"
+  if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
+done
+# v103: O LOBBY DE DIA, AS SALAS SEM BOTS, O ÁRBITRO, A RANQUEADA QUE VALE, O PERFIL PELO CHAT, OS SONS DO ONLINE, OS CONTROLES E A TELA
+# CHEIA (ver o CHANGELOG.md, v103). O v103_ranqueada (Node) confere a fila (o fila_bots e os 20 s sem ninguém: a ranqueada contra
+# os bots no servidor) e, na plataforma de teste, os pontos dela com o teto do dia contra os bots e o ranking; o v103_salas
+# (Python, quatro navegadores) a sala sem bots, a ficha do árbitro, o começo com um a menos, pôr gente no meio sem reiniciar e quem
+# sai deixando a vaga vazia; o v103_sons, os sons do online contados em dois navegadores; o v103_chat_perfil (a plataforma de
+# teste), o VER PERFIL pelo chat no lobby e na partida; o v103_controles, o controle e o teclado configuráveis e o analógico; o
+# v103_tela, a tela cheia, o PWA e o encaixe em vários tamanhos.
+printf '%-12s ' "v103_ranq"
+if out=$(node tests/v103_ranqueada_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+for t in v103_salas v103_sons v103_chat_perfil v103_controles v103_tela; do
+  [ -f "tests/${t}_test.py" ] || continue
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

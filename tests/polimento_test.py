@@ -6,7 +6,7 @@ v77: cada botão abre só a tela dele (o título igual ao botão: TREINO, CLUBE,
 Rodar: python3 tests/polimento_test.py
 """
 import pathlib, re
-from comum import abre, rt, roda, Placar, async_playwright, RAIZ, HARNESS
+from comum import abre, rt, roda, Placar, async_playwright, RAIZ, HARNESS, clica_lobby
 import comum; comum.SKINS_PRONTAS = True   # v101: este teste confere as tampinhas prontas (o interruptor as traz de volta)
 
 FOCO = """(() => { const a = document.activeElement; if (!a || a === document.body) return 'body';
@@ -67,7 +67,7 @@ async def principal():
         async def destino(sel):
             await rt(pg, "(() => { if (LB.pop && !LB.pop.hidden) fechaPop(); if (lobby.tela){ ED.saindo = true; fechaTela(); ED.saindo = false; } abrirLobby(); return true; })()")
             await pg.wait_for_timeout(200)
-            await pg.click(sel); await pg.wait_for_timeout(450)
+            await clica_lobby(pg, sel); await pg.wait_for_timeout(450)   # (v102: os que foram para a barra de atalhos ou para o MENU, por lá)
             return await rt(pg, "(() => { const T = lobby.tela && TELAS[lobby.tela]; const h = T && T.el.querySelector('.tl-cab h2'); const a = T && T.el.querySelector('.tl-aba[aria-selected=true]'); return {tela:lobby.tela, h2:h && h.textContent, aba:a && a.textContent.replace(/\\d+$/, '')}; })()")
         tile = await pg.evaluate("document.querySelector('#rx [data-rx=\"cofre\"] b').textContent")   # (v90: o TAMPINHA virou COFRE)
         d = await destino('#rx [data-rx="cofre"]')
@@ -160,7 +160,16 @@ async def principal():
 
         print('\n5) as janelas: foco, Tab, fundo inerte, Esc por camada e o foco de volta')
         await rt(pg, "(() => { if (lobby.tela){ ED.saindo = true; fechaTela(); ED.saindo = false; } abrirLobby(); return true; })()"); await pg.wait_for_timeout(250)
-        await pg.focus('#lb-missoes'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(300)   # v71: o PASSE saiu do lobby; os DESAFIOS abrem a mesma janela
+        # v102: o lobby com menos coisa na tela — as MISSÕES, o CLUBE e os AJUSTES moram no MENU: pelo teclado, Enter no MENU abre a
+        # gaveta (o foco entra nela) e Enter no item abre o de sempre; quando a janela ou a tela fecha, o foco volta para o MENU
+        v102 = await rt(pg, "LB.raiz.classList.contains('v102')")
+        async def pelo_menu(nome):
+            await pg.focus('#lb .v102-menu-bt'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(280)
+            await pg.focus('#lb .v102-item:has-text("%s")' % nome); await pg.keyboard.press('Enter')
+        if v102:
+            await pelo_menu('MISSÕES'); await pg.wait_for_timeout(300)
+        else:
+            await pg.focus('#lb-missoes'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(300)   # v71: o PASSE saiu do lobby; os DESAFIOS abrem a mesma janela
         j = await pg.evaluate("(() => ({aberta:!document.getElementById('lb-pop').hidden, dentro:document.getElementById('lb-pop').contains(document.activeElement), fundo:!!document.getElementById('rx').closest('[inert]'), jogo:!!document.getElementById('wrap').inert, aviso:!document.getElementById('lb-aviso').closest('[inert]')}))()")
         P.confere(j['aberta'] and j['dentro'], 'a janela abre com o foco dentro', j)
         P.confere(j['fundo'] and j['jogo'] and j['aviso'], 'o fundo fica inerte (o lobby e o jogo); o aviso continua sendo lido', j)
@@ -173,8 +182,12 @@ async def principal():
         P.confere(not sai, 'Tab e Shift+Tab ficam dentro da janela')
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
         f = await pg.evaluate(FOCO)
-        P.confere(await rt(pg, "LB.pop.hidden") and ('lb-missoes' in f or 'Desafios' in f) and not await pg.evaluate("!!document.querySelector('[inert]')"), 'Esc fecha; o foco volta ao botão que abriu e nada fica inerte', f)
-        await pg.focus('#rx [data-rx="clube"]'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(350)
+        volta_ok = ('Menu' in f or 'v102-menu-bt' in f) if v102 else ('lb-missoes' in f or 'Desafios' in f)
+        P.confere(await rt(pg, "LB.pop.hidden") and volta_ok and not await pg.evaluate("!!document.querySelector('[inert]')"), 'Esc fecha; o foco volta ao botão que abriu (v102: o MENU) e nada fica inerte', f)
+        if v102:
+            await pelo_menu('CLUBE'); await pg.wait_for_timeout(350)
+        else:
+            await pg.focus('#rx [data-rx="clube"]'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(350)
         await pg.focus('.clb-criar-bt'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(350)
         m = await pg.evaluate("(() => { const m = document.querySelector('.clb-modal'); return m && {role:m.getAttribute('role'), modal:m.getAttribute('aria-modal'), nome:m.getAttribute('aria-label'), dentro:m.contains(document.activeElement)}; })()")
         P.confere(m and m['role'] == 'dialog' and m['modal'] == 'true' and m['dentro'], 'a janela do clube (dentro da tela) é um diálogo com o foco dentro', m)
@@ -183,11 +196,14 @@ async def principal():
         P.confere(not e['modal'] and e['tela'] == 'clube' and 'CRIAR CLUBE' in await pg.evaluate(FOCO), 'Esc fecha só a janela do clube (a tela fica) e o foco volta ao CRIAR CLUBE', [e, await pg.evaluate(FOCO)])
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
         f = await pg.evaluate(FOCO)
-        P.confere(await rt(pg, "lobby.tela") is None and 'Clube' in f, 'o segundo Esc fecha a tela e o foco volta ao CLUBE do lobby', f)
-        await pg.focus('#lb-ajustes'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(300)
+        P.confere(await rt(pg, "lobby.tela") is None and (('Menu' in f) if v102 else ('Clube' in f)), 'o segundo Esc fecha a tela e o foco volta ao CLUBE do lobby (v102: ao MENU, de onde ele abriu)', f)
+        if v102:
+            await pelo_menu('AJUSTES'); await pg.wait_for_timeout(300)
+        else:
+            await pg.focus('#lb-ajustes'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(300)
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
         f = await pg.evaluate(FOCO)
-        P.confere(await pg.evaluate("document.getElementById('pop-ajustes').hidden") and '#lb-ajustes' in f, 'Ajustes: Esc fecha e o foco volta para a engrenagem', f)
+        P.confere(await pg.evaluate("document.getElementById('pop-ajustes').hidden") and (('Menu' in f) if v102 else ('#lb-ajustes' in f)), 'Ajustes: Esc fecha e o foco volta para a engrenagem (v102: para o MENU)', f)
         await rt(pg, "abreTela('skins'); true"); await pg.wait_for_timeout(400)
         await pg.click('.tpe-menu-bt'); await pg.wait_for_timeout(200)
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(200)

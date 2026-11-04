@@ -553,7 +553,7 @@ class Turma {
     if (c.sala) this.sai(c, 'saiu');
     const n = mp ? inteiro(m.n, mp.porMin, mp.porMax, mp.porTime) : inteiro(m.n, 1, 4, 2), E = mp ? mp.E : 2;
     const r = {code:this.codigo(), name:limpa(m.name, 24) || (mp ? limpa(mp.info.nome, 24) : 'Racha de ' + c.nome), host:c.id, n, map:MAPAS_SALA.includes(m.map) ? m.map : MAPAS_SALA[0],
-      jogo:mp ? mp.jogo : MODOS_SALA.includes(m.jogo) ? m.jogo : 'futebol', tempo:mp ? mp.tempo : TEMPOS.includes(m.tempo) ? m.tempo : 0, bots:mp && typeof m.bots !== 'boolean' ? mp.bots : !!m.bots,
+      jogo:mp ? mp.jogo : MODOS_SALA.includes(m.jogo) ? m.jogo : 'futebol', tempo:mp ? mp.tempo : TEMPOS.includes(m.tempo) ? m.tempo : 0, bots:false,   // v103: as salas personalizadas não têm bots
       pub:m.pub !== false && !(mp && mp.privado), servidor:true,
       state:'waiting', round:0, roster:new Array(E*n).fill(null), members:[], tournament:null, hist:[], reservas:new Map(), removidos:new Map(),
       inicio:0, pausa:null, pausadoMs:0, ultimo:null, gols:{}, encerrada:-1, interrompida:-1, vaziaAte:0, criada:Date.now()};
@@ -579,7 +579,7 @@ class Turma {
     const rc = this.rachaoDaSala(m.rachao); if (rc.erro) return this.erro(c, rc.erro, 'rachao');
     if (c.sala) this.sai(c, 'saiu');
     const n = inteiro(m.n, 1, RCH.MAX_POR_TIME, rc.info.def || 2);
-    const r = {code:this.codigo(), name:limpa(m.name, 24) || limpa('Rachão de ' + c.nome, 24), host:c.id, n, map:MAPAS_SALA[0], jogo:'rachao', tempo:0, bots:m.bots !== false,
+    const r = {code:this.codigo(), name:limpa(m.name, 24) || limpa('Rachão de ' + c.nome, 24), host:c.id, n, map:MAPAS_SALA[0], jogo:'rachao', tempo:0, bots:false,   // v103: sem bots
       pub:m.pub !== false, servidor:true, state:'waiting', round:0, roster:new Array(2*n).fill(null), members:[], tournament:null, hist:[], reservas:new Map(), removidos:new Map(),
       inicio:0, pausa:null, pausadoMs:0, ultimo:null, gols:{}, encerrada:-1, interrompida:-1, vaziaAte:0, criada:Date.now(), rachao:rc};
     this.salas.set(r.code, r); c.sala = r.code;
@@ -614,7 +614,7 @@ class Turma {
     const trocou = !!(rc && rc.info.hash !== r.rachao.info.hash);
     if (rc) r.rachao = rc;
     if (Number.isInteger(m.n) && m.n !== r.n && m.n >= 1 && m.n <= RCH.MAX_POR_TIME) this.novoN(r, m.n, 2);
-    if (typeof m.bots === 'boolean') r.bots = m.bots;
+    // (v103: os bots não voltam pela configuração: as salas personalizadas não têm bots)
     if (typeof m.pub === 'boolean') r.pub = m.pub;
     if (typeof m.name === 'string' && limpa(m.name, 24)) r.name = limpa(m.name, 24);
     if (trocou) for (const x of r.members){ const cl = this.porId.get(x.id); if (cl && cl.sala === r.code) this.mandaRachaoSala(cl, r); }
@@ -703,7 +703,7 @@ class Turma {
     }
     if (r.jogo !== 'futebol') r.chutes = null;           // v99: (os chutes do Rachão são do FUTEBOL; o COM CURVA tem a curva dele)
     if (TEMPOS.includes(m.tempo)) r.tempo = m.tempo;
-    if (typeof m.bots === 'boolean' && !r.tournament) r.bots = m.bots;
+    // (v103: os bots não voltam pela configuração: as salas personalizadas não têm bots)
     if (typeof m.pub === 'boolean') r.pub = m.pub;
     if (typeof m.name === 'string' && limpa(m.name, 24)) r.name = limpa(m.name, 24);
     if (this.experimental){                              // v92: a versão de testes — o painel do admin manda o perfil da física
@@ -731,14 +731,14 @@ class Turma {
     if (r.custom) return r.roster.some(Boolean) ? '' : 'Ninguém está nos times. Toque num time para entrar.';   // v92 · OFICINA: vaga sem gente vira bot (ou fica vazia, sem bots)
     if (r.rachao){                                       // v98: a vaga sem gente vira bot; sem bots, cada time precisa de alguém
       if (!r.roster.some(Boolean)) return 'Ninguém está nos times. Toque num time para entrar.';
-      if (!r.bots && (!r.roster.slice(0, r.n).some(Boolean) || !r.roster.slice(r.n).some(Boolean))) return 'Com os bots desligados, cada time precisa de pelo menos uma pessoa (ou ligue os BOTS).';
+      if (!r.bots && (!r.roster.slice(0, r.n).some(Boolean) || !r.roster.slice(r.n).some(Boolean))) return 'Cada time precisa de pelo menos uma pessoa. Chame a galera em CONVIDAR.';   // (v103: a sala sem bots)
       return '';
     }
     if (r.tournament) return r.roster[0] && r.roster[1] ? '' : 'Os dois do duelo precisam estar na sala (toque em PRÓXIMO DUELO).';
     const gente = r.roster.filter(Boolean).length;
     if (!gente) return 'Ninguém está nos times. Toque no Time A ou no Time B para entrar.';
-    const falta = r.roster.length - gente;
-    if (!r.bots && falta) return 'Falta' + (falta > 1 ? 'm ' + falta + ' jogadores' : ' 1 jogador') + '. Chame a galera em CONVIDAR ou ligue os BOTS.';
+    // v103: sem bots, as vagas que sobram ficam vazias (o time joga com um a menos): só precisa de alguém em cada time
+    if (!r.bots && (!r.roster.slice(0, r.n).some(Boolean) || !r.roster.slice(r.n).some(Boolean))) return 'Cada time precisa de pelo menos uma pessoa. Chame a galera em CONVIDAR.';
     return '';
   }
   start(c){
@@ -774,12 +774,15 @@ class Turma {
     for (let i = 0; i < 2*r.n; i++){
       const id = r.roster[i], x = id && r.members.find(m => m.id === id);
       if (x) jogadores.push({netId:x.id, nome:x.name});
-      else jogadores.push({netId:null, nome:'Bot', bot:'dificil'});   // (o motivo() garante sala cheia quando bots desligados)
+      else if (r.bots) jogadores.push({netId:null, nome:'Bot', bot:'dificil'});   // (a ranqueada: os bots completam)
+      else jogadores.push({vazio:true});               // v103: a sala personalizada sem bots: a vaga fica vazia (o time joga com um a menos)
     }
+    const semBots = !r.bots;
     // v94: o motor da rodada. A sala com o motor próprio só roda com ele se todos os aparelhos em campo o conhecem (a página
     // antiga guardada num aparelho não entende o m94): senão a rodada vai no motor de antes, para todos, e a sala avisa
     let motor = this.motorDe(r);
     if (this.temChutes(r)) motor = 'v93';              // v99: os chutes do Rachão moram no núcleo (o motor próprio da v94 não tem)
+    if (jogadores.some(j => j.vazio)) motor = 'v93';     // v103: a vaga vazia é do motor das salas (o motor próprio da v94 não tem)
     if (motor === 'v94'){
       const velhos = jogadores.filter(j => j.netId && !(this.porId.get(j.netId) || {}).v94);
       if (velhos.length){ motor = 'v93'; this.diz(r, {type:'say', sys:true, who:'', text:'Esta rodada vai com o motor de antes: ' + velhos.map(j => j.nome).join(', ') + ' está com uma versão antiga do jogo.', t:Date.now()}); }
@@ -789,6 +792,7 @@ class Turma {
       fisica:this.fisicaDe(r), fisicaBase:this.fisicaPadrao, quadros:r.quadros === 60 ? 60 : 30,   // v92: o perfil da sala
       motor, fisica94:r.fisica94 || null,                                                           // v94: o motor e o perfil dele
       chutes:this.temChutes(r) ? r.chutes : null,                                                   // v99: os chutes do Rachão
+      semBots:semBots && motor !== 'v94',                                                           // v103: quem sai deixa a vaga vazia (sem bot no lugar; o motor próprio da v94, de testes, ainda põe o bot)
       agora:() => this.agora(), decorrido:() => this.decorrido(r),
       log:t => this.log(t),
       suspeito:(id, tipo, det) => this.log('suspeito na sala ' + r.code + ': ' + id + ' ' + tipo + (det ? ' (' + det + ')' : '')),   // registro para investigação, sem banimento automático
@@ -1020,7 +1024,7 @@ class Turma {
     const j = r.roster.map((id, i) => {
       const m = id && r.members.find(x => x.id === id), cl = m && this.porId.get(m.id), rv = !id ? res.find(([, v]) => v.slot === i) : null;
       const e = est[id || (rv && rv[0]) || ('b' + i)] || null;
-      return {i, id:id || null, nome:m ? m.name : rv ? rv[1].nome || 'Jogador' : 'Bot', st:m ? 'ativo' : rv ? 'caiu' : 'bot', ms:cl && Number.isFinite(cl.ms) ? cl.ms : null,
+      return {i, id:id || null, nome:m ? m.name : rv ? rv[1].nome || 'Jogador' : r.bots ? 'Bot' : '', st:m ? 'ativo' : rv ? 'caiu' : r.bots ? 'bot' : 'vazio', ms:cl && Number.isFinite(cl.ms) ? cl.ms : null,
         ate:rv ? Math.max(0, Math.round((rv[1].ate - agora)/1000)) : 0, e:e ? {g:e.g, a:e.a, d:e.d, r:e.r} : null};
     });
     const fora = r.members.filter(x => x.slot < 0 && !x.bot).map(x => ({id:x.id, nome:x.name, skin:x.skin, banco:!!x.banco}));
@@ -1078,7 +1082,7 @@ class Turma {
       const de = alvo.slot, ocupaId = r.roster[slot], ocupa = ocupaId && r.members.find(x => x.id === ocupaId);
       if (ocupa === alvo) return;
       if (motor && r.rachao && (!motor.temLugar(slot) || (ocupa && de >= 0 && !motor.temLugar(de))))   // v98: (sem bots, o lugar vazio não tem jogador nesta partida)
-        return this.erro(c, 'Nesta partida do Rachão esse lugar não tem jogador (os bots estão desligados): mude entre as partidas.', 'adm');
+        return this.erro(c, 'Nesta partida do Rachão essa vaga está vazia: mude entre as partidas.', 'adm');
       for (const [id, v] of r.reservas) if (v.slot === slot) r.reservas.delete(id);   // (a vaga de quem caiu agora é de outro: ele volta assistindo)
       if (ocupa){ this.senta(r, ocupa, de); ocupa.banco = de < 0; }
       this.senta(r, alvo, slot); alvo.banco = false;
@@ -1094,7 +1098,7 @@ class Turma {
       if (!alvo || alvo.slot < 0) return;
       const de = alvo.slot; this.senta(r, alvo, -1); alvo.banco = true;
       if (motor) motor.admTira(alvo.id);
-      return feito(alvo.name + ' foi para o banco' + (motor ? (r.custom && !r.bots ? ' (a vaga no ' + nomeT(de) + ' fica vazia: os bots estão desligados)' : ' (o bot segura o lugar no ' + nomeT(de) + ')') : ''));
+      return feito(alvo.name + ' foi para o banco' + (motor ? (!r.bots ? ' (a vaga no ' + nomeT(de) + ' fica vazia)' : ' (o bot segura o lugar no ' + nomeT(de) + ')') : ''));
     }
     if (acao === 'admin' || acao === 'expulsar'){
       if (!alvo || alvo.id === c.id) return this.erro(c, 'Essa pessoa não está mais na sala.', 'adm');
@@ -1398,7 +1402,7 @@ class Turma {
       const antes = r.custom.hash; this.poeFisicaSala(r, fx);
       if (r.custom.hash !== antes) trocou = true;          // (o mapa da sala vai de novo para todo mundo)
     }
-    if (typeof m.bots === 'boolean') r.bots = m.bots;
+    // (v103: os bots não voltam pela configuração: as salas personalizadas não têm bots)
     if (typeof m.pub === 'boolean') r.pub = m.pub && !(r.custom && r.custom.privado);
     if (typeof m.name === 'string' && limpa(m.name, 24)) r.name = limpa(m.name, 24);
     if (trocou) for (const x of r.members){ const cl = this.porId.get(x.id); if (cl && cl.sala === r.code) this.mandaMapaSala(cl, r); }
@@ -1520,9 +1524,20 @@ class Turma {
       let L = [...this.filaEsp.values()].filter(e => e.n === n).sort((a, b) => a.t0 - b.t0);
       while (L.length >= 2*n){ const g = this.filaGrupo(L, 2*n); this.filaSala(g, n); L = L.filter(e => g.indexOf(e) < 0); }
       if (n >= 2 && L.length >= 2 && agora - L[0].t0 >= FILA_MISTA_MS){ const g = this.filaGrupo(L, Math.min(L.length, 2*n)); this.filaSala(g, n); L = L.filter(e => g.indexOf(e) < 0); }
-      for (const e of L) if (agora - e.t0 >= FILA_MAX_MS){ this.filaEsp.delete(e.c.id); this.manda(e.c, {type:'fila_nada', n}); this.v88Marca(e.c); }
+      // v103: ninguém apareceu — a ranqueada contra os bots roda AQUI, no servidor (o resultado tem o selo e vale pontos, com o
+      // teto do dia contra os bots); antes ia fila_nada e o jogo jogava no aparelho, sem valer nada na conta (v100)
+      for (const e of L) if (agora - e.t0 >= FILA_MAX_MS) this.filaSala([e], n);
     }
     if (this.filaEsp.size){ this.filaT = setTimeout(() => this.filaTenta(), 1000); if (this.filaT.unref) this.filaT.unref(); }
+  }
+  filaBots(c){                                           // v103: o JOGAR CONTRA BOTS AGORA da busca — a ranqueada com os bots já, no servidor
+    const e = this.filaEsp.get(c.id); if (!e) return this.manda(c, {type:'fila', on:false});
+    if (e.grp && typeof this.g93Joga === 'function'){    // (o grupo: o líder pede para todos, e o grupo fica junto no mesmo time)
+      const U = typeof this.g93Unidades === 'function' ? this.g93Unidades(e.n) : null, u = U && U.find(x => x.es.some(y => y.c.id === c.id));
+      if (u && this.g93Joga([u], e.n)) return;
+      return;
+    }
+    this.filaSala([e], e.n);
   }
   filaGrupo(L, k){                                       // quem espera há mais tempo e os de pontos mais perto dele
     const a = L[0], resto = L.slice(1).sort((x, y) => Math.abs(x.pts - a.pts) - Math.abs(y.pts - a.pts) || x.t0 - y.t0);
@@ -1689,7 +1704,7 @@ Turma.ACOES = {list:'list', create:'create', join:'join', leave:'leave', seat:'s
   adm:'adm',                                            // v93 · Fase 3: as ações do admin da sala
   fala:'fala',                                          // v93 · Fase 5: os balões de fala rápida
   club_req:'club_req', clubCreate:'clubAntigo', clubJoin:'clubAntigo', clubLeave:'clubAntigo', cupCreate:'cupCreate', cupNext:'cupNext', cupEnd:'cupEnd',
-  fila:'fila', fila_sai:'filaSai',
+  fila:'fila', fila_sai:'filaSai', fila_bots:'filaBots',   // v103: a ranqueada contra os bots no servidor, já
   // v93 · Fase 4: o grupo (server/grupo93.js)
   grupo_cria:'grupo_cria', grupo_estado:'grupo_estado', grupo_convida:'grupo_convida', grupo_resposta:'grupo_resposta', grupo_sai:'grupo_sai',
   grupo_expulsa:'grupo_expulsa', grupo_lider:'grupo_lider', grupo_modo:'grupo_modo', grupo_pts:'grupo_pts',

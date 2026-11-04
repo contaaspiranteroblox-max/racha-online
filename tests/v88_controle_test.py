@@ -48,9 +48,11 @@ async def principal():
         r = await rt(pg, "(() => { ajxAbre('controles'); const U = V88PAD.ui; return {st:U.st.textContent, tr:U.tr.hidden, mapa:U.mapa.hidden, ativo:V88PAD.ativo}; })()")
         P.confere(not r['ativo'] and 'Nenhum controle' in r['st'] and r['tr'] and r['mapa'], 'sem controle: o grupo diz que não tem e fica curto (o A/B e a lista aparecem quando conecta)', r)
         await rt(pg, PAD); await pg.wait_for_timeout(250)
-        r = await rt(pg, "(() => { const U = V88PAD.ui; return {st:U.st.textContent, tr:U.tr.hidden, mapa:U.mapa.hidden, itens:U.mapa.children.length, ativo:V88PAD.ativo}; })()")
-        P.confere(r['ativo'] and r['st'].startswith('Conectado: Controle de teste') and not r['tr'] and not r['mapa'] and r['itens'] == 6,
-                  'conectou: os Ajustes › Controles mostram o controle, o TROCAR A E B e a lista dos 6 botões', r)
+        # (v103: o TROCAR A E B virou o jeito INVERTIDO e a lista dos 6 botões virou as 12 ações, cada uma no botão que quiser —
+        # tests/v103_controles_test.py confere a troca dos botões)
+        r = await rt(pg, "(() => { const U = V88PAD.ui; return {st:U.st.textContent, tr:U.tr.hidden, mapa:U.mapa.hidden, itens:U.mapa.querySelectorAll('.v103-acao[data-pad]').length, inv:!!U.tr.querySelector('[data-jeito=\"invertido\"]'), ativo:V88PAD.ativo}; })()")
+        P.confere(r['ativo'] and r['st'].startswith('Conectado: Controle de teste') and not r['tr'] and not r['mapa'] and r['itens'] == 12 and r['inv'],
+                  'conectou: os Ajustes › Controles mostram o controle, os jeitos prontos (o INVERTIDO é o TROCAR A E B) e as 12 ações', r)
 
         print('\n2) nos menus: andar, confirmar e voltar')
         await toque(pg, 1)                                  # B = Esc: fecha os Ajustes
@@ -60,10 +62,19 @@ async def principal():
         await toque(pg, 13)                                 # o direcional para baixo: sem foco, vai para o JOGAR
         r = await rt(pg, "({jogar:document.activeElement === LB.jogar, foco:document.body.classList.contains('v88-pad-foco')})")
         P.confere(r['jogar'] and r['foco'], 'o direcional acende um botão (o primeiro é o JOGAR) e o foco aparece', r)
-        await toque(pg, 14)                                 # para a esquerda: o MODO, colado no JOGAR (v101: o MODO novo, a bola e RANQUEADA; o #lb-modo virou o cartão do campo)
+        v102 = await rt(pg, "LB.raiz.classList.contains('v102')")
+        # para a esquerda: o MODO, colado no JOGAR (v101: o MODO novo, a bola e RANQUEADA; o #lb-modo virou o cartão do campo) ·
+        # v102: o MODO fica em cima do JOGAR — para cima
+        await toque(pg, 12 if v102 else 14)
         r = await rt(pg, "({modo:document.activeElement === LB.modo || !!(document.activeElement && document.activeElement.classList.contains('v101-modo')), nome:(document.activeElement && (document.activeElement.getAttribute('aria-label') || document.activeElement.textContent) || '').slice(0, 40)})")
-        P.confere(r['modo'], 'para a esquerda: o MODO (o vizinho do JOGAR)', r)
-        await rt(pg, "(() => { document.querySelector('#rx .rx-bt[data-loja]').focus(); return 1; })()")
+        P.confere(r['modo'], 'para a esquerda (v102: para cima): o MODO (o vizinho do JOGAR)', r)
+        if v102:                                            # (v102: a LOJA mora no MENU: A no MENU abre a gaveta, A na LOJA abre a loja)
+            await rt(pg, "(() => { document.querySelector('#lb .v102-menu-bt').focus(); return 1; })()")
+            await toque(pg, 0)
+            await pg.wait_for_timeout(300)
+            await rt(pg, "(() => { [...document.querySelectorAll('#lb .v102-item')].find(b => /LOJA/.test(b.textContent)).focus(); return 1; })()")
+        else:
+            await rt(pg, "(() => { document.querySelector('#rx .rx-bt[data-loja]').focus(); return 1; })()")
         await toque(pg, 0)                                  # A confirma: abre a LOJA
         await pg.wait_for_timeout(300)
         r = await rt(pg, "({tela:lobby.tela || ''})")
@@ -83,9 +94,9 @@ async def principal():
         await rt(pg, eixo(math.cos(a), math.sin(a))); await pg.wait_for_timeout(150)
         r = await rt(pg, "(() => { const i = getInput(); return {mx:i.mx, my:i.my, ang:Math.atan2(i.my, i.mx)*180/Math.PI, mag:Math.hypot(i.mx, i.my)}; })()")
         P.confere(abs(r['ang'] - 11.25) < .01 and abs(r['mag'] - 1) < 1e-6, 'o analógico do controle (10°) entra no setor de 11,25° (as 32 direções do toque), com a força inteira', r)
-        await rt(pg, eixo(.2, .1)); await pg.wait_for_timeout(150)
+        await rt(pg, eixo(.07, .03)); await pg.wait_for_timeout(150)   # (v103: a zona morta é 0,12 do curso — era 0,28 — e ajustável)
         r = await rt(pg, "(() => { const i = getInput(); return {mx:i.mx || 0, my:i.my || 0}; })()")
-        P.confere(abs(r['mx']) < 1e-6 and abs(r['my']) < 1e-6, 'abaixo da zona morta do controle (0,28 do eixo): parado', r)
+        P.confere(abs(r['mx']) < 1e-6 and abs(r['my']) < 1e-6, 'abaixo da zona morta do controle (0,12 do curso; era 0,28): parado', r)
         # a mesma velocidade do teclado: 600 ms para a direita com o controle e com a seta
         await rt(pg, SOLTA); await pg.wait_for_timeout(300)
         x0 = await rt(pg, "(() => { P.x = CX - U(150); P.y = CY; P.vx = P.vy = 0; return P.x; })()")

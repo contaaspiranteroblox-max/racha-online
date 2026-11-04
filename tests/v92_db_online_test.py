@@ -131,7 +131,7 @@ async def principal():
                       '%d ms · por estados: os dois no mesmo comando (o CHUTE 3 ms depois): vale o PASSE na tela e no servidor (%.2f · %.2f)' % (atraso, e['mesmo']['prev'], e['mesmo']['srv']), e['mesmo'])
             P.confere(perto(a['seguinte']['prev'], 21.25) and perto(a['seguinte']['srv'], 21.25),
                       '%d ms · DB atual: só o PASSE, na tela e no servidor (%.2f · %.2f): a previsão não mostra mais o DB que o servidor recusava' % (atraso, a['seguinte']['prev'], a['seguinte']['srv']), a['seguinte'])
-            P.confere(perto(a['mesmo']['prev'], 34) and perto(a['mesmo']['srv'], 34),
+            P.confere(perto(a['mesmo']['prev'], 36) and perto(a['mesmo']['srv'], 36),   # (v103: o CHUTE 340 → 360: a bola sai a 36 u/s)
                       '%d ms · DB atual: no mesmo comando vale o CHUTE, na tela e no servidor (%.2f · %.2f)' % (atraso, a['mesmo']['prev'], a['mesmo']['srv']), a['mesmo'])
             P.confere(all(x[c]['corr_u'] < 1.0 for x in (e, a) for c in ('seguinte', 'mesmo')),
                       '%d ms: a correção da bola na tela de Ana fica abaixo de 1 u em todas (a bola não sai e volta)' % atraso,

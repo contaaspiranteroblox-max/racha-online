@@ -2,6 +2,208 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v103 — 03/11/2026 · o lobby de dia, as salas sem bots, o árbitro simples, a ranqueada que vale, os sons do online, os controles e a tela cheia
+
+A pedido, com a imagem da quadra de grama do Bar do Seu Zé: *"use esta imagem de fundo, crie uma função nas configurações para
+configurar o controle (chute no quadrado etc.) e pra PC também, tire os bots das salas personalizadas e quando alguém sai fica
+com um a menos, crie uma função de poder pôr pessoas nas salas sem reiniciar a sala, deixe mais clean as configurações de
+árbitros, caso tenha algum delay no analógico retire, deixe a ranqueada e o ranking funcional, poder clicar no perfil dos
+players pelo chat, sons no online está bugado, aumentar bem pouco a força do chute e do passe, e faça o RACHA funcionar em tela
+cheia no Android e no iPhone (PWA e um botão de tela cheia)"*. O bloco de física da base não muda (o build confere:
+`sha256 ad9f1d2216409b0e`); a força do CHUTE mora no núcleo (abaixo). O backup do antes: a etiqueta git `antes-v103` (a v102).
+
+- **O LOBBY DE DIA** (`tools/v103/lobby_dia.js`, `tools/v103/arte`): a imagem enviada no fundo da tela inicial (no lugar da
+  quadra da noite da v101 — a imagem da noite saiu do jogo) e a mesma cena desfocada no fundo das telas; a tampinha em pé no
+  círculo do meio da quadra, com a sombra macia na grama e a luz do sol (sem a luz roxa, o anel de neon e o reflexo de chão
+  molhado, que eram da quadra da noite). A arrumação da v102 (o MENU, a barra, o MODO e o JOGAR) não muda.
+- **O CHUTE UM POUCO MAIS FORTE** (`server/partida/nucleo.js`, o mesmo arquivo do servidor e do jogo): o CHUTE 340 → **360**
+  (a bola parada sai a 36 u/s, era 34; uns 6%). O teto da bola não muda (46,75 u/s): o DB continua no teto, e o chute sozinho
+  fica mais perto dele. **O PASSE ficou em 212,5**: ele decide o DB com a bola rolando (a bola não pode sair do alcance antes
+  do CHUTE do passo seguinte) e qualquer aumento derruba o DB — medido no laboratório do DB (`tests/v92_db/lab.cjs`, o cenário
+  da bola rolando): com o PASSE a 213 a chance do DB cai de 76% para 31%; a 220, para 0%. A ponte da física RACHA × Rachão
+  (`app/public/game/rachao/ponte.js`, e o `server/partida/rachao_motor.js` gerado dela) usa o CHUTE novo: misturar "o chute
+  do RACHA" num estádio do Rachão dá os mesmos 36 u/s.
+- **AS SALAS PERSONALIZADAS SEM BOTS** (`server/turma.js`, `server/partida/sala.js`, `server/partida/nucleo.js`,
+  `server/partida/sala_mapa.js`, `tools/v103/salas.js`):
+  - as salas online (as normais, as do mapa da Oficina e as do Rachão) não têm mais bots: o quadro BOTS saiu das regras e do
+    CRIAR SALA (a sala NESTE APARELHO continua com os bots — é o treino); as cinco regras que ficam usam a grade de cinco, com
+    o texto inteiro ("Futebol" e "Só chutar" eram cortados na de seis);
+  - começa com **pelo menos uma pessoa em cada time** (o time pode ter um a menos); a vaga sem gente fica **vazia**: a
+    tampinha não entra no campo (o núcleo pula a vaga vazia, no servidor e na previsão do aparelho) e o quadro diz quais
+    estão vazias (`Q.fora`); o jogo não desenha nem aponta a vaga vazia;
+  - **quem sai, cai ou vai para o banco deixa a vaga vazia** — o time joga com um a menos, sem bot no lugar; quem caiu e
+    volta em até 90 s reassume a vaga dele (a tampinha volta ao campo);
+  - **pôr gente sem reiniciar**: o árbitro põe quem assiste (ou quem chegou no meio da partida) numa vaga vazia — a tampinha
+    aparece no campo do time na hora, o placar e o relógio continuam; com o time cheio, TROCAR COM quem está lá;
+  - (no Rachão, o motor é outro: quem cai no meio ainda deixa um bot segurando o lugar até voltar; a vaga sem gente no começo
+    fica vazia como nas outras).
+- **O ÁRBITRO MAIS SIMPLES** (`tools/v103/arbitro.js`): eram dois jeitos de mexer nos times, um por cima do outro (o árbitro
+  dos cartões, com o apito e o apito principal, que não valia com a partida rolando, e o ADMIN da v93). Agora é um só, que
+  vale antes e durante a partida:
+  - tocar no **cartão** de alguém abre a ficha: MUDAR PARA O TIME B (ou A; com o time cheio, TROCAR COM quem está lá), PÔR NO
+    BANCO, TORNAR ÁRBITRO e REMOVER DA SALA (os dois últimos confirmam); quem assiste: PÔR NO TIME A / PÔR NO TIME B;
+  - tocar numa **VAGA LIVRE** pergunta QUEM ENTRA ali;
+  - o **apito dos ajudantes saiu**; "árbitro" em todo lugar (era admin, apito, apito principal); o botão ADMIN da tela da
+    sala saiu (os cartões fazem o mesmo); na partida, a faixa de cima diz "SALA X · árbitro";
+  - na **pausa**, a parte do árbitro junta TIMES E JOGADORES (o painel do lado, com OUTRO TIME, BANCO, ÁRBITRO e "vaga
+    livre"), PAUSAR PARA TODOS e ENCERRAR PARTIDA.
+- **A RANQUEADA QUE VALE** (`server/turma.js`, `server/grupo93.js`, `app/api/racha/jogoRouter.ts`, `tools/v103/ranqueada.js`):
+  desde a revisão de segurança da v100 só vale na conta o resultado que o servidor simulou — e, quando ninguém aparecia na
+  busca (o normal com pouca gente), a ranqueada ia contra os bots NO APARELHO e não valia nada (nem patente, nem XP, nem
+  moedas). Agora, ninguém em 20 s (ou o JOGAR CONTRA BOTS AGORA, que manda `fila_bots`): **a partida contra os bots roda no
+  servidor** (o grupo junto, no mesmo time) e o resultado vale: a patente como contra os bots, **com o teto do dia de 250
+  pontos** (o que a liga contra os bots sempre teve), XP e moedas. Contra gente continua sem o teto. Sem servidor, a partida
+  fica no aparelho e a busca avisa que ela não vale pontos na conta. Servidor antigo (sem o `fila_bots`): em 6 s vai para o
+  aparelho, como antes.
+- **O RANKING**: abre em PONTOS RANQUEADOS (a patente de quem joga a ranqueada, agora com as partidas contra os bots do
+  servidor); GOLS, ASSISTÊNCIAS e CRAQUE DO JOGO continuam só com as partidas contra gente com conta, e a tela vazia diz isso.
+- **O PERFIL PELO CHAT** (`tools/v103/chat_perfil.js`): na partida, o VER PERFIL da ficha (o nome no chat) não mostrava nada
+  — a janela abria dentro do lobby escondido. Agora abre por cima do jogo (e fechar volta para a partida); a ficha de quem tem
+  conta sempre tem o VER PERFIL como o primeiro botão; tocar na tampinha da ficha também abre; a sua ficha abre o seu perfil
+  do jogo.
+- **OS SONS DO ONLINE** (`tools/v103/sons.js`): medido com dois navegadores, contando cada som — no online só tocava o SEU
+  chute e o gol. Agora tocam também o chute e o passe dos outros (pelo quadro do servidor, CHUTE ou PASSE pelos botões), a
+  bola na trave (no mundo previsto, uma vez por batida), o apito da saída depois do gol e o apito final (uma vez por rodada).
+- **OS CONTROLES DO JEITO DE CADA UM** (`tools/v103/controles.js`, `app/public/game/v103-controles.css`; AJUSTES › CONTROLES):
+  - **no controle** (o de videogame, Bluetooth ou com fio, no celular ou no PC): cada ação no botão que você quiser — PASSE,
+    CHUTE, CURVA, PAUSA, os chutes do Rachão (CAVADINHA, CURVA ← →, SUPER), a FINTA e o DRIBLE da GINGA e o CONFIRMAR/VOLTAR
+    dos menus: toque na ação e aperte o botão no controle (o Esc ou 8 s cancelam). Até dois botões por ação; nenhuma ação fica
+    sem botão (o botão que era de outra sai de lá, ou os dois trocam). Jeitos prontos: PADRÃO (✕/A passe, ○/B chute), **ESTILO
+    FIFA** (✕ passe, **□ chute**, ○ curva) e INVERTIDO (quem tinha o "Trocar A e B" da v88 ligado passa para ele). Os nomes dos
+    botões aparecem como no controle ligado (PlayStation ✕ ○ □ △ L1 R1…, Xbox A B X Y LB RB…, Nintendo, ou "Botão n"); mais a
+    zona morta do analógico do controle (com o analógico ao vivo), a vibração no chute (com o TESTAR) e o VOLTAR AO PADRÃO.
+    Andar continua no analógico da esquerda e no direcional;
+  - **no teclado (PC)**: a lista de teclas de sempre ganhou a PAUSA (P; o Esc continua) e as dicas do começo da partida, o
+    tutorial e o cartão dos chutes do Rachão mostram as teclas — ou os botões do controle — de cada um;
+  - guardado em `racha-controle-v103` (o `racha88-controle` antigo continua sendo gravado: voltar para uma versão antiga não
+    perde o ligado/desligado).
+- **O ANALÓGICO SEM ATRASO** (medido): o controle chegava **um quadro depois** (a v88 lia o controle depois do quadro do jogo) —
+  agora é lido no começo do quadro; a zona morta dele caiu de 28% para 12% (ajustável) e ele anda nas mesmas direções do
+  analógico da tela. O analógico da tela começa a andar a **6% do curso** (era 15%) e para abaixo de 4% (era 9%); quem tinha o
+  padrão antigo guardado nos ajustes finos passa para o novo uma vez (os valores mudados à mão ficam). Nenhuma suavização no
+  caminho do toque (procurado); no online vai a mesma direção da previsão do aparelho.
+- **A TELA CHEIA E O APP INSTALÁVEL** (`tools/v103/tela.js`, `app/public/game/v103-tela.css`,
+  `app/public/game/manifest.webmanifest`, `app/public/game/sw.js`, os ícones em `app/public/game/icones`):
+  - o botão **TELA CHEIA** — o quadrado dos quatro cantinhos na barra de cima do lobby (antes do MENU), o cantinho da PAUSA,
+    AJUSTES › Visual e, com o celular em pé no Android, o JOGAR EM TELA CHEIA da tela GIRE O CELULAR — põe o jogo em tela
+    cheia, sem as barras do navegador, e trava o celular deitado (Chrome no Android; no PC, o Esc sai). **Nada entra em tela
+    cheia sozinho** (como ficou combinado na v101.1): só pelo botão; em tela cheia e no app instalado o botão some;
+  - no **iPhone**, onde o Safari não deixa um site entrar em tela cheia, o botão mostra o guia curto: Compartilhar ›
+    Adicionar à Tela de Início (no iOS 26 o Compartilhar fica no menu •••) — pelo ícone, o RACHA abre como app, sem barra
+    nenhuma (as marcas do iPhone: `apple-mobile-web-app-capable`, a barra de status por cima do jogo e o ícone 180 × 180);
+  - o **app instalável (PWA)**: o manifesto (deitado, tela cheia, os ícones com o grafite do próprio jogo, gerados por
+    `tools/v103/icones.py`) e o service worker **sempre a rede primeiro** (o jogo novo chega na hora; a cópia guardada só abre
+    o jogo sem internet, para treinar contra os bots; nunca mexe na API, nos websockets das salas nem em POST). Só registra por
+    https ou no localhost; `sw: false` no `config.js` desliga e tira o registro. Os servidores mandam o manifesto com o tipo
+    certo e sem guardar versão velha (`server/servidor.js`, `app/api/lib/vite.ts`);
+  - **a tela inteira**: as faixas em volta da área do jogo (o entalhe, a barrinha do iPhone, as sobras da tela) mostram o
+    próprio campo, mais escuro, em vez do preto; o canvas, o HUD e os controles ficam exatamente onde estavam, dentro da área
+    segura — conferido em 8 tamanhos de tela, com e sem entalhe, contra a v102; o puxar-para-atualizar e o "elástico" do
+    iPhone não atrapalham mais. No Ultra leve e na Oficina a faixa fica na cor do fundo. Com a câmera andando, as faixas são
+    redesenhadas no máximo 10 vezes por segundo: redesenhadas a cada quadro, elas atrasavam o laço do jogo o bastante para
+    mudar em que comando o CHUTE chegava no servidor (medido no `v92_db_online`, que voltou a passar sempre).
+- **Os testes**: entram na bateria (`tests/roda_tudo.sh`) o `v103_ranqueada_test.mjs` (12 verificações, Node: a fila, o
+  `fila_bots`, os pontos com o teto do dia e o ranking na plataforma de teste), o `v103_salas_test.py` (15, quatro navegadores),
+  o `v103_sons_test.py` (8), o `v103_chat_perfil_test.py` (8, a plataforma de teste), o `v103_controles_test.py` (58) e o
+  `v103_tela_test.py` (264; com `RACHA_BASE=<a página de teste da v102>` confere também que o jogo ficou no mesmo lugar). Os
+  testes que contavam com os bots nas salas online ou com o ADMIN e a RESERVA ganharam a sala com duas pessoas e os nomes
+  novos: o `servidor_test`, o `v93_salas`, o `v93_revisao` (1 e 3), o `v94_turma`, o `oficina_servidor`, o
+  `v98_rachao_servidor`, o `v93_fase3` (a ficha pelo cartão e a pausa do árbitro), o `v79` (a ranqueada contra os bots no
+  servidor) e o `v83_salas_ws` (o fim da partida pelos gols do gancho de teste, com o novo `tests/ganchos_teste_pre.cjs`, e as
+  três salas da medição com duas pessoas cada), o `v98_rachao_online` (no 2x2 com duas pessoas, duas no campo) e o
+  `v100_seguranca` (a ranqueada contra os bots do servidor agora vale para a patente, uma vez por selo); os de força do chute
+  comparam com o CHUTE novo (`v92_nucleo`, `v92_db`, `v92_db_online`, `v99_chutes`, `v86_chute`, `v97_mistura`, `v97_rachao`; o lance de 900
+  passos do `v92` roda com o CHUTE de antes, para continuar igual ao da v91); o sorteio de partidas também mudou com o chute:
+  o simulador do `v102_rede` passou de 8 para 24 sementes (com 8, uma medida do "outro pula" virou só pelo sorteio) e o
+  `oficina_mapa` olha 3 minutos para os bots fazerem gol (a semente de sempre fez o 1º aos 75 s); o `v88_controle` confere a
+  lista nova do controle e a zona morta nova; o `v102` conta o botão da tela cheia na barra. O `tools/v92/pacote.py` confere os arquivos da v103 no ZIP. Continuam como na v102: o `v71` na sala
+  (o *Só chutar*, desde a v99), o `v73` (o anel novo da v102) e o `v92` (o painel da versão de testes).
+- **Fica para depois**: no Rachão, quem cai no meio ainda deixa um bot até voltar (o motor do Rachão é outro); o PASSE mais
+  forte (só junto com uma mudança na janela do DB); a tela cheia e o guia do iPhone conferidos no Chromium (com os tamanhos e
+  os entalhes de mentira), não num aparelho de verdade.
+
+## v102 — 03/11/2026 · o correio de volta, a borda BOTÃO, o anel da tampinha, o lobby mais limpo e o online mais liso
+
+A pedido, com a imagem de duas tampinhas listradas num campo: *"crie uma borda de botão nesse estilo e os mensagens do correio
+não funciona no racha melhore essa borda ao redor e deixe o jogo mais liso multiplayer manda um preview pra mim cria um lobby
+com menos informações tá muito confuso"*. A física não muda (o build confere: `sha256 ad9f1d2216409b0e`). O backup do antes: a
+etiqueta git `antes-v102` (a v101).
+
+- **O CORREIO E AS MENSAGENS FUNCIONAM DE NOVO** (a plataforma, `app/api`). O defeito: o `drizzle-orm` da produção (0.45)
+  embrulha todo erro do MySQL num `DrizzleQueryError` ("Failed query: …") e o código conferia a chave repetida (`ER_DUP_ENTRY`)
+  só no erro de fora. Depois da primeira carta para todo mundo (o RACHA CONTROL, o login do dia, o presente), cada abertura do
+  correio, das mensagens e do resumo do lobby tentava gravar a mesma carta de novo e caía no erro — o correio parava de abrir
+  para todo mundo. Agora:
+  - o `app/api/racha/erros.ts` (`ehDuplicado`) procura a chave repetida no erro e nos de dentro (`.cause`), e todos os lugares
+    que esperavam a chave repetida usam ele: o correio, as missões, o comum da v88, o fundador, os amigos, a economia, o clube,
+    o guard e o ranking (o `INSERT INTO limites` da v100 caía do mesmo jeito);
+  - o correio confere as cartas que a conta já tem antes de gravar as cartas para todo mundo (sem tentar de novo a cada vez);
+  - **APAGAR** marca a carta como apagada (some da lista e não volta); antes ela era apagada do banco e voltava na abertura
+    seguinte, **com o prêmio para coletar de novo**;
+  - o banco de teste (`tests/plataforma/drizzle_lite.mjs`) embrulha os erros como o da produção — os testes antigos passavam
+    porque o de teste não embrulhava.
+- **A BORDA BOTÃO** (`tools/v102/borda.js`): no CRIAR TAMPINHA › BORDA, **grátis**, logo depois da Lisa — o jeito do futebol de
+  botão da imagem: o **aro liso** na cor do ARO (o nome da cor dela no editor; branco na imagem), o **contorno escuro** firme
+  por fora, o filete entre o aro e o desenho, o relevo e o brilho em cima à esquerda; o desenho (o padrão, as cores e o ícone)
+  ocupa mais da tampinha. Ela entra no **fim da lista das bordas** (o lugar 27): os códigos das tampinhas de sempre não mudam,
+  o servidor das salas só olha o lugar 26 (a dos fundadores) e o catálogo da plataforma (`app/contracts/catalogo_tampinhas.json`,
+  gerado do jogo) ganhou a peça. Com uma cara animada, o aro do botão entra no lugar dos dentes. Os bots também podem sair com
+  ela (é uma borda grátis).
+- **O ANEL EM VOLTA DA TAMPINHA** (o seu verde; o dos outros, na cor do time): encostado na tampinha, um degradê (mais forte
+  perto dela), a sombra curta da tampinha em cima, o brilho de vidro em cima à esquerda, a **borda de fora clara e firme** (é o
+  alcance do chute, como antes) com a luz no chão e um fio escuro por fora, que lê na grama, na quadra e no concreto. Só o
+  desenho: o alcance e a força do chute não mudam.
+- **O LOBBY COM MENOS COISA NA TELA** (`tools/v102/lobby.js` e `app/public/game/v102.css`): eram **26 botões** na tela
+  inicial; agora são **13**:
+  - em cima: o **perfil**; as **moedas**, as **gemas**, o **correio** e o **MENU** (☰);
+  - no meio: a **tampinha** e **uma vaga do grupo** (o + com GRUPO embaixo; com o grupo formado, as vagas mostram quem está);
+  - embaixo: a **barra de atalhos** (SALAS, TREINO, OFICINA e COFRE) e, na direita, o **MODO** (o tamanho do time, RANQUEADA e o
+    campo, com as setas de trocar — o MODO repetido da v101 saiu) em cima do **JOGAR**;
+  - o **MENU**, a gaveta da direita: a **PATENTE** no alto (a insígnia, o nome e os pontos; tocar abre as patentes) e LOJA,
+    CLUBE, AMIGOS, RANKING, EVENTOS, PASSE RACHA, MISSÕES, CHAT, AJUSTES e CONEXÃO. Os números e os pontos vermelhos de sempre
+    (os pedidos de amizade, o prêmio das missões, as não lidas do chat…) aparecem no item e somados no botão do MENU; fecha no X,
+    tocando fora ou no Esc (e no B do controle);
+  - cada botão novo toca o botão de sempre (escondido): abre exatamente o que já abria; pelo teclado e pelo controle, Enter (A)
+    no MENU abre a gaveta com o foco dentro, e quando a janela ou a tela aberta por ela fecha, o foco volta para o MENU; em pé
+    continua o lobby de antes;
+  - no celular deitado (onde o texto não cresce sozinho) a barra, o MODO e os itens do MENU ficam maiores (o MODO nunca com
+    menos de 44 px de verdade).
+- **O cabeçalho do CRIAR TAMPINHA**: os três quadrados de cima (o chat, os amigos e os ajustes) apareciam **vazios** — o editor
+  abre pelo `abreTela` de antes da v91 e os ícones novos só entravam pelo da v91. Agora entram ao abrir (e em todas as telas
+  montadas no fim do carregamento).
+- **Os testes**: o `tests/v102_correio_test.mjs` (o correio com o banco embrulhando os erros como a produção: falha no código de
+  antes, passa no novo) e o `tests/v102_test.py` (100 verificações: o lobby em cinco tamanhos de tela, o MENU e os atalhos
+  abrindo o mesmo que os botões de sempre, a PATENTE, os números e os pontos, a borda BOTÃO e o anel) entram na bateria. Os
+  testes que tocavam nos botões que foram para o MENU tocam por ele (o `comum.clica_lobby` acha o botão novo que toca o de
+  sempre): o v71 (os lugares e as medidas do lobby), o v77 (a barra de cima), o v81 (o chat e as não lidas), o v87_site (os
+  AMIGOS), o v95 (a OFICINA na barra), o celular (o MODO em cima do JOGAR), a Oficina (o botão da barra), o polimento (o foco
+  de volta no MENU) e o controle (o MODO para cima; a LOJA pelo MENU); o v101 deixa a contagem das peças à vista para o da v102.
+  O `tools/v92/pacote.py` confere os arquivos da v102 no ZIP. Continuam como na v101: o `v71` na sala (o *Só chutar*, desde a
+  v99).
+- **O ONLINE MAIS LISO** (o "deixe o jogo mais liso multiplayer"): medido antes de mexer — dois navegadores numa sala 1v1 com
+  a internet de mentira do 4G (o atraso, os picos do rádio e os pedaços que chegam juntos: `tests/v92_proxy.cjs` ganhou
+  `--pico`, `--rajada`, `--semente` e `--estat`), com a "verdade" de cada passo gravada pelo servidor
+  (`tests/v102/servidor_verdade.cjs`, `tests/v102_rede_medidas.py`) e um simulador com o motor de verdade
+  (`tests/v102/sim.mjs`). As causas, da maior para a menor: no pico do 4G a fila de comandos de alguém esvazia, a tampinha
+  dele para no servidor e o mundo previsto no aparelho corria na frente e depois parava (o "pulo" do tempo do mundo); os
+  outros jogadores eram adivinhados pela velocidade do quadro (a virada chegava uma ida e volta depois, e quem engasgava
+  aparecia parado e depois correndo). O que entrou:
+  - o quadro do servidor leva as **direções que cada um apertou** (`Q.ent`: a de agora e as da fila, em 64 setores) e o
+    **crédito que a recuperação da fila vai pagar** (`Q.cred`, só quando alguém tem) — uns 40 bytes por quadro no 1v1
+    (`server/partida/sala.js`; a fila e a partida não mudam; `RACHA_ENTRADAS=0` desliga);
+  - a previsão do aparelho (`tools/v102/liso.js`) anda os outros com o que eles apertaram (e não pela velocidade do quadro) e
+    refaz os seus comandos que o servidor vai pagar como passos só da tampinha, como ele faz — o mundo previsto não corre
+    na frente e para; nos 2 s depois do começo e de um engasgo seu (mais de 140 ms sem comando) o crédito não vale (o
+    servidor junta crédito que não paga). Servidor antigo: sem os campos, tudo como antes; jogo antigo: ignora os campos;
+    `RACHA_CONFIG.rede102 = false` desliga;
+  - medido (24 sementes × 60 s no simulador, v96 → v102): no 4G, o pulo do tempo do mundo de 3,4% para 0,35% dos quadros
+    (no 4G ruim, de 6,4% para 1%), os outros parados e depois correndo de 14 para 3,6 por minuto, a correção da sua tampinha
+    (p95) de 4,4 para 2,9 px e o erro dos outros (p95) de 50 para 39 px; nos navegadores a melhora vai no mesmo sentido
+    (os números variam muito de uma rodada para outra). Fica para depois: a fila do servidor sem colchão contra a oscilação
+    e o empurra-empurra na bola a 30 quadros por segundo;
+  - testes: `tests/v102_rede_test.mjs` (35 verificações, sem navegador) na bateria; o `v92_nucleo_test` e o `v99_chutes_test`
+    comparam os quadros sem os campos novos.
+
 ## v101 — 30/10/2026 · o lobby no estilo da imagem da noite e só o CRIAR TAMPINHA
 
 A pedido, com a imagem da tela inicial no pôr do sol: *"reformule o jogo neste estilo, tire todas skins, deixe apenas o criar

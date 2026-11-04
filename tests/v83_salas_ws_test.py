@@ -37,7 +37,7 @@ def proc_stat(pid):
     return int(partes[13]) + int(partes[14]), rss   # utime + stime (jiffies), RSS em kB
 
 proc = subprocess.Popen(
-    ['node', os.path.join(RAIZ, 'server', 'servidor.js'), '--porta', str(PORTA), '--host', '127.0.0.1',
+    ['node', '-r', os.path.join(RAIZ, 'tests', 'ganchos_teste_pre.cjs'), os.path.join(RAIZ, 'server', 'servidor.js'), '--porta', str(PORTA), '--host', '127.0.0.1',
      '--memoria', '--segredo', SEGREDO, '--tempo-normal', '14', '--prorrogacao', '8'],
     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     env=dict(os.environ, RACHA_CONTAGEM_MS=os.environ.get('RACHA_CONTAGEM_MS', '0'), RACHA_REPLAY=os.environ.get('RACHA_REPLAY', '0')))   # v93: sem a contagem e o replay
@@ -164,15 +164,15 @@ try:
           while (Date.now() - t2 < 2000) { input(A2, 1, 1); input(B, 0, -1); await espera(33); }
           L.ackVolta = ackDe(A2) >= 0 && ackDe(A2) > 0;
 
-          // (11) o fim da partida pelo servidor: a Ana vai embora de vez — o bot assume e joga
-          // contra a Bia parada até a meta; o resultado e o selo chegam para quem ficou
+          // (11) o fim da partida pelo servidor: a Ana vai embora de vez — (v103: sem bot no lugar; a vaga fica vazia) a Bia
+          // faz os gols da meta pelo gancho de teste (o motor de verdade faz o resto); o resultado e o selo chegam para quem ficou
           A2.ws.close();
           await espera(800);
           L.fim = await (async () => {
+            const tB = Math.floor(B.room.roster.indexOf(B.id) / B.room.n);
+            for (let k = 0; k < 4 && !B.result; k++) { manda(B, {type: '__teste_gol', time: tB}); await espera(3500); }
             const t3 = Date.now();
-            // (v95: o campo 30% maior com o gol de antes — o bot sozinho leva mais para fazer os 3: até 7 min; nas simulações
-            //  do mesmo roteiro, até ~4 min e meio)
-            while (!B.result && Date.now() - t3 < 420000) { await espera(500); }
+            while (!B.result && Date.now() - t3 < 20000) { await espera(300); }
             return B.result;
           })();
           L.golPayload = B.snaps.some(s => s.data.goal && typeof s.data.goal.name === 'string');
@@ -272,7 +272,7 @@ try:
 
         # ======================= PARTE 3 · várias partidas ao mesmo tempo + medição =======================
         cpu0, rss0 = proc_stat(proc.pid); tj0 = time.time()
-        r3 = pag.evaluate("""async ([porta, bils]) => {
+        r3 = pag.evaluate("""async ([porta, bils, bils2]) => {
           const L = {salas: []};
           const espera = ms => new Promise(r => setTimeout(r, ms));
           const cli = (bil, nome) => new Promise((res, rej) => {
@@ -292,9 +292,14 @@ try:
           });
           for (let i = 0; i < bils.length; i++) {
             const c = await cli(bils[i], 'Med' + i);
-            c.ws.send(JSON.stringify({type: 'create', name: 'Medida ' + i, n: 2, map: i % 2 ? 0 : 4, jogo: i === 2 ? 'curva' : 'futebol', tempo: 0, bots: true, pub: false}));
+            c.ws.send(JSON.stringify({type: 'create', name: 'Medida ' + i, n: 2, map: i % 2 ? 0 : 4, jogo: i === 2 ? 'curva' : 'futebol', tempo: 0, pub: false}));
             const t0 = Date.now();
             while (!c.room && Date.now() - t0 < 5000) await espera(100);
+            // (v103: as salas online não têm bots — a partida começa com pelo menos uma pessoa em cada time)
+            const o = await cli(bils2[i], 'Med' + i + 'b');
+            o.ws.send(JSON.stringify({type: 'join', code: c.room.code, slot: 2}));
+            const t0b = Date.now();
+            while (!(c.room && c.room.roster && c.room.roster.filter(Boolean).length === 2) && Date.now() - t0b < 5000) await espera(100);
             c.ws.send(JSON.stringify({type: 'start'}));
             const t1 = Date.now();
             while (!c.start && Date.now() - t1 < 5000) await espera(100);
@@ -306,7 +311,7 @@ try:
             await espera(33);
           }
           return {snaps: L.salas.map(c => c.snaps), bytes: L.salas.map(c => c.bytes), codigos: L.salas.map(c => c.room && c.room.code)};
-        }""", [PORTA, [bilhete(1001 + i, 'Med' + str(i)) for i in range(3)]])
+        }""", [PORTA, [bilhete(1001 + i, 'Med' + str(i)) for i in range(3)], [bilhete(2001 + i, 'Med%db' % i) for i in range(3)]])
         cpu1, rss1 = proc_stat(proc.pid); tj1 = time.time()
 
         print('14) várias partidas ao mesmo tempo · e a medição (CPU, RAM, banda, quadros)')

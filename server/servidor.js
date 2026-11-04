@@ -67,7 +67,9 @@ const CFG = {
 
 const TIPOS = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.svg':'image/svg+xml', '.ico':'image/x-icon', '.mp3':'audio/mpeg',
-  '.ogg':'audio/ogg', '.wav':'audio/wav', '.woff':'font/woff', '.woff2':'font/woff2', '.ttf':'font/ttf', '.txt':'text/plain; charset=utf-8', '.map':'application/json'};
+  '.ogg':'audio/ogg', '.wav':'audio/wav', '.woff':'font/woff', '.woff2':'font/woff2', '.ttf':'font/ttf', '.txt':'text/plain; charset=utf-8', '.map':'application/json',
+  '.webmanifest':'application/manifest+json; charset=utf-8'};   // v103: o manifesto do app instalável (o sw.js vai como .js: JavaScript)
+const CONFERE = new Set(['.html', '.js', '.css', '.webmanifest']);   // (o navegador confere com o servidor a cada vez: o jogo novo chega na hora)
 
 /* v100 (segurança): os cabeçalhos de proteção em todas as respostas — o jogo só fica dentro de moldura do próprio endereço
    e dos endereços de RACHA_ORIGENS/RACHA_MOLDURAS (a página que embute o jogo; frame-ancestors), sem plugins (object-src),
@@ -99,7 +101,7 @@ function entrega(req, res){
       if (e2){ res.writeHead(404, cab({'Content-Type':'text/plain; charset=utf-8'})); return res.end('não encontrado'); }
       const ext = path.extname(alvo).toLowerCase();
       res.writeHead(200, cab({'Content-Type':TIPOS[ext] || 'application/octet-stream', 'Content-Length':buf.length,
-        'Cache-Control':ext === '.html' || ext === '.js' || ext === '.css' ? 'no-cache' : 'public, max-age=3600'}));
+        'Cache-Control':CONFERE.has(ext) ? 'no-cache' : 'public, max-age=3600'}));
       res.end(req.method === 'HEAD' ? undefined : buf);
     });
   });

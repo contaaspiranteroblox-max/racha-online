@@ -14,6 +14,7 @@ import { patenteDe } from "@contracts/patentes";
 import { CATALOGO, itemCat, nivelPasse, type Anexo } from "@contracts/v88";
 import { movimentar, entregarItens } from "../economia";
 import type { CtxAutenticado, UsuarioSessao } from "../guard";
+import { ehDuplicado } from "../erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 type Db = ReturnType<typeof getDb>;
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -112,7 +113,7 @@ export async function notifica(usuarioId: number, n: Notificacao, db: Conn = get
       refTipo: n.refTipo ?? null, refId: n.refId === undefined ? null : String(n.refId).slice(0, 60), chave: n.chave ? n.chave.slice(0, 80) : null, expiraEm: n.expiraEm ?? null,
     });
   } catch (e) {
-    if (/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) return false;   // (a mesma mensagem já estava lá)
+    if (ehDuplicado(e)) return false;   // (a mesma mensagem já estava lá)
     throw e;
   }
   try {
@@ -212,6 +213,6 @@ export async function denunciaDoChat(d: { autor: string; alvo: string; motivo: s
       chave: chaveDenuncia(autor.id, alvo.id, motivo + ":chat"),
     });
   } catch (e) {
-    if (!/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) throw e;
+    if (!ehDuplicado(e)) throw e;
   }
 }

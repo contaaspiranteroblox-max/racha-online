@@ -15,6 +15,7 @@ import { getDb } from "../queries/connection";
 import { carteiras, transacoes, itensUsuario } from "@db/schema";
 import { CARTEIRA_INICIAL } from "@contracts/loja";
 import { existeCodigo } from "@contracts/v88";
+import { ehDuplicado } from "./erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 type Db = ReturnType<typeof getDb>;
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -55,7 +56,7 @@ export async function garanteCarteira(usuarioId: number, db: Conn = getDb()): Pr
   try {
     await db.insert(carteiras).values({ usuarioId, moedas, gemas });
   } catch (e) {
-    if (!/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) throw e;
+    if (!ehDuplicado(e)) throw e;
     return garanteCarteira(usuarioId, db);                // (outra chamada criou ao mesmo tempo)
   }
   await db.insert(transacoes).values({
@@ -81,7 +82,7 @@ export async function entregarItens(usuarioId: number, codigos: string[], origem
       await db.insert(itensUsuario).values({ usuarioId, codigoItem: codigo, origem: origem.slice(0, 20), origemDetalhe: detalhe.slice(0, 80) });
       novos.push(codigo);
     } catch (e) {
-      if (!/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) throw e;
+      if (!ehDuplicado(e)) throw e;
     }
   }
   return novos;

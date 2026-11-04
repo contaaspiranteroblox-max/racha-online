@@ -79,7 +79,12 @@ async def lobby_em(pw, P, w, h, nome):
                 if cruzam(c['L'][i][1], c['L'][j][1]):
                     cr.append((c['L'][i][0], c['L'][j][0]))
         P.confere(not cr, nome + ': nenhum botão por cima de outro', cr)
-        P.confere(len(c['L']) >= 24, nome + ': todas as peças à vista', [n for n, _ in c['L']])
+        if await rt(pg, "(() => LB.raiz.classList.contains('v102'))()"):
+            # v102: o lobby com menos coisa na tela (a patente, os lados, a OFICINA, o PASSE, as MISSÕES, o MODO, o chat, os
+            # ajustes e o sinal foram para o MENU): o que fica à vista e o MENU são conferidos no tests/v102_test.py
+            P.confere(len(c['L']) >= 8, nome + ': as peças que ficam à vista na v102 (o resto no MENU: tests/v102_test.py)', [n for n, _ in c['L']])
+        else:
+            P.confere(len(c['L']) >= 24, nome + ': todas as peças à vista', [n for n, _ in c['L']])
         js = [x for x in erros if not x.startswith('console:')]
         P.confere(not js, nome + ': sem erro de JavaScript', js[:3])
     finally:

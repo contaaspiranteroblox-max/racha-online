@@ -159,7 +159,10 @@ console.log('3) o determinismo (a mesma conta no servidor, no TESTAR e na previs
   confere(a.qs.join('|') !== c.qs.join('|'), 'outra semente: outra partida (a mira dos bots)');
   const sane = q => Number.isFinite(q.x) && Number.isFinite(q.y) && q.x >= a.P.G.GL - 1 && q.x <= a.P.G.GR + 1 && q.y >= a.P.G.GT - 1 && q.y <= a.P.G.GB + 1;
   confere(a.P.jog.every(sane) && Number.isFinite(a.P.B.x) && Number.isFinite(a.P.B.y), 'ninguém sai do mundo nem vira NaN');
-  confere(a.P.placar[0] + a.P.placar[1] > 0, 'os bots fazem gol no mapa novo', a.P.placar);
+  // (v103: com o CHUTE 6% mais forte a semente 42 faz o 1º gol aos 75 s, não mais no 1º minuto — em 3 min sai gol nas 4
+  //  sementes medidas, como com o CHUTE de antes: a conferência olha 3 minutos)
+  const L3 = M.novaPartida(m, { seed: 42 }); for (let i = 0; i < 3600 * 3; i++) L3.passo();
+  confere(L3.placar[0] + L3.placar[1] > 0, 'os bots fazem gol no mapa novo (em 3 min de partida)', L3.placar);
   let src = M.novaPartida.toString() + M.compila.toString();
   confere(!/Math\.random\s*\(|Date\.now\s*\(|performance\.now\s*\(|new Date\b/.test(require('fs').readFileSync(new URL('../server/partida/mapa.js', import.meta.url), 'utf8')), 'o arquivo do mapa não usa Math.random, Date.now nem o relógio');
 }

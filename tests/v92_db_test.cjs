@@ -34,8 +34,8 @@ confere(V92.dbModo === 0 && N.PERFIL_V91.dbModo === 0, 'o perfil padrão (v92) e
   const p = N.perfilLimpo({ dbModo: 7, dbJanelaParada: 2.6, dbProtecaoParada: 99, dbVParada: -3, dbRelogio: 0.4, dbAnulaMs: 'x', dbJanelaMs: 40, lixo: 1 });
   confere(p.dbModo === 1 && p.dbJanelaParada === 3 && p.dbProtecaoParada === 12 && p.dbVParada === 0 && p.dbRelogio === 0 && p.dbAnulaMs === V92.dbAnulaMs && p.dbJanelaMs === 16 && !('lixo' in p),
     'o perfil de fora é limpo: só os campos conhecidos, inteiros arredondados, sim/não, cortados nos limites', p);
-  confere(N.PERFIL_V92.forcaPasse === 212.5 && EXP.forcaPasse === 212.5 && EXP.forcaChute === 340 && EXP.raioChute === 2.5,
-    'o DB por estados não mexe na física: a força do PASSE (212,5), a do CHUTE (340) e o alcance (2,5 + 1 u) são os de sempre');
+  confere(N.PERFIL_V92.forcaPasse === 212.5 && EXP.forcaPasse === 212.5 && EXP.forcaChute === N.PERFIL_V92.forcaChute && EXP.forcaChute === 360 && EXP.raioChute === 2.5,
+    'o DB por estados não mexe na física: a força do PASSE (212,5), a do CHUTE (360 desde a v103) e o alcance (2,5 + 1 u) são os do padrão');
 }
 {
   let n = 0, dif = 0; const ex = [];

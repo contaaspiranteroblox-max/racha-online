@@ -1,10 +1,14 @@
 """RACHA v93 · FASE 3 — O PAINEL DO ADMIN DA SALA (passa/falha, com as medidas impressas).
 Com o servidor da turma de verdade (tests/servidor_visitantes.cjs) e três navegadores — a Ana (a admin, num celular deitado
 de 844 × 390), o Beto (jogador) e o Caio (assistindo) — numa sala personalizada 1v1 hospedada:
-  1. na pausa da Ana aparece ADMIN DA SALA (com o desenho, ≥ 44 px); na do Beto, não;
+  0. (v103: o botão ADMIN da tela da sala saiu — o árbitro toca no CARTÃO de alguém e a ficha tem MUDAR/TROCAR, PÔR NO
+     BANCO, TORNAR ÁRBITRO e REMOVER DA SALA, cabendo no celular deitado);
+  1. na pausa da Ana aparece TIMES E JOGADORES (era ADMIN DA SALA; com o desenho, ≥ 44 px), na parte do árbitro; na do
+     Beto, não;
   2. o painel abre do lado (compacto: não ocupa o meio da tela, botões ≥ 36 px com a área de toque de 44), com os dois times
      e o banco;
-  3. RESERVA: o Beto vai para o banco no meio da partida (o aparelho dele passa a assistir, com o aviso) e o bot segura o lugar;
+  3. BANCO (era RESERVA): o Beto vai para o banco no meio da partida (o aparelho dele passa a assistir, com o aviso) e a vaga
+     fica livre (v103: sem bot no lugar);
   4. ENTRAR: o Caio (do banco) entra na vaga, o aparelho dele vira jogador e a tampinha anda com o analógico dele no servidor;
   5. o placar continua (1 × 0 antes e depois das trocas) e ninguém aparece em dois lugares;
   6. ENCERRAR pede confirmação no próprio painel; confirmado, a partida acaba para todos (o resultado não vale prêmio);
@@ -55,23 +59,23 @@ async def principal():
             await espera(A, "NET49.room && NET49.room.members.length === 2", 8000)
             await rt(A, "(() => { const b = document.querySelector('.v70-sl-atalhos .entrar'); if (b && !b.hidden) b.click(); return 1; })()")
             await espera(A, "NET49.room.roster.indexOf(NET49.id) >= 0 && NET49.room.roster.every(Boolean)", 8000)
-            adm0 = await rt(A, "(() => { const b = document.querySelector('#tela-sala .v93-sl-adm'); return b ? {vis:!b.hidden && b.getBoundingClientRect().height >= 44} : null; })()")
-            # o painel aberto pela tela da sala (antes de começar): do lado, sem cobrir o COMEÇAR
-            await rt(A, "(() => { const b = document.querySelector('#tela-sala .v93-sl-adm'); if (b) b.click(); return 1; })()"); await asyncio.sleep(.4)
-            sl = await rt(A, """(() => { const p = document.querySelector('.v93-adm'), i = document.getElementById('sl-iniciar'); if (!p || p.hidden || !i) return null;
-              const a = p.getBoundingClientRect(), b = i.getBoundingClientRect(), ad = document.querySelector('#tela-sala .v93-sl-adm').getBoundingClientRect();
-              const cruza = (x, y) => x.left < y.right - 1 && x.right > y.left + 1 && x.top < y.bottom - 1 && x.bottom > y.top + 1;
-              const outros = [...document.querySelectorAll('#tela-sala button')].filter(x => !x.classList.contains('v93-sl-adm') && x.offsetParent && getComputedStyle(x).visibility !== 'hidden').map(x => x.getBoundingClientRect()).filter(r => r.width > 4);
-              return {txt:p.querySelector('.v93-adm-cab small').textContent, cobre:cruza(a, b), w:Math.round(a.width), bt:{h:Math.round(ad.height), bate:outros.filter(r => cruza(ad, r)).length, dentro:ad.left >= 0 && ad.right <= innerWidth && ad.bottom <= innerHeight}}; })()""")
+            # (v103) o botão ADMIN da tela da sala saiu: o árbitro toca no cartão do Beto e a ficha dele abre
+            adm0 = await rt(A, "(() => { const b = document.querySelector('#tela-sala .v93-sl-adm'); return {vis:!!b && !b.hidden && !!b.offsetParent}; })()")
+            await rt(A, "(() => { const id = NET49.room.roster[1], c = document.querySelector('#tela-sala .sl-card[data-id=\"' + id + '\"]'); if (c) c.click(); return !!c; })()"); await asyncio.sleep(.4)
+            sl = await rt(A, """(() => { const c = LB.popCaixa; if (LB.pop.hidden || !c.classList.contains('v103-ficha')) return null;
+              const bts = [...c.querySelectorAll('.lb-btn')].filter(b => b.offsetParent), r = c.getBoundingClientRect();
+              return {txt:bts.map(b => b.textContent.trim()), dentro:r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1, min:Math.min(...bts.map(b => Math.round(b.getBoundingClientRect().height)))}; })()""")
             await A.screenshot(path='tests/saida/v93_admin_sala.png')
-            await rt(A, "(() => { v93AdmFecha(); return 1; })()")
+            await rt(A, "(() => { fechaPop(); return 1; })()")
             await rt(A, "slIniciar()")
             ok = await espera(A, JOGA, 12000) and await espera(Bp, JOGA, 12000)
             await rt(Cp, "(() => { net49Send({type:'join', code:%s, spectate:true}); return 1; })()" % json.dumps(cod))
             await espera(Cp, "NET49.playing && NET49.localSlot < 0", 10000)
             for pg in (A, Bp, Cp):
                 await rt(pg, "(() => { filaPop.length = 0; if (!LB.pop.hidden) fechaPop(); return 1; })()")
-            P.confere(ok and adm0 and adm0['vis'] and sl and 'ANTES DE COMEÇAR' in sl['txt'] and not sl['cobre'] and sl['bt']['h'] >= 44 and not sl['bt']['bate'] and sl['bt']['dentro'], '0) na tela da sala a Ana tem o botão ADMIN (o painel abre do lado, sem cobrir o COMEÇAR) e a sala 1v1 hospedada começa (Ana × Beto; o Caio assiste)', [adm0, sl])
+            fic = (sl or {}).get('txt') or []
+            P.confere(ok and not adm0['vis'] and sl and any(t.startswith('TROCAR COM') or t.startswith('MUDAR PARA') for t in fic) and all(t in fic for t in ('PÔR NO BANCO', 'TORNAR ÁRBITRO', 'REMOVER DA SALA')) and sl['dentro'] and sl['min'] >= 44,
+                      '0) na tela da sala (sem o botão ADMIN) a Ana toca no cartão do Beto: a ficha com TROCAR, PÔR NO BANCO, TORNAR ÁRBITRO e REMOVER, inteira na tela; e a sala 1v1 hospedada começa (Ana × Beto; o Caio assiste)', [adm0, sl])
             # o gol: 1 × 0
             await rt(A, "(() => { net49Send({type:'__teste_gol', time:P.time}); return 1; })()")
             pl = await espera(A, "RQ.placar[0] + RQ.placar[1] === 1 ? RQ.placar.join('×') : ''", 6000)
@@ -91,9 +95,10 @@ async def principal():
             await rt(Bp, "pausaAbre(); 1"); await asyncio.sleep(.3)
             pb = await rt(Bp, "(() => { const b = document.getElementById('pa-adm'); return !!(b && b.isConnected); })()")
             await rt(Bp, "pausaFecha(); 1")
-            P.confere(pa and pa['h'] >= 44 and pa['ic'] and not pb, '1) na pausa da Ana: ADMIN DA SALA (%s px, com o desenho); na do Beto, não' % (pa and pa['h']), [pa, pb])
-            P.confere(pa5['cabe'] and pa6['cabe'] and pa5['duas'] and pa6['duas'] and min(pa5['min'], pa6['min']) >= 44,
-                      '   a pausa da admin cabe no celular deitado sem rolar, com %s e com %s botões (duas colunas) e o bloco do árbitro; botões ≥ %s px' % (pa5['n'], pa6['n'], min(pa5['min'], pa6['min'])), [pa5, pa6])
+            arb = await rt(A, "(() => { const b = document.getElementById('pa-adm'); return !!b && !!b.closest('#pa-arb') && /TIMES E JOGADORES/.test(b.textContent); })()")
+            P.confere(pa and pa['h'] >= 44 and pa['ic'] and arb and not pb, '1) na pausa da Ana: TIMES E JOGADORES na parte do árbitro (%s px); na do Beto, não' % (pa and pa['h']), [pa, arb, pb])
+            P.confere(pa5['cabe'] and pa6['cabe'] and min(pa5['min'], pa6['min']) >= 44,
+                      '   a pausa do árbitro cabe no celular deitado sem rolar, com %s e com %s botões e o bloco do árbitro (os três numa linha); botões ≥ %s px' % (pa5['n'], pa6['n'], min(pa5['min'], pa6['min'])), [pa5, pa6])
             await pg_click(A, '#pa-adm'); await asyncio.sleep(.4)
             pn = await rt(A, """(() => { const p = document.querySelector('.v93-adm'); if (!p || p.hidden) return null; const r = p.getBoundingClientRect();
               const bts = [...p.querySelectorAll('.v93-adm-bt')].filter(b => b.offsetParent).map(b => Math.round(b.getBoundingClientRect().height));
@@ -103,9 +108,11 @@ async def principal():
                       '2) o painel abre do lado direito (%s px de %s: não ocupa o meio), com os times e o banco; botões ≥ 34 px' % (pn and pn['w'], pn and pn['vw']), pn)
 
             print('\n2) as trocas no meio da partida')
-            await rt(A, "(() => { const li = [...document.querySelectorAll('.v93-adm .v93-adm-l')].find(l => /Beto/.test(l.textContent)); const b = li && [...li.querySelectorAll('button')].find(x => /RESERVA/.test(x.textContent)); if (b) b.click(); return !!b; })()")
+            await rt(A, "(() => { const li = [...document.querySelectorAll('.v93-adm .v93-adm-l')].find(l => /Beto/.test(l.textContent)); const b = li && [...li.querySelectorAll('button')].find(x => /^(RESERVA|BANCO)$/.test(x.textContent.trim())); if (b) b.click(); return !!b; })()")
             bb = await espera(Bp, "NET49.playing && NET49.localSlot < 0 ? 1 : 0", 5000)
-            P.confere(bb, '3) RESERVA: o Beto vai para o banco no meio da partida (o aparelho dele passa a assistir)', bb)
+            await asyncio.sleep(.3)
+            livre = await rt(A, "(() => [...document.querySelectorAll('.v93-adm .v93-adm-time .v93-adm-nome')].map(x => x.textContent))()")
+            P.confere(bb and 'vaga livre' in livre, '3) BANCO: o Beto vai para o banco no meio da partida (o aparelho dele passa a assistir) e a vaga dele fica livre (sem bot)', [bb, livre])
             await asyncio.sleep(.6)
             await rt(A, "(() => { const li = [...document.querySelectorAll('.v93-adm .v93-adm-fora .v93-adm-l')].find(l => /Caio/.test(l.textContent)); const b = li && [...li.querySelectorAll('button')].find(x => /ENTRAR/.test(x.textContent)); if (b) b.click(); return !!b; })()")
             await asyncio.sleep(.3)

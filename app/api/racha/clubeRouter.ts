@@ -18,6 +18,7 @@ import { notifica, empurraRelacoes, cartoesDe } from "./v88/comum";
 import { autenticado, exigeLimite, type CtxAutenticado } from "./guard";
 import { formatarIdPublico } from "@contracts/racha";
 import { podeUsarCodigo, AVISO_FUNDADOR } from "./fundador";
+import { ehDuplicado } from "./erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 const MAX_MEMBROS = 30;
 const MAX_ADMINS = 4;
@@ -31,7 +32,6 @@ const limpa = (s: string, n: number) =>
 const chaveNome = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 24);
 const semCuringa = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
-const ehDuplicado = (e: unknown) => /duplicate|ER_DUP_ENTRY|1062/i.test(String((e as { message?: string })?.message ?? e));
 
 const campos = {
   descricao: z.string().max(80).transform((s) => limpa(s, 60) || "Junte-se a nós!"),

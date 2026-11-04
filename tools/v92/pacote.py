@@ -94,6 +94,23 @@ with zipfile.ZipFile(saida) as z:
     assert b'window.RachaSalaLocal' in jogo and b'window.RachaChutes99' in jogo, 'o jogo do ZIP não tem os chutes do Rachão nas salas (v99)'
     assert {'app/public/game/v101.css', 'tools/v101/v101.py', 'tools/v101/lobby.js', 'tools/v101/semskins.js'} <= nomes, 'faltam os arquivos da v101 no ZIP'   # v101: o lobby da imagem da noite e só o CRIAR TAMPINHA
     assert b'window.RachaLobby101' in jogo and b'window.RachaSemSkins101' in jogo, 'o jogo do ZIP não tem o lobby da v101 nem as prontas guardadas'
+    # v102: a borda BOTÃO, o anel e o lobby com o MENU (no jogo) e o correio que reconhece a chave repetida do drizzle (na plataforma)
+    assert {'app/public/game/v102.css', 'tools/v102/v102.py', 'tools/v102/borda.js', 'tools/v102/lobby.js', 'app/api/racha/erros.ts'} <= nomes, 'faltam os arquivos da v102 no ZIP'
+    assert b'window.RachaLobby102' in jogo and b'v102SpriteAnel' in jogo, 'o jogo do ZIP não tem o lobby nem o anel da v102'
+    # v102 (parte 2): o online mais liso (as direções e o crédito no quadro)
+    assert 'tools/v102/liso.js' in nomes and b'RachaLiso102' in jogo, 'falta o online mais liso da v102 no ZIP'
+    # v103: o lobby de dia, as salas sem bots, o árbitro, a ranqueada contra os bots no servidor, o perfil pelo chat e os sons do online
+    assert {'app/public/game/v103.css', 'tools/v103/v103.py', 'tools/v103/lobby_dia.js', 'tools/v103/salas.js', 'tools/v103/arbitro.js',
+            'tools/v103/ranqueada.js', 'tools/v103/chat_perfil.js', 'tools/v103/sons.js', 'tools/v103/arte/fundo_dia.webp'} <= nomes, 'faltam os arquivos da v103 no ZIP'
+    assert all(x in jogo for x in (b'window.RachaArbitro103', b'window.RachaSalas103', b'window.RachaRanqueada103', b'window.RachaChatPerfil103', b'window.RachaSons103')), 'o jogo do ZIP não tem a v103'
+    # v103 · controles: o controle e o teclado do jeito de cada um (Ajustes › Controles) e o analógico sem atraso
+    assert {'app/public/game/v103-controles.css', 'tools/v103/controles.py', 'tools/v103/controles.js'} <= nomes, 'faltam os controles da v103 no ZIP'
+    # v103 · tela: a tela cheia (o botão, o guia do iPhone e o campo até a beirada) e o app instalável (o manifesto, o service worker e os ícones)
+    V103 = {'app/public/game/v103-tela.css', 'app/public/game/manifest.webmanifest', 'app/public/game/sw.js', 'app/public/game/icones/racha-192.png',
+            'app/public/game/icones/racha-512.png', 'app/public/game/icones/racha-maskable-192.png', 'app/public/game/icones/racha-maskable-512.png',
+            'app/public/game/icones/apple-touch-icon.png', 'tools/v103/tela.py', 'tools/v103/tela.js', 'tools/v103/icones.py'}
+    assert V103 <= nomes, 'faltam os arquivos da v103 no ZIP: ' + ', '.join(sorted(V103 - nomes))
+    assert b'window.RachaTela103' in jogo and b'rel="manifest" href="./manifest.webmanifest"' in jogo, 'o jogo do ZIP não tem a tela cheia nem o manifesto da v103'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)

@@ -1,0 +1,36 @@
+/* RACHA v103 · o lobby de dia, o árbitro mais simples e as salas sem bots (tools/v103/*.js) */
+
+/* ---- a ficha do árbitro (o cartão de alguém, quem entra na vaga, as confirmações): em duas colunas, sem passar da tela ---- */
+#lb .pop-caixa.arb-pop.v103-ficha{ max-width:min(640px, 94vw); }
+#lb .pop-caixa.arb-pop.v103-ficha .v103-acoes{
+  display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; width:100%;
+  max-height:min(52vh, 420px); overflow-y:auto; overscroll-behavior:contain; padding:2px; box-sizing:border-box;
+}
+#lb .pop-caixa.arb-pop.v103-ficha .v103-acoes > .lb-btn{ margin:0; min-height:max(48px, calc(46px / var(--v103-sc, 1))); min-width:0; white-space:normal; line-height:1.1; padding-left:12px; padding-right:12px; }
+#lb .pop-caixa.arb-pop.v103-ficha .v103-acoes > .lb-btn:last-child:nth-child(odd){ grid-column:1 / -1; }   /* (o CANCELAR sozinho na linha) */
+#lb .pop-caixa.arb-pop.v103-ficha .v103-nota{ margin:10px 0 0; font-size:15px; opacity:.85; }
+@media (max-height:430px){
+  #lb .pop-caixa.arb-pop.v103-ficha{ padding-top:10px; padding-bottom:10px; }
+  #lb .pop-caixa.arb-pop.v103-ficha h2{ font-size:26px; margin:2px 0 8px; }
+  #lb .pop-caixa.arb-pop.v103-ficha .v103-acoes{ gap:8px; max-height:58vh; }
+  #lb .pop-caixa.arb-pop.v103-ficha .v103-acoes > .lb-btn{ min-height:max(44px, calc(46px / var(--v103-sc, 1))); font-size:18px; }
+}
+
+/* ---- a sala online: sem o quadro BOTS ficam 5 quadros de regra — a grade de 5 de sempre (não a de 6 da v99) ---- */
+#lb .sl-ops.v99-6.v103-5{ grid-template-columns:repeat(5, minmax(0, 1fr)); column-gap:46px; }
+#lb.estreito .sl-ops.v99-6.v103-5{ column-gap:40px; }
+#lb.retrato .sl-ops.v99-6.v103-5{ grid-template-columns:repeat(6, minmax(0, 1fr)); }
+#lb.retrato .sl-ops.v99-6.v103-5 .sl-op:nth-child(4){ grid-column:2 / span 2; }
+
+/* ---- a pausa: o TIMES E JOGADORES na parte do árbitro, os três numa linha (cabe no celular deitado sem rolar) ---- */
+#pa-arb .v103-pa-times{ width:100%; }
+#pa-arb.v103-tres{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+#pa-arb.v103-tres > .pa-bt{ min-width:0; white-space:normal; line-height:1.1; padding-left:8px; padding-right:8px; font-size:clamp(12px, 3.4vh, 17px); }
+#pa-arb.v103-tres > .v103-pa-times .v71-ic{ display:none; }
+
+/* ---- o perfil pelo chat NA PARTIDA: só a janela do perfil por cima do jogo (a camada do lobby aparece sem o resto) ---- */
+#lb.v103-pop-jogo{ background:none !important; pointer-events:none; }
+#lb.v103-pop-jogo > *{ visibility:hidden !important; }
+#lb.v103-pop-jogo #lb-pop, #lb.v103-pop-jogo #lb-pop *{ visibility:visible !important; }
+#lb.v103-pop-jogo #lb-pop{ pointer-events:auto; }
+.c81-f-tampa.v103-toca{ cursor:pointer; }

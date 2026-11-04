@@ -234,10 +234,12 @@ async def principal():
             await A.screenshot(path=str(SAIDA / 'v98_contagem.png'))
             await A.wait_for_timeout(1800)
             ca, cb, cc = await fa.evaluate(CENA), await fb.evaluate(CENA), await fc.evaluate(CENA)
-            P.confere(ca and cb and cc and ca['eu'] == 0 and cb['eu'] == 2 and cc['eu'] == -1 and ca['jogo'] and len(ca['j']) == 4,
-                      'a partida nos três aparelhos: a Ana no lugar dela, o Beto no dele e o Caio assistindo', [ca and ca['eu'], cb and cb['eu'], cc and cc['eu']])
-            P.confere(ca['j'][2][2] == 'Beto' and ca['j'][0][2] == '' and cb['j'][0][2] == 'Ana' and cc['j'][0][2] == 'Ana' and cc['j'][2][2] == 'Beto' and ca['j'][1][2] == '',
-                      'os nomes de quem joga embaixo das tampinhas dos outros (a sua tem a setinha; os bots, nada)', [ca['j'], cb['j']])
+            # (v103: as salas online não têm bots — no 2x2 com a Ana e o Beto, as duas vagas sem gente ficam vazias: 2 no campo)
+            P.confere(ca and cb and cc and ca['eu'] == 0 and cb['eu'] == 2 and cc['eu'] == -1 and ca['jogo'] and len(ca['j']) == 2,
+                      'a partida nos três aparelhos: a Ana no lugar dela, o Beto no dele e o Caio assistindo (sem bots nas vagas vazias)', [ca and ca['eu'], cb and cb['eu'], cc and cc['eu'], ca and len(ca['j'])])
+            jl = lambda c, lugar: next((x for x in c['j'] if x[3] == lugar), None) or [0, 0, None, lugar]   # (o jogador do lugar)
+            P.confere(jl(ca, 2)[2] == 'Beto' and jl(ca, 0)[2] == '' and jl(cb, 0)[2] == 'Ana' and jl(cc, 0)[2] == 'Ana' and jl(cc, 2)[2] == 'Beto' and not any(x[3] in (1, 3) for x in ca['j']),
+                      'os nomes de quem joga embaixo das tampinhas dos outros (a sua tem a setinha; as vagas sem gente não entram no campo)', [ca['j'], cb['j']])
             P.confere(cc['sub'] == 'Assistindo' and not cc['toque'], 'quem assiste vê "Assistindo" no placar e não tem os botões de jogar', [cc['sub'], cc['toque']])
             r = await fc.evaluate("({rot: App.topR.rot, w: innerWidth, h: innerHeight})")
             P.confere(r['rot'] and r['h'] > r['w'], 'em pé, o Rachão online gira o campo (como nos modos de sempre)', r)

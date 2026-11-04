@@ -88,6 +88,9 @@ const RECUPERA_MAX = 30;                             // passos (0,5 s): o máxim
 const CREDITO_MS = 1200;
 const FILA_GRANDE = 40;                              // passou disso (um apagão enorme): alcança de uma vez, como antes
 const FILA_V95 = process.env.RACHA_FILA === 'v95';
+const ENTRADAS_MAX = 6;                              // v102: as direções de cada um que vão no quadro (a que ele quer agora + as da fila)
+const ESPERA_QUER = 12;                              // v102: parado à espera de comando até 12 passos (200 ms): o quadro diz a direção que ele quer
+const CREDITO_PAGANDO = 6;                            // v102: passos — o crédito continua no quadro até 6 passos depois do último pagamento
 const RQ_FORMA = { 1: [[0.22, 0]], 2: [[0.2, 0], [0.58, 0]], 3: [[0.2, -0.42], [0.2, 0.42], [0.62, 0]], 4: [[0.2, -0.43], [0.2, 0.43], [0.62, -0.43], [0.62, 0.43]] };
 // (v92: o raio da barreira da saída por tamanho — 8, 10, 12 e 13,5 u — vem no campo do núcleo: G.circ)
 const META_PADRAO = 3;                               // futebol e com curva: primeiro a 3
@@ -153,6 +156,7 @@ class PartidaSala {
     this.cr = this.jogo === 'futebol' && o.motor !== 'v94' ? N.crOpcoes(o.chutes) : null;   // v99: os chutes do Rachão (null = só o chutar)
     this.snapCada = o.quadros === 60 ? 1 : SNAP_A_CADA;
     this.filaV95 = FILA_V95 || o.fila === 'v95';     // v96: a fila antiga (sem a recuperação), para comparar
+    this.ent102 = o.entradas !== false && process.env.RACHA_ENTRADAS !== '0';   // v102: as direções e o crédito de cada um no quadro (Q.ent, Q.cred)
     this.agora = o.agora || (() => Date.now());
     this.decorrido = o.decorrido || null;            // v80: o relógio oficial (ms, sem as pausas)
     this.log = o.log || (() => {});
@@ -164,6 +168,11 @@ class PartidaSala {
     this.onReplay = o.onReplay || null;              // v93: depois da comemoração, o replay do gol (a turma para o motor e volta com fimReplay)
     this.est = {};                                   // v93: as estatísticas de cada um (humanos pelo id; bots pelo lugar: 'b' + i)
     this.ranked = !!o.ranked;
+    // v103 · as salas personalizadas sem bots (o pedido: "quando alguém sai, o time fica com um a menos, não bote bot no lugar"):
+    // a vaga sem gente (o.jogadores[i] = {vazio:true}) e a de quem sai, cai ou vai para o banco ficam VAZIAS — a tampinha sai do
+    // campo (q.fora: não anda, não bate e não toca na bola; o núcleo pula) e volta quando alguém entra nela (o admin põe,
+    // ou quem caiu volta). A ranqueada continua com os bots completando.
+    this.semBots = !!o.semBots || (o.jogadores || []).some(j => j && j.vazio);
     this.v80 = o.regra === 'v80' ? { seg: (o.r80 && o.r80.seg) || 180, prorrog: (o.r80 && o.r80.prorrog) || 120 } : null;
     this.tempoLim = !this.v80 && o.tempo ? o.tempo * 60 : 0;    // sala por tempo: o relógio da partida (s de jogo)
     this.meta = this.v80 ? 3 : (this.tempoLim ? 999 : META_PADRAO);   // por tempo: sem limite de gols (como o jogo)
@@ -189,10 +198,10 @@ class PartidaSala {
   }
 
   novoJogador(j, i) {
-    const time = Math.floor(i / this.n), k = i % this.n;
+    const time = Math.floor(i / this.n), k = i % this.n, vazio = !!(j && j.vazio) || (!j && this.semBots);   // v103: a vaga vazia
     const q = {
-      i, netId: j && j.netId ? String(j.netId) : null, nome: (j && j.nome) || 'Bot',
-      bot: j && j.bot ? j.bot : (j && j.netId ? null : 'dificil'),   // lugar vazio vira bot (a sala tem a opção)
+      i, netId: j && j.netId ? String(j.netId) : null, nome: vazio ? '' : (j && j.nome) || 'Bot', fora: vazio,
+      bot: vazio ? null : j && j.bot ? j.bot : (j && j.netId ? null : 'dificil'),   // lugar vazio vira bot (a sala tem a opção) · v103: ou fica vazio
       time, k, papel: this.n >= 3 && k === this.n - 1 ? 'gk' : 'campo',
       x: 0, y: 0, vx: 0, vy: 0, mx: 0, my: 0, r: this.C.R_JOG, m: this.C.MASSA_JOG,
       chuteT: -99, fxT: -9, ack49: 0, ultimoChuteMs: -1e9,
@@ -200,7 +209,7 @@ class PartidaSala {
       cr: this.cr ? N.crNovo() : null, suBot: false,  // v99: os chutes do Rachão (o bot também usa)
     };
     if (q.bot) q.botAi = BotSala.criar(q.bot);
-    else {                                            // o humano já nasce com a fila de comandos pronta
+    else if (!vazio) {                                // o humano já nasce com a fila de comandos pronta
       q.fila = { fila: [], chegou: this.agora(), min: 99, n: 0, ult: null, feito: 0, visto: 0 };
       q.netButton = N.novoBotao();                    // v92: a máquina dos botões do núcleo (com o toque armado e os contadores)
       q.cv70 = q.netButton.cv;
@@ -219,9 +228,11 @@ class PartidaSala {
       return ja.i;
     }
     const L = Number.isInteger(lugar) ? this.jog[lugar] : null;   // v93: o lugar da sala (a turma sabe onde a pessoa está sentada): esse primeiro
-    const q = (L && !L.netId && (L.reserva === netId || L.bot) ? L : null) || this.jog.find(x => x.reserva === netId) || this.jog.find(x => x.bot && !x.reserva && !x.netId);
+    const livre = x => !x.netId && (x.bot || x.fora);  // (v103: a vaga vazia também é livre)
+    const q = (L && !L.netId && (L.reserva === netId || livre(L)) ? L : null) || this.jog.find(x => x.reserva === netId) || this.jog.find(x => livre(x) && !x.reserva);
     if (!q) return -1;
     for (const x of this.jog) if (x !== q && x.reserva === netId) x.reserva = null;   // (nenhuma outra vaga fica guardada para quem voltou)
+    if (q.fora) this.volta(q);                       // v103: a tampinha volta para o campo
     q.netId = String(netId); q.nome = nome || q.nome; q.bot = null; q.botAi = null; q.reserva = null;
     q.fila = { fila: [], chegou: 0, min: 99, n: 0, ult: null, feito: 0, visto: 0 };
     q.netButton = N.novoBotao();
@@ -235,22 +246,41 @@ class PartidaSala {
     const q = this.jog.find(x => x.netId === netId);
     if (!q) return;
     q.reserva = q.netId;                             // a reserva da reconexão (a turma dá 90 s)
+    if (this.semBots) { q.netId = null; this.poeFora(q); return; }   // v103: sem bots, o time fica com um a menos (a vaga espera ele voltar)
     q.netId = null; q.bot = 'dificil'; q.botAi = BotSala.criar('dificil');
     q.fila = null; q.mx = q.my = 0; q.cv70 = null;
     if (this.cr) q.cr = N.crNovo();                  // v99 (o bot começa sem nada armado)
     if (this.v94) S94().reiniciaJogador(this, q);
   }
   gente() { return this.jog.filter(q => q.netId).length; }
+  /* v103 · a vaga vazia: a tampinha sai do campo (fica fora da física, longe, parada, sem bot e sem fila) e volta quando alguém
+     entra nela — no lugar da formação de saída do time dela (as batidas separam se tiver alguém ali). */
+  estaciona(q) { q.x = this.G.CX; q.y = this.G.LY0 - 40 * this.C.R_JOG; q.vx = q.vy = 0; q.mx = q.my = 0; }
+  poeFora(q) {
+    q.fora = true; q.bot = null; q.botAi = null; q.nome = ''; q.fila = null; q.cv70 = null; q.netButton = null; q.suBot = false;
+    if (this.cr) q.cr = N.crNovo();
+    this.estaciona(q);
+    this.toques = this.toques.filter(t => t.p !== q); if (this.chuteDe && this.chuteDe.p === q) this.chuteDe = null;
+  }
+  volta(q) {
+    q.fora = false;
+    if (this.v94) return;
+    const G = this.G, f = RQ_FORMA[this.n][Math.min(q.k, this.n - 1)], s = q.time === 0 ? -1 : 1;
+    q.x = G.CX + s * f[0] * ((G.LX1 - G.LX0) / 2); q.y = G.CY + f[1] * ((G.LY1 - G.LY0) / 2); q.vx = q.vy = 0; q.mx = q.my = 0;
+    if (this.estado === 'saida' && q.time === this.saidaTime && q.k === 0) this.spawn(q);
+  }
 
   /* ---- v93 · Fase 3: o admin mexe nos lugares no meio da partida (a turma confere quem pode). O placar, o relógio e os números
      de cada um continuam; as tampinhas ficam onde estão no campo — muda quem joga nelas. Ninguém fica em dois lugares. ---- */
   liberaHumano(q) {                                  // o lugar volta a ser bot (sem reserva: quem saiu foi o admin que tirou)
+    if (this.semBots) { q.reserva = null; q.netId = null; this.poeFora(q); return; }   // v103: ou fica vazio
     q.reserva = null; q.netId = null; q.nome = 'Bot'; q.bot = 'dificil'; q.botAi = BotSala.criar('dificil');
     q.fila = null; q.mx = q.my = 0; q.cv70 = null; q.netButton = null;
     if (this.cr) q.cr = N.crNovo();                  // v99
     if (this.v94) S94().reiniciaJogador(this, q);
   }
   poeHumano(q, netId, nome) {                        // um humano assume o lugar q (o bot sai)
+    if (q.fora) this.volta(q);                       // v103: a vaga vazia ganha a tampinha de volta
     q.netId = String(netId); q.nome = nome || q.nome; q.bot = null; q.botAi = null; q.reserva = null;
     q.fila = { fila: [], chegou: 0, min: 99, n: 0, ult: null, feito: 0, visto: 0 };
     q.netButton = N.novoBotao(); q.cv70 = q.netButton.cv; q.ack49 = 0; q.mx = q.my = 0;
@@ -261,7 +291,7 @@ class PartidaSala {
     const alvo = this.jog[i]; if (!alvo) return false;
     const id = String(netId);
     for (const q of this.jog) { if (q !== alvo && q.netId === id) this.liberaHumano(q); if (q.reserva === id) q.reserva = null; }
-    if (alvo.netId && alvo.netId !== id) this.liberaHumano(alvo);
+    if (alvo.netId && alvo.netId !== id && !this.semBots) this.liberaHumano(alvo);   // (v103: sem bots, a tampinha fica onde está e muda quem joga nela)
     if (alvo.netId !== id) this.poeHumano(alvo, id, nome);
     return true;
   }
@@ -332,7 +362,7 @@ class PartidaSala {
   }
   nsRecupera(q, f, b, porComando) {                  // v96: um comando a mais neste passo, só a tampinha (o passo que ficou para trás)
     const c = f.fila.shift(); if (!c) return;
-    f.cred--; f.ult = c; f.feito = c.seq; f.recuperados = (f.recuperados | 0) + 1;
+    f.cred--; f.ult = c; f.feito = c.seq; f.recuperados = (f.recuperados | 0) + 1; f.pagou = this.tick;   // (v102: o passo do último pagamento, para o Q.cred)
     this.nsBotao(q.netButton || b, c); if (porComando) this.nsSegura(q, b);
     if (this.cr) { N.crComando(q.cr, c, this); N.crTick(this, this.C, q, q.cr, c.su === 1, true, NAO_CHUTA); }   // v99: o super carrega (e solta) no passo dele, como no aparelho; o chute sai nos passos de agora
     N.passoSolo(this, this.C, q, c);
@@ -415,6 +445,7 @@ class PartidaSala {
     } else {
     // 1) as entradas: humanos pela fila de comandos; bots pela inteligência (mesmas regras e limites)
     for (const q of this.jog) {
+      if (q.fora) continue;                          // v103: a vaga vazia não decide nada
       if (q.bot) { BotSala.decide(this, q); if (this.cr) N.crTick(this, this.C, q, q.cr, q.suBot, this.estado === 'saida' || this.estado === 'jogo', this.chutaCb); }   // v99: o bot também carrega o super
       else this.controle(q);
     }
@@ -435,7 +466,7 @@ class PartidaSala {
   toquesNaBola() {
     if (this.cr && N.crAlta(this, this.C)) return;   // v99: a bola passando por cima não é toque de ninguém
     const lim = this.C.R_BOLA + 2, B = this.B;
-    for (const q of this.jog) if (Math.hypot(q.x - B.x, q.y - B.y) <= q.r + lim) this.toque(q);
+    for (const q of this.jog) if (!q.fora && Math.hypot(q.x - B.x, q.y - B.y) <= q.r + lim) this.toque(q);
   }
   toque(q) {
     const h = this.toques, u = h[h.length - 1];
@@ -548,6 +579,7 @@ class PartidaSala {
   }
   spawn(q) {                                         // (o rqSpawn: a formação de saída; quem bate fica atrás da bola)
     if (this.v94) return;                            // v94: a formação é a do motor (M.saida)
+    if (q.fora) return this.estaciona(q);            // v103: a vaga vazia fica fora do campo
     const G = this.G, f = RQ_FORMA[this.n][Math.min(q.k, this.n - 1)], s = q.time === 0 ? -1 : 1;
     q.x = G.CX + s * f[0] * ((G.LX1 - G.LX0) / 2); q.y = G.CY + f[1] * ((G.LY1 - G.LY0) / 2);
     if (q.time === this.saidaTime && q.k === 0) { q.x = G.CX + s * (q.r + this.C.R_BOLA + 10); q.y = G.CY; }
@@ -603,7 +635,7 @@ class PartidaSala {
     if (L.desvio) { const e = this.estDe(L.desvio), i = e.def.findIndex(t => this.tick - t <= RQ_DESVIO_JANELA + 10); if (i >= 0) { e.def.splice(i, 1); e.d = Math.max(0, e.d - 1); } }
   }
   estatisticas() {
-    for (const q of this.jog) this.estDe(q);           // (todo lugar aparece, mesmo sem número)
+    for (const q of this.jog) if (!q.fora || q.netId) this.estDe(q);   // (todo lugar aparece, mesmo sem número · v103: menos a vaga vazia)
     return Object.values(this.est).map(e => ({ k: e.k, i: e.i, time: e.time, nome: e.nome, bot: e.bot, g: e.g, a: e.a, d: e.d, r: e.r, c: e.c, p: e.p, cg: e.cg }));
   }
   fimReplay() {                                      // v93: o replay acabou (todos votaram ou o tempo passou): a saída, como depois de todo gol
@@ -629,12 +661,47 @@ class PartidaSala {
       }),
       goal: this.ultimoGol || null,
     };
+    if (this.semBots) { const fora = []; for (const q of this.jog) if (q.fora) fora.push(q.i); if (fora.length) Q.fora = fora; }   // v103: as vagas vazias (o jogo não desenha)
     if (this.cr) {                                     // v99: a bola no alto (altura, subida, giro, o teto do super, o fogo) e o estado de cada um
       Q.bz = [ns3(B.z), ns3(B.vz), ns4(B.sp), ns1(B.teto), B.fogo | 0];   // (a altura com 3 casas: o quique cai no mesmo passo na previsão)
       Q.cr = this.jog.map(q => N.crPack(q.cr));
     }
     if (this.v94) S94().quadroExtra(this, Q);        // v94: + o estado do motor (m94) para a previsão do aparelho
+    else if (this.ent102) {                            // v102: o que a previsão do aparelho precisa para andar os outros e o tempo do mundo
+      Q.ent = this.jog.map(q => this.entradas(q));
+      // (o crédito só vale se a recuperação vai pagar: não na fila da v95 nem no DB por estados, que não recuperam)
+      const cr = this.filaV95 || this.C.DB_MODO === 1 ? null : this.jog.map(q => this.credito102(q));
+      if (cr && cr.some(Boolean)) Q.cred = cr;
+    }
     return Q;
+  }
+  /* v102 · as direções de cada um no quadro: [a que ele quer agora, as que estão na fila (os próximos passos)...], em 64 setores
+     (0 = para a direita, 16 = para baixo; -1 = parado). "A que ele quer": a do passo do quadro; com a tampinha parada no
+     servidor esperando comando (o apagão: o crédito da v96), a do último comando que chegou — ele vai andar com ela quando a
+     recuperação pagar. E Q.cred (só quando alguém tem): o crédito que a recuperação vai pagar a cada um (credito102). Com os
+     dois, a previsão do aparelho anda os outros com o que eles de fato apertaram (e não pela velocidade do quadro, que é zero
+     na tampinha parada à espera) e não deixa o tempo do mundo previsto correr nem parar com o apagão de ninguém
+     (tools/v102/liso.js). O jogo antigo ignora os dois campos. RACHA_ENTRADAS=0 (ou o.entradas: false) não manda. */
+  entradas(q) {
+    const cod = (x, y) => (!x && !y) ? -1 : (Math.round(Math.atan2(y, x) * 32 / Math.PI) + 64) % 64;
+    // (só no buraco curto — até ESPERA_QUER passos: o pico do 4G, quando os comandos estão no caminho e vão chegar juntos; parado
+    //  mais que isso é o aparelho que travou ou a internet que caiu: os comandos não vêm, e ele fica parado de verdade)
+    const f = q.fila, quer = (!q.mx && !q.my && f && f.cred > 0 && f.cred <= ESPERA_QUER && f.ult) ? f.ult : { x: q.mx, y: q.my };
+    const v = [cod(quer.x, quer.y)];
+    if (f) for (let k = 0; k < f.fila.length && v.length < ENTRADAS_MAX; k++) { const c = f.fila[k]; if (c.seq > f.feito) v.push(cod(c.x, c.y)); }
+    return v;
+  }
+  // v102 · o crédito que vai no quadro: o que a recuperação vai pagar quando os comandos que estão no caminho chegarem (a
+  // tampinha parada esperando, depois dos palpites) ou está pagando (a fila acima do colchão, ou um pagamento há até
+  // CREDITO_PAGANDO passos: a fila oscilando em volta do colchão não liga e desliga o campo). A SOBRA — os comandos chegando
+  // em dia e a fila no colchão, sem pagar — não vai: a recuperação não paga isso (acaba sozinha em 1,2 s), e na previsão do
+  // aparelho viraria passos só da tampinha que o servidor não faz (ela atravessando a bola, o tempo do mundo atrás). Medido:
+  // com o crédito inteiro no quadro a sua tampinha piorava no navegador (o deslize p95 dobrava no 4G de mentira)
+  credito102(q) {
+    const f = q.fila; if (!f || !(f.cred > 0)) return 0;
+    const esperando = !f.fila.length && !(f.ult && f.feito - f.ult.seq < 4);
+    const pagando = f.fila.length > 2 || (f.pagou != null && this.tick - f.pagou <= CREDITO_PAGANDO);
+    return esperando || pagando ? f.cred | 0 : 0;
   }
 
   botaoQuadro(q) {                                   // v92: o estado dos botões no quadro (a previsão do aparelho continua daqui)

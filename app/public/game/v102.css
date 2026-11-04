@@ -1,0 +1,135 @@
+/* =====================================================================================================================
+   RACHA v102 · O LOBBY COM MENOS COISA NA TELA (o lobby em tools/v102/lobby.js)
+   A cena da v101 continua; por cima, só o que se usa sempre: o perfil, o dinheiro, o correio e o MENU em cima; a tampinha
+   (e a vaga do grupo) no meio; a barra de atalhos na esquerda e o MODO em cima do JOGAR na direita. O resto mora no MENU,
+   a gaveta da direita. Tudo atrás da classe .v102 (no #lb e no <html>) e só deitado (em pé fica o lobby de antes).
+   ===================================================================================================================== */
+
+/* ---------------------------------------------------------------- 1) o que sai da tela inicial (continua no MENU) */
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .lb-topo .v91-pat,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .lb-topo #lb-chat,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .lb-topo #lb-ajustes,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .lb-topo .v101-sinal,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .v71-col,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #ofi-lobby,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .v88-passe,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-missoes,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .v101-modo,
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-jogar .v101-jogar-coroa{ display:none !important; }
+
+/* ---------------------------------------------------------------- 2) o MENU (em cima, o quadrado depois do correio) */
+#lb.v101 .v102-menu-bt{ display:none; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .lb-topo .v102-menu-bt{ display:flex !important; }
+#lb.v101.v102 .v102-menu-bt .v91-tp-ic svg{ width:100%; height:100%; display:block; }
+#lb.v101.v102 .v102-menu-bt[aria-expanded="true"]::before{ border-color:rgba(190,150,255,.8) !important; box-shadow:var(--v101-luz), 0 0 14px rgba(150,80,255,.55) !important; }
+
+/* os números e os pontos vermelhos (no MENU, nos itens dele e na barra de atalhos) */
+#lb.v101 .v102-selo{ position:absolute; right:-7px; top:-7px; z-index:3; min-width:28px; height:28px; padding:0 8px; border-radius:14px; box-sizing:border-box;
+  font:800 18px/28px var(--v101-tit); font-style:normal; letter-spacing:.3px; color:#fff; text-align:center; pointer-events:none;
+  background:radial-gradient(circle at 40% 35%, #ff6a72, #ff1f3d 60%, #c40024); box-shadow:0 0 0 2.5px #1a0716, 0 0 8px rgba(255,40,70,.6); }
+#lb.v101 .v102-selo.ponto{ min-width:18px; width:18px; height:18px; padding:0; right:-3px; top:-3px; }
+
+/* ---------------------------------------------------------------- 3) a barra de atalhos (embaixo, na esquerda) */
+#lb.v101 .v102-doca{ display:none; }
+#lb.v91.v101.v102:not(.retrato) #lb-palco .v102-doca{ position:absolute; z-index:3; left:22px; bottom:42px; height:116px; display:flex; align-items:stretch; padding:0 5px;
+  border-radius:12px; background:var(--v101-painel); border:1.5px solid var(--v101-borda); box-shadow:var(--v101-luz), var(--v101-sombra); }
+#lb.v101.v102 .v102-doca-bt{ position:relative; flex:none; width:126px; margin:0; padding:2px 0 0; border:0; background:none; color:var(--v101-txt); cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; -webkit-tap-highlight-color:transparent; transition:transform .08s; }
+#lb.v101.v102 .v102-doca-bt[hidden]{ display:none; }
+#lb.v101.v102 .v102-doca-bt + .v102-doca-bt::before{ content:''; position:absolute; left:0; top:20px; bottom:20px; width:1.5px; background:rgba(150,160,255,.16); }
+#lb.v101.v102 .v102-doca-bt-ic{ width:60px; height:56px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+#lb.v101.v102 .v102-doca-bt-ic svg{ width:100%; height:100%; display:block; }
+#lb.v101.v102 .v102-doca-bt-tx{ font:800 23px/1 var(--v101-tit); letter-spacing:.6px; color:#fff; text-shadow:var(--v101-cont); white-space:nowrap; }
+#lb.v101.v102 .v102-doca-bt .v102-selo{ right:16px; top:6px; }
+#lb.v101.v102 .v102-doca-bt .v102-selo.ponto{ right:22px; top:12px; }
+#lb.v101.v102 .v102-doca-bt:active{ transform:translateY(2px) scale(.96); }
+@media (hover:hover){ #lb.v101.v102 .v102-doca-bt:hover{ background:radial-gradient(ellipse 60% 55% at 50% 45%, rgba(150,120,255,.16), rgba(150,120,255,0)); } }
+#lb.v101.v102 .v102-doca-bt:focus-visible, #lb.v101.v102 .v102-item:focus-visible, #lb.v101.v102 .v102-gav-x:focus-visible{ outline:3px solid #ffd23f; outline-offset:-3px; border-radius:10px; }
+
+/* ---------------------------------------------------------------- 4) o MODO em cima do JOGAR (direita) */
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-jogar{ left:auto !important; right:22px !important; width:404px !important; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-modo{ left:auto !important; right:22px !important; width:404px !important; bottom:190px !important; height:max(88px, var(--v102-modo-h, 88px)) !important;
+  padding:0 58px 0 10px !important; gap:14px !important; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-modo .v91-modo-ic{ width:92px !important; height:66px !important; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-modo .v91-modo-ic > *{ transform:scale(.8); }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-modo .v71-modo-tx{ gap:5px !important; min-width:0; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-modo .v71-modo-tx > b{ font-size:32px !important; }
+#lb.v101.v102:not(.retrato) #lb-palco #lb-modo .v101-campo{ display:none !important; }
+#lb.v101.v102 #lb-modo .v102-sub{ display:none; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco #lb-modo .v71-modo-tx > small.v102-sub{ display:block !important; font:800 18px/1 var(--v101-tit); letter-spacing:.8px; color:#8fb4ff; text-shadow:var(--v101-cont); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb.v101.v102:not(.retrato) #lb-palco #lb-modo .v101-troca{ right:14px; width:32px; height:32px; margin-top:-16px; }
+
+/* ---------------------------------------------------------------- 5) a vaga do grupo: uma só (o + com GRUPO), mais calma */
+#lb.v101.v102:not(.retrato) #lb-palco .v101-vaga:not(.cheia)[data-i="0"],
+#lb.v101.v102:not(.retrato) #lb-palco .v101-vaga:not(.cheia)[data-i="2"]{ display:none; }
+#lb.v101.v102 .v101-vaga:not(.cheia) .v101-vaga-mais{ background:radial-gradient(circle at 50% 38%, rgba(48,44,110,.9), rgba(14,12,44,.94) 72%);
+  box-shadow:0 0 0 2.5px rgba(214,200,255,.55), 0 0 0 5px rgba(10,6,30,.55), 0 0 14px rgba(150,90,255,.45), inset 0 0 10px rgba(160,120,255,.25); }
+#lb.v101.v102 .v101-vaga:not(.cheia) .v101-vaga-mais svg{ filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+#lb.v101.v102 .v101-vaga:not(.cheia) .v101-vaga-mais path{ stroke:#f3eeff; }
+@media (hover:hover){ #lb.v101.v102 .v101-vaga:not(.cheia):hover .v101-vaga-mais{ box-shadow:0 0 0 2.5px #e2d4ff, 0 0 0 5px rgba(10,6,30,.6), 0 0 20px rgba(170,110,255,.8), inset 0 0 10px rgba(170,130,255,.35); } }
+#lb.v101.v102:not(.retrato) #lb-palco .v101-vaga:not(.cheia)::after{ content:'GRUPO'; position:absolute; left:50%; top:calc(100% + 9px); transform:translateX(-50%);
+  font:800 calc(var(--vr, 46px) * .42)/1 var(--v101-tit); letter-spacing:1px; color:#e4dcff; text-shadow:var(--v101-cont); white-space:nowrap; pointer-events:none; }
+
+/* ---------------------------------------------------------------- 6) a gaveta do MENU (da direita) */
+#lb.v101 .v102-fundo, #lb.v101 .v102-gaveta{ display:none; }
+#lb.v101.v102:not(.retrato) #lb-palco .v102-fundo:not([hidden]){ display:block; position:absolute; inset:-240px; z-index:40; background:rgba(6,4,26,.58); opacity:0; transition:opacity .18s; }
+#lb.v101.v102:not(.retrato) #lb-palco .v102-fundo.on{ opacity:1; }
+#lb.v101.v102:not(.retrato) #lb-palco .v102-gaveta:not([hidden]){ display:flex; flex-direction:column; position:absolute; top:0; right:0; bottom:0; z-index:41; width:470px; box-sizing:border-box; padding:0 22px 22px;
+  background:linear-gradient(180deg, #1d215a 0%, #121440 60%, #0d0e33 100%); border-left:1.5px solid var(--v101-borda);
+  box-shadow:inset 2px 0 0 rgba(180,120,255,.28), -18px 0 40px rgba(3,2,18,.55); transform:translateX(calc(100% + 40px)); transition:transform .2s cubic-bezier(.2,.8,.2,1); }
+#lb.v101.v102:not(.retrato) #lb-palco .v102-gaveta.on{ transform:none; }
+#lb.v101.v102 .v102-gav-cab{ flex:none; display:flex; align-items:center; justify-content:space-between; height:104px; }
+#lb.v101.v102 .v102-gav-tit{ font:800 46px/1 var(--v101-tit); letter-spacing:2px; color:#fff; text-shadow:0 3px 0 rgba(4,3,20,.9), 0 0 16px rgba(150,80,255,.45); padding-left:4px; }
+#lb.v101.v102 .v102-gav-x{ position:relative; width:64px; height:64px; margin:0; padding:0; border-radius:10px; border:1.5px solid var(--v101-borda); background:var(--v101-painel); color:#e8e6ff; cursor:pointer;
+  box-shadow:var(--v101-luz), var(--v101-sombra); display:flex; align-items:center; justify-content:center; }
+#lb.v101.v102 .v102-gav-x svg{ width:30px; height:30px; display:block; }
+#lb.v101.v102 .v102-gav-x:active{ transform:translateY(2px) scale(.96); }
+#lb.v101.v102 .v102-gav-grade{ flex:1; min-height:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:92px; grid-auto-rows:116px; align-content:start; gap:12px; }
+/* a PATENTE no alto da gaveta (a linha inteira): a insígnia, o nome e os pontos */
+#lb.v101.v102 .v102-pat{ grid-column:1 / -1; position:relative; margin:0; padding:0 18px 0 12px; border-radius:10px; cursor:pointer; color:#fff; text-align:left;
+  display:flex; align-items:center; gap:12px; min-width:0; -webkit-tap-highlight-color:transparent; transition:transform .08s, border-color .12s;
+  background:linear-gradient(180deg, rgba(58,40,40,.92) 0%, rgba(30,20,40,.95) 100%); border:1.5px solid rgba(255,190,80,.45);
+  box-shadow:var(--v101-luz), inset 0 0 16px rgba(255,170,30,.12), 0 4px 10px rgba(3,2,18,.45); }
+#lb.v101.v102 .v102-pat[hidden]{ display:none; }
+#lb.v101.v102 .v102-pat-ins{ flex:none; width:70px; height:70px; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) drop-shadow(0 0 8px rgba(255,170,40,.35)); }
+#lb.v101.v102 .v102-pat-ins svg{ width:100%; height:100%; display:block; }
+#lb.v101.v102 .v102-pat-tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+#lb.v101.v102 .v102-pat-tx small{ font:800 16px/1 var(--v101-tit); letter-spacing:1.2px; color:#ffd890; text-shadow:var(--v101-cont); }
+#lb.v101.v102 .v102-pat-tx b{ font:800 30px/1 var(--v101-tit); letter-spacing:.5px; text-shadow:var(--v101-cont); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#lb.v101.v102 .v102-pat-pts{ flex:none; display:flex; align-items:center; gap:6px; }
+#lb.v101.v102 .v102-pat-pts svg{ width:24px; height:24px; display:block; }
+#lb.v101.v102 .v102-pat-pts b{ font:800 24px/1 var(--v101-tit); color:#ffe4a0; text-shadow:var(--v101-cont); }
+#lb.v101.v102 .v102-pat:active{ transform:translateY(2px) scale(.98); }
+@media (hover:hover){ #lb.v101.v102 .v102-pat:hover{ border-color:rgba(255,200,90,.8); } }
+#lb.v101.v102 .v102-pat:focus-visible{ outline:3px solid #ffd23f; outline-offset:-3px; }
+#lb.v101.v102 .v102-item{ position:relative; margin:0; padding:4px 6px 0; border-radius:10px; border:1.5px solid var(--v101-borda); background:var(--v101-painel); color:#fff; cursor:pointer;
+  box-shadow:var(--v101-luz), 0 4px 10px rgba(3,2,18,.45); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-width:0;
+  -webkit-tap-highlight-color:transparent; transition:transform .08s, border-color .12s; }
+#lb.v101.v102 .v102-item[hidden]{ display:none; }
+#lb.v101.v102 .v102-item-ic{ width:58px; height:54px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+#lb.v101.v102 .v102-item-ic svg{ width:100%; height:100%; display:block; }
+#lb.v101.v102 .v102-item-tx{ font:800 24px/1 var(--v101-tit); letter-spacing:.6px; text-shadow:var(--v101-cont); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+#lb.v101.v102 .v102-item:active{ transform:translateY(2px) scale(.97); }
+@media (hover:hover){ #lb.v101.v102 .v102-item:hover{ border-color:var(--v101-borda2); } }
+@media (prefers-reduced-motion:reduce){
+  #lb.v101.v102:not(.retrato) #lb-palco .v102-gaveta:not([hidden]), #lb.v101.v102:not(.retrato) #lb-palco .v102-fundo:not([hidden]){ transition:none; }
+}
+
+/* ---------------------------------------------------------------- 7) no celular deitado (o palco encolhe: 667 × 375 = 0,42; o texto
+   não cresce sozinho ali) tudo um pouco maior, como os botões dos lados da v101 (o #lb-palco ganha .v101-cel) */
+#lb.v91.v101.v102:not(.retrato) #lb-palco.v101-cel .v102-doca{ height:138px; bottom:34px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-doca-bt{ width:150px; gap:8px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-doca-bt-ic{ width:74px; height:68px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-doca-bt-tx{ font-size:30px; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco.v101-cel #lb-modo{ height:max(108px, var(--v102-modo-h, 108px)) !important; }   /* (no mínimo 44 px de verdade: o dedo) */
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco.v101-cel #lb-modo .v71-modo-tx > b{ font-size:36px !important; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco.v101-cel #lb-modo .v71-modo-tx > small.v102-sub{ font-size:24px !important; }
+#lb.v101.v102:not(.retrato) #lb-palco.v101-cel .v101-vaga:not(.cheia)::after{ font-size:calc(var(--vr, 46px) * .5); }
+#lb.v101.v102 #lb-palco.v101-cel .v102-gav-grade{ grid-template-rows:96px; grid-auto-rows:120px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-gav-cab{ height:90px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-pat-tx b{ font-size:34px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-pat-tx small{ font-size:20px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-item-ic{ width:68px; height:64px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-item-tx{ font-size:30px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-selo{ min-width:34px; height:34px; border-radius:17px; font-size:22px; line-height:34px; }
+#lb.v101.v102 #lb-palco.v101-cel .v102-selo.ponto{ min-width:22px; width:22px; height:22px; }

@@ -29,7 +29,7 @@ Isto não prova se o novo visual agrada nem a leitura em cada celular de verdade
 Rodar: python3 tests/v71_test.py
 """
 import json
-from comum import abre, rt, roda, Placar, async_playwright
+from comum import abre, rt, roda, Placar, async_playwright, clica_lobby
 import comum; comum.SKINS_PRONTAS = True   # v101: este teste confere as tampinhas prontas (o interruptor as traz de volta)
 
 # o que a partida desenha: troca o drawPlayer por um espião durante um quadro do render
@@ -95,10 +95,12 @@ MARINHO = r"""(() => {
 
 # as caixas de tudo que se toca no lobby (deitado): visível, dentro da tela, sem cobrir outra, e o tamanho de verdade
 CAIXAS = """(() => {
-  const sel = ['#lb-eu', '.lb-topo .v71-liga', '.lb-topo .v91-pat', '.lb-topo .hm-grana', '#lb-chat', '.lb-topo .v88-caixa', '#lb-ajustes', '#rx .v71-tile', '#lb .v88-passe', '#lb-missoes', '#lb-modo', '#lb-jogar'];   // (v91: + a PATENTE, o CORREIO e o PASSE)
+  const v102 = LB.raiz.classList.contains('v102');   // (v102: o lobby com menos coisa na tela — a barra de atalhos e o MENU no lugar dos lados, da patente, do chat, dos ajustes, do PASSE e das MISSÕES)
+  const sel = v102 ? ['#lb-eu', '.lb-topo .hm-grana', '.lb-topo .v88-caixa', '#lb .v102-menu-bt', '#lb .v102-doca-bt', '#lb-modo', '#lb-jogar']
+    : ['#lb-eu', '.lb-topo .v71-liga', '.lb-topo .v91-pat', '.lb-topo .hm-grana', '#lb-chat', '.lb-topo .v88-caixa', '#lb-ajustes', '#rx .v71-tile', '#lb .v88-passe', '#lb-missoes', '#lb-modo', '#lb-jogar'];   // (v91: + a PATENTE, o CORREIO e o PASSE)
   const L = [];
   for (const s of sel) for (const e of document.querySelectorAll(s)){
-    const cs = getComputedStyle(e); if (cs.display === 'none' || e.closest('[hidden]')) continue;
+    const cs = getComputedStyle(e); if (cs.display === 'none' || e.closest('[hidden]') || !e.getClientRects().length) continue;
     const r = e.getBoundingClientRect(); L.push({n:(e.getAttribute('aria-label') || e.id || s).slice(0, 18), l:r.left, t:r.top, r:r.right, b:r.bottom, w:r.width, h:r.height});
   }
   const fora = L.filter(c => c.l < -1 || c.t < -1 || c.r > innerWidth + 1 || c.b > innerHeight + 1).map(c => c.n);
@@ -106,8 +108,8 @@ CAIXAS = """(() => {
   for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++){ const a = L[i], b = L[j];
     if (a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1) cobre.push(a.n + ' × ' + b.n); }
   const pequenos = L.filter(c => c.w < 43.5 || c.h < 43.5).map(c => c.n + ' ' + Math.round(c.w) + 'x' + Math.round(c.h));
-  const tiles = L.filter(c => /^(Loja|Tampinha|Cofre|Clube|Treino|Salas|Amigos|Ranking)(:|$)/.test(c.n));
-  return {n:L.length, fora, cobre, pequenos, menorTile:Math.round(Math.min(...tiles.map(c => Math.min(c.w, c.h)))),
+  const tiles = L.filter(c => /^(Loja|Tampinha|Cofre|Clube|Treino|Salas|Amigos|Ranking|Oficina)(:|$)/.test(c.n));
+  return {v102, n:L.length, fora, cobre, pequenos, menorTile:Math.round(Math.min(...tiles.map(c => Math.min(c.w, c.h)))),
     jogar:Math.round(document.getElementById('lb-jogar').getBoundingClientRect().height), cabe:LB.raiz.classList.contains('v70-cabe')};
 })()"""
 
@@ -201,7 +203,9 @@ async def principal():
         b, pg, erros = await abre(pw, 1280, 720)
         r = await rt(pg, """(() => { const nomes = s => [...document.querySelectorAll(s)].map(b => b.querySelector(':scope > b').textContent);
           const fora = ['[data-rx="comunidade"]', '.rx-bt[data-rx="chat"]', '.rx-amg'].map(s => { const e = document.querySelector('#lb ' + s); return e && getComputedStyle(e).display === 'none' && e.tabIndex === -1; });
-          const pa = document.querySelector('#lb [data-rx="passe"]'), passe = !!pa && !pa.closest('.lb-topo') && !!pa.closest('#lb-palco') && getComputedStyle(pa).display !== 'none' && pa.tabIndex === 0;   // (v88: o PASSE voltou, para o Passe RACHA · v90: na fileira de baixo)
+          const pa = document.querySelector('#lb [data-rx="passe"]'), passe = LB.raiz.classList.contains('v102')   // (v102: o PASSE RACHA mora no MENU, que toca o botão de sempre)
+            ? !!pa && [...document.querySelectorAll('#lb .v102-item')].some(b => b._alvo && b._alvo() === pa && /PASSE RACHA/.test(b.textContent) && b.tabIndex === 0)
+            : !!pa && !pa.closest('.lb-topo') && !!pa.closest('#lb-palco') && getComputedStyle(pa).display !== 'none' && pa.tabIndex === 0;   // (v88: o PASSE voltou, para o Passe RACHA · v90: na fileira de baixo)
           const liga = document.querySelector('.lb-topo .v71-liga'), pat = document.querySelector('.lb-topo .v91-pat');   // (v91: a PATENTE da faixa de cima, logo depois da LIGA)
           return {esq:nomes('#rx .v71-esq > .rx-bt'), dir:nomes('#rx .v71-dir > .rx-bt'), fora, passe, liga:!!liga && liga.previousElementSibling === LB.eu && !!pat && liga.nextElementSibling === pat && pat.querySelector('b').textContent === rqElo(CONTA.rq.pts).nome,
             elo:document.getElementById('lb-rq-elo').textContent === rqElo(CONTA.rq.pts).nome,
@@ -220,7 +224,7 @@ async def principal():
                   'o MODO mostra o que vai ser jogado (v79: o tamanho da ranqueada e RANQUEADA · ESTÁDIO) e o JOGAR diz o mesmo para o leitor de tela', r)
         for nome, sel, tipo, alvo in LUGARES:
             await rt(pg, FECHA); await pg.wait_for_timeout(420)
-            await pg.click(sel); await pg.wait_for_timeout(500)
+            await clica_lobby(pg, sel); await pg.wait_for_timeout(500)   # (v102: os que foram para a barra de atalhos ou para o MENU, por lá)
             e = await rt(pg, ESTADO)
             ok = (e['tela'] == alvo) if tipo == 'tela' else (e['rq'] == alvo) if tipo == 'rq' else bool(e[tipo])
             P.confere(ok, '%-16s → abre %s' % (nome, alvo if tipo in ('tela', 'rq') else tipo), e)
@@ -234,7 +238,7 @@ async def principal():
             await pg.wait_for_timeout(300)
             c = await rt(pg, CAIXAS)
             pequeno_ok = (not c['pequenos']) if not c['cabe'] else (c['menorTile'] >= 44 and c['jogar'] >= 44)
-            P.confere(c['n'] >= 15 and not c['fora'] and not c['cobre'] and pequeno_ok,
+            P.confere(c['n'] >= (11 if c.get('v102') else 15) and not c['fora'] and not c['cobre'] and pequeno_ok,
                       '%dx%d: %d botões do lobby dentro da tela, nenhum por cima do outro, %s' % (w, h, c['n'], 'quadrados e JOGAR ≥ 44 px (celular deitado)' if c['cabe'] else 'todos ≥ 44 px'), c)
             for aba in ('ranked',):                              # (v79: a CASUAL saiu; o JOGAR é só a ranqueada)
                 f = await rt(pg, """(() => { abreJogar('%s'); const c = RQP.raiz.querySelector('.rq-caixa'), r = c.getBoundingClientRect(), bt = RQP.buscar.getBoundingClientRect();

@@ -26,3 +26,6 @@ tests/saida/logs*_resumo.txt
 *.p12
 *.pfx
 *.bundle
+
+# os worktrees dos agentes (nunca entram no git nem nos ZIPs)
+.claude/

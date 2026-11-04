@@ -59,10 +59,10 @@ async function principal(){
     const code = Ana.sala().code, r = t.salas.get(code);
     Beto.manda({type:'join', code, slot:1}); Caio.manda({type:'join', code, spectate:true});
     Ana.manda({type:'start'}); r.partida.desligar();
-    Beto.ws.close();                                    // (o Beto cai: o bot segura o lugar e a partida continua)
+    Beto.ws.close();                                    // (o Beto cai: a vaga dele fica vazia — v103: sem bots — e a partida continua)
     const p0 = r.partida;
     Ana.limpa(); await adm(Ana, {acao:'reiniciar'});
-    confira(/Não dá para reiniciar agora: falta 1 jogador/.test(erroAdm(Ana)) && r.state === 'playing' && r.partida === p0 && !p0.encerrado,
+    confira(/Não dá para reiniciar agora: cada time precisa de pelo menos uma pessoa/.test(erroAdm(Ana)) && r.state === 'playing' && r.partida === p0 && !p0.encerrado,
       'sem os bots e com alguém fora, o REINICIAR é recusado com o motivo — e a partida continua para todos', [erroAdm(Ana), r.state]);
     try { t.fecha(); } catch (_) {}
   }
@@ -74,6 +74,7 @@ async function principal(){
     const Ana = cliente(t, 'Ana');
     Ana.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:0, bots:true, pub:false, name:'r2'});
     const r = t.salas.get(Ana.sala().code);
+    { const Beto0 = cliente(t, 'Beto'); Beto0.manda({type:'join', code:r.code, slot:1}); }   // (v103: sem bots, o outro time precisa de alguém)
     Ana.manda({type:'start'});
     const p = r.partida; p.desligar(); p.rodar(5); p.estado = 'jogo';
     relogio += 20000; const d0 = t.decorrido(r);

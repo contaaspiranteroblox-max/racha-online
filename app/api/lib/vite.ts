@@ -13,6 +13,25 @@ export function serveStaticFiles(app: App) {
   // continuam aqui: /perfil, /amigos… — o jogo as abre por cima dele, num painel)
   app.get("/", (c) => c.redirect("/game/racha.html" + new URL(c.req.url).search, 302));
 
+  // v103: o app instalável (PWA) — o manifesto com o tipo dele (application/manifest+json, que o serveStatic não garante) e o
+  // service worker como JavaScript; os dois sempre conferidos com o servidor (no-cache: a versão nova do jogo chega na hora)
+  app.use("/game/*", async (c, next) => {
+    await next();
+    try {
+      if (c.res.status !== 200) return;
+      const p = c.req.path;
+      if (p.endsWith(".webmanifest")) {
+        c.res.headers.set("Content-Type", "application/manifest+json; charset=utf-8");
+        c.res.headers.set("Cache-Control", "no-cache");
+      } else if (p === "/game/sw.js") {
+        c.res.headers.set("Content-Type", "text/javascript; charset=utf-8");
+        c.res.headers.set("Cache-Control", "no-cache");
+      }
+    } catch {
+      /* (resposta sem cabeçalhos mutáveis: segue como veio) */
+    }
+  });
+
   app.use("*", serveStatic({ root: "./dist/public" }));
 
   app.notFound((c) => {

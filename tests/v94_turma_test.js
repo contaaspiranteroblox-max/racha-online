@@ -42,6 +42,7 @@ console.log('1) o padrão: o motor de antes (a versão oficial não muda sozinha
   const A = entra(t, 'Ana', { v93: 1, v94: 1 });
   A.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: true, pub: false });
   const r = t.salaDe(A.c);
+  entra(t, 'Beto', { v93: 1, v94: 1 }).manda({ type: 'join', code: r.code, slot: 1 });   // (v103: sem bots, o outro time precisa de alguém)
   confira(t.motorPadrao === 'v93' && t.motorDe(r) === 'v93', 'sem RACHA_MOTOR_JOGO: o motor de antes', [t.motorPadrao]);
   A.manda({ type: 'start' });
   const st = A.ult('start');
@@ -93,6 +94,7 @@ console.log('4) a versão de testes: o admin troca o motor e manda o perfil do m
   const A = entra(t, 'Ana', { v93: 1, v94: 1 });
   A.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: true, pub: false });
   const r = t.salaDe(A.c);
+  entra(t, 'Beto', { v93: 1, v94: 1 }).manda({ type: 'join', code: r.code, slot: 1 });   // (v103: sem bots, o outro time precisa de alguém)
   A.manda({ type: 'config', motor: 'v93' });
   confira(t.motorDe(r) === 'v93', 'o admin pôs o motor de antes');
   A.manda({ type: 'config', motor: 'v94', fisica94: { vMax: 3.2, vChute: 99 } });

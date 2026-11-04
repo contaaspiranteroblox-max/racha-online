@@ -55,6 +55,18 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v101 (tools/v101/v101.py + tools/v101/*.js + app/public/game/v101.css, por último): o lobby e as telas no estilo da imagem da
      noite (a arte desenhada em código em tools/v101/arte: o fundo, o das telas, os ícones e a ilustração da OFICINA) e as
      tampinhas prontas escondidas (fica só o CRIAR TAMPINHA; V101_SKINS_PRONTAS religa).
+ v102 (tools/v102/v102.py + tools/v102/*.js + app/public/game/v102.css, por último): a borda BOTÃO no CRIAR TAMPINHA, o anel
+     novo em volta da tampinha, o lobby com menos coisa na tela (o resto no MENU) e o online mais liso.
+ v103 (tools/v103/v103.py + tools/v103/*.js + app/public/game/v103.css): o lobby de dia (a imagem enviada, em tools/v103/arte),
+     as salas online sem bots (a vaga sem gente fica vazia) e o árbitro mais simples, a ranqueada que vale (contra os bots do
+     servidor), o perfil pelo chat e os sons do online.
+ v103 · controles (tools/v103/controles.py + controles.js + app/public/game/v103-controles.css): Ajustes › Controles › Controle
+     (cada ação no botão que o jogador quiser, os jeitos prontos, os nomes dos botões do controle ligado, a zona morta e a
+     vibração), a PAUSA no teclado, as dicas com as teclas de cada um e o analógico sem atraso (o controle lido no começo do
+     quadro; o da tela anda a 6% do curso).
+ v103 · tela (tools/v103/tela.py + tela.js + app/public/game/v103-tela.css, o manifest.webmanifest, o sw.js e os ícones em
+     app/public/game/icones, por último): a tela cheia no navegador (o botão; no iPhone, o guia da Tela de Início), o app
+     instalável e o campo até a beirada (as faixas em volta da área do jogo com o próprio campo; o HUD na área segura).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -94,7 +106,11 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v98/v98',                                                                   # v98: o RACHA e o Rachão separados na Oficina e as salas online do Rachão (o motor do Rachão no servidor, gerado da página)
               'v99/v99',                                                                   # v99: os chutes do Rachão (cavadinha, curva e super chute) nas salas personalizadas do RACHA (no núcleo, no servidor e na sala neste aparelho)
               'v100/v100',                                                                 # v100: a revisão de segurança (o convite com outro servidor pergunta antes; o bilhete da conta só vai para o servidor do jogo e vale 15 min)
-              'v101/v101']                                                                 # v101: o lobby e as telas no estilo da imagem da noite (a arte em código em tools/v101/arte) e só o CRIAR TAMPINHA (as prontas escondidas)
+              'v101/v101',                                                                 # v101: o lobby e as telas no estilo da imagem da noite (a arte em código em tools/v101/arte) e só o CRIAR TAMPINHA (as prontas escondidas)
+              'v102/v102',                                                                 # v102: a borda BOTÃO, o anel da tampinha, o lobby mais limpo (o MENU) e o online mais liso
+              'v103/controles',                                                            # v103: o controle e o teclado do jeito de cada um (Ajustes › Controles) e o analógico sem atraso
+              'v103/v103',                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, o árbitro, a ranqueada, o perfil pelo chat e os sons do online
+              'v103/tela']                                                                 # v103: a tela cheia (Android e iPhone), o app instalável (PWA) e o campo até a beirada                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, a ranqueada, o perfil pelo chat e os sons do online
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

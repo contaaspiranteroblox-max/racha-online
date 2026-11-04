@@ -132,7 +132,13 @@ async def principal():
             print('\n3) os amigos da conta no jogo; as páginas do site por cima do jogo')
             # v88: os amigos da conta ficam no próprio jogo (a tela AMIGOS da v88, com os dados da plataforma): o AMIGOS do lobby
             # abre essa tela, sem o painel do site por cima
-            await pg.click('#rx [data-rx="amigos"]')         # (v90: o AMIGOS de cima saiu; o AMIGOS da coluna da direita faz o mesmo)
+            # (v90: o AMIGOS de cima saiu; o AMIGOS da coluna da direita faz o mesmo · v102: a coluna foi para o MENU: o MENU › AMIGOS)
+            if await rt(pg, "LB.raiz.classList.contains('v102')"):
+                await pg.click('#lb .v102-menu-bt')
+                await pg.wait_for_timeout(300)
+                await pg.click('#lb .v102-item:has-text("AMIGOS")')
+            else:
+                await pg.click('#rx [data-rx="amigos"]')
             await pg.wait_for_timeout(400)
             t = await rt(pg, "({tela:lobby.tela, painel:!!document.getElementById('v87site')})")
             P.confere(t['tela'] == 'v88amigos' and not t['painel'], 'v88: com a conta, o AMIGOS do lobby abre os amigos da conta dentro do jogo (sem o painel do site)', t)

@@ -51,6 +51,7 @@ async function principal(){
     const Ana = cliente(t, 'Ana');
     Ana.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:0, bots:true, pub:false, name:'r1'});
     const r = t.salas.get(Ana.c.sala);
+    { const Beto0 = cliente(t, 'Beto'); Beto0.manda({type:'join', code:r.code, slot:1}); }   // (v103: sem bots, o outro time precisa de alguém)
     Ana.manda({type:'start'}); t.contagemFim(r); clearTimeout(r.contagemT);
     const p = r.partida; p.desligar();
     const q = () => p.jog.find(x => x.netId === Ana.id);
@@ -89,6 +90,7 @@ async function principal(){
     const Ana = cliente(t, 'Ana');
     Ana.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:0, bots:true, pub:false, name:'r3'});
     const r = t.salas.get(Ana.c.sala);
+    { const Beto0 = cliente(t, 'Beto'); Beto0.manda({type:'join', code:r.code, slot:1}); }   // (v103: sem bots, o outro time precisa de alguém)
     Ana.manda({type:'start'});                           // (a contagem: o relógio começa daqui a 3 s)
     relogio += 1000; Ana.manda({type:'pause', paused:true});   // (a pausa no meio da contagem)
     relogio += 4000;                                     // (2 s de contagem + 2 s de jogo, pausado)

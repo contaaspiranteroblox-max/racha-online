@@ -12,6 +12,7 @@ import { getDb } from "../../queries/connection";
 import { missoesProgresso, eventos } from "@db/schema";
 import { autenticado, exigeLimite } from "../guard";
 import { contaDe, entregaAnexos, type Conn } from "./comum";
+import { ehDuplicado } from "../erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 import {
   missoesDoDia, missoesDaSemana, missoesDaTemporada, missoesDoEvento, quantoConta, anexosDoPremio, periodoDia, periodoSemana, periodoTemporada,
   temporadaAtiva, segundaUtc, CATALOGO, type EventoPartida, type Missao,
@@ -48,7 +49,7 @@ export async function contaMissoes(usuarioId: number, ev: EventoPartida, agora: 
           await db.insert(missoesProgresso).values({ usuarioId, missao: m.id, periodo: g.periodo, progresso: Math.min(m.meta, q), meta: m.meta });
           if (q >= m.meta) feitas.push({ id: m.id, nome: m.nome });
         } catch (e) {
-          if (!/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) throw e;
+          if (!ehDuplicado(e)) throw e;
         }
         continue;
       }

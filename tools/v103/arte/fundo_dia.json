@@ -1,0 +1,19 @@
+{
+ "w": 1672,
+ "h": 941,
+ "tampa": {
+  "x": 829,
+  "y": 580,
+  "r": 165
+ },
+ "circulo": {
+  "cx": 829,
+  "cy": 718,
+  "rx": 305,
+  "ry": 54
+ },
+ "chao_y": 590,
+ "meio_y": 712,
+ "fonte": "imagem enviada (03/11/2026): a quadra de grama com o Bar do Seu Zé, de dia",
+ "dia": true
+}

@@ -7,7 +7,7 @@
      · app/public/game/rachao/ponte.js (a física misturada) e app/public/game/rachao/quadro.js (a língua do online);
      · app/public/game/rachao/estadios.js, as partes 0 a 3 (o estádio como documento: a limpeza e a montagem).
    As salas online do Rachão jogam com ESTE código — o mesmo da página (tests/v98_rachao_servidor_test.mjs confere).
-   sha256 (16): jogo b5be492e9009212d · ponte e4efce0d299381cd · quadro 5588d48c6c195b7f · estádio eb850f8b43036953
+   sha256 (16): jogo b5be492e9009212d · ponte c5ce4256534bbc75 · quadro 5588d48c6c195b7f · estádio eb850f8b43036953
    ===================================================================================================================== */
 function criaMotorRachao(opcoes) {
   opcoes = opcoes || {};
@@ -3136,7 +3136,8 @@ class TopMatch {
   const PARTES = Object.freeze(['bola', 'jogador', 'chute']);
 
   /* ---------- o RACHA de sempre: o perfil oficial (PERFIL_V92 do núcleo) e os extras do mapa no Clássico ---------- */
-  const RACHA = Object.freeze({ rJog: 2.0, raioChute: 2.5, massaJog: 1.25, velJog: 14.1, forcaPasse: 212.5, forcaChute: 340, rBola: 1.0, massaBola: 10,
+  // (v103: o CHUTE do RACHA ficou 6% mais forte no núcleo, 340 → 360 — aqui também, para a mistura achar o chute do RACHA)
+  const RACHA = Object.freeze({ rJog: 2.0, raioChute: 2.5, massaJog: 1.25, velJog: 14.1, forcaPasse: 212.5, forcaChute: 360, rBola: 1.0, massaBola: 10,
     limiteBola: 46.75, fatorBola: 0.99, atritoBola: 0.5, atritoJog: 0.3, quiqueBola: 0, quiqueParede: 0.65, quiqueTrave: 0.6, quiqueRede: 0.15,
     quiqueJogJog: 0.3, quiqueJogParede: 0.65 });
   const RACHA_EXTRA = Object.freeze({ acelJog: 1, freioJog: 1, recuo: 0, giroCurva: 1, massaChute: 1 });
@@ -3945,4 +3946,4 @@ function decodifica(s) {
   })();
   return Object.freeze({ TopMatch, MAPS, MAP_BY_ID, basePhys, buildStadium, POWERS, POWER_BY_ID, POWER_EVERY, DIFF, FORMATIONS, PHYS, SUPER, KICK_LOB, KICK_CURVE, TEAM_NAMES, Disc, World, mkSeg, M_BALL, M_PLAYER, M_ALL, fmtTime, Ponte: window.RachaPonte, Quadro: window.RachaoQuadro, EST, Math });
 }
-module.exports = { criaMotorRachao, SHA: Object.freeze({ jogo: 'b5be492e9009212d', ponte: 'e4efce0d299381cd', quadro: '5588d48c6c195b7f', estadio: 'eb850f8b43036953' }) };
+module.exports = { criaMotorRachao, SHA: Object.freeze({ jogo: 'b5be492e9009212d', ponte: 'c5ce4256534bbc75', quadro: '5588d48c6c195b7f', estadio: 'eb850f8b43036953' }) };

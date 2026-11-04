@@ -337,15 +337,19 @@ async def online(pw, P):
         await rt(C, "LB.jogar.click()")
         await espera(C, "(() => { const b = RachaRanqueada79.busca(); return b && b.fase === 'fila'; })()", 6000)
         await rt(C, "document.querySelector('#v79-busca .v79-busca-bots').click()")
-        jb2 = await espera(C, "RQ.on && !NET49.playing && X49.matchMode === 'ranked' && RQ.mapa === 4 && RQ.n === 3", 3000)
-        P.confere(bool(jb2) and await rt(C, "window.__env.slice(window.__env.lastIndexOf('fila')).indexOf('fila_sai') > 0"), 'JOGAR CONTRA BOTS AGORA: sai da fila e a ranqueada contra bots começa na hora')
-        await rt(C, "(() => { rqSai(); abrirLobby(); filaPop.length = 0; if (!LB.pop.hidden) fechaPop(); return 1; })()")
+        # v103: a ranqueada contra os bots roda NO SERVIDOR (o resultado vale na conta): o fila_bots, e o servidor manda o começo
+        jb2 = await espera(C, "NET49.playing && NET49.room && NET49.room.ranked && NET49.room.n === 3 && RQ.on && RQ.n === 3 && NET49.localSlot >= 0", 8000)
+        P.confere(bool(jb2) and await rt(C, "window.__env.slice(window.__env.lastIndexOf('fila')).indexOf('fila_bots') > 0"), 'JOGAR CONTRA BOTS AGORA: a ranqueada contra bots começa na hora, no servidor (v103: o fila_bots — vale pontos na conta)')
+        await rt(C, "net49Send({type:'leave'})")
+        await espera(C, "!NET49.room && lobby.aberto", 8000)
+        await rt(C, "(() => { filaPop.length = 0; if (!LB.pop.hidden) fechaPop(); return 1; })()")
         await asyncio.sleep(0.4)                                  # (o clique fantasma: o lobby ignora os primeiros 300 ms)
         t1 = time.time()
         await rt(C, "LB.jogar.click()")
-        so = await espera(C, "RQ.on && !NET49.playing && X49.matchMode === 'ranked' && RQ.mapa === 4 && !lobby.aberto && RQ.aviso.txt", 30000, 200)
+        so = await espera(C, "NET49.playing && NET49.room && NET49.room.ranked && !lobby.aberto && RQ.aviso.txt", 30000, 200)
         dt2 = time.time() - t1
-        P.confere(so == 'NINGUÉM ONLINE AGORA · RANQUEADA CONTRA BOTS' and 19 <= dt2 <= 27, 'sozinho na fila: depois de ~20 s, a ranqueada é contra bots (e a faixa avisa)', [so, round(dt2, 1)])
+        P.confere(so == 'NINGUÉM ONLINE AGORA · RANQUEADA CONTRA BOTS' and 19 <= dt2 <= 27, 'sozinho na fila: depois de ~20 s, a ranqueada é contra bots no servidor (v103) e a faixa avisa', [so, round(dt2, 1)])
+        await rt(C, "net49Send({type:'leave'})")
         for pg in sess:
             errs = [e for e in pg.erros if 'Failed to load resource' not in e and 'favicon' not in e]
             P.confere(not errs, 'nenhum erro de JavaScript na sessão de ' + pg.nome, errs[:3])

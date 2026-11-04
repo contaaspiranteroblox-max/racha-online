@@ -23,7 +23,8 @@
   const PARTES = Object.freeze(['bola', 'jogador', 'chute']);
 
   /* ---------- o RACHA de sempre: o perfil oficial (PERFIL_V92 do núcleo) e os extras do mapa no Clássico ---------- */
-  const RACHA = Object.freeze({ rJog: 2.0, raioChute: 2.5, massaJog: 1.25, velJog: 14.1, forcaPasse: 212.5, forcaChute: 340, rBola: 1.0, massaBola: 10,
+  // (v103: o CHUTE do RACHA ficou 6% mais forte no núcleo, 340 → 360 — aqui também, para a mistura achar o chute do RACHA)
+  const RACHA = Object.freeze({ rJog: 2.0, raioChute: 2.5, massaJog: 1.25, velJog: 14.1, forcaPasse: 212.5, forcaChute: 360, rBola: 1.0, massaBola: 10,
     limiteBola: 46.75, fatorBola: 0.99, atritoBola: 0.5, atritoJog: 0.3, quiqueBola: 0, quiqueParede: 0.65, quiqueTrave: 0.6, quiqueRede: 0.15,
     quiqueJogJog: 0.3, quiqueJogParede: 0.65 });
   const RACHA_EXTRA = Object.freeze({ acelJog: 1, freioJog: 1, recuo: 0, giroCurva: 1, massaChute: 1 });

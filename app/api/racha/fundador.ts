@@ -12,6 +12,7 @@
 import { sql, eq, and, inArray } from "drizzle-orm";
 import { getDb } from "../queries/connection";
 import { contadores, itensUsuario } from "@db/schema";
+import { ehDuplicado } from "./erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 export const FUNDADORES = 30;
 export const ITEM_FUNDADOR = "tp_fundador";
@@ -81,7 +82,7 @@ export async function garanteFundador(usuarioId: number): Promise<{ numero: numb
     if (!r) esgotadoAte = Date.now() + 60_000;
     return r;
   } catch (e) {
-    if (/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) {
+    if (ehDuplicado(e)) {
       const n = await numeroFundador(usuarioId, db);
       return n !== null ? { numero: n, vagas: FUNDADORES, novo: false } : null;
     }

@@ -22,7 +22,9 @@
               endereço do jogo (a plataforma serve o jogo em /game/racha.html). Nunca vai para '*'.
    skinsProntas: v101 — as tampinhas prontas (as da loja, as animadas, as do passe e dos eventos, a dos fundadores) estão
               guardadas: o jogo mostra só o CRIAR TAMPINHA. true traz todas de volta (o que cada um tinha continua guardado).
-              Ex.: skinsProntas: true */
+              Ex.: skinsProntas: true
+   sw:        v103 — o service worker do app instalável (o sw.js, só por https ou no localhost: a rede sempre primeiro; a
+              cópia só abre o jogo sem internet). false não registra e tira o que já estava registrado. Ex.: sw: false */
 window.RACHA_CONFIG = Object.assign({
   modo: 'producao',
   presente: true            // v87.2: o presente de TESTE (moedas e gemas) — apague esta linha no lançamento

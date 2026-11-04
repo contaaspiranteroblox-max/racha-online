@@ -15,9 +15,15 @@ import { autenticado, exigeLimite, type UsuarioSessao } from "../guard";
 import { contaDe, entregaAnexos, notifica, type Conn } from "./comum";
 import { diaUtc, validaAnexos, type Anexo } from "@contracts/v88";
 import { garanteEventos } from "./eventos";
+import { ehDuplicado } from "../erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 const DIA = 864e5;
 type TipoCarta = (typeof correio.$inferInsert)["tipo"];
+// v102: APAGAR não tira a linha do banco — a carta fica marcada como apagada (o vencimento vai para 1º/1/2000). Se a linha
+// sumisse, a mesma carta (para todo mundo, o login do dia, o presente) voltava na próxima abertura com outro id, e o prêmio
+// podia ser coletado de novo (o livro da carteira guarda "correio:<id>"). A chave única (conta + chave) continua lá.
+const APAGADA = new Date(Date.UTC(2000, 0, 1));
+const apagada = (c: { expiraEm: Date | null }) => !!c.expiraEm && c.expiraEm.getTime() < Date.UTC(2001, 0, 1);
 
 // pôr uma carta no correio de uma conta (a chave impede a repetida)
 export async function poeCarta(usuarioId: number, c: { tipo: TipoCarta; titulo: string; corpo?: string; anexos: Anexo[]; chave: string; expiraEm?: Date | null; origemAdminId?: number | null; avisar?: boolean }, db: Conn = getDb()): Promise<boolean> {
@@ -27,7 +33,7 @@ export async function poeCarta(usuarioId: number, c: { tipo: TipoCarta; titulo: 
       chave: c.chave.slice(0, 80), expiraEm: c.expiraEm ?? new Date(Date.now() + 30 * DIA), origemAdminId: c.origemAdminId ?? null,
     });
   } catch (e) {
-    if (/duplicate|ER_DUP_ENTRY|1062/i.test(String((e as Error)?.message ?? e))) return false;
+    if (ehDuplicado(e)) return false;
     throw e;
   }
   if (c.avisar !== false && c.anexos.length) {
@@ -45,7 +51,13 @@ export async function materializaCorreio(u: UsuarioSessao): Promise<void> {
     where: and(eq(correioGlobal.ativo, true), lte(correioGlobal.inicio, agora), or(isNull(correioGlobal.fim), gt(correioGlobal.fim, agora))),
     limit: 50,
   });
+  // v102: as que a conta já recebeu nem tentam de novo (antes cada abertura do correio, das mensagens e o resumo do lobby
+  // tentavam gravar a mesma carta e dependiam do erro de chave repetida — que na produção vinha embrulhado e quebrava tudo)
+  const ja = globais.length
+    ? new Set((await db.query.correio.findMany({ where: eq(correio.usuarioId, u.id), columns: { chave: true }, limit: 500 })).map((c) => c.chave))
+    : new Set<string>();
   for (const g of globais) {
+    if (ja.has("global:" + g.id)) continue;
     if (g.contasAte && u.criadoEm.getTime() > g.contasAte.getTime()) continue;
     const nova = await poeCarta(u.id, { tipo: g.tipo, titulo: g.titulo, corpo: g.corpo, anexos: g.anexos as Anexo[], chave: "global:" + g.id, expiraEm: g.fim ?? new Date(Date.now() + 30 * DIA), origemAdminId: g.criadoPor, avisar: false }, db);
     // o aviso para todo mundo (manutenção, sistema) também aparece na central de mensagens, em SISTEMA
@@ -110,7 +122,7 @@ export const correioRouter = createRouter({
     await materializaCorreio(u);
     const l = await getDb().query.correio.findMany({ where: eq(correio.usuarioId, u.id), orderBy: [desc(correio.criadoEm), desc(correio.id)], limit: 100 });
     const agora = Date.now();
-    return l.filter((c) => !c.expiraEm || c.expiraEm.getTime() > agora || c.coletadoEm).map(formata);
+    return l.filter((c) => !apagada(c) && (!c.expiraEm || c.expiraEm.getTime() > agora || c.coletadoEm)).map(formata);
   }),
   marcarLido: autenticado.input(z.object({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
     const u = contaDe(ctx);
@@ -144,7 +156,7 @@ export const correioRouter = createRouter({
     const c = await db.query.correio.findFirst({ where: and(eq(correio.id, input.id), eq(correio.usuarioId, u.id)) });
     if (!c) throw new TRPCError({ code: "NOT_FOUND", message: "Carta não encontrada." });
     if ((c.anexos || []).length && !c.coletadoEm && (!c.expiraEm || c.expiraEm.getTime() > Date.now())) throw new TRPCError({ code: "BAD_REQUEST", message: "Colete o prêmio antes de apagar a carta." });
-    await db.delete(correio).where(eq(correio.id, c.id));
+    await db.update(correio).set({ expiraEm: APAGADA, lidoEm: c.lidoEm ?? new Date() }).where(eq(correio.id, c.id));
     return { ok: true };
   }),
 });

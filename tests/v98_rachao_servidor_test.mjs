@@ -390,9 +390,9 @@ try {
   // a partida
   A.manda({ type: 'start' });
   const st = await B.espera(m => m.type === 'start' && m.room && m.room.rachao), cont = await B.espera(m => m.type === 'contagem');
-  confere(st && Array.isArray(st.room.rachao.lugares) && st.room.rachao.lugares.join() === '0,1,2,3' && cont && cont.ms === 600, 'COMEÇAR: todos recebem o começo com os lugares da partida e a contagem 3, 2, 1 do servidor', st && st.room.rachao);
+  confere(st && Array.isArray(st.room.rachao.lugares) && st.room.rachao.lugares.join() === '0,2' && cont && cont.ms === 600, 'COMEÇAR: todos recebem o começo com os lugares da partida (v103: só os de gente — sem bots nas vagas) e a contagem 3, 2, 1 do servidor', st && st.room.rachao);
   const q1 = await B.espera(m => m.type === 'rq');
-  confere(q1 && q1.d.j.length === 4 && q1.d.b.length === 1 && q1.round === st.room.round, 'os quadros da partida chegam (os 4 jogadores e a bola)');
+  confere(q1 && q1.d.j.length === 2 && q1.d.b.length === 1 && q1.round === st.room.round, 'os quadros da partida chegam (os 2 jogadores, sem bots nas vagas, e a bola)');
   await dorme(700);
   let seq = 0; const q0 = A.ultimo(m => m.type === 'rq'), x0 = q0.d.j[0][0], y0 = q0.d.j[0][1];
   for (let i = 0; i < 45; i++) { A.manda({ type: 'input', seq: ++seq, x: 0, y: 1, f: 2 }); await dorme(16); }
@@ -406,13 +406,13 @@ try {
   // o Beto cai e volta
   const tokB = B.token; B.fecha(); await dorme(400);
   let qq = A.ultimo(m => m.type === 'rq');
-  confere(qq && (qq.d.j[2][5] & 128), 'o Beto caiu: um bot assume a tampinha dele no meio da partida (no quadro, o lugar dele é de bot)');
+  confere(qq && (qq.d.j[1][5] & 128), 'o Beto caiu: um bot assume a tampinha dele no meio da partida (no quadro, o lugar dele é de bot · v103: o índice 1 — só os lugares de gente entram)');
   const B2 = cliente('Beto', { rch: 1 }); B2.token = tokB; await B2.abre();
   await B2.espera(m => m.type === 'hello');
   B2.manda({ type: 'join', code, slot: 2 });             // (o aparelho volta para o mesmo lugar: a Oficina faz isso sozinha em até 90 s)
   const st2 = await B2.espera(m => m.type === 'start' && m.resume, 5000);
   await dorme(300); qq = A.ultimo(m => m.type === 'rq');
-  confere(st2 && st2.room.rachao && qq && !(qq.d.j[2][5] & 128) && B2.msgs.some(m => m.type === 'rachao_sala'), 'o Beto volta (o mesmo token): o campo, o começo com a retomada e a tampinha dele de volta', st2 && st2.resume);
+  confere(st2 && st2.room.rachao && qq && !(qq.d.j[1][5] & 128) && B2.msgs.some(m => m.type === 'rachao_sala'), 'o Beto volta (o mesmo token): o campo, o começo com a retomada e a tampinha dele de volta', st2 && st2.resume);
   // os gols (o gancho de teste pede o gol ao motor do Rachão) e o fim
   for (let g = 0; g < 3; g++) { A.manda({ type: '__teste_gol', time: 0 }); await dorme(2700); }
   const res = await A.espera(m => m.type === 'result', 8000), resB = await B2.espera(m => m.type === 'result', 3000);

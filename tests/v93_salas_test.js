@@ -70,30 +70,32 @@ async function principal(){
   await adm(Ana, {acao:'mover', id:Beto.id, slot:3}); await adm(Ana, {acao:'mover', id:Ana.id, slot:0});   // (de volta: Ana 0, Beto 3)
   confira(r.roster[0] === Ana.id && r.roster[3] === Beto.id, '   (de volta: Ana no Time A, Beto no Time B)', r.roster);
 
-  console.log('\n2) na partida (hospedada): o banco, a vaga do bot e a troca — o motor troca quem joga em cada tampinha');
+  console.log('\n2) na partida (hospedada): o banco, a vaga vazia e a troca — o motor troca quem joga em cada tampinha (v103: sem bots)');
   Ana.manda({type:'start'});
-  confira(r.state === 'playing' && r.partida && ids(r).join(',') === [Ana.id, null, Caio.id, Beto.id].join(','), 'a partida começa: Ana, bot, Caio, Beto (o bot na vaga)', ids(r));
+  confira(r.state === 'playing' && r.partida && ids(r).join(',') === [Ana.id, null, Caio.id, Beto.id].join(',') && r.partida.jog[1].fora && !r.partida.jog[1].bot, 'a partida começa: Ana, a vaga vazia, Caio, Beto (v103: sem bot na vaga — o Time A joga com um a menos)', ids(r));
   r.partida.desligar();                                 // (daqui o teste anda o motor na mão: rodar)
   r.partida.rodar(30); r.partida.placar = [1, 0]; const tick0 = r.partida.tick;
   const pos0 = r.partida.jog.map(q => [Math.round(q.x), Math.round(q.y)]);
   await adm(Ana, {acao:'reserva', id:Caio.id});
   const qc = r.partida.jog[2];
-  confira(!r.roster[2] && qc.bot && !qc.netId && caio.slot === -1 && caio.banco, 'RESERVA: o Caio vai para o banco e o bot segura o lugar dele na hora', [r.roster, qc.bot, qc.netId]);
+  confira(!r.roster[2] && !qc.bot && qc.fora && !qc.netId && caio.slot === -1 && caio.banco && (r.partida.quadro().fora || []).includes(2), 'RESERVA: o Caio vai para o banco e a vaga dele fica vazia na hora (v103: sem bot)', [r.roster, qc.bot, qc.fora, qc.netId]);
   await adm(Ana, {acao:'mover', id:Duda.id, slot:2});
-  confira(r.roster[2] === Duda.id && r.partida.jog[2].netId === Duda.id && !r.partida.jog[2].bot && semDuplicados(r), 'ENTRAR (do banco na vaga do bot): a Duda assume a tampinha do lugar 3', ids(r));
+  confira(r.roster[2] === Duda.id && r.partida.jog[2].netId === Duda.id && !r.partida.jog[2].bot && !r.partida.jog[2].fora && semDuplicados(r), 'ENTRAR (do banco na vaga vazia, no meio da partida): a Duda ganha a tampinha do lugar 3 no campo', ids(r));
   await adm(Ana, {acao:'mover', id:Caio.id, slot:1});
-  confira(r.partida.jog[1].netId === Caio.id && semDuplicados(r), 'o Caio entra na vaga do bot do Time A', ids(r));
+  confira(r.partida.jog[1].netId === Caio.id && !r.partida.jog[1].fora && semDuplicados(r), 'o Caio entra na vaga vazia do Time A (sem reiniciar: a tampinha dele aparece no campo)', ids(r));
   await adm(Ana, {acao:'mover', id:Beto.id, slot:0});
   confira(r.partida.jog[0].netId === Beto.id && r.partida.jog[3].netId === Ana.id && r.roster[0] === Beto.id && r.roster[3] === Ana.id && semDuplicados(r),
     'TROCAR no meio da partida: Ana e Beto trocam de tampinha (cada um com a sua fila de comandos nova)', ids(r));
   const pos1 = r.partida.jog.map(q => [Math.round(q.x), Math.round(q.y)]);
-  confira(r.partida.placar.join('×') === '1×0' && r.partida.tick === tick0 && JSON.stringify(pos0) === JSON.stringify(pos1), 'o placar (1 × 0), o relógio do motor e as tampinhas no campo continuam iguais', [r.partida.placar, r.partida.tick, tick0]);
+  const noCampo = q => q.x > r.partida.G.LX0 && q.x < r.partida.G.LX1 && q.y > r.partida.G.LY0 && q.y < r.partida.G.LY1;
+  confira(r.partida.placar.join('×') === '1×0' && r.partida.tick === tick0 && JSON.stringify([pos0[0], pos0[3]]) === JSON.stringify([pos1[0], pos1[3]]) && r.partida.jog.every(noCampo),
+    'o placar (1 × 0), o relógio do motor e as tampinhas que estavam no campo continuam iguais; as das vagas que ganharam gente estão no campo', [r.partida.placar, r.partida.tick, tick0, pos1]);
   r.partida.rodar(20);
-  confira(r.partida.tick === tick0 + 20 && r.partida.jog.every(q => q.bot ? !!q.botAi : !!q.fila && !!q.netButton), 'o motor segue jogando (bots com a inteligência, humanos com a fila e os botões)', r.partida.tick);
+  confira(r.partida.tick === tick0 + 20 && r.partida.jog.every(q => q.fora || (q.bot ? !!q.botAi : !!q.fila && !!q.netButton)), 'o motor segue jogando (humanos com a fila e os botões)', r.partida.tick);
   Ana.limpa(); await adm(Ana, {acao:'mover', id:'u_nao_existe', slot:1});
   confira(/não está mais na sala/.test(erroAdm(Ana)), 'alguém que já saiu: "Essa pessoa não está mais na sala."', erroAdm(Ana));
   Duda.manda({type:'leave'});
-  confira(!r.partida.jog.some(q => q.netId === Duda.id) && semDuplicados(r), 'a Duda sai da sala no meio: o bot assume (ninguém em dois lugares)', ids(r));
+  confira(!r.partida.jog.some(q => q.netId === Duda.id) && r.partida.jog[2].fora && !r.partida.jog[2].bot && semDuplicados(r), 'a Duda sai da sala no meio: a vaga dela fica vazia — o time joga com um a menos (v103: sem bot no lugar)', ids(r));
   Duda.manda({type:'join', code});
   const duda2 = r.members.find(x => x.id === Duda.id);
   confira(duda2 && duda2.slot === -1 && !r.partida.jog.some(q => q.netId === Duda.id) && semDuplicados(r), 'a Duda volta como espectadora (o lugar dela não volta sozinho: o admin decide)', ids(r));

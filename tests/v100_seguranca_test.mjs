@@ -160,9 +160,14 @@ try {
   const p2 = await patente();
   confere(p2 === p1 && !(r2.rq && r2.rq.delta) && !(r3.rq && r3.rq.delta) && !(r4.rq && r4.rq.delta), 'o MESMO selo de novo — igual ou com a assinatura reescrita — não sobe mais nada (era o replay que inflava a patente)', [r2.motivo, r3.motivo, r4.motivo, p2]);
   confere(/já foi usado/.test(r4.motivo || '') && (r4.xpConcedido | 0) === 0, 'o selo repetido: "Esse resultado online já foi usado." e sem XP', r4.motivo);
-  const bots = await partida(seloRq({ o: undefined }));
+  // v103: a ranqueada contra os bots que o SERVIDOR simulou (h:1, k:1, sem o:1) vale para a patente como contra os bots (com o
+  // teto do dia) — antes valia como online comum, sem patente; o mesmo selo de novo continua sem valer nada
+  const seloBots = seloRq({ o: undefined });
+  const bots = await partida(seloBots);
   const p3 = await patente();
-  confere(bots.ok && bots.rq == null && p3 === p2, 'a ranqueada online contra os bots que a fila pôs do outro lado (sem o:1): vale como online comum, sem mexer na patente', { rq: bots.rq, xp: bots.xpConcedido });
+  confere(bots.ok && bots.rq && bots.rq.delta > 0 && p3 === p2 + bots.rq.delta, 'a ranqueada online contra os bots que a fila pôs do outro lado (sem o:1): vale para a patente como contra os bots (v103; ' + p2 + ' → ' + p3 + ')', { rq: bots.rq, xp: bots.xpConcedido });
+  const bots2 = await partida(seloBots);
+  confere((await patente()) === p3 && !(bots2.rq && bots2.rq.delta), 'e o mesmo selo dos bots de novo não sobe mais nada', bots2.motivo);
 
   {
     const seloPar = seloRq(), abertas = [];

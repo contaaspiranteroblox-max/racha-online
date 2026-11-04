@@ -88,5 +88,25 @@ async def rt(pg, js):
     return await pg.evaluate('s => window.__RT(s)', js)
 
 
+async def clica_lobby(pg, sel):
+    """Clica de verdade (o Playwright) num botão do lobby. v102: o lobby com menos coisa na tela — os botões que foram para a
+    barra de atalhos ou para o MENU ficam escondidos e são tocados pelo botão novo que toca o de sempre (no MENU: abre a gaveta
+    e toca o item). Fora da v102 (ou com o botão à vista), o clique é no próprio sel."""
+    onde = await pg.evaluate("""s => { const el = document.querySelector(s);
+      if (!el || el.offsetParent !== null || !document.querySelector('#lb.v102')) return null;
+      const b = [...document.querySelectorAll('#lb .v102-doca-bt, #lb .v102-item, #lb .v102-pat')].find(x => x._alvo && x._alvo() === el);
+      if (!b) return null;
+      document.querySelectorAll('[data-clica-lobby]').forEach(x => x.removeAttribute('data-clica-lobby'));
+      b.setAttribute('data-clica-lobby', '1');
+      return b.classList.contains('v102-doca-bt') ? 'atalho' : 'menu'; }""", sel)
+    if onde is None:
+        await pg.click(sel)
+        return
+    if onde == 'menu':
+        await pg.click('#lb .v102-menu-bt')
+        await pg.wait_for_timeout(260)
+    await pg.click('[data-clica-lobby="1"]')
+
+
 def roda(corrotina):
     sys.exit(asyncio.run(corrotina))

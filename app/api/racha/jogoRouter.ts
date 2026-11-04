@@ -325,7 +325,13 @@ export const jogoRouter = createRouter({
       // (v100: a ranqueada online só mexe na patente com gente do outro lado — o:1 no selo; contra os bots que a fila pôs no
       //  outro time, a partida vale como uma online comum, sem pontos de patente)
       const contraGente = !input.online || seloOk?.o === 1;
-      const rqRes: RespostaRanqueada | null = acaoFim("") === "partida" && contraGente ? await aplicaRanqueada(c.usuario.id, idSelo ? "selo:" + idSelo.slice(0, 59) : p.id, partidaRq(false), extraRq) : null;
+      // v103: a ranqueada online contra os bots (ninguém apareceu na busca: o SERVIDOR simulou a partida com os bots — o selo
+      //  diz ranqueada, k:1, sem gente do outro lado) conta como contra os bots: os pontos valem, com o teto do dia contra os
+      //  bots (RQ_LIMITES.botsPorDia), como a liga contra os bots sempre teve. O placar é o do servidor (o selo), não do aparelho.
+      const contraBotsServidor = !!input.online && seloOk?.h === 1 && seloOk?.k === 1 && seloOk?.o !== 1;
+      const rqRes: RespostaRanqueada | null = acaoFim("") === "partida" && (contraGente || contraBotsServidor)
+        ? await aplicaRanqueada(c.usuario.id, idSelo ? "selo:" + idSelo.slice(0, 59) : p.id, contraBotsServidor ? { ...partidaRq(false), contraBots: true, nivelBots: null } : partidaRq(false), extraRq)
+        : null;
       // v88: as moedas da partida (na carteira da conta), as missões, o XP do passe e o melhor da partida
       const r88 = await recompensaPartida(c.usuario.id, Number(c.usuario.idPublico), p.id, {
         resultado, gols: input.gols, assistencias: input.assistencias, placarNosso: input.placarNosso, ranqueada: rq, online: !!input.online, mvp: input.mvp, selo: seloOk,

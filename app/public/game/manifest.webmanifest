@@ -1,0 +1,21 @@
+{
+  "name": "RACHA · Futebol de Rua",
+  "short_name": "RACHA",
+  "description": "Futebol de rua com tampinha: treino, ranqueada e salas online com a galera.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./racha.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#0d0a22",
+  "theme_color": "#0d0a22",
+  "categories": ["games", "sports"],
+  "icons": [
+    {"src": "icones/racha-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icones/racha-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icones/racha-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icones/racha-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

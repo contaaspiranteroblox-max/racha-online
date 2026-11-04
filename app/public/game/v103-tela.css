@@ -1,0 +1,88 @@
+/* =====================================================================================================================
+   RACHA v103 · TELA CHEIA, O APP INSTALÁVEL E O CAMPO ATÉ A BEIRADA (o código em tools/v103/tela.js)
+   · a página não puxa para atualizar nem estica no fim do gesto (o "elástico" do iPhone): nada a rolar fora das listas;
+   · a MOLDURA: o canvas atrás do jogo que preenche as faixas fora da área do jogo (o entalhe, a barrinha do iPhone, as
+     sobras dos lados) com o próprio campo, mais escuro — o HUD e os controles continuam dentro da área segura;
+   · o botão TELA CHEIA: o quadrado da barra de cima do lobby (antes do MENU), o cantinho da PAUSA, a linha dos Ajustes e o
+     JOGAR EM TELA CHEIA da tela GIRE O CELULAR (em pé, no Android);
+   · o GUIA do iPhone (Compartilhar › Adicionar à Tela de Início).
+   ===================================================================================================================== */
+
+/* ---------------------------------------------------------------- 1) a página parada (sem puxar para atualizar) */
+html, body{ overscroll-behavior:none; }
+
+/* ---------------------------------------------------------------- 2) a moldura (atrás de tudo: só aparece nas faixas) */
+#v103-moldura{ position:fixed; left:0; top:0; width:100%; height:100%; z-index:-1; display:block; pointer-events:none; }
+#v103-moldura[hidden]{ display:none !important; }
+
+/* ---------------------------------------------------------------- 3) o quadrado da barra de cima do lobby (deitado, como o MENU) */
+#lb .v103-tela-bt{ display:none; }
+#lb.v91.v95v.v101.v102:not(.retrato) #lb-palco .lb-topo .v103-tela-bt:not([hidden]){ display:flex !important; }
+#lb .v103-tela-bt .v91-tp-ic svg{ width:100%; height:100%; display:block; }
+
+/* ---------------------------------------------------------------- 4) o cantinho da PAUSA */
+#pausa .pa-caixa{ position:relative; }
+#pausa .v103-pa-tela{ position:absolute; top:8px; right:8px; z-index:2; width:46px; height:46px; margin:0; padding:0; box-sizing:border-box; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:#f6f3ea; -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  border:1.5px solid var(--v101-borda, rgba(128,142,255,.36)); background:var(--v101-painel, #1e2259); box-shadow:var(--v101-luz, none), 0 3px 8px rgba(3,2,18,.45); }
+#pausa .v103-pa-tela[hidden]{ display:none !important; }
+#pausa .v103-pa-tela svg{ width:26px; height:26px; display:block; pointer-events:none; }
+#pausa .v103-pa-tela:active{ transform:translateY(2px) scale(.96); }
+#pausa .v103-pa-tela:focus-visible{ outline:3px solid #ffd23f; outline-offset:2px; }
+@media (hover:hover){ #pausa .v103-pa-tela:hover{ border-color:var(--v101-borda2, rgba(170,180,255,.55)); } }
+/* (com o botão no canto, o título e a linha de baixo dele não chegam nos cantos) */
+#pausa .pa-caixa.v103-com-tela h2, #pausa .pa-caixa.v103-com-tela .pa-rot{ padding-left:54px; padding-right:54px; }
+
+/* ---------------------------------------------------------------- 4b) na tela GIRE O CELULAR (em pé, no Android): JOGAR EM TELA CHEIA */
+#v70-gire .v103-gire-bt{ display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; margin:6px 0 0; padding:0 20px; box-sizing:border-box;
+  border-radius:12px; border:2px solid rgba(255,255,255,.45); background:rgba(255,255,255,.08); color:#f3efe4; cursor:pointer;
+  font:800 16px/1 system-ui, "Segoe UI", Roboto, sans-serif; letter-spacing:.6px; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+#v70-gire .v103-gire-bt[hidden]{ display:none !important; }
+#v70-gire .v103-gire-bt svg{ width:22px; height:22px; margin:0; flex:none; }
+#v70-gire .v103-gire-bt span{ max-width:none; font:inherit; color:inherit; }
+#v70-gire .v103-gire-bt:active{ transform:translateY(2px); background:rgba(255,255,255,.16); }
+
+/* ---------------------------------------------------------------- 5) a linha dos Ajustes (Visual) */
+#pop-ajustes .v103-aj-tela .v103-aj-como{ flex:0 0 auto; }
+#pop-ajustes .v103-aj-tela .v103-aj-como[hidden], #pop-ajustes .v103-aj-tela .aj-chave[hidden]{ display:none !important; }
+
+/* ---------------------------------------------------------------- 6) o GUIA do iPhone */
+.v103-guia{ position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; box-sizing:border-box;
+  padding:max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background:rgba(5,4,20,.72); font-family:var(--v101-tit, "Barlow Condensed", "Arial Narrow", system-ui, sans-serif); color:var(--v101-txt, #f7f4ff);
+  touch-action:manipulation; -webkit-user-select:none; user-select:none; }
+.v103-guia[hidden]{ display:none !important; }
+.v103-guia *{ box-sizing:border-box; }
+.v103-guia-caixa{ position:relative; width:min(720px, 100%); max-height:100%; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:clamp(8px, 2.4vh, 14px);
+  padding:clamp(12px, 3vh, 22px) clamp(14px, 3vw, 26px); border-radius:16px; border:1.5px solid var(--v101-borda, rgba(128,142,255,.36));
+  background:linear-gradient(180deg, #1d215a 0%, #121440 60%, #0d0e33 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.11), 0 18px 50px rgba(3,2,18,.7); }
+.v103-guia h2{ margin:0; padding-right:52px; font:400 clamp(24px, 6.4vh, 36px)/1 var(--v101-jog, "Lilita One", "Anton", Impact, sans-serif); letter-spacing:1px; color:#ffd23f;
+  text-shadow:0 3px 0 rgba(4,3,20,.9), 0 0 16px rgba(150,80,255,.45); }
+.v103-guia-tx{ margin:0; padding-right:44px; font:600 clamp(15px, 3.9vh, 19px)/1.25 var(--v101-tit, "Barlow Condensed", system-ui, sans-serif); color:var(--v101-txt2, #d6d8f6); }
+.v103-guia-tx b{ color:#fff; font-weight:800; }
+.v103-guia-passos{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:clamp(8px, 1.6vw, 12px); }
+.v103-guia-passos li{ position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; padding:clamp(8px, 2.2vh, 14px) 8px clamp(8px, 2vh, 12px); border-radius:12px;
+  text-align:center; background:linear-gradient(180deg, rgb(30,34,88) 0%, rgb(17,19,56) 100%); border:1.5px solid var(--v101-borda, rgba(128,142,255,.36));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.11), 0 4px 10px rgba(3,2,18,.45); }
+.v103-guia-n{ position:absolute; left:8px; top:6px; min-width:26px; height:26px; border-radius:13px; font:800 17px/26px var(--v101-tit, system-ui); color:#1a0e00;
+  background:linear-gradient(180deg, #ffe85a 0%, #ffd21f 45%, #ff9d00 100%); box-shadow:0 2px 0 rgba(4,3,20,.8); }
+.v103-guia-ic{ width:clamp(36px, 10vh, 52px); height:clamp(36px, 10vh, 52px); display:flex; align-items:center; justify-content:center; }
+.v103-guia-ic svg, .v103-guia-ic img{ width:100%; height:100%; display:block; }
+.v103-guia-ic img{ border-radius:22%; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+.v103-guia-passos b{ display:block; font:800 clamp(15px, 3.9vh, 19px)/1.1 var(--v101-tit, system-ui); letter-spacing:.3px; color:#fff; }
+.v103-guia-passos small{ display:block; font:600 clamp(12px, 3.2vh, 15px)/1.2 var(--v101-tit, system-ui); color:var(--v101-txt2, #bcc0ea); }
+.v103-guia-acoes{ display:flex; justify-content:center; }
+.v103-guia-ok{ min-width:min(260px, 100%); min-height:48px; margin:0; padding:0 26px; border-radius:12px; border:0; cursor:pointer; color:#2a1600;
+  font:400 clamp(20px, 5vh, 26px)/1 var(--v101-jog, "Lilita One", Impact, sans-serif); letter-spacing:1px;
+  background:linear-gradient(180deg, #ffe85a 0%, #ffd21f 45%, #ff9d00 100%); box-shadow:inset 0 2px 0 rgba(255,255,255,.55), 0 4px 0 #7a3c00, 0 7px 12px rgba(0,0,0,.4); }
+.v103-guia-ok:active{ transform:translateY(3px); box-shadow:inset 0 2px 0 rgba(255,255,255,.55), 0 1px 0 #7a3c00; }
+.v103-guia-x{ position:absolute; right:10px; top:10px; width:46px; height:46px; margin:0; padding:0; border-radius:10px; cursor:pointer; color:#e8e6ff;
+  border:1.5px solid var(--v101-borda, rgba(128,142,255,.36)); background:var(--v101-painel, #1e2259); display:flex; align-items:center; justify-content:center; }
+.v103-guia-x svg{ width:24px; height:24px; display:block; }
+.v103-guia-ok:focus-visible, .v103-guia-x:focus-visible{ outline:3px solid #ffd23f; outline-offset:2px; }
+/* em pé (o guia também cabe: os passos um embaixo do outro) */
+@media (orientation:portrait){
+  .v103-guia-passos{ grid-template-columns:minmax(0, 1fr); }
+  .v103-guia-passos li{ flex-direction:row; text-align:left; padding-left:44px; }
+  .v103-guia-passos li > span{ min-width:0; }
+}

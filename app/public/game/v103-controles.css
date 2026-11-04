@@ -1,0 +1,62 @@
+/* =====================================================================================================================
+   RACHA v103 · Ajustes › Controles › Controle (tools/v103/controles.js). O resto da janela é o de sempre (ajx-grupo, ajx-seg,
+   ajx-tecla, ajx-tbt, aj-chave, v88-aj-faixa, ajx-rest): aqui só os botões do controle desenhados, os títulos de cada parte,
+   a ação que acende quando o botão dela é apertado, a troca em andamento e o analógico ao vivo.
+   ===================================================================================================================== */
+#pop-ajustes .v103-sub{ margin:14px 0 4px; font:800 calc(13px*var(--v70-ui, 1))/1.2 system-ui, sans-serif; letter-spacing:1.3px; text-transform:uppercase; color:#c9d2ff; }
+#pop-ajustes .v103-sub2{ margin:12px 0 0; padding-top:6px; border-top:1px dashed rgba(170,180,255,.22); color:#9fb0ff; font-size:calc(12px*var(--v70-ui, 1)); }
+#pop-ajustes .v103-grupo:first-child .v103-sub2{ border-top:0; padding-top:0; }
+#pop-ajustes .v103-corpo[hidden], #pop-ajustes .v103-lista[hidden], #pop-ajustes .v103-grupo[hidden], #pop-ajustes .v103-tempo[hidden], #pop-ajustes .v103-pers[hidden]{ display:none !important; }
+
+/* os botões do controle (um chip): o PlayStation com os símbolos coloridos, o Xbox com as letras nas cores dele */
+#pop-ajustes .v103-gl{ display:inline-flex; align-items:center; justify-content:center; min-width:1.75em; height:1.75em; padding:0 .32em; border-radius:.5em;
+  font:800 1em/1 system-ui, sans-serif; letter-spacing:.02em; vertical-align:middle; background:rgba(255,255,255,.1); color:#fff; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22); }
+#pop-ajustes .v103-gl.v103-face{ min-width:1.75em; width:1.75em; padding:0; border-radius:50%; }
+#pop-ajustes .v103-gl svg{ width:1.2em; height:1.2em; display:block; }
+#pop-ajustes .v103-gl.v103-ps.v103-face{ background:#14172b; box-shadow:inset 0 0 0 2px rgba(255,255,255,.2); }
+#pop-ajustes .v103-gl.v103-ps.v103-b0{ color:#8fb8ff; } #pop-ajustes .v103-gl.v103-ps.v103-b1{ color:#ff7d7d; }
+#pop-ajustes .v103-gl.v103-ps.v103-b2{ color:#f4a1e2; } #pop-ajustes .v103-gl.v103-ps.v103-b3{ color:#58e3b6; }
+#pop-ajustes .v103-gl.v103-xbox.v103-face{ color:#0e1116; text-shadow:none; box-shadow:inset 0 -2px 0 rgba(0,0,0,.25); }
+#pop-ajustes .v103-gl.v103-xbox.v103-b0{ background:#5bc950; } #pop-ajustes .v103-gl.v103-xbox.v103-b1{ background:#ef5a4f; }
+#pop-ajustes .v103-gl.v103-xbox.v103-b2{ background:#4a90ff; } #pop-ajustes .v103-gl.v103-xbox.v103-b3{ background:#f5c542; }
+#pop-ajustes .v103-gl.v103-nintendo.v103-face{ background:#2c2f36; color:#fff; }
+#pop-ajustes .v103-slot .v103-gl{ font-size:calc(15px*var(--v70-ui, 1)); }
+#pop-ajustes .v103-jeito small{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:2px 4px; margin-top:3px; }
+#pop-ajustes .v103-jeito small .v103-gl{ font-size:calc(12px*var(--v70-ui, 1)); }
+
+/* as ações (o desenho das linhas do Teclado, com classes próprias: as do teclado são contadas pelos testes e pelo jogo) */
+#pop-ajustes .v103-acao .ajx-tx{ flex:1 1 200px; }
+#pop-ajustes .v103-bts{ display:flex; gap:8px; }
+#pop-ajustes .v103-slot{ min-width:72px; min-height:var(--v70-alvo, 48px); padding:0 12px; border:3px solid var(--k, #0f1112); border-radius:10px; background:#15181a; color:var(--v70-giz, #f3efe4);
+  font:800 calc(16px*var(--v70-ui, 1))/1 ui-monospace, Menlo, Consolas, monospace; box-shadow:0 3px 0 var(--v70-tinta, #0f1112); cursor:pointer; }
+#pop-ajustes .v103-slot.vazia{ color:var(--v70-giz2, #b9bdb4); background:var(--v70-neutro, #3a3f43); }
+#pop-ajustes .v103-slot.on{ background:var(--v70-amarelo, #ffd23f); color:var(--v70-amarelo-tx, #2a1d00); font-family:system-ui, sans-serif; font-size:calc(14px*var(--v70-ui, 1)); }
+/* a que está trocando de botão e a que acende quando o botão dela é apertado */
+#pop-ajustes .v103-acao{ border-radius:10px; transition:background-color .25s; }
+#pop-ajustes .v103-acao.v103-cap{ background:rgba(255,210,63,.1); box-shadow:inset 3px 0 0 #ffd23f; padding-left:8px; }
+#pop-ajustes .v103-acao.v103-cap .ajx-tx b{ color:#ffd23f; }
+#pop-ajustes .v103-acao.v103-aceso{ background:rgba(140,200,255,.2); transition:none; }
+#pop-ajustes .v103-andar .v103-fixo{ flex:0 0 auto; min-width:72px; padding:8px 12px; border-radius:10px; text-align:center; font:800 calc(15px*var(--v70-ui, 1))/1 system-ui, sans-serif;
+  color:var(--v70-giz2, #b9bdb4); background:rgba(0,0,0,.18); box-shadow:inset 0 0 0 2px rgba(255,255,255,.08); }
+#pop-ajustes .v103-msg{ min-height:1.3em; font-weight:700; }
+#pop-ajustes .v103-msg.cap{ color:#ffd23f; }
+#pop-ajustes .v103-msg.ok{ color:#8fe39b; }
+#pop-ajustes .v103-msg.erro{ color:#ff9a8a; }
+#pop-ajustes .v103-tempo{ display:block; height:4px; margin:2px 0 6px; border-radius:2px; background:#ffd23f; transform-origin:left center; transition:transform .2s linear; }
+#pop-ajustes .v103-pers{ margin-top:6px; }
+
+/* a zona morta com o analógico de agora (o círculo de fora = o curso; o tracejado = a zona morta; o ponto = o analógico) */
+#pop-ajustes .v103-zona .v103-alvo{ position:relative; flex:0 0 auto; width:52px; height:52px; border-radius:50%; background:rgba(0,0,0,.25); box-shadow:inset 0 0 0 2px rgba(255,255,255,.22); }
+#pop-ajustes .v103-alvo-zona{ position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); border-radius:50%; border:1.5px dashed rgba(255,210,63,.75); box-sizing:border-box; }
+#pop-ajustes .v103-alvo-pt{ position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:#9aa3ad; box-shadow:0 0 0 2px rgba(0,0,0,.35); }
+#pop-ajustes .v103-alvo.anda .v103-alvo-pt{ background:#ffd23f; }
+#pop-ajustes .v103-testa{ min-width:0; padding:0 14px; font-family:system-ui, sans-serif; font-size:calc(13px*var(--v70-ui, 1)); letter-spacing:.6px; }
+#pop-ajustes .v103-testa:disabled{ opacity:.45; cursor:default; }
+
+/* o celular deitado (os Ajustes compactos da v70.1) */
+#pop-ajustes.v70-compacto .v103-sub{ margin:8px 0 2px; font-size:calc(11px*var(--v70-ui, 1)); }
+#pop-ajustes.v70-compacto .v103-zona .v103-alvo{ width:40px; height:40px; }
+#pop-ajustes.v70-compacto .v103-andar .v103-fixo{ min-width:56px; padding:5px 8px; font-size:calc(12px*var(--v70-ui, 1)); }
+#pop-ajustes.v70-compacto .v103-slot{ min-width:56px; min-height:32px; border-width:2px; font-size:calc(12px*var(--v70-ui, 1)); box-shadow:0 2px 0 var(--v70-tinta, #0f1112); }
+#pop-ajustes.v70-compacto .v103-acao{ min-height:36px; }
+@media (prefers-reduced-motion: reduce){ #pop-ajustes .v103-acao, #pop-ajustes .v103-tempo{ transition:none; } }

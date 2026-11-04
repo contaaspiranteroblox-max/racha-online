@@ -58,7 +58,8 @@ async def principal():
             simbolos:s ? s.querySelectorAll('symbol[id^="v91i-"]').length : 0, moeda:getComputedStyle(lb).getPropertyValue('--v91-moeda').slice(0, 30), gema:getComputedStyle(lb).getPropertyValue('--v91-gema').slice(0, 30),
             azul:getComputedStyle(document.documentElement).getPropertyValue('--v91-azul-f'), tile:tile ? getComputedStyle(tile).boxShadow : '',
             dica:(document.querySelector('#lb .v90-dica span') || {}).textContent, of:ro ? [Math.round(ro.top), Math.round(ro.bottom)] : null, tr:rt ? [Math.round(rt.top), Math.round(rt.bottom)] : null,
-            sk:SK76_KIT.p.cria, skOk:SK76.ok, v101:document.documentElement.classList.contains('v101'), ofL:ro ? Math.round(ro.left) : null, trL:rt ? Math.round(rt.left) : null}; })()""")
+            sk:SK76_KIT.p.cria, skOk:SK76.ok, v101:document.documentElement.classList.contains('v101'), ofL:ro ? Math.round(ro.left) : null, trL:rt ? Math.round(rt.left) : null,
+            v102:lb.classList.contains('v102'), doca:[...document.querySelectorAll('#lb .v102-doca-bt')].map(e => e.textContent.trim())}; })()""")
         P.confere(v['html'] and v['lb'], 'o visual da v95 está ligado (html.v95v e #lb.v95v)', v)
         # (v101: o sprite da imagem da noite tem os 22 de sempre e mais 5 — a OFICINA, a bola, as setas de trocar, o sinal e a pessoa)
         P.confere(v['defs'] and v['textos'] == 0 and v['simbolos'] == (27 if v['v101'] else 22), 'os 22 ícones do sprite no desenho novo (v101: + 5), sem letra (o $ da moeda é desenhado) e com o <defs> que a v91 usa', v)
@@ -68,7 +69,10 @@ async def principal():
         P.confere(('rgba(255, 255, 255, 0.11) 0px 1px 0px 0px inset' in v['tile']) if v['v101'] else ('rgb(10, 13, 32)' in v['tile']), 'os botões da tela inicial são placas (a beirada de baixo grossa; v101: o vidro escuro)', v['tile'][:120])
         P.confere(v['dica'] == 'Toque para abrir o cofre, segure para trocar', 'a dica embaixo da tampinha, em frase', v['dica'])
         # (v101: a OFICINA é o cartão dourado logo embaixo da coluna da esquerda, debaixo do TREINO, alinhada com ela)
-        if v['v101']:
+        # (v102: o lobby com menos coisa na tela — a OFICINA e o TREINO lado a lado na barra de atalhos de baixo)
+        if v['v102']:
+            P.confere(v['doca'] == ['SALAS', 'TREINO', 'OFICINA', 'COFRE'], 'a OFICINA do lado do TREINO, na barra de atalhos (v102)', v['doca'])
+        elif v['v101']:
             P.confere(v['of'] and v['tr'] and 0 <= v['of'][0] - v['tr'][1] <= 30 and abs(v['ofL'] - v['trL']) <= 2, 'a OFICINA logo embaixo do TREINO (v101)', [v['of'], v['tr'], v['ofL'], v['trL']])
         else:
             P.confere(v['of'] and v['tr'] and abs(v['of'][0] - v['tr'][0]) <= 6 and abs(v['of'][1] - v['tr'][1]) <= 6, 'a OFICINA na mesma fileira do TREINO', [v['of'], v['tr']])
@@ -364,6 +368,9 @@ async def principal():
         b, pg, erros = await abre(pw, 844, 390, config={'modo': 'demo'})
         await pg.wait_for_timeout(600)
         cel = await rt(pg, """(() => { const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1; };
+          if (LB.raiz.classList.contains('v102')){   // (v102: os botões dos lados e a OFICINA foram para a barra de atalhos e o MENU)
+            const at = [...document.querySelectorAll('#lb .v102-doca-bt, #lb .v102-menu-bt')];
+            return {tiles:at.length === 5 && at.every(vis), jogar:vis(document.getElementById('lb-jogar')), of:at.some(e => /OFICINA/.test(e.textContent) && vis(e))}; }
           return {tiles:[...document.querySelectorAll('#rx .rx-bt.v71-tile')].every(vis), jogar:vis(document.getElementById('lb-jogar')), of:vis(document.querySelector('.ofi-lobby'))}; })()""")
         P.confere(cel['tiles'] and cel['jogar'] and cel['of'], '844×390: os botões da tela inicial, o JOGAR e a OFICINA cabem na tela', cel)
         await pg.screenshot(path=str(SAIDA / 'v95_lobby_844.png'))

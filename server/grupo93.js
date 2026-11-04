@@ -481,9 +481,9 @@ function aplica(Turma){
         g = escolhe(U, 2*n, n, false);
         if (g && g.reduce((s, u) => s + u.es.length, 0) >= 2 && this.g93Joga(g, n)) U = U.filter(u => g.indexOf(u) < 0);
       }
-      for (const u of U) if (!u.grp && agora - u.t0 >= CFG.filaMax){
-        const e = u.es[0]; this.filaEsp.delete(e.c.id); this.manda(e.c, {type:'fila_nada', n}); this.v88Marca(e.c);
-      }
+      // v103: ninguém apareceu — a ranqueada contra os bots roda no servidor (vale pontos, com o teto do dia contra os bots);
+      // o grupo também (juntos no mesmo time, os bots completam)
+      for (const u of U) if (agora - u.t0 >= CFG.filaMax) this.g93Joga([u], n);
     }
     if (this.filaEsp.size){ this.filaT = setTimeout(() => this.filaTenta(), 1000); if (this.filaT.unref) this.filaT.unref(); }
   };

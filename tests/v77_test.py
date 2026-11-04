@@ -54,7 +54,8 @@ LOBBY = r"""(() => {
     logoLido:document.querySelector('#rx .rx-logo').textContent, tiles, topo, cvs, xp:(document.getElementById('v77-xp') || {}).textContent,
     modo:[LB.modo.querySelector('.v71-modo-tx b').textContent, (LB.modo.querySelector('.v77-modo-nm') || {}).textContent],
     premio:!!LB.missoes.querySelector('.mi-premio .v77-pilha') && /^\d/.test(LB.missoes.querySelector('.mi-premio b').textContent), estrela:!!LB.missoes.querySelector('.v77-mi-ic, .v91-mi-ic'),
-    v77:LB.raiz.classList.contains('v77'), carrossel:document.querySelectorAll('#lb-palco .tp-carrossel, #lb-palco .v77-carrossel, #lb-palco [class*=carross]').length};
+    v77:LB.raiz.classList.contains('v77'), carrossel:document.querySelectorAll('#lb-palco .tp-carrossel, #lb-palco .v77-carrossel, #lb-palco [class*=carross]').length,
+    v102:LB.raiz.classList.contains('v102'), menu:vis(document.querySelector('#lb .v102-menu-bt')) && [...document.querySelectorAll('#lb .v102-item')].map(b => b.textContent.trim()).join('|').indexOf('CHAT') >= 0};
 })()"""
 
 # a tampinha do meio: desenhada reta (sem rodar) e sem a bola do lado
@@ -166,7 +167,11 @@ async def principal():
                           and [t['ic'] for t in l['tiles']] == ['loja', 'cofre', 'clube', 'treino', 'salas', 'amigos', 'ranking', 'eventos'],
                           'os 8 botões dos lados com os desenhos (v90: o COFRE no lugar da TAMPINHA; v91: os desenhos da imagem de referência; o EVENTOS na coluna da direita)', l['tiles'])
                 # v88: entre os AMIGOS e os ajustes apareceu o CORREIO · v90: os AMIGOS saíram do alto (são o botão AMIGOS da direita)
-                P.confere(l['topo'][-3:] == ['lb-chat', 'lb-correio', 'lb-ajustes'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, o chat, (v88) o CORREIO e os ajustes (v90: os AMIGOS ficam no botão da direita)', l['topo'])
+                if 'v102-menu-bt' in ' '.join(l['topo']) or l.get('v102'):
+                    # (v102: o lobby com menos coisa na tela — o chat e os ajustes foram para o MENU, o quadrado depois do correio)
+                    P.confere(l['topo'][-2:] == ['lb-correio', 'tp-ic'] and l['menu'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, (v88) o CORREIO e (v102) o MENU, com o chat e os ajustes dentro', l['topo'])
+                else:
+                    P.confere(l['topo'][-3:] == ['lb-chat', 'lb-correio', 'lb-ajustes'] and l['topo'].count('hm-grana') == 2, 'em cima: moedas e gemas com o +, o chat, (v88) o CORREIO e os ajustes (v90: os AMIGOS ficam no botão da direita)', l['topo'])
                 P.confere(l['xp'] == '0 / 100' and l['modo'] == ['2 VS 2', 'RANQUEADA · ESTÁDIO'] and l['premio'] and l['estrela'],
                           'você com o XP em números; o MODO com o tamanho grande (2 VS 2) e embaixo o que vai ser jogado (v79: RANQUEADA · ESTÁDIO); as MISSÕES com o desenho (v91: a prancheta) e o prêmio na pilha de moedas', l)
                 P.confere(l['carrossel'] == 0 and sorted(l['cvs']) == sorted(['lb-brilho', 'lb-eu-cv']) or l['carrossel'] == 0 and 'lb-brilho' in l['cvs'] and len(l['cvs']) <= 2,

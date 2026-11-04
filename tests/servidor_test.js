@@ -106,7 +106,7 @@ function regras(){
   confira(A.sala().roster[1] === B.id, 'pôr no time em que já está não muda nada');
   A.manda({type:'config', n:2, bots:true, tempo:3, jogo:'ginga', map:3, name:'  Racha  novo  '});
   s = A.sala();
-  confira(s.n === 2 && s.roster.length === 4 && s.roster[0] === A.id && s.roster[2] === B.id && s.bots && s.tempo === 3 && s.name === 'Racha novo', 'config: 2v2 (quem cabe fica no lugar), bots, tempo, nome limpo', s);
+  confira(s.n === 2 && s.roster.length === 4 && s.roster[0] === A.id && s.roster[2] === B.id && !s.bots && s.tempo === 3 && s.name === 'Racha novo', 'config: 2v2 (quem cabe fica no lugar), tempo, nome limpo — e os bots não ligam (v103: sala personalizada sem bots)', s);
   confira(s.jogo === 'curva' && s.map === 4, 'config: a GINGA e o VIADUTO não entram (a sala segue COM CURVA no ESTÁDIO)', [s.jogo, s.map]);
   A.manda({type:'config', map:0}); confira(A.sala().map === 0, 'config: trocar para a ARENA vale');
   B.manda({type:'config', n:4});
@@ -191,13 +191,13 @@ function regras(){
   motor = salaT(t, A).partida;
   B.ws.close();
   s = A.sala();
-  confira(s.roster[1] === null && !s.members.some(m => m.id === B.id) && A.todas('say').some(m => /caiu/.test(m.text || '')) && motor.jog[1].bot && motor.jog[1].reserva === B.id,
-    'o Beto caiu no meio: um bot do servidor assume a tampinha na hora (o lugar fica guardado) e a sala avisa', [s.roster, motor.jog[1].bot, motor.jog[1].reserva]);
+  confira(s.roster[1] === null && !s.members.some(m => m.id === B.id) && A.todas('say').some(m => /caiu/.test(m.text || '')) && !motor.jog[1].bot && motor.jog[1].fora && motor.jog[1].reserva === B.id && (motor.quadro().fora || []).includes(1),
+    'o Beto caiu no meio: a vaga dele fica vazia (v103: sem bot no lugar — o time joga com um a menos), o lugar fica guardado e a sala avisa', [s.roster, motor.jog[1].bot, motor.jog[1].fora, motor.jog[1].reserva]);
   confira(s.state === 'playing', 'a partida segue (ninguém roda a partida no aparelho)');
   const B2 = entra(t, 'Beto', B.token);
   confira(B2.id === B.id, 'voltou com o token: o mesmo id', [B2.id, B.id]);
   B2.manda({type:'join', code:s.code, slot:1});
-  confira(A.sala().roster[1] === B.id && B2.ult('start') && B2.ult('start').resume.score.join() === '1,0' && motor.jog[1].netId === B.id && !motor.jog[1].bot,
+  confira(A.sala().roster[1] === B.id && B2.ult('start') && B2.ult('start').resume.score.join() === '1,0' && motor.jog[1].netId === B.id && !motor.jog[1].bot && !motor.jog[1].fora,
     'voltou para o mesmo lugar no meio da partida, com o placar (resume), e reassumiu a tampinha', B2.ult('start'));
   A.ws.close();
   s = B2.sala();
@@ -262,7 +262,7 @@ function regras(){
   confira(s2.tournament.champion === campeao && t2.b.d.campeoes.length === 1 && t2.b.d.campeoes[0].champion.name === pega(campeao).nome, 'campeão e a galeria de campeões', [s2.tournament.champion, t2.b.d.campeoes]);
   J[0].manda({type:'cupEnd'});
   s2 = J[0].sala();
-  confira(!s2.tournament && s2.n === 2 && s2.bots, 'encerrar a copa volta às regras da sala');
+  confira(!s2.tournament && s2.n === 2 && !s2.bots, 'encerrar a copa volta às regras da sala (sem bots: v103)');
   J[1].manda({type:'social'});
   confira(J[1].ult('social') && J[1].ult('social').champions.length === 1, 'social: a galeria de campeões');
 
@@ -381,6 +381,7 @@ function regras(){
   const Xv = cliente(t5, 'V'); Xv.manda({type:'hello', name:'V', conta:assina(SEG, {p:'124', n:'V', e:Date.now() - 1})});
   confira(Xv.ult('hello').conta === false, 'bilhete vencido não vale');
   X.manda({type:'create', n:1, map:0, jogo:'futebol', tempo:0, bots:true, pub:true});
+  { const Y = cliente(t5, 'Y'); Y.manda({type:'hello', name:'Y'}); Y.manda({type:'join', code:X.sala().code, slot:1}); }   // (v103: sem bots, o outro time precisa de alguém)
   X.manda({type:'start'}); quadroMotor(t5, X, [0, 0]); relogio += 45000; golMotor(t5, X, [3, 2], X.ult('hello').id, 40); fimMotor(t5, X, [3, 2]);
   const rx = X.ult('result') || {}, selo = confere(SEG, rx.selo);
   confira(rx.valida && selo && selo.j === '000123' && selo.l === 0 && selo.p.join() === '3,2' && selo.m === 'futebol' && selo.s === X.sala().code && selo.r === 1, 'o resultado que vale vem com o selo da conta (a plataforma confere)', selo);
@@ -458,12 +459,15 @@ function ranqueada(){
   confira(Math.floor(s.roster.indexOf(C.id)/2) !== Math.floor(s.roster.indexOf(D.id)/2), 'os times pelos pontos: o mais forte de um lado, o outro do outro', s.roster);
   C.manda({type:'leave'}); D.manda({type:'leave'});
 
-  // sozinho: 20 s e vem fila_nada (o jogo joga contra os bots)
+  // sozinho: 20 s e a ranqueada contra os bots começa NO SERVIDOR (v103; até a v102 vinha fila_nada e o jogo jogava no aparelho)
   const E = entra(t, 'Edu'); E.limpa();
   E.manda({type:'fila', n:3, pts:0});
-  relogio += 12000; t.filaTenta(); confira(!E.ult('fila_nada'), 'sozinho: aos 12 s ainda procurando');
+  relogio += 12000; t.filaTenta(); confira(!E.ult('start'), 'sozinho: aos 12 s ainda procurando');
   relogio += 9000; t.filaTenta();
-  confira(!!E.ult('fila_nada') && t.filaEsp.size === 0, 'sozinho: aos 20 s vem fila_nada e ele sai da fila', E.ult('fila_nada'));
+  const rE = salaT(t, E);
+  confira(!E.ult('fila_nada') && E.ult('start') && E.ult('start').room.ranked && rE && rE.partida && t.filaEsp.size === 0, 'sozinho: aos 20 s a ranqueada contra os bots começa no servidor (v103) e ele sai da fila', E.ult('start') && E.ult('start').room);
+  if (rE && rE.partida) rE.partida.desligar();
+  E.manda({type:'leave'});
   // sair da fila; cair procurando; procurar estando numa sala
   E.manda({type:'fila', n:1, pts:0}); E.manda({type:'fila_sai'});
   confira(t.filaEsp.size === 0 && E.ult('fila').on === false, 'fila_sai: desistiu, saiu da fila');
@@ -609,7 +613,9 @@ function regra80(){
   confira(A2.ult('result') && A2.ult('result').valida && A2.ult('result').winner === -1, 'com o tempo encurtado: 1 × 1 no fim dos 20 s é empate que vale', A2.ult('result'));
 
   // a sala personalizada continua como era (sem a regra v80 nem o relógio do servidor)
-  const C = entra(t, 'Caio'); C.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:3, bots:true, pub:true}); C.manda({type:'start'});
+  const C = entra(t, 'Caio'); C.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:3, bots:true, pub:true});
+  { const D = entra(t, 'Duda'); D.manda({type:'join', code:C.sala().code, slot:1}); }   // (v103: sem bots, o outro time precisa de alguém)
+  C.manda({type:'start'});
   const sc = C.ult('start') && C.ult('start').room;
   C.limpa(); anda(5); t.relogios();
   confira(sc && sc.regra === '' && sc.relogio === null && !C.ult('relogio'), 'a sala personalizada (3 minutos) fica com as regras dela: sem a regra v80 e sem o relógio do servidor', sc && [sc.regra, sc.relogio]);

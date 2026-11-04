@@ -287,7 +287,7 @@ function salas(){
   confira(snap && snap.data.sc.length === 4 && snap.data.p.length === 8 && Array.isArray(snap.data.b) && snap.round === r.round, 'os quadros chegam com o placar dos 4 times e as 8 vagas', snap && snap.data);
   const qa = r.partida.jog[0];
   confira(qa.netId === A.id && qa.ack49 > 100 && qa.x !== 0, 'o comando da Ana anda com a tampinha dela (ack ' + qa.ack49 + ')');
-  confira(r.partida.jog[1].bot && r.partida.jog[4].bot, 'as vagas sem gente viraram bots (bots ligados)');
+  confira(r.partida.jog[1].vazio && !r.partida.jog[1].bot && r.partida.jog[4].vazio && !r.partida.jog[4].bot, 'as vagas sem gente ficam vazias (v103: as salas personalizadas não têm bots)');
   // o gol: a Ana chuta no gol do time B (o g1, à direita)
   const P = r.partida.P, g = P.G.gols[1]; P.estado = 'jogo';
   for (const q of P.jog) if (q !== qa) { q.x = P.G.GL + 40 + q.i * 40; q.y = P.G.GT + 40; q.bot = null; q.ai = null; }
@@ -295,13 +295,13 @@ function salas(){
   P.chuta(qa, P.C.FORCA_POWER);
   for (let i = 0; i < 40; i++){ anda(1000/60); r.partida.passo(); }
   confira(P.placar.join() === '1,0,0,0' && r.gols[A.id] === 1, 'gol da Ana no gol do Time B: ponto do Time A (o servidor anotou o autor)', [P.placar, r.gols]);
-  // a Bia cai no meio da partida: um bot assume; ela volta para o mesmo lugar
+  // a Bia cai no meio da partida: a vaga fica vazia (v103: sem bots); ela volta para o mesmo lugar
   const iB = r.roster.indexOf(B.id);
   B.ws.close();
-  confira(P.jog[iB].bot && !P.jog[iB].netId, 'a Bia caiu: um bot assume a tampinha dela na hora');
+  confira(!P.jog[iB].bot && P.jog[iB].vazio && P.jog[iB].fora && !P.jog[iB].netId && P.jog[iB].reserva === B.id, 'a Bia caiu: a vaga dela fica vazia na hora (v103: sem bot no lugar) e guardada para ela');
   const B2 = cliente(t, 'Bia'); B2.manda({type:'hello', name:'Bia', conta:assina('s3gr3d0', {p:'11', n:'Bia'})});
   B2.manda({type:'join', code:r.code, slot:iB});
-  confira(P.jog[iB].netId === B.id && !P.jog[iB].bot && !!B2.ult('mapa_sala') && !!B2.ult('start'), 'ela volta: reassume a tampinha e recebe o mapa e o começo da partida', [P.jog[iB].netId, !!B2.ult('mapa_sala'), !!B2.ult('start')]);
+  confira(P.jog[iB].netId === B.id && !P.jog[iB].bot && !P.jog[iB].fora && !!B2.ult('mapa_sala') && !!B2.ult('start'), 'ela volta: a tampinha dela volta ao campo e ela recebe o mapa e o começo da partida', [P.jog[iB].netId, !!B2.ult('mapa_sala'), !!B2.ult('start')]);
   // a conexão nova chega antes de a velha cair (outra aba, o celular trocando de rede): continua UMA tampinha só, a mesma
   for (const q of P.jog) if (!q.netId && !q.bot) M.botAssume(P, q);   // (as vagas sem gente voltam a ser bots: há vaga de bot para tomar)
   const B3 = cliente(t, 'Bia'); B3.manda({type:'hello', name:'Bia', conta:assina('s3gr3d0', {p:'11', n:'Bia'})});
@@ -353,6 +353,7 @@ function privado(){
   // a sala comum
   const D = entra(t, 'Dani');
   D.manda({type:'create', n:2, jogo:'futebol', bots:true});
+  { const E2 = entra(t, 'Edu'); E2.manda({type:'join', code:D.sala().code, slot:2}); }   // (v103: sem bots, o outro time precisa de alguém)
   const s = D.sala();
   confira(s && !s.mapa && s.E === 2 && s.roster.length === 4, 'a sala comum continua igual (2 times, sem mapa)');
   D.manda({type:'start'});
@@ -491,7 +492,7 @@ function v93NasSalas(){
   A.manda({type:'adm', acao:'mover', id:B.id, slot:3});
   confira(r.roster[3] === B.id && r.roster[2] === C.id && P.jog[3].netId === B.id && P.jog[2].netId === C.id, 'o admin troca dois de lugar: cada um passa para a tampinha do outro', r.roster);
   A.manda({type:'adm', acao:'reserva', id:C.id});
-  confira(r.roster[2] === null && P.jog[2].bot && !P.jog[2].netId, 'RESERVA: quem sai vai para o banco e o bot segura o lugar');
+  confira(r.roster[2] === null && !P.jog[2].bot && P.jog[2].vazio && P.jog[2].fora && !P.jog[2].netId, 'RESERVA: quem sai vai para o banco e a vaga fica vazia (v103: sem bot no lugar)');
   A.limpa(); B.limpa(); A.manda({type:'adm', acao:'encerrar'});
   for (let i = 0; i < 120 && r.partida; i++){ anda(1000/60); r.partida.passo(); }
   const res = B.ult('result');

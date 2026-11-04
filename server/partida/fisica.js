@@ -27,7 +27,7 @@ const R_JOG = U(2.0);             // raio do corpo da tampinha
 const RAIO_CHUTE = U(2.5);        // o anel de chute
 const MASSA_JOG = 1.25;
 const VEL_JOG = U(14.1);          // velocidade máxima da tampinha (14,1 u/s)
-const FORCA_KICK = 212.5, FORCA_POWER = 340;   // PASSE / CHUTE (v87.1: 15% abaixo da versão antiga, 250 / 400; na v86, 275 / 440) — os mesmos do jogo
+const FORCA_KICK = 212.5, FORCA_POWER = 360;   // PASSE / CHUTE (v103: o CHUTE uns 6% mais forte, era 340; v87.1: 15% abaixo da versão antiga, 250 / 400; na v86, 275 / 440) — os mesmos do jogo
 
 const R_BOLA = U(1.0);
 const MASSA_BOLA = 10;

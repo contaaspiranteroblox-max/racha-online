@@ -49,6 +49,7 @@ function gemeas(cfg, roteiro, ticks) {
     const qa = A.p.quadro(), qb = B.p.quadro();
     qb.players = qb.players.map(v => v.slice(0, 7));     // (o campo 7 é novo na v92: o estado dos botões)
     qb.ball = qb.ball.slice(0, 5);                       // (na COM CURVA a v92 manda também o efeito da bola)
+    delete qb.ent; delete qb.cred;                       // (v102: as direções e o crédito de cada um, para a previsão do aparelho)
     const sa = JSON.stringify(qa), sb = JSON.stringify(qb);
     if (sa !== sb) dif = { tick: i, velho: sa.slice(0, 400), novo: sb.slice(0, 400) };
     gols = qa.score[0] + qa.score[1];
@@ -190,11 +191,12 @@ console.log('\n3) o perfil de fora é limpo');
   confere(l.velJog === N.LIMITES.velJog[1] && l.rBola === N.LIMITES.rBola[0], 'valores fora dos limites são cortados (velocidade 999 → ' + l.velJog + ' u/s; bola −5 → ' + l.rBola + ' u)', l);
   confere(l.direcoes === 32 && l.bufferToque === 7 && l.jogRede === 0 && l.fatorBola === N.PERFIL_V92.fatorBola, 'direções viram 8/16/32/64/livre, o toque armado vira inteiro, o que não é número volta ao padrão', l);
   confere(!('xss' in l) && Object.keys(l).length === Object.keys(N.PERFIL_V92).length, 'só os campos conhecidos entram', Object.keys(l));
-  const C = N.resolve(N.PERFIL_V91), F = require('../server/partida/fisica.js');
+  const C = N.resolve(N.PERFIL_V92), F = require('../server/partida/fisica.js');   // (v103: a fisica.js segue o padrão do jogo — o CHUTE 360)
   const iguais = ['R_JOG', 'RAIO_CHUTE', 'MASSA_JOG', 'VEL_JOG', 'FORCA_KICK', 'FORCA_POWER', 'R_BOLA', 'MASSA_BOLA', 'LIMITE_VEL_BOLA', 'FATOR_BOLA', 'AMORT_ANGULAR', 'ATRITO_BOLA', 'ATRITO_JOG_BOLA', 'ATRITO_TRAVE_BOLA', 'QUIQUE_BOLA', 'Q_PAREDE', 'Q_TRAVE', 'Q_REDE', 'ALCANCE_CHUTE'].filter(k => C[k] !== F[k]);
-  confere(!iguais.length, 'o PERFIL_V91 resolve exatamente nas constantes da fisica.js (as do jogo)', iguais);
+  confere(!iguais.length, 'o PERFIL_V92 (o padrão) resolve exatamente nas constantes da fisica.js (as do jogo)', iguais);
   const d = Object.keys(N.PERFIL_V92).filter(k => N.PERFIL_V92[k] !== N.PERFIL_V91[k]);
-  confere(JSON.stringify(d.sort()) === JSON.stringify(['bufferToque', 'jogRede']), 'o PERFIL_V92 só difere do v91 no toque armado e na rede (os números da física são os mesmos)', d);
+  confere(JSON.stringify(d.sort()) === JSON.stringify(['bufferToque', 'forcaChute', 'jogRede']) && N.PERFIL_V92.forcaChute === 360 && N.PERFIL_V92.forcaPasse === N.PERFIL_V91.forcaPasse,
+    'o PERFIL_V92 só difere do v91 no toque armado, na rede e no CHUTE da v103 (360, era 340; o PASSE e o resto da física são os mesmos)', d);
 }
 
 console.log('\n4) o relógio do motor das salas');

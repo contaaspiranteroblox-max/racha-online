@@ -56,6 +56,17 @@
    "anim": false
   },
   {
+   "k": "b:bt",
+   "tipo": "b",
+   "id": "bt",
+   "nome": "Botão",
+   "tipoNome": "Borda",
+   "raridade": "gratis",
+   "moedas": 0,
+   "gemas": 0,
+   "anim": false
+  },
+  {
    "k": "b:cl",
    "tipo": "b",
    "id": "cl",
