@@ -34,7 +34,11 @@
     api: function(proc, input, ehQuery){
       var base = R84.base();
       if (!base) return Promise.reject(new Error('sem plataforma'));
-      var corpo = JSON.stringify({ 0: { json: input === undefined ? null : input } });
+      // v104: sem entrada vai o "undefined" do superjson (o json null com o meta, como o cliente do tRPC manda): o servidor de
+      // verdade (tRPC 11 + zod 4) recusava o null puro nas entradas opcionais — "expected object, received null" — e o
+      // CORREIO (as mensagens.listar) não abria. Os testes não pegavam: o servidor de teste trocava o null por undefined.
+      var semEntrada = input === undefined || input === null;
+      var corpo = JSON.stringify({ 0: semEntrada ? { json: null, meta: { values: ['undefined'], v: 1 } } : { json: input } });
       var url = base + '/api/trpc/' + proc + '?batch=1' + (ehQuery ? '&input=' + encodeURIComponent(corpo) : '');
       var cab = { 'content-type': 'application/json' };
       if (R84.token) cab['authorization'] = 'Bearer ' + R84.token;

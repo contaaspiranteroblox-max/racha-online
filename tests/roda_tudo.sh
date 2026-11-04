@@ -257,6 +257,14 @@ for t in v103_salas v103_sons v103_chat_perfil v103_controles v103_tela; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done
+# v104: O CORREIO DE VERDADE, O ÁRBITRO ARRASTANDO NO PAINEL DOS JOGADORES, A TELA INTEIRA SÓ COM O JOGO E O RANKING QUE ABRE ONDE
+# TEM GENTE (ver o CHANGELOG.md, v104). O v104_painel (Python, três navegadores e o servidor da turma) a VAGA LIVRE no painel e
+# o árbitro segurando e arrastando (banco, vaga, troca, time) com a partida rolando; o v104_ranking (a plataforma de teste, que
+# agora entrega o null como a produção) a caixa de entrada e o ranking indo para a aba que tem gente.
+for t in v104_painel v104_ranking; do
+  printf '%-12s ' "$t"
+  if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
+done
 # v92: os dois ZIPs prontos (o oficial sem o painel; o de testes com ele) servidos pelo node server.js, como num servidor
 # (v100: e o do lançamento, --lancamento: sem o presente de teste; nenhum dos três com segredo, banco, chave ou pacote)
 printf '%-12s ' "v92_pacote"

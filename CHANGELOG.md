@@ -2,6 +2,51 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v104 — 04/11/2026 · o correio de verdade, o árbitro arrastando no painel e a tela inteira só com o jogo
+
+A pedido, com o jogo já na VPS nova e três prints (o painel dos jogadores, o correio com erro e a tela cheia): *"quero o nome
+dos jogadores assim quando clicar ali; se eu segurar um jogador posso afastar ele pra reserva e o reserva para algum time — o
+árbitro da partida consegue fazer isso; o correio ainda não funciona; o ranking dos jogadores também não; a tela cheia ainda
+fica com umas bordas estranhas, meio bugadas — quero tela cheia sem bordas meio transparentes, totalmente, só o jogo"*. A
+física não muda (o build confere: `sha256 ad9f1d2216409b0e`). O backup do antes: a etiqueta git `antes-v104` (a v103).
+
+- **O CORREIO FUNCIONA NO SERVIDOR DE VERDADE** (`tools/v84/login_cedo.js`). O defeito do print ("expected object, received
+  null"): sem entrada, o jogo mandava `{"json": null}` para a plataforma; o tRPC 11 com o zod 4 da produção entrega esse null
+  para a validação, e as entradas opcionais (a `mensagens.listar` da CAIXA DE ENTRADA, a `estat.resumo`, a `clubes.listar`)
+  recusam o null — a caixa inteira não abria (as cartas e as mensagens vêm juntas). Agora vai o "undefined" do superjson
+  (`{"json": null, "meta": {"values": ["undefined"]}}`), como o cliente do tRPC manda. Os testes não pegavam porque o servidor
+  de teste trocava o null por undefined: o `tests/plataforma/trpc_lite.mjs` agora entrega o null como a produção (e o
+  `superjson_lite.mjs` entende o valor de cima anotado), e com ele o `v102_correio_test` falhava do mesmo jeito do print antes
+  da correção; os clientes dos testes (Node e Python) mandam como o jogo.
+- **O PAINEL DOS JOGADORES NA PARTIDA** (`tools/v104/painel.js`, o botão das pessoas do lado do placar):
+  - a vaga sem gente aparece como **VAGA LIVRE** (antes, como um "Jogador · SEM CLUBE" com uma tampinha qualquer: o painel
+    achava que era um bot sem nome — o "Jogador" do print); quem caiu: "CAIU · A VAGA ESPERA";
+  - o **ÁRBITRO SEGURA** o nome de alguém (meio segundo: o nome "levanta") **e arrasta**: para o **BANCO** (vai para o banco e a
+    vaga fica livre), para uma **VAGA LIVRE** (entra ali), para o **nome de outro** (os dois trocam: quem vem do banco entra e
+    o outro vai para o banco) ou para a **cor de um time** (a primeira vaga livre dele). Vale na hora, com a partida rolando
+    (as mesmas ações do servidor da ficha do árbitro e do TIMES E JOGADORES da pausa). O banco aparece mesmo vazio, para
+    receber; a dica fica no alto do painel. Quem não é o árbitro só vê o painel (os toques passam para o jogo, como antes).
+- **A TELA INTEIRA SÓ COM O JOGO** (`tools/v104/tela_inteira.js`): a moldura da v103 (o campo escurecido num canvas de trás,
+  redesenhado 10 vezes por segundo) saiu. Agora o **próprio canvas do jogo cobre a tela toda**: o campo, as tampinhas, a bola e
+  as redes vão até a beirada, no mesmo quadro, sem escurecer e sem atraso — no computador de 16:10 e no tablet o campo aparece
+  inteiro (antes, cortado em cima e embaixo pela faixa). A área de sempre (a tela virtual de 1920 × 888: o HUD, os botões, o
+  analógico e a pausa) continua no mesmo lugar e do mesmo tamanho, dentro da área segura do celular. Por dentro: o contexto
+  soma o deslocamento da área de sempre em cada `setTransform` e o canvas responde a área de sempre no `getBoundingClientRect`
+  (os toques, o HUD e as janelas por cima fazem as mesmas contas de antes). O escuro da PAUSA, do fim e da apresentação vai até
+  a beirada também. No Ultra leve e na partida da Oficina fica como antes; `RACHA_CONFIG.telaInteira = false` desliga.
+- **O RANKING ABRE ONDE TEM GENTE** (`tools/v104/ranking.js`): a v103 fez o RANKING abrir em PONTOS RANQUEADOS, que só tem
+  quem jogou a RANQUEADA — num servidor novo (as contas do zero), com a turma jogando nas salas, ele abria vazio e parecia
+  quebrado, com os GOLS e as ASSISTÊNCIAS das salas já contando. Agora, se a aba de agora vier vazia, ele vai sozinho para a
+  primeira categoria com alguém (a não ser que a pessoa tenha escolhido a aba). Lembrando: só contam as partidas online, com
+  conta, contra gente com conta do outro lado, que terminaram (o placar ou o tempo; a encerrada pelo árbitro não vale).
+- **Os testes**: entram na bateria o `v104_painel_test.py` (10 verificações, três navegadores: a VAGA LIVRE, a dica só para o
+  árbitro, segurar e soltar no banco, na vaga, em cima de outro e no time, com a partida rolando) e o `v104_ranking_test.py`
+  (4: a caixa de entrada abre com o servidor de teste rigoroso e o ranking vai para a aba com gente). O `v103_tela` confere o
+  canvas de ponta a ponta (no lugar da moldura); os testes que liam pixels do canvas com a escala `cv.width/W` usam o `K` (o
+  `v93_fase1` e o `v92_hud`) — o `getImageData` do jogo já soma o deslocamento da área de sempre. O `tools/v92/pacote.py`
+  confere os arquivos da v104 no ZIP. Continuam como na v103: o `v71`, o `v73`, o `v75`, o `v76`, o `v77`, o `v92`, o
+  `v92_celular` e o `v93_fase4` (do lobby e do painel da versão de testes de versões anteriores).
+
 ## v103 — 03/11/2026 · o lobby de dia, as salas sem bots, o árbitro simples, a ranqueada que vale, os sons do online, os controles e a tela cheia
 
 A pedido, com a imagem da quadra de grama do Bar do Seu Zé: *"use esta imagem de fundo, crie uma função nas configurações para
@@ -113,11 +158,12 @@ cheia no Android e no iPhone (PWA e um botão de tela cheia)"*. O bloco de físi
   três salas da medição com duas pessoas cada), o `v98_rachao_online` (no 2x2 com duas pessoas, duas no campo) e o
   `v100_seguranca` (a ranqueada contra os bots do servidor agora vale para a patente, uma vez por selo); os de força do chute
   comparam com o CHUTE novo (`v92_nucleo`, `v92_db`, `v92_db_online`, `v99_chutes`, `v86_chute`, `v97_mistura`, `v97_rachao`; o lance de 900
-  passos do `v92` roda com o CHUTE de antes, para continuar igual ao da v91); o sorteio de partidas também mudou com o chute:
+  passos do `v92` e a sessão da v92 do `v92_celular` rodam com o CHUTE de antes, para continuar iguais aos da v91); o sorteio de partidas também mudou com o chute:
   o simulador do `v102_rede` passou de 8 para 24 sementes (com 8, uma medida do "outro pula" virou só pelo sorteio) e o
   `oficina_mapa` olha 3 minutos para os bots fazerem gol (a semente de sempre fez o 1º aos 75 s); o `v88_controle` confere a
   lista nova do controle e a zona morta nova; o `v102` conta o botão da tela cheia na barra. O `tools/v92/pacote.py` confere os arquivos da v103 no ZIP. Continuam como na v102: o `v71` na sala
-  (o *Só chutar*, desde a v99), o `v73` (o anel novo da v102) e o `v92` (o painel da versão de testes).
+  (o *Só chutar*, desde a v99), o `v73` (o anel novo da v102), o `v92` e o `v92_celular` (o painel da versão de testes e o A ⇄ B) e o
+  `v93_fase4` (as vagas do grupo no lobby da v102).
 - **Fica para depois**: no Rachão, quem cai no meio ainda deixa um bot até voltar (o motor do Rachão é outro); o PASSE mais
   forte (só junto com uma mudança na janela do DB); a tela cheia e o guia do iPhone conferidos no Chromium (com os tamanhos e
   os entalhes de mentira), não num aparelho de verdade.

@@ -140,7 +140,9 @@ export async function fetchRequestHandler({ endpoint, req, router, createContext
     const bruto = entradas[i] || entradas[String(i)];
     const crua = bruto && typeof bruto === 'object' && 'json' in bruto ? superjson.deserialize(bruto) : bruto;
     try {
-      const dado = await roda(proc, ctx, crua === null ? undefined : crua, caminho, proc.tipo);
+      // (v104: o null fica null, como no tRPC de verdade — antes virava undefined aqui e escondia o defeito do correio: a
+      //  entrada opcional do zod 4 recusa o null; o jogo manda o "undefined" do superjson quando não tem entrada)
+      const dado = await roda(proc, ctx, crua, caminho, proc.tipo);
       respostas.push({ result: { data: superjson.serialize(dado) } });
     } catch (e) {
       respostas.push(formaErro(e, caminho));

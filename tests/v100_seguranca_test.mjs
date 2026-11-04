@@ -46,7 +46,7 @@ function sobe(env) {
 async function desce(S) { if (!S) return; S.p.kill('SIGTERM'); await new Promise((r) => { S.p.once('exit', r); setTimeout(r, 3000); }); }
 let BASE = '';
 async function bruto(proc, input, { token, query, cab } = {}) {
-  const corpo = JSON.stringify({ 0: { json: input === undefined ? null : input } });
+  const corpo = JSON.stringify({ 0: input === undefined || input === null ? { json: null, meta: { values: ['undefined'], v: 1 } } : { json: input } });   // (v104: sem entrada, o undefined do superjson — como o jogo manda)
   const url = BASE + '/api/trpc/' + proc + '?batch=1' + (query ? '&input=' + encodeURIComponent(corpo) : '');
   const r = await fetch(url, { method: query ? 'GET' : 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}), ...(cab || {}) }, body: query ? undefined : corpo });
   const l = JSON.parse(await r.text());

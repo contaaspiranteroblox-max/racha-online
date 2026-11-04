@@ -47,7 +47,8 @@ class Plataforma:
             self.p = None
 
     def api(self, proc, inp=None, token=None, query=False):
-        corpo = json.dumps({'0': {'json': inp}})
+        # (v104: sem entrada, o undefined do superjson — como o jogo e o cliente do tRPC mandam; o servidor recusa o null puro)
+        corpo = json.dumps({'0': {'json': None, 'meta': {'values': ['undefined'], 'v': 1}} if inp is None else {'json': inp}})
         url = self.base + '/api/trpc/' + proc + '?batch=1' + ('&input=' + urllib.parse.quote(corpo) if query else '')
         req = urllib.request.Request(url, data=None if query else corpo.encode(), method='GET' if query else 'POST',
                                      headers={'content-type': 'application/json', **({'authorization': 'Bearer ' + token} if token else {})})

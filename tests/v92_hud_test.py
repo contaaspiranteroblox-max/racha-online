@@ -283,7 +283,7 @@ async def celular(P, pw, cel, M):
                   '%s: SALVAR (com o dedo) fecha o editor e guarda no layout e no aparelho (sem rascunho sobrando)' % cel, sv)
         # 8) 0%: invisível na partida, o toque continua valendo (três desenhos seguidos, no mesmo instante: com 0%, sem o CHUTE e com 100%)
         await asyncio.sleep(0.3)
-        px = await rt(pg, """(() => { const k = cv.width/W, e = hud.power, ex = e.x, ey = e.y, g = cv.getContext('2d');
+        px = await rt(pg, """(() => { const k = K, e = hud.power, ex = e.x, ey = e.y, g = cv.getContext('2d');
           const S = () => { const out = []; for (const [dx, dy] of [[0, 0], [-40, -20], [40, 20], [-30, 35], [30, -35], [0, 50], [55, 0]]){ const p = g.getImageData(Math.round((ex + dx)*k), Math.round((ey + dy)*k), 1, 1).data; out.push([p[0], p[1], p[2]]); } return out; };
           render(0); const inv = S();
           e.x = W + 900; render(0); const sem = S(); e.x = ex;

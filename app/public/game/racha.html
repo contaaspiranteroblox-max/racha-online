@@ -2027,6 +2027,7 @@
 <link rel="stylesheet" href="./v103-tela.css">
 <link rel="stylesheet" href="./v103.css">
 <link rel="stylesheet" href="./v103-controles.css">
+<link rel="stylesheet" href="./v104.css">
 <script src="./rua.js"></script>
 <script src="./arena.js"></script>
 <script src="./lobby.js"></script>
@@ -2591,7 +2592,11 @@
     api: function(proc, input, ehQuery){
       var base = R84.base();
       if (!base) return Promise.reject(new Error('sem plataforma'));
-      var corpo = JSON.stringify({ 0: { json: input === undefined ? null : input } });
+      // v104: sem entrada vai o "undefined" do superjson (o json null com o meta, como o cliente do tRPC manda): o servidor de
+      // verdade (tRPC 11 + zod 4) recusava o null puro nas entradas opcionais — "expected object, received null" — e o
+      // CORREIO (as mensagens.listar) não abria. Os testes não pegavam: o servidor de teste trocava o null por undefined.
+      var semEntrada = input === undefined || input === null;
+      var corpo = JSON.stringify({ 0: semEntrada ? { json: null, meta: { values: ['undefined'], v: 1 } } : { json: input } });
       var url = base + '/api/trpc/' + proc + '?batch=1' + (ehQuery ? '&input=' + encodeURIComponent(corpo) : '');
       var cab = { 'content-type': 'application/json' };
       if (R84.token) cab['authorization'] = 'Bearer ' + R84.token;
@@ -57822,6 +57827,290 @@ window.RachaTela103 = {
     moldura:V103M.vis, molduraPintadas:V103M.pintadas, molduraDesligada:V103M.desligada, pedidos:V103T.pedidos, saidas:V103T.saidas, travas:V103T.travas}),
   toca:v103Toca, entra:v103Entra, sai:v103Sai, sync:v103Sync, guia:{abre:v103GuiaAbre, fecha:v103GuiaFecha}
 };
+
+/* ======================================================================= RACHA v104 (tools/v104/*.js) */
+/* ---------------------------------------------------------------- tools/v104/painel.js */
+/* ======================================================================================================================
+   RACHA v104 · O PAINEL DOS JOGADORES NA PARTIDA (o botão das pessoas, do lado do placar) E O ÁRBITRO ARRASTANDO
+   O pedido (04/11/2026): "quero o nome dos jogadores assim quando clicar ali; se eu segurar um jogador posso afastar ele pra
+   reserva e o reserva para algum time — o árbitro da partida consegue fazer isso".
+     · a vaga sem gente (as salas online não têm bots desde a v103) aparece como VAGA LIVRE — antes o painel achava que era um
+       bot e mostrava um "Jogador · SEM CLUBE" com uma tampinha qualquer;
+     · quem caiu: "CAIU · A VAGA ESPERA (x s)" (não tem mais bot segurando o lugar nas salas sem bots);
+     · o ÁRBITRO segura o nome de alguém (meio segundo, o nome "levanta") e arrasta:
+         – para o BANCO: vai para o banco (a vaga dele fica livre);
+         – para uma VAGA LIVRE: entra ali;
+         – para o nome de outro jogador: os dois trocam (quem vem do banco entra e o outro vai para o banco);
+         – para a cor de um time: a primeira vaga livre dele.
+       Vale na hora, com a partida rolando — são as mesmas ações do servidor da ficha do árbitro e do TIMES E JOGADORES da
+       pausa (mover e reserva). Quem não é o árbitro só vê o painel.
+   ====================================================================================================================== */
+const V104D = {t:null, ini:null, arr:null, fantasma:null, alvo:null, arb:null};
+const v104Arb = () => { try { const r = NET49.room; return !!(NET49.playing && r && !r.ranked && typeof v103Arb === 'function' && v103Arb(r)); } catch (_) { return false; } };
+
+/* ---------------------------------------------------------------- 1) os dados: quem é quem (o id e o lugar) e a vaga livre */
+if (typeof v95PainelDados === 'function'){
+  const v95PainelDadosAntes104 = v95PainelDados;
+  v95PainelDados = function(){
+    const out = v95PainelDadosAntes104.apply(this, arguments);
+    try {
+      if (NET49.playing && NET49.room){
+        const r = NET49.room, n = r.n | 0, Pn = V93P.painel && V93P.painel.round === r.round ? V93P.painel : null;
+        for (let t = 0; t < 2; t++) (out.times[t] || []).forEach((o, k) => {
+          const i = t*n + k, J = Pn && Pn.j ? Pn.j[i] : null, id = J ? J.id : r.roster[i];
+          o.slot = i; o.id = id || null;
+          const vazia = J ? J.st === 'vazio' : !id && !r.bots;
+          if (vazia) Object.assign(o, {st:'vazio', nome:'VAGA LIVRE', bot:false, skin:'', emoji:'', avatar:'', e:null, clube:null, flag:'', id:null});
+        });
+        const fora = (Pn && Pn.fora) || (r.members || []).filter(x => x.slot < 0);
+        (out.fora || []).forEach((o, k) => { const x = fora[k]; if (x && x.id) o.id = x.id; });
+      }
+    } catch (e) { console.error('v104 painel (dados)', e); }
+    return out;
+  };
+}
+if (typeof v95Linha === 'function'){
+  const v95LinhaAntes104 = v95Linha;
+  v95Linha = function(o){
+    const li = v95LinhaAntes104.apply(this, arguments);
+    try {
+      if (o.id) li.dataset.id = o.id;
+      if (Number.isInteger(o.slot)) li.dataset.slot = String(o.slot);
+      if (o.st === 'vazio'){
+        li.className = 'v93-pj-l v95-pj-l v104-vaga'; li.textContent = '';
+        li.appendChild(nodo('span', 'v104-vaga-tx', 'VAGA LIVRE'));
+        li.setAttribute('aria-label', 'Vaga livre');
+      } else if (o.st === 'caiu' && NET49.room && !NET49.room.bots){
+        const sm = li.querySelector('.v95-pj-cl'); if (sm) sm.textContent = 'CAIU · A VAGA ESPERA' + (o.ate ? ' (' + o.ate + ' s)' : '');
+      }
+    } catch (e) { console.error('v104 painel (linha)', e); }
+    return li;
+  };
+}
+
+/* ---------------------------------------------------------------- 2) o painel: as cores dos times, o banco sempre à mão e a dica */
+if (typeof v93PainelPinta === 'function'){
+  const v93PainelPintaAntes104 = v93PainelPinta;
+  v93PainelPinta = function(){
+    if (V104D.arr) return;                                    // (arrastando: o painel não se refaz embaixo do dedo)
+    const arb = v104Arb();
+    if (arb !== V104D.arb){ V104D.arb = arb; try { V95H.assin = ''; } catch (_) {} }   // (virou ou deixou de ser o árbitro: refaz)
+    const out = v93PainelPintaAntes104.apply(this, arguments);
+    try { v104PainelArruma(arb); } catch (e) { console.error('v104 painel', e); }
+    return out;
+  };
+}
+function v104PainelArruma(arb){
+  const p = V93P.el && V93P.el.p; if (!p || p.hidden) return;
+  p.classList.toggle('v104-arb', arb);
+  p.querySelectorAll('.v95-pj-t').forEach((c, t) => { c.dataset.time = String(t); });
+  if (!arb) return;
+  if (!p.querySelector('.v95-pj-fora')){                     // (o banco vazio também recebe: é para onde se arrasta)
+    const f = nodo('div', 'v93-pj-fora v95-pj-fora v104-banco-vazio');
+    f.append(nodo('h4', null, 'BANCO E QUEM ASSISTE'), nodo('p', 'v104-banco-tx', 'Solte aqui para mandar para o banco'));
+    const leg = p.querySelector('.v95-pj-leg'); if (leg) p.insertBefore(f, leg); else p.appendChild(f);
+  }
+  if (!p.querySelector('.v104-dica')){
+    const d = nodo('p', 'v104-dica', 'ÁRBITRO: segure um jogador e arraste para o banco, para uma vaga ou para outro jogador (troca)');
+    const cab = p.querySelector('.v95-pj-cab'); if (cab) cab.insertAdjacentElement('afterend', d); else p.insertBefore(d, p.firstChild);
+  }
+}
+
+/* ---------------------------------------------------------------- 3) segurar e arrastar (só o árbitro) */
+function v104Fim(){
+  clearTimeout(V104D.t); V104D.t = null;
+  if (V104D.ini && V104D.ini.li) V104D.ini.li.classList.remove('v104-segurando');
+  if (V104D.arr && V104D.arr.li) V104D.arr.li.classList.remove('v104-origem');
+  if (V104D.alvo) V104D.alvo.classList.remove('v104-alvo');
+  if (V104D.fantasma) V104D.fantasma.remove();
+  const p = V93P.el && V93P.el.p; if (p) p.classList.remove('v104-arrastando');
+  const tinha = !!V104D.arr;
+  V104D.ini = V104D.arr = V104D.fantasma = V104D.alvo = null;
+  if (tinha){ try { V95H.assin = ''; v93PainelPinta(); } catch (_) {} }
+}
+function v104Pega(){
+  const I = V104D.ini, p = V93P.el && V93P.el.p; if (!I || !p || p.hidden || !v104Arb()) return v104Fim();
+  const li = I.li, r = li.getBoundingClientRect(), col = li.closest('.v95-pj-t');
+  const cx = nodo('div', 'v93-pj v95-pj v104-fantasma');
+  const cor = col ? getComputedStyle(col).getPropertyValue('--c') : '';
+  cx.style.cssText = 'position:fixed;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;margin:0;padding:3px;z-index:99999;pointer-events:none;border-radius:11px;'
+    + 'background:' + (cor ? cor.trim() : 'rgba(40,46,66,.96)') + ';';
+  const ul = nodo('ul'); ul.appendChild(li.cloneNode(true)); cx.appendChild(ul);
+  document.body.appendChild(cx);
+  li.classList.remove('v104-segurando'); li.classList.add('v104-origem');
+  p.classList.add('v104-arrastando');
+  V104D.fantasma = cx;
+  V104D.arr = {id:I.id, de:li.dataset.slot != null ? +li.dataset.slot : -1, li, dx:I.x - r.left, dy:I.y - r.top};
+  try { if (navigator.vibrate) navigator.vibrate(15); } catch (_) {}
+  try { som.clique(); } catch (_) {}
+}
+function v104AlvoEm(x, y){
+  const p = V93P.el && V93P.el.p; if (!p) return null;
+  const el = document.elementFromPoint(x, y); if (!el || !p.contains(el)) return null;
+  const li = el.closest('li[data-slot]'); if (li) return {el:li, tipo:'vaga', slot:+li.dataset.slot};
+  const f = el.closest('.v95-pj-fora'); if (f) return {el:f, tipo:'banco'};
+  const c = el.closest('.v95-pj-t[data-time]'); if (c) return {el:c, tipo:'time', time:+c.dataset.time};
+  return null;
+}
+function v104Solta(x, y){
+  const A = V104D.arr, alvo = v104AlvoEm(x, y), r = NET49.room;
+  if (!A || !alvo || !r || !v104Arb()) return;
+  const n = r.n | 0, deTime = A.de >= 0 ? Math.floor(A.de/n) : -1;
+  if (alvo.tipo === 'vaga'){ if (alvo.slot !== A.de) v93AdmManda('mover', {id:A.id, slot:alvo.slot}); }
+  else if (alvo.tipo === 'time'){ if (alvo.time !== deTime) v93AdmManda('mover', {id:A.id, time:alvo.time}); }
+  else if (alvo.tipo === 'banco'){ if (A.de >= 0) v93AdmManda('reserva', {id:A.id}); }
+}
+document.addEventListener('pointerdown', e => {
+  if (V104D.arr || (e.button != null && e.button > 0)) return;
+  const p = V93P.el && V93P.el.p; if (!p || p.hidden || !p.contains(e.target) || !v104Arb()) return;
+  const li = e.target.closest('li[data-id]'); if (!li) return;
+  v104Fim();
+  V104D.ini = {x:e.clientX, y:e.clientY, id:li.dataset.id, li, pid:e.pointerId};
+  li.classList.add('v104-segurando');
+  V104D.t = setTimeout(v104Pega, 450);
+}, true);
+document.addEventListener('pointermove', e => {
+  const I = V104D.ini; if (!I || e.pointerId !== I.pid) return;
+  if (!V104D.arr){ if (Math.hypot(e.clientX - I.x, e.clientY - I.y) > 12) v104Fim(); return; }   // (mexeu antes de levantar: não era para arrastar)
+  e.preventDefault();
+  const A = V104D.arr, cx = V104D.fantasma;
+  if (cx){ cx.style.left = (e.clientX - A.dx) + 'px'; cx.style.top = (e.clientY - A.dy) + 'px'; }
+  const alvo = v104AlvoEm(e.clientX, e.clientY), el = alvo ? alvo.el : null;
+  if (el !== V104D.alvo){ if (V104D.alvo) V104D.alvo.classList.remove('v104-alvo'); V104D.alvo = el; if (el && el !== A.li) el.classList.add('v104-alvo'); }
+}, {capture:true, passive:false});
+document.addEventListener('pointerup', e => {
+  const I = V104D.ini; if (!I || e.pointerId !== I.pid) return;
+  if (V104D.arr){ e.preventDefault(); e.stopPropagation(); try { v104Solta(e.clientX, e.clientY); } catch (er) { console.error('v104 soltar', er); } }
+  v104Fim();
+}, true);
+document.addEventListener('pointercancel', e => { const I = V104D.ini; if (I && e.pointerId === I.pid) v104Fim(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && V104D.arr){ e.stopPropagation(); v104Fim(); } }, true);
+document.addEventListener('contextmenu', e => { if (V104D.ini) e.preventDefault(); }, true);   // (o segurar do celular não abre o menu)
+window.RachaPainel104 = {arb:v104Arb, solta:v104Solta, estado:() => ({ini:!!V104D.ini, arr:!!V104D.arr})};
+
+/* ---------------------------------------------------------------- tools/v104/tela_inteira.js */
+/* ======================================================================================================================
+   RACHA v104 · A TELA INTEIRA SÓ COM O JOGO (o pedido: "a tela cheia ainda fica com umas bordas estranhas, meio bugadas; quero
+   tela cheia sem bordas meio transparentes — totalmente transparente, só o jogo")
+   A v103 pintava as faixas em volta da área do jogo num canvas de trás (a moldura: o campo escurecido, redesenhado no máximo
+   10 vezes por segundo): parecia uma borda à parte, escura, que andava atrasada. Agora o PRÓPRIO canvas do jogo cobre a tela
+   toda — o mundo (o campo, as tampinhas, a bola, as redes) vai até a beirada, no mesmo quadro, sem escurecer:
+     · a área de sempre (1920 × 888 da tela virtual: o HUD, os botões, o analógico, a pausa) continua no mesmo lugar e do mesmo
+       tamanho, dentro da área segura do celular (o entalhe e a barrinha do iPhone ficam só com o campo);
+     · como: o canvas vai para a tela toda; o contexto soma o deslocamento da área de sempre em cada setTransform (o jogo
+       continua desenhando nas mesmas coordenadas de sempre) e no getImageData/putImageData, e o canvas responde, no
+       getBoundingClientRect, a área de sempre (os toques, o HUD e as janelas por cima continuam fazendo as mesmas contas);
+     · no Ultra leve e na partida da Oficina fica como antes (as faixas na cor do fundo do campo); RACHA_CONFIG.telaInteira =
+       false desliga.
+   ====================================================================================================================== */
+const V104T = {on:false, ox:0, oy:0, oxc:0, oyc:0, rw:0, rh:0};
+const V104T_ST = CanvasRenderingContext2D.prototype.setTransform, V104T_RT = CanvasRenderingContext2D.prototype.resetTransform;
+const V104T_BCR = Element.prototype.getBoundingClientRect;
+ctx.setTransform = function(a, b, c, d, e, f){
+  if (!V104T.on) return V104T_ST.apply(this, arguments);
+  if (arguments.length === 0) return V104T_ST.call(this, 1, 0, 0, 1, V104T.ox, V104T.oy);
+  if (arguments.length === 1 && a && typeof a === 'object'){
+    const m = a, v = (x, y, p) => typeof m[x] === 'number' ? m[x] : typeof m[y] === 'number' ? m[y] : p;
+    return V104T_ST.call(this, v('a', 'm11', 1), v('b', 'm12', 0), v('c', 'm21', 0), v('d', 'm22', 1), v('e', 'm41', 0) + V104T.ox, v('f', 'm42', 0) + V104T.oy);
+  }
+  return V104T_ST.call(this, a, b, c, d, e + V104T.ox, f + V104T.oy);
+};
+if (typeof V104T_RT === 'function') ctx.resetTransform = function(){ return V104T.on ? V104T_ST.call(this, 1, 0, 0, 1, V104T.ox, V104T.oy) : V104T_RT.call(this); };
+// (ler e escrever pixels também na conta da área de sempre: quem lia o pixel (x·K, y·K) continua lendo o mesmo ponto do jogo)
+const V104T_GID = CanvasRenderingContext2D.prototype.getImageData, V104T_PID = CanvasRenderingContext2D.prototype.putImageData;
+ctx.getImageData = function(sx, sy){ if (!V104T.on) return V104T_GID.apply(this, arguments); const a = [...arguments]; a[0] = sx + V104T.ox; a[1] = sy + V104T.oy; return V104T_GID.apply(this, a); };
+ctx.putImageData = function(img, dx, dy){ if (!V104T.on) return V104T_PID.apply(this, arguments); const a = [...arguments]; a[1] = dx + V104T.ox; a[2] = dy + V104T.oy; return V104T_PID.apply(this, a); };
+cv.getBoundingClientRect = function(){
+  const r = V104T_BCR.call(this);
+  return V104T.on ? new DOMRect(r.left + V104T.oxc, r.top + V104T.oyc, V104T.rw, V104T.rh) : r;
+};
+function v104TelaQuer(){
+  try { if (window.RACHA_CONFIG && window.RACHA_CONFIG.telaInteira === false) return false; } catch (_) {}
+  try { if (G().plano) return false; } catch (_) {}                      // (Ultra leve: nada a mais para desenhar)
+  try { if (typeof OFJ !== 'undefined' && OFJ && OFJ.on) return false; } catch (_) {}   // (a Oficina tem o fundo dela)
+  return true;
+}
+function v104Encaixa(){
+  const s = (typeof HUDX !== 'undefined' && HUDX.css) || 1, q = K/s;   // (px do aparelho por px da página: a qualidade escolhida)
+  const rw = Math.floor(W*s), rh = Math.floor(H*s), st = cv.style;
+  st.position = ''; st.left = ''; st.top = ''; st.width = rw + 'px'; st.height = rh + 'px';   // (a área de sempre, no lugar de sempre)
+  if (!v104TelaQuer()){
+    const bw = Math.max(1, Math.round(W*K)), bh = Math.max(1, Math.round(H*K));
+    if (cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+    V104T.on = false; V104T.ox = V104T.oy = 0;
+    return;
+  }
+  const r = V104T_BCR.call(cv);
+  const vw = Math.max(1, Math.round(window.innerWidth || r.width)), vh = Math.max(1, Math.round(window.innerHeight || r.height));
+  st.position = 'fixed'; st.left = '0px'; st.top = '0px'; st.width = vw + 'px'; st.height = vh + 'px';
+  const bw = Math.max(1, Math.round(vw*q)), bh = Math.max(1, Math.round(vh*q));
+  if (cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+  Object.assign(V104T, {oxc:r.left, oyc:r.top, rw:r.width, rh:r.height, ox:Math.round(r.left*q), oy:Math.round(r.top*q), on:true});
+}
+const resizeAntes104 = resize;
+resize = function(){
+  const out = resizeAntes104.apply(this, arguments);
+  try { v104Encaixa(); } catch (e) { console.error('v104 tela inteira', e); }
+  return out;
+};
+const renderAntes104 = render;
+render = function(){
+  try {
+    if (v104TelaQuer() !== V104T.on) v104Encaixa();
+    if (V104T.on){                                       // (o render limpa a partir da área de sempre: as faixas de cima e da esquerda aqui)
+      V104T_ST.call(ctx, 1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = (typeof CAMPO !== 'undefined' && CAMPO.fundo) || '#121212';
+      if (V104T.oy > 0) ctx.fillRect(0, 0, cv.width, V104T.oy);
+      if (V104T.ox > 0) ctx.fillRect(0, 0, V104T.ox, cv.height);
+    }
+  } catch (_) {}
+  return renderAntes104.apply(this, arguments);
+};
+try { if (typeof V103M !== 'undefined'){ V103M.desligada = true; if (typeof v103MolduraEsconde === 'function') v103MolduraEsconde(); } } catch (_) {}   // (a moldura da v103 sai: o jogo cobre a tela)
+try { v104Encaixa(); } catch (e) { console.error('v104 tela inteira', e); }
+window.RachaTelaInteira104 = {estado:() => Object.assign({}, V104T), encaixa:v104Encaixa};
+
+/* ---------------------------------------------------------------- tools/v104/ranking.js */
+/* ======================================================================================================================
+   RACHA v104 · O RANKING ABRE ONDE TEM GENTE (o pedido: "o ranking dos jogadores também não está funcionando")
+   A v103 fez o RANKING abrir em PONTOS RANQUEADOS — que só tem quem jogou a RANQUEADA. Num servidor novo (as contas do zero) e
+   com a turma jogando nas salas, essa aba vem vazia e o ranking parece quebrado, mesmo com os GOLS e as ASSISTÊNCIAS das salas
+   (as partidas online contra gente com conta) já contando. Agora, ao abrir, se a aba de agora vier vazia o ranking procura,
+   na ordem das abas, a primeira categoria com alguém e abre nela — a não ser que a pessoa tenha escolhido a aba.
+   ====================================================================================================================== */
+const V104RK = {procurou:false, escolheu:false};
+document.addEventListener('click', e => { if (e.target && e.target.closest && e.target.closest('.rk90-aba')) V104RK.escolheu = true; }, true);
+function v104RkProcura(){
+  if (V104RK.procurou || V104RK.escolheu || typeof V90RK === 'undefined') return;
+  const k = v90Chave(), pac = V90RK.dados[k], r = pac && pac.r;
+  if (!r || !r.temporada || (r.lista && r.lista.length)) return;     // (ainda carregando, sem temporada, ou já tem gente: fica)
+  V104RK.procurou = true;
+  const temp = V90RK.temp, ordem = V90_CATS.map(c => c[0]).filter(c => c !== V90RK.cat);
+  (async () => {
+    for (const cat of ordem){
+      if (V104RK.escolheu) return;
+      const kk = (temp || 'vigente') + '|' + cat;
+      let d = V90RK.dados[kk] && V90RK.dados[kk].r;
+      if (!d){
+        const inp = {categoria:cat}; if (temp) inp.temporada = temp;
+        try { d = await v88Q('ranking.top', inp); V90RK.dados[kk] = {em:Date.now(), r:d}; } catch (_) { d = null; }
+      }
+      if (d && d.lista && d.lista.length){
+        if (!V104RK.escolheu){ V90RK.cat = cat; try { v88Repinta('ranking'); } catch (_) {} }
+        return;
+      }
+    }
+  })();
+}
+if (typeof v90RkRender === 'function'){
+  const v90RkRenderAntes104 = v90RkRender;
+  v90RkRender = function(){
+    const out = v90RkRenderAntes104.apply(this, arguments);
+    try { v104RkProcura(); } catch (e) { console.error('v104 ranking', e); }
+    return out;
+  };
+}
+window.RachaRanking104 = {estado:() => Object.assign({}, V104RK)};
 
 montaAbas();
 if (onbPrecisa()) onbAbre();   // v57: a primeira vez (antes do presente)

@@ -23,6 +23,11 @@ export function deserialize(p) {
   if (!p || typeof p !== 'object') return p;
   let json = p.json;
   const valores = p.meta && p.meta.values;
+  if (Array.isArray(valores)) {                       // (v104: o valor de cima anotado — ["undefined"], ["Date"]… — como o superjson)
+    const tipo = valores[0];
+    if (typeof tipo === 'string') json = tipo === 'Date' ? new Date(json) : tipo === 'bigint' ? BigInt(json) : tipo === 'undefined' ? undefined : tipo === 'set' ? new Set(json) : tipo === 'map' ? new Map(json) : json;
+    return json;
+  }
   if (valores) {
     for (const [cam, tipos] of Object.entries(valores)) {
       const partes = cam ? cam.split('.') : [];

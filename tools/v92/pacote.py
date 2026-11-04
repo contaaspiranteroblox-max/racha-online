@@ -111,6 +111,9 @@ with zipfile.ZipFile(saida) as z:
             'app/public/game/icones/apple-touch-icon.png', 'tools/v103/tela.py', 'tools/v103/tela.js', 'tools/v103/icones.py'}
     assert V103 <= nomes, 'faltam os arquivos da v103 no ZIP: ' + ', '.join(sorted(V103 - nomes))
     assert b'window.RachaTela103' in jogo and b'rel="manifest" href="./manifest.webmanifest"' in jogo, 'o jogo do ZIP não tem a tela cheia nem o manifesto da v103'
+    # v104: o painel dos jogadores com o árbitro arrastando, a tela inteira só com o jogo e o ranking que abre onde tem gente
+    assert {'app/public/game/v104.css', 'tools/v104/v104.py', 'tools/v104/painel.js', 'tools/v104/tela_inteira.js', 'tools/v104/ranking.js'} <= nomes, 'faltam os arquivos da v104 no ZIP'
+    assert all(x in jogo for x in (b'window.RachaPainel104', b'window.RachaTelaInteira104', b'window.RachaRanking104')), 'o jogo do ZIP não tem a v104'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)

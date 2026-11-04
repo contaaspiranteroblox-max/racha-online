@@ -19,7 +19,7 @@ from v92_hud_test import (CELULARES, Dedos, abre_cel, pronto, espera, geo, toca_
                           HE_OPC, HE_OPA, HE_LAY, CONTA_CHUTES, ESTADO)
 
 # os pixels de um botão (em volta do centro), lidos no canvas logo depois de um desenho
-PIX = """(k0 => { const k = cv.width/W, e = hud[k0], g = cv.getContext('2d'), r = (k0 === 'joy' ? JOY.aro*e.al + JOY.knob*e.km : BASE[k0].r)*e.s, out = [];
+PIX = """(k0 => { const k = K, e = hud[k0], g = cv.getContext('2d'), r = (k0 === 'joy' ? JOY.aro*e.al + JOY.knob*e.km : BASE[k0].r)*e.s, out = [];
   for (let i = 0; i < 24; i++){ const a = i*Math.PI/12, f = (i % 3 + 1)/3.2; const p = g.getImageData(Math.round((e.x + Math.cos(a)*r*f)*k), Math.round((e.y + Math.sin(a)*r*f)*k), 1, 1).data; out.push([p[0], p[1], p[2]]); }
   for (const R of [r + 14, r + 24]) for (let i = 0; i < 12; i++){ const a = i*Math.PI/6; const p = g.getImageData(Math.round((e.x + Math.cos(a)*R)*k), Math.round((e.y + Math.sin(a)*R)*k), 1, 1).data; out.push([p[0], p[1], p[2]]); }
   return out; })"""
@@ -92,7 +92,7 @@ async def efeitos(P, pw, cel):
         a1 = await rt(pg, "[hud.power.a, HE.el.opaV.textContent]")
         await rt(pg, "heFechaPop(); 1"); await asyncio.sleep(.3)
         await toca_el(pg, d, '#hp-salvar'); await asyncio.sleep(.5)
-        px = await rt(pg, """(() => { const k = cv.width/W, e = hud.power, ex = e.x, ey = e.y, g = cv.getContext('2d');
+        px = await rt(pg, """(() => { const k = K, e = hud.power, ex = e.x, ey = e.y, g = cv.getContext('2d');
           const S = () => { const out = []; for (const [dx, dy] of [[0, 0], [-40, -20], [40, 20], [-30, 35], [30, -35], [0, 50], [55, 0]]){ const p = g.getImageData(Math.round((ex + dx)*k), Math.round((ey + dy)*k), 1, 1).data; out.push([p[0], p[1], p[2]]); } return out; };
           ptrs.clear(); render(0); const um = S();
           e.x = W + 900; render(0); const sem = S(); e.x = ex;

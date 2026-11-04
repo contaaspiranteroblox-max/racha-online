@@ -149,7 +149,8 @@ PARTIDA = """(() => {
   const vis = e => { const q = e.getBoundingClientRect(), cs = getComputedStyle(e); return q.width > 2 && q.height > 2 && cs.display !== 'none' && cs.visibility !== 'hidden' && !e.closest('[hidden]'); };
   const botoes = [...document.querySelectorAll('#wrap button, #wrap [role=button]')].filter(vis).map(e => [(e.id || String(e.className) || e.tagName).slice(0, 30), (q => [q.left, q.top, q.right, q.bottom])(e.getBoundingClientRect())]);
   const m = document.getElementById('v103-moldura'), mr = m ? m.getBoundingClientRect() : null, ms = m ? getComputedStyle(m) : null;
-  return {vw:innerWidth, vh:innerHeight, sa, cv:[r.left, r.top, r.width, r.height], ctl, botoes, hk:HUDX.k,
+  const rr = Element.prototype.getBoundingClientRect.call(cv), t104 = window.RachaTelaInteira104 ? RachaTelaInteira104.estado() : null;
+  return {vw:innerWidth, vh:innerHeight, sa, cv:[r.left, r.top, r.width, r.height], real:[rr.left, rr.top, rr.width, rr.height], t104, ctl, botoes, hk:HUDX.k,
     moldura:!!m && !m.hidden, mr:mr ? [mr.left, mr.top, mr.width, mr.height] : null, mz:ms ? ms.zIndex : null, mpe:ms ? ms.pointerEvents : null,
     estado:window.RachaTela103 ? RachaTela103.estado() : null};
 })()"""
@@ -199,8 +200,8 @@ def arquivos(P):
     chk = subprocess.run(['node', '--check', str(JOGO / 'sw.js')], capture_output=True, text=True)
     P.confere(chk.returncode == 0, 'o sw.js é JavaScript válido (node --check)', chk.stderr[:200])
     etapas = (RAIZ / 'tools' / 'aplicar_rua.py').read_text(encoding='utf-8')
-    P.confere("'v102/v102',  " in etapas and "'v103/tela']" in etapas and etapas.index("'v103/tela']") > max(etapas.find("'v103/v103'"), etapas.find("'v103/controles'")),
-              'a etapa v103/tela no fim da lista do build (depois das outras da v103: os embrulhos dela ficam por cima)')
+    P.confere("'v102/v102',  " in etapas and "'v103/tela'" in etapas and etapas.index("'v103/tela'") > max(etapas.find("'v103/v103'"), etapas.find("'v103/controles'")),
+              'a etapa v103/tela depois das outras da v103 (os embrulhos dela ficam por cima; a v104 vem depois)')
 
 
 # ---------------------------------------------------------------------------------------------------------------- 2) e 3) os servidores e o app instalável
@@ -457,8 +458,10 @@ async def tamanhos(P, b):
                 P.confere(not fb, nome + ': partida — os botões da tela (%d) dentro da área segura' % len(m['botoes']), fb[:4])
                 r = m['cv']
                 faixa = r[0] > .5 or r[1] > .5 or r[0] + r[2] < vw - .5 or r[1] + r[3] < vh - .5
-                P.confere(m['moldura'] == faixa and (not faixa or (m['mr'] == [0, 0, vw, vh] and m['mz'] == '-1' and m['mpe'] == 'none')),
-                          nome + ': partida — ' + ('a moldura cobre a tela atrás do jogo, sem pegar toque' if faixa else 'sem faixa, sem moldura'), (m['moldura'], m['mr'], m['mz'], m['mpe']))
+                # (v104: a moldura saiu — o PRÓPRIO canvas do jogo cobre a tela toda; a área de sempre continua onde estava)
+                cobre = [round(x) for x in m['real']] == [0, 0, round(vw), round(vh)]
+                P.confere(cobre and not m['moldura'] and m['t104'] and m['t104']['on'],
+                          nome + ': partida — o jogo cobre a tela toda (o canvas de ponta a ponta, sem moldura nem faixa)' + (' — antes, aqui tinha faixa' if faixa else ''), (m['real'], m['moldura'], m['t104']))
                 if faixa:
                     from PIL import Image
                     im = Image.open(io.BytesIO(png))
@@ -468,7 +471,7 @@ async def tamanhos(P, b):
                     elif r[1] >= 10: caixa = ((r[0] + 4) * k, 2 * k, (r[0] + r[2] - 4) * k, (r[1] - 2) * k)
                     if caixa:
                         n_cores, _ = textura(png, caixa)
-                        P.confere(n_cores >= 12, nome + ': partida — na faixa, o campo continua (mais escuro), não uma cor lisa (%d cores)' % n_cores, n_cores)
+                        P.confere(n_cores >= 12, nome + ': partida — onde era a faixa, o campo continua (o próprio jogo, sem escurecer), não uma cor lisa (%d cores)' % n_cores, n_cores)
                 if BASE:
                     base = await mede_partida(b, w, h, ins, arquivo=BASE)
                     igual = all(abs(a - e2) < .01 for a, e2 in zip(m['cv'], base['cv'])) and len(m['ctl']) == len(base['ctl']) and all(
@@ -522,7 +525,8 @@ async def pausa(P, b):
     try:
         await rt(pg, "graf = 'leve'; aplicaGraficos(); jogar(); true"); await pg.wait_for_timeout(900)
         u = await rt(pg, "({m:RachaTela103.estado().moldura, cor:document.body.style.backgroundColor, campo:CAMPO.fundo})")
-        P.confere(not u['m'] and u['cor'] != '', 'no Ultra leve: sem a moldura (as faixas na cor do fundo do mapa)', u)
+        u2 = await rt(pg, "RachaTelaInteira104.estado().on")
+        P.confere(not u['m'] and u['cor'] != '' and not u2, 'no Ultra leve: o canvas fica do tamanho da área do jogo (v104) e as faixas na cor do fundo do mapa', [u, u2])
         await rt(pg, "graf = 'padrao'; aplicaGraficos(); abrirLobby(); true"); await pg.wait_for_timeout(400)
         u = await rt(pg, "({m:RachaTela103.estado().moldura, cor:document.body.style.backgroundColor})")
         P.confere(not u['m'] and u['cor'] == '', 'de volta ao lobby: a moldura some e a cor da página volta', u)

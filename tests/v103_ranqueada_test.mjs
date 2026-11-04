@@ -73,7 +73,7 @@ const pronto = await new Promise((resolve, reject) => {
 const base = `http://127.0.0.1:${pronto.porta}`;
 let token = '';
 async function api(nome, input, query = false) {
-  const corpo = JSON.stringify({ 0: { json: input ?? null } });
+  const corpo = JSON.stringify({ 0: input === undefined || input === null ? { json: null, meta: { values: ['undefined'], v: 1 } } : { json: input } });   // (v104: sem entrada, o undefined do superjson — como o jogo manda)
   const url = base + '/api/trpc/' + nome + '?batch=1' + (query ? '&input=' + encodeURIComponent(corpo) : '');
   const res = await fetch(url, { method: query ? 'GET' : 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: query ? undefined : corpo });
   const item = (await res.json())[0];

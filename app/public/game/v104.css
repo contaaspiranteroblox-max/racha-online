@@ -1,0 +1,34 @@
+/* RACHA v104 · o painel dos jogadores na partida (a vaga livre e o árbitro arrastando) — tools/v104/painel.js */
+
+/* ---- a vaga sem gente: VAGA LIVRE (antes parecia um "Jogador" com uma tampinha qualquer) ---- */
+.v95-pj li.v104-vaga{ display:flex; align-items:center; justify-content:center; min-height:54px; padding:0 8px; border-radius:9px;
+  background:rgba(0,0,0,.12); box-shadow:inset 0 0 0 2px rgba(255,255,255,.2); outline:2px dashed rgba(255,255,255,.5); outline-offset:-6px; }
+.v104-vaga-tx{ font:400 15px/1 var(--v91-tit); letter-spacing:1.2px; color:rgba(255,255,255,.9); text-shadow:0 1.5px 0 rgba(0,0,0,.45); }
+
+/* ---- o árbitro: segurar e arrastar (o painel deixa os toques passarem para o jogo; o do árbitro recebe, para arrastar) ---- */
+.v93-pj.v95-pj.v104-arb{ pointer-events:auto; }
+.v95-pj.v104-arb li[data-id]{ cursor:grab; -webkit-touch-callout:none; touch-action:none; }
+.v95-pj li.v104-segurando{ transform:scale(.96); transition:transform .45s ease-out; }
+.v95-pj li.v104-origem{ opacity:.3; }
+.v95-pj.v104-arrastando li[data-slot]:not(.v104-origem):not(.v104-vaga){ box-shadow:inset 0 0 0 2px rgba(255,255,255,.3); }
+.v95-pj .v104-alvo, .v95-pj li.v104-vaga.v104-alvo{ box-shadow:inset 0 0 0 3px #ffd23f, 0 0 14px rgba(255,210,63,.6) !important; }
+.v104-fantasma{ transform:rotate(-2deg) scale(1.04); box-shadow:0 12px 26px rgba(0,0,0,.55); opacity:.96; }
+.v104-fantasma ul{ list-style:none; margin:0; padding:0; display:grid; }
+.v104-fantasma li{ margin:0; }
+.v104-dica{ margin:0 2px 6px; padding:5px 8px; border-radius:8px; background:rgba(5,8,16,.62); text-align:center;
+  font:800 11.5px/1.25 var(--v91-num); letter-spacing:.4px; color:#ffe9a8; text-shadow:0 1px 0 rgba(0,0,0,.6); }
+.v104-banco-vazio .v104-banco-tx{ margin:0; padding:9px 6px 10px; border-radius:9px; outline:2px dashed rgba(255,255,255,.35); outline-offset:-4px;
+  text-align:center; font:700 12px/1.2 var(--v91-num); color:rgba(223,228,255,.85); }
+
+@media (max-height:430px), (max-width:700px){
+  .v95-pj li.v104-vaga{ min-height:36px; }
+  .v104-vaga-tx{ font-size:12.5px; }
+  .v104-dica{ font-size:10px; padding:3px 6px; margin-bottom:4px; }
+  .v104-banco-vazio .v104-banco-tx{ padding:6px 4px 7px; font-size:10.5px; }
+}
+
+/* ---- a tela inteira (tools/v104/tela_inteira.js): o escuro das janelas por cima da partida vai até a beirada (o entalhe e a
+   barrinha do iPhone também — o jogo agora aparece ali) ---- */
+#pausa{ box-shadow:0 0 0 100vmax rgba(6, 9, 30, .62); }
+#fim, #trfim{ box-shadow:0 0 0 100vmax rgba(6, 9, 30, .58); }
+#rq-vs{ box-shadow:0 0 0 100vmax rgba(8, 9, 10, .92); }

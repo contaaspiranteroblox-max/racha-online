@@ -32,7 +32,7 @@ function sobe() {
 }
 let BASE = '', ORIGEM = '';
 async function api(proc, input, token, query) {
-  const corpo = JSON.stringify({ 0: { json: input === undefined ? null : input } });
+  const corpo = JSON.stringify({ 0: input === undefined || input === null ? { json: null, meta: { values: ['undefined'], v: 1 } } : { json: input } });   // (v104: sem entrada, o undefined do superjson — como o jogo manda)
   const url = BASE + '/api/trpc/' + proc + '?batch=1' + (query ? '&input=' + encodeURIComponent(corpo) : '');
   const r = await fetch(url, { method: query ? 'GET' : 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: query ? undefined : corpo });
   const l = JSON.parse(await r.text());

@@ -67,6 +67,8 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v103 · tela (tools/v103/tela.py + tela.js + app/public/game/v103-tela.css, o manifest.webmanifest, o sw.js e os ícones em
      app/public/game/icones, por último): a tela cheia no navegador (o botão; no iPhone, o guia da Tela de Início), o app
      instalável e o campo até a beirada (as faixas em volta da área do jogo com o próprio campo; o HUD na área segura).
+ v104 (tools/v104/v104.py + painel.js + tela_inteira.js + app/public/game/v104.css, por último): a VAGA LIVRE e o árbitro
+     segurando e arrastando no painel dos jogadores da partida, e o canvas do jogo cobrindo a tela toda (a moldura da v103 sai).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -110,7 +112,8 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v102/v102',                                                                 # v102: a borda BOTÃO, o anel da tampinha, o lobby mais limpo (o MENU) e o online mais liso
               'v103/controles',                                                            # v103: o controle e o teclado do jeito de cada um (Ajustes › Controles) e o analógico sem atraso
               'v103/v103',                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, o árbitro, a ranqueada, o perfil pelo chat e os sons do online
-              'v103/tela']                                                                 # v103: a tela cheia (Android e iPhone), o app instalável (PWA) e o campo até a beirada                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, a ranqueada, o perfil pelo chat e os sons do online
+              'v103/tela',                                                                 # v103: a tela cheia (Android e iPhone), o app instalável (PWA) e o campo até a beirada                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, a ranqueada, o perfil pelo chat e os sons do online
+              'v104/v104']                                                                 # v104: o correio de verdade, o árbitro arrastando no painel dos jogadores e a tela inteira só com o jogo
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:
