@@ -286,7 +286,12 @@ async def principal():
             # ---------------------------------------------------------------- 5) o fim
             print('\n5) os gols e o fim')
             for g in range(3):
-                await A.evaluate("() => OFI.interno.mandaSala({type: '__teste_gol', time: 0})"); await A.wait_for_timeout(2700)
+                await A.evaluate("() => OFI.interno.mandaSala({type: '__teste_gol', time: 0})")
+                # (o próximo gol só depois da comemoração deste: o servidor ignora o gol na fase 'goal', e com a máquina ocupada a
+                #  comemoração passava dos 2,7 s fixos de antes — o terceiro gol se perdia e o fim não vinha)
+                await espera_q(fa, "(() => { const c = RachaoRede.cena(); return !!c && c.m.score[0] >= %d; })()" % (g + 1), 9000)
+                if g < 2: await espera_q(fa, "(() => { const c = RachaoRede.cena(); return !!c && c.m.phase !== 'goal'; })()", 9000)
+                await A.wait_for_timeout(300)
             fins = [await espera_q(f, "(() => !document.getElementById('end').hidden && {tit: document.getElementById('endTitle').textContent, txt: document.getElementById('endText').innerText, placar: document.getElementById('endScore').innerText, volta: document.querySelector('#btnAgain .t').textContent, sair: document.getElementById('btnMenu').textContent, muda: document.getElementById('btnChange').hidden})()", 9000) for f in (fa, fb, fc)]
             P.confere(fins[0] and fins[0]['tit'] == 'Vitória!' and 'Você fez 3 gols' in fins[0]['txt'] and fins[0]['volta'] == 'Voltar para a sala' and fins[0]['sair'] == 'Sair da sala' and fins[0]['muda'],
                       'três gols da Ana: o fim dela (Vitória!, os gols dela, VOLTAR PARA A SALA e SAIR DA SALA; sem jogar de novo nem mudar opções)', fins[0])

@@ -1742,6 +1742,7 @@ grupo93.aplica(Turma);                                 // v93 · Fase 4 (depois 
 grupo93.configura({filaMax:FILA_MAX_MS, filaMista:FILA_MISTA_MS});
 fila95.aplica(Turma);                                  // v95 (depois do grupo: a volta da fila é a dele)
 emotes106.aplica(Turma);                               // v106: os emojis da partida (server/emotes106.js)
+require('./convite107').aplica(Turma, {maxGente:MAX_GENTE, maxGenteMapa:MAX_GENTE_MAPA});   // v107: o convite pelo chat, para quem não é amigo também (server/convite107.js)
 
 /* a página que abriu o jogo pode falar com o servidor? Mesmo endereço do servidor e o próprio computador (localhost) sempre;
    outras só se estiverem na lista (RACHA_ORIGENS / --origens). Sem cabeçalho Origin (programa, não navegador): pode. */

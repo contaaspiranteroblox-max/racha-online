@@ -10,7 +10,8 @@
   para ler e tocar no tamanho real (mais de 36 px de altura e letra de 14 px ou mais).
 · O PAINEL: embaixo (não em cima, como na v63), as abas 🇧🇷 BRASIL | ⚽ SALA (PARTIDA na partida), quem está online, as
   mensagens com o nome em amarelo (e o V), as frases rápidas na sala, o campo "Digite sua mensagem…" e ENVIAR; o nome abre a
-  ficha (SILENCIAR, DENUNCIAR, VER PERFIL com a conta).
+  ficha (SILENCIAR, DENUNCIAR, VER PERFIL com a conta; v107: a janelinha colada no nome — PERFIL, CONVIDAR, DENUNCIAR e
+  SILENCIAR).
 · OS FILTROS NO APARELHO: telefone, CPF, e-mail, link, @ e palavrão não saem (com o motivo); mensagem repetida e muitas
   seguidas também não.
 · OS TRÊS PONTINHOS: o balão escuro com os três pontos em cima da tampinha de quem está digitando (não o texto).
@@ -82,10 +83,12 @@ async def barra_painel(pw, P):
     P.confere(p['foco'], 'o foco vai para o campo')
     ba = await rt(pg, "({n:CB.n.hidden, seta:CB.el.querySelector('.c81-seta').innerHTML.indexOf('M6 9.5') > 0})")
     P.confere(ba['n'] and ba['seta'], 'aberto: as não lidas zeram e a seta vira para baixo', ba)
-    # a ficha pelo nome
+    # a ficha pelo nome (v107: a janelinha colada no nome — PERFIL, CONVIDAR e DENUNCIAR e o SILENCIAR embaixo; quem não tem
+    # conta fica com o PERFIL e o CONVIDAR apagados: ver o tests/v107_perfil_test.py)
     await rt(pg, "CB.lista.querySelector('.c81-nome').click()"); await pg.wait_for_timeout(200)
-    f = await rt(pg, "(() => { const F = CB.pn.querySelector('.c81-ficha'); return {hidden:F.hidden, nome:F.querySelector('.c81-f-tx b').textContent, selo:F.querySelector('.c81-f-tx b').getAttribute('data-v79-selo'), det:F.querySelector('.c81-f-tx small').textContent, bts:Array.from(F.querySelectorAll('.c81-f-bt')).map(b => b.textContent.trim()), nota:F.querySelector('.c81-f-nota').textContent}; })()")
-    P.confere(not f['hidden'] and f['nome'] == 'CRIA7' and f['selo'] == 'verificado' and f['bts'] == ['SILENCIAR', 'DENUNCIAR'] and 'Alguém quer jogar?' in f['nota'], 'o nome abre a ficha: a tampinha, o nome com o V, SILENCIAR e DENUNCIAR (sem a plataforma, sem o VER PERFIL)', f)
+    f = await rt(pg, "(() => { const F = CB.pn.querySelector('.c81-ficha'); return {hidden:F.hidden, nome:F.querySelector('.c81-f-tx b').textContent, selo:F.querySelector('.c81-f-tx b').getAttribute('data-v79-selo'), det:F.querySelector('.c81-f-tx small').textContent, bts:Array.from(F.querySelectorAll('.c81-f-bt')).map(b => (b.querySelector('span') || b).textContent.trim()), off:Array.from(F.querySelectorAll('.c81-f-bt')).filter(b => b.disabled).map(b => (b.querySelector('span') || b).textContent.trim()), nota:F.querySelector('.c81-f-nota').textContent}; })()")
+    P.confere(not f['hidden'] and f['nome'] == 'CRIA7' and f['selo'] == 'verificado' and f['bts'] == ['PERFIL', 'CONVIDAR', 'DENUNCIAR', 'SILENCIAR'] and f['off'] == ['PERFIL', 'CONVIDAR'] and 'sem conta' in f['det'] and 'Alguém quer jogar?' in f['nota'],
+              'o nome abre a ficha: a tampinha, o nome com o V, DENUNCIAR e SILENCIAR (sem a plataforma e sem conta: o PERFIL e o CONVIDAR apagados)', f)
     await rt(pg, "Array.from(CB.pn.querySelectorAll('.c81-f-bt')).find(b => /SILENCIAR/.test(b.textContent)).click()"); await pg.wait_for_timeout(200)
     p = await rt(pg, PAINEL); mudo = await rt(pg, "({mudo:BRASIL.silenciados.has('u2'), salvo:JSON.parse(localStorage.getItem('streetball-brasil')).mudo, barra:CB.el.querySelector('.c81-msg').textContent})")
     P.confere(mudo['mudo'] and 'u2' in mudo['salvo'] and not any(n[0] == 'CRIA7' for n in p['nomes']) and mudo['barra'] == 'Jogador: Bora!', 'SILENCIAR: as mensagens dele somem para você (no painel e na barra) e fica salvo', [mudo, p['nomes']])

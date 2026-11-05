@@ -271,7 +271,7 @@ async def principal():
             m_ok = await espera(pa, "(BRASIL.msgs || []).some(m => m && m.texto === 'gol de placa hoje')", 6000)
             fi = await rt(pa, """(() => { const m = (BRASIL.msgs || []).find(x => x && x.texto === 'gol de placa hoje'); if (!m) return null;
               cbAbre('brasil'); RachaChat81.abreFicha(m, false);
-              const n = [...CB.pn.querySelectorAll('.c81-f-bt')].filter(b => /VER PERFIL/.test(b.textContent)).length;
+              const n = [...CB.pn.querySelectorAll('.c81-f-bt')].filter(b => /^(VER )?PERFIL$/.test((b.querySelector('span') || b).textContent.trim())).length;   // (v107: o PERFIL da janelinha)
               [...CB.pn.querySelectorAll('.c81-f-bt')].find(b => /DENUNCIAR/.test(b.textContent)).click();
               const marcado = (CB.pn.querySelector('.v88-f-m.on') || {}).dataset.m;
               CB.pn.querySelector('.v88-f-m[data-m="toxico"]').click(); CB.pn.querySelector('.v88-f-envia').click(); cbFecha();

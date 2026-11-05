@@ -1,0 +1,117 @@
+/* =====================================================================================================================
+   RACHA v107 · a janelinha do nome (tools/v107/perfil.js): colada no nome tocado (no chat, no cartão da sala e no painel da
+   partida), com PERFIL (azul), CONVIDAR (verde) e DENUNCIAR (vermelho) empilhados e grandes, e SILENCIAR · BLOQUEAR
+   embaixo. O desenho é o do RACHA (v91): o azul-marinho liso (a pontinha tem a mesma cor), o contorno preto grosso, os
+   botões com o degrau e a letra com contorno. A mesma folha serve a ficha do chat (.c81-ficha.pf107-pop) e a de quem está na
+   sala (.pf107-pop.pf107-membro). Os tamanhos ficam no mínimo de toque (44 px) também no celular deitado.
+   ===================================================================================================================== */
+.pf107-pop, .c81-ficha.pf107-pop{
+  position:fixed; inset:auto; z-index:230; box-sizing:border-box; width:min(296px, calc(100vw - 16px)); max-height:calc(100vh - 16px);
+  display:flex; flex-direction:column; gap:8px; margin:0; padding:10px 10px 8px;
+  border:3px solid #05060c; border-radius:18px; background:#1d2666;
+  box-shadow:inset 0 0 0 2px rgba(86,132,255,.34), inset 0 3px 0 rgba(255,255,255,.1), 0 6px 0 rgba(0,0,0,.45), 0 16px 34px rgba(0,0,0,.55);
+  color:#fff; font-family:"Barlow", system-ui, "Segoe UI", Roboto, sans-serif; text-align:left;
+  overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin;
+  -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  animation:pf107-aparece .14s ease-out;
+}
+html.v91 .c81-ficha.pf107-pop{ background:#1d2666 !important; }
+.pf107-pop[hidden], .c81-ficha.pf107-pop[hidden]{ display:none !important; }
+.pf107-pop *{ box-sizing:border-box; }
+@keyframes pf107-aparece{ from{ opacity:0; } to{ opacity:1; } }   /* (só a opacidade: nada de transform enquanto mede o lugar) */
+
+/* a pontinha (fora da caixa: o conteúdo pode rolar sem cortar ela) */
+.pf107-seta{ position:fixed; z-index:232; display:block; width:16px; height:16px; margin:-8px 0 0 -8px; box-sizing:border-box; transform:rotate(45deg);
+  background:#1d2666; border:3px solid transparent; pointer-events:none; }
+.pf107-seta[hidden]{ display:none; }
+.pf107-seta[data-lado="dir"]{ border-left-color:#05060c; border-bottom-color:#05060c; }
+.pf107-seta[data-lado="esq"]{ border-top-color:#05060c; border-right-color:#05060c; }
+.pf107-seta[data-lado="baixo"]{ border-top-color:#05060c; border-left-color:#05060c; }
+.pf107-seta[data-lado="cima"]{ border-bottom-color:#05060c; border-right-color:#05060c; }
+
+/* o cabeçalho: a tampinha pequena, o nome (com o selo) e o ID, e o ✕ */
+.pf107-pop .pf107-cab{ flex:none; display:flex; align-items:center; gap:8px; min-height:40px; margin:0; }
+.pf107-pop .pf107-tampa{ flex:none; width:40px; height:40px; }
+.pf107-pop .pf107-tampa canvas{ display:block; width:100%; height:100%; }
+.pf107-pop .pf107-id{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.pf107-pop .pf107-id b{ display:flex; align-items:center; min-width:0; font:400 19px/1.1 "Lilita One", "Arial Black", Impact, sans-serif; color:#fff; letter-spacing:.3px;
+  text-shadow:var(--v91-cont-p, 0 2px 0 #05060c); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pf107-pop .pf107-id small{ display:block; font:700 12px/1.25 "Barlow", system-ui, sans-serif; color:#aab6e8; letter-spacing:.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pf107-pop .pf107-x{ flex:none; width:36px; height:36px; display:grid; place-items:center; margin:0; padding:0; border:2px solid #05060c; border-radius:50%;
+  background:#111847; color:#fff; font:700 15px/1 system-ui, sans-serif; cursor:pointer; box-shadow:0 2px 0 #05060c; }
+.pf107-pop .pf107-x:active{ transform:translateY(1px); }
+.pf107-pop .pf107-nota{ flex:none; margin:0; font:600 13px/1.3 "Barlow", system-ui, sans-serif; color:#c3cbea; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pf107-pop .pf107-nota[hidden]{ display:none; }
+.pf107-pop.pf107-membro .pf107-nota{ white-space:normal; text-align:center; color:#aab6e8; }
+
+/* os três botões grandes, empilhados */
+.pf107-pop .pf107-acoes{ flex:none; display:flex; flex-direction:column; flex-wrap:nowrap; gap:7px; margin:0; }
+.pf107-pop .pf107-bt{ position:relative; display:grid; grid-template-columns:30px minmax(0, 1fr) 30px; grid-template-rows:auto; align-items:center; align-content:center; column-gap:6px;
+  width:100%; min-height:50px; height:auto; margin:0; padding:5px 10px 8px; border:3px solid #05060c; border-radius:14px; color:#fff; cursor:pointer;
+  font:400 21px/1.05 "Lilita One", "Arial Black", Impact, sans-serif; letter-spacing:.7px; text-align:center; text-shadow:var(--v91-cont-p, 0 2px 0 #05060c);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.32), inset 0 -5px 0 rgba(0,0,0,.22), 0 4px 0 #05060c; opacity:1; }
+.pf107-pop .pf107-bt .pf107-ic, .pf107-pop .pf107-bt .v88-ic{ grid-column:1; grid-row:1; display:block; width:28px; height:28px; margin:0; filter:drop-shadow(0 1px 0 rgba(0,0,0,.45)); }
+.pf107-pop .pf107-bt .pf107-ic svg{ display:block; width:100%; height:100%; }
+.pf107-pop .pf107-bt.pf107-com-sub .pf107-ic, .pf107-pop .pf107-bt.pf107-com-sub .v88-ic{ grid-row:1 / span 2; }
+.pf107-pop .pf107-bt .pf107-rot{ grid-column:2; grid-row:1; display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pf107-pop .pf107-bt .pf107-sub{ grid-column:2; grid-row:2; display:block; margin-top:2px; font:700 12px/1.15 "Barlow", system-ui, sans-serif; letter-spacing:.2px;
+  text-shadow:0 1px 0 rgba(0,0,0,.65); color:#f3f5ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pf107-pop .pf107-azul{ background:var(--v91-azul-f, linear-gradient(180deg, #7cc4ff 0%, #2f7fff 35%, #1f5ad6 70%, #163f9e 100%)); }
+.pf107-pop .pf107-verde{ background:var(--v91-verde-f, linear-gradient(180deg, #7fe08f 0%, #2fae55 30%, #168a3c 65%, #0d6b2e 100%)); }
+.pf107-pop .pf107-vermelho{ background:var(--v91-verm-f, linear-gradient(180deg, #ff8a7a 0%, #e0352a 45%, #b5141c 100%)); }
+.pf107-pop .pf107-cinza{ background:linear-gradient(180deg, #3a4486 0%, #283174 50%, #1c2460 100%); }
+.pf107-pop .pf107-bt:active:not(:disabled){ transform:translateY(3px); box-shadow:inset 0 3px 0 rgba(255,255,255,.3), 0 1px 0 #05060c; }
+.pf107-pop .pf107-bt:disabled{ cursor:default; filter:saturate(.25) brightness(.72); opacity:1; }
+.pf107-pop .pf107-bt.pf107-dica .pf107-sub{ color:#ffe27a; }
+.pf107-pop .pf107-bt.pf107-pisca{ animation:pf107-pisca .4s ease-out; }
+@keyframes pf107-pisca{ 0%{ filter:brightness(1.35); } 100%{ filter:none; } }
+.pf107-pop .pf107-bt:focus-visible, .pf107-pop .pf107-link:focus-visible, .pf107-pop .pf107-x:focus-visible{ outline:3px solid #ffd21f; outline-offset:2px; }
+
+/* embaixo: silenciar e bloquear, como os links do perfil */
+.pf107-pop .pf107-links{ display:flex; flex-wrap:wrap; justify-content:center; gap:0 16px; margin:0; }
+.pf107-pop .pf107-link{ display:inline-flex; align-items:center; min-height:36px; height:auto; margin:0; padding:2px 4px; border:0; border-radius:8px; background:none; box-shadow:none;
+  color:#aab6e8; font:800 13px/1 "Barlow", system-ui, sans-serif; letter-spacing:1px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.pf107-pop .pf107-link.pf107-link-verm{ color:#ff9c90; }
+.pf107-pop .pf107-link span{ display:inline; }
+
+/* a denúncia com o motivo (a v88), dentro da janelinha */
+.c81-ficha.pf107-pop.pf107-den{ gap:7px; }
+.c81-ficha.pf107-pop.pf107-den .pf107-id b{ color:#ffb4a8; font-size:17px; }
+.c81-ficha.pf107-pop.pf107-den .pf107-nota{ display:block; }
+.c81-ficha.pf107-pop.pf107-den .v88-f-motivos{ display:flex; flex-wrap:wrap; gap:5px; }
+.c81-ficha.pf107-pop.pf107-den .v88-f-m{ height:34px; padding:0 10px; margin:0; border:2px solid #05060c; border-radius:17px; background:#111847; color:#e9ebee;
+  font:800 12px/1 "Barlow", system-ui, sans-serif; letter-spacing:.7px; cursor:pointer; box-shadow:0 2px 0 #05060c; }
+.c81-ficha.pf107-pop.pf107-den .v88-f-m.on{ background:linear-gradient(180deg, #ff6b5c, #c8231a); color:#fff; }
+.c81-ficha.pf107-pop.pf107-den .pf107-acoes{ flex-direction:row; gap:8px; }
+.c81-ficha.pf107-pop.pf107-den .pf107-acoes .pf107-bt{ flex:1 1 0; grid-template-columns:24px minmax(0, 1fr) 0; min-height:46px; font-size:18px; padding:4px 8px 7px; }
+.c81-ficha.pf107-pop.pf107-den .pf107-acoes .pf107-bt .pf107-ic, .c81-ficha.pf107-pop.pf107-den .pf107-acoes .pf107-bt .v88-ic{ width:22px; height:22px; }
+.c81-ficha.pf107-pop.pf107-den .pf107-acoes .v88-f-volta{ grid-template-columns:0 minmax(0, 1fr) 0; }
+.c81-ficha.pf107-pop.pf107-den .pf107-acoes .pf107-bt > span{ grid-column:2; grid-row:1; }
+
+/* o convite pelo chat (a janela de sempre de quem recebe) */
+#lb .pop-caixa.v88-convite-pop .pf107-conv-nota{ margin-top:-4px; color:#ffe27a; font-weight:700; }
+
+/* a ficha do árbitro com o VER PERFIL primeiro: um botão a mais na grade de duas colunas (o CANCELAR sobe para o lado do último:
+   as mesmas três linhas de antes, nada a mais para rolar) */
+#lb .pop-caixa.arb-pop.v103-ficha .v103-acoes > .lb-btn.pf107-ver{ grid-column:auto; }
+
+/* o painel dos jogadores da partida: as linhas de quem é gente recebem o toque (o resto do painel deixa passar para o jogo) */
+.v93-pj .pf107-toca{ pointer-events:auto; cursor:pointer; }
+
+/* o celular deitado (a tela baixa): tudo um pouco menor, os botões ainda com 44 px */
+@media (max-height:430px){
+  .pf107-pop, .c81-ficha.pf107-pop{ gap:6px; padding:8px 9px 6px; width:min(280px, calc(100vw - 16px)); border-radius:16px; }
+  .pf107-pop .pf107-cab{ min-height:36px; gap:7px; }
+  .pf107-pop .pf107-tampa{ width:34px; height:34px; }
+  .pf107-pop .pf107-id b{ font-size:17px; }
+  .pf107-pop .pf107-x{ width:34px; height:34px; }
+  .pf107-pop .pf107-acoes{ gap:6px; }
+  .pf107-pop .pf107-bt{ min-height:44px; font-size:19px; padding:4px 9px 7px; grid-template-columns:26px minmax(0, 1fr) 26px; }
+  .pf107-pop .pf107-bt .pf107-ic, .pf107-pop .pf107-bt .v88-ic{ width:24px; height:24px; }
+  .pf107-pop .pf107-bt .pf107-sub{ font-size:11px; margin-top:1px; }
+  .pf107-pop .pf107-link{ min-height:32px; }
+  .pf107-pop .pf107-nota{ font-size:12px; }
+  .c81-ficha.pf107-pop.pf107-den .pf107-nota{ display:none; }
+  .c81-ficha.pf107-pop.pf107-den .v88-f-m{ height:30px; padding:0 9px; font-size:11px; }
+}
+@media (prefers-reduced-motion: reduce){ .pf107-pop, .c81-ficha.pf107-pop, .pf107-pop .pf107-bt.pf107-pisca{ animation:none; } }

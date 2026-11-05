@@ -140,6 +140,20 @@ with zipfile.ZipFile(saida) as z:
     # v106: o COFRE no estilo das fotos (o pedestal, as abas CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS e os cartões bege)
     assert {'app/public/game/v106-cofre.css', 'tools/v106/cofre.py', 'tools/v106/cofre.js', 'tests/v106_cofre_test.py'} <= nomes, 'faltam os arquivos da v106 (o cofre) no ZIP'
     assert all(x in jogo for x in (b'window.RachaCofre106', b'<link rel="stylesheet" href="./v106-cofre.css">', b'CRIAR\\nPERSONALIZADO')), 'o jogo do ZIP não tem o cofre da v106'
+    # v107: o perfil pelo nome (a janelinha PERFIL · CONVIDAR · DENUNCIAR no chat, o cartão da sala e o painel da partida) e o convite pelo chat
+    assert {'app/public/game/v107-perfil.css', 'tools/v107/perfil.py', 'tools/v107/perfil.js', 'server/convite107.js', 'tests/v107_perfil_test.py',
+            'tests/v107_convite_servidor_test.mjs'} <= nomes, 'faltam os arquivos da v107 (o perfil pelo nome e o convite pelo chat) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaPerfil107', b'<link rel="stylesheet" href="./v107-perfil.css">', b'function pf107Posiciona')), 'o jogo do ZIP não tem a janelinha do nome da v107'
+    assert b"require('./convite107').aplica(Turma" in z.read('server/turma.js'), 'o servidor do ZIP não tem o convite pelo chat da v107'
+    # v107: o árbitro arrastando os jogadores na sala (o cartão) e na partida (sem segurar), e a faixa de quem foi movido
+    assert {'app/public/game/v107-painel.css', 'tools/v107/painel.py', 'tools/v107/painel.js', 'tests/v107_painel_test.py'} <= nomes, 'faltam os arquivos da v107 (arrastar na sala e na partida) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaPainel107', b'<link rel="stylesheet" href="./v107-painel.css">', b'function pn107AlvoSala', b'function pn107LeLinha')), 'o jogo do ZIP não tem o arrastar da v107'
+    # v107: os gestos do emoji e das falas (segurar e arrastar: a cruz no meio da tela, o aro e o X; a cruz das frases e o COFRE)
+    assert {'app/public/game/v107-gestos.css', 'tools/v107/gestos.py', 'tools/v107/gestos.js', 'tests/v107_gestos_test.py'} <= nomes, 'faltam os arquivos da v107 (os gestos) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaGestos107', b'<link rel="stylesheet" href="./v107-gestos.css">', b"'racha-falas-v107'")), 'o jogo do ZIP não tem os gestos da v107'
+    # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
+    assert {'tools/v107/chute.py', 'tools/v107/chute.js', 'tests/v107_chute_test.py'} <= nomes, 'faltam os arquivos da v107 (o anel do chute) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaChute107', b'function v107SpriteBranco', b'(v107: o branco opaco)')), 'o jogo do ZIP não tem o anel do chute bem branco da v107'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)

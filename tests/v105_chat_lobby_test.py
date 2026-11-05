@@ -302,8 +302,8 @@ async def plataforma(pw, P):
             # o nome do Beto abre a ficha com o VER PERFIL; o perfil abre por cima (o painel do chat fecha antes)
             await A.click('#cp .c81-lista .c81-nome:has-text("betov105")'); await asyncio.sleep(.3)
             fic = await rt(A, "(() => { const F = C81.ficha; return {vis:!!F && !F.hidden, bts:[...F.querySelectorAll('.c81-f-bt span')].map(s => s.textContent), id:(F.querySelector('.c81-f-tx small') || {}).textContent || ''}; })()")
-            P.confere(fic['vis'] and fic['bts'] and fic['bts'][0] == 'VER PERFIL' and beto['pub'] in fic['id'], 'o nome do Beto no painel abre a ficha dele, com o VER PERFIL primeiro', fic)
-            await A.click('#cp .c81-ficha .c81-f-bt:has-text("VER PERFIL")')
+            P.confere(fic['vis'] and fic['bts'] and fic['bts'][0] in ('VER PERFIL', 'PERFIL') and beto['pub'] in fic['id'], 'o nome do Beto no painel abre a ficha dele, com o VER PERFIL (v107: o PERFIL da janelinha) primeiro', fic)
+            await A.click('#cp .c81-ficha .c81-f-bt:has-text("PERFIL") >> nth=0')
             pf = await espera(A, """(() => { const c = LB.popCaixa; if (LB.pop.hidden || !c.classList.contains('v88-perfil-pop') || !/betov105/i.test(c.textContent || '')) return '';
               const r = c.getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width/2, r.top + Math.min(r.height/2, 60));
               return JSON.stringify({emCima:!!e && c.contains(e), chat:CB.aberto, pn:CB.pn.hidden}); })()""", 10000)

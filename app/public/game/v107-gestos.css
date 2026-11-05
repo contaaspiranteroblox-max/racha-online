@@ -1,0 +1,103 @@
+/* =====================================================================================================================
+   RACHA v107 · OS GESTOS DO EMOJI E DAS FALAS (o JS em tools/v107/gestos.js)
+   Segurar e arrastar nos dois botões do lado do placar: o aro do analógico pequeno em volta do botão (com as 4 setinhas), o
+   botão que anda um pouco com o dedo (a cópia do desenho dele, laranja como o botão aberto), o X de cancelar do lado e, no meio
+   da tela, a cruz dos 5 (os emojis nos círculos escuros da cruz da v106; as frases nas pílulas brancas do menu das falas), com
+   as setinhas entre o meio e cada lado. A acesa ganha o brilho laranja (e a setinha daquele lado acende). O lugar e o tamanho
+   de cada peça vêm do JS (longe dos controles, da pausa e do placar). Nada aqui pega toque: o dedo que pousar em cima cai no
+   jogo. Com Reduzir animações (o sistema ou os Ajustes), sem as transições.
+   E, no COFRE › EMOJI, a troca EMOJIS | FRASES e a cruz das 5 frases (as pílulas no lugar dos círculos).
+   ===================================================================================================================== */
+/* os dois botões seguram o dedo (sem rolar a página, sem o menu do navegador e sem selecionar nada) */
+.emo106-bt, .v93-fl-bt{ touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+.emo106-bt.ges107-segura, .v93-fl-bt.ges107-segura{ opacity:0; }
+/* enquanto o dedo segura, a cruz do toque, o menu das falas e o painel dos jogadores saem da frente (voltam no toque rápido) */
+html.ges107-aberto .emo106-cruz, html.ges107-aberto .v93-fl-menu, html.ges107-aberto .v93-pj{ visibility:hidden; }
+
+/* o aro do analógico pequeno (atrás do botão que anda) */
+.ges107-aro{ position:absolute; z-index:5; pointer-events:none; box-sizing:border-box; border-radius:50%;
+  background:radial-gradient(circle closest-side, rgba(8,10,28,.1) 0 52%, rgba(8,10,28,.52) 100%);
+  box-shadow:0 0 0 2px rgba(255,255,255,.62), 0 3px 10px rgba(0,0,0,.35); animation:ges107-aro .14s ease-out both; }
+.ges107-aro[hidden]{ display:none; }
+.ges107-aro-seta{ position:absolute; left:50%; top:50%; width:var(--ges107-sa, 5px); height:var(--ges107-sa, 5px); background:rgba(255,255,255,.88);
+  clip-path:polygon(50% 0, 100% 100%, 0 100%); transition:background-color .1s; }
+.ges107-aro-seta.cima{ transform:translate(-50%, -50%) translateY(calc(-1 * var(--ges107-ra, 26px))); }
+.ges107-aro-seta.baixo{ transform:translate(-50%, -50%) translateY(var(--ges107-ra, 26px)) rotate(180deg); }
+.ges107-aro-seta.esquerda{ transform:translate(-50%, -50%) translateX(calc(-1 * var(--ges107-ra, 26px))) rotate(-90deg); }
+.ges107-aro-seta.direita{ transform:translate(-50%, -50%) translateX(var(--ges107-ra, 26px)) rotate(90deg); }
+.ges107-aro-seta.on{ background:#ffa61a; }
+
+/* o botão que anda com o dedo (o de verdade fica parado e transparente, segurando o toque) */
+.ges107-pino{ position:absolute; z-index:7; pointer-events:none; display:grid; place-items:center; border-radius:50%; color:#fff;
+  background:rgba(255,166,26,.95); box-shadow:0 0 0 2px #fff, 0 4px 12px rgba(0,0,0,.42); will-change:transform; }
+.ges107-pino[hidden]{ display:none; }
+.ges107-pino svg{ width:58%; height:58%; }
+.ges107-pino.falas svg{ width:56%; height:56%; }
+.ges107-pino.cancela{ background:rgba(8,10,28,.82); box-shadow:0 0 0 2px rgba(255,255,255,.5), 0 4px 12px rgba(0,0,0,.42); }
+
+/* o X de cancelar (soltar em cima dele não manda nada) */
+.ges107-x{ position:absolute; z-index:8; pointer-events:none; display:grid; place-items:center; box-sizing:border-box; border-radius:50%; color:#fff;
+  background:rgba(8,10,28,.76); box-shadow:0 0 0 2px rgba(255,255,255,.48), 0 3px 8px rgba(0,0,0,.35);
+  transition:transform .1s ease-out, background-color .1s, box-shadow .1s; animation:ges107-pop .14s ease-out both; }
+.ges107-x[hidden]{ display:none; }
+.ges107-x svg{ width:50%; height:50%; }
+.ges107-x.on{ background:#e2412f; transform:scale(1.16); box-shadow:0 0 0 2px #fff, 0 0 18px rgba(226,65,47,.78); }
+
+/* a cruz dos 5 no meio da tela (o meio da cruz no 0, 0 deste elemento; as opções em volta, no lugar que o JS mediu) */
+.ges107-cruz{ position:absolute; z-index:8; width:0; height:0; pointer-events:none; transform-origin:0 0; }
+.ges107-cruz[hidden]{ display:none; }
+.ges107-cruz *{ pointer-events:none; }
+.ges107-fundo{ position:absolute; border-radius:50%; animation:ges107-in .15s ease-out both;
+  background:radial-gradient(circle closest-side, rgba(8,10,28,.44) 0, rgba(8,10,28,.3) 64%, rgba(8,10,28,0) 100%); }
+.ges107-op{ position:absolute; box-sizing:border-box; transform:translate(-50%, -50%); animation:ges107-in .15s ease-out both;
+  transition:transform .1s ease-out, box-shadow .1s, background-color .1s, opacity .12s; }
+.ges107-op.on{ transform:translate(-50%, -50%) scale(1.13); }
+/* os emojis: os círculos escuros da cruz da v106 */
+.ges107-cruz.emoji .ges107-op{ width:var(--ges107-s, 56px); height:var(--ges107-s, 56px); display:grid; place-items:center; border-radius:50%;
+  background:rgba(14,18,40,.86); box-shadow:0 0 0 2px rgba(255,255,255,.34), 0 3px 8px rgba(0,0,0,.35); }
+.ges107-cruz.emoji .ges107-op canvas{ width:92%; height:92%; }
+.ges107-cruz.emoji .ges107-op.on{ background:rgba(255,166,26,.45); box-shadow:0 0 0 3px #fff, 0 0 0 6px rgba(255,166,26,.95), 0 0 26px 8px rgba(255,166,26,.55); }
+/* as frases: as pílulas brancas do menu das falas */
+.ges107-cruz.falas .ges107-op{ height:var(--ges107-h, 36px); display:flex; align-items:center; justify-content:center; padding:0 calc(var(--ges107-f, 16px) * .9);
+  border-radius:calc(var(--ges107-h, 36px) / 2); background:#ffffff; color:#1b1530; white-space:nowrap;
+  font:800 var(--ges107-f, 16px)/1 var(--v91-num, "Barlow Condensed", system-ui, sans-serif); letter-spacing:.3px;
+  box-shadow:inset 0 -3px 0 rgba(20,16,46,.18), 0 0 0 2px rgba(20,16,46,.55), 0 4px 10px rgba(0,0,0,.35); }
+.ges107-cruz.falas .ges107-op b{ font:inherit; }
+.ges107-cruz.falas .ges107-op.on{ background:#fff3d6; box-shadow:inset 0 -3px 0 rgba(150,80,0,.18), 0 0 0 3px #ffa61a, 0 0 0 5px #ffffff, 0 0 24px 8px rgba(255,166,26,.58); }
+/* as setinhas entre o meio e cada lado (a do lado aceso fica laranja) */
+.ges107-chev{ position:absolute; display:block; width:18px; aspect-ratio:24 / 14; color:rgba(255,255,255,.72); filter:drop-shadow(0 1px 1px rgba(0,0,0,.65));
+  animation:ges107-in .15s ease-out both; transition:color .1s; }
+.ges107-chev svg{ display:block; width:100%; height:100%; }
+.ges107-chev.cima{ transform:translate(-50%, -50%); }
+.ges107-chev.baixo{ transform:translate(-50%, -50%) rotate(180deg); }
+.ges107-chev.esquerda{ transform:translate(-50%, -50%) rotate(-90deg); }
+.ges107-chev.direita{ transform:translate(-50%, -50%) rotate(90deg); }
+.ges107-chev.on{ color:#ffa61a; filter:drop-shadow(0 0 4px rgba(255,166,26,.9)) drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+/* esperando o intervalo (a opção não vai agora) e em cima do X (nada vai) */
+.ges107-cruz.espera .ges107-op{ opacity:.5; }
+.ges107-cruz.cancela .ges107-op, .ges107-cruz.cancela .ges107-chev{ opacity:.3; }
+/* (só para o leitor de tela) */
+.ges107-vivo{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+@keyframes ges107-in{ from{ opacity:0; } }
+@keyframes ges107-aro{ from{ opacity:0; transform:scale(.72); } }
+@keyframes ges107-pop{ from{ opacity:0; transform:scale(.6); } }
+@media (prefers-reduced-motion:reduce){ .ges107-aro, .ges107-aro-seta, .ges107-x, .ges107-fundo, .ges107-op, .ges107-chev{ animation:none; transition:none; } }
+html.v70-calmo .ges107-aro, html.v70-calmo .ges107-aro-seta, html.v70-calmo .ges107-x, html.v70-calmo .ges107-fundo, html.v70-calmo .ges107-op, html.v70-calmo .ges107-chev{ animation:none; transition:none; }
+
+/* ---------------------------------------------------------------- o COFRE › EMOJI › FRASES (a cruz das 5 frases e a grade das 8) */
+#lb .ges107-cf-cruz{ container-type:inline-size; }
+#lb .ges107-cf-cruz .cf106-lugar{ width:29%; height:19%; padding:0 2.2%; box-sizing:border-box; border-radius:18px; }
+#lb .ges107-cf-cruz .cf106-lugar.l0{ left:50%; top:12%; } #lb .ges107-cf-cruz .cf106-lugar.l1{ left:15.5%; top:50%; } #lb .ges107-cf-cruz .cf106-lugar.l2{ left:50%; top:50%; }
+#lb .ges107-cf-cruz .cf106-lugar.l3{ left:84.5%; top:50%; } #lb .ges107-cf-cruz .cf106-lugar.l4{ left:50%; top:88%; }
+.ges107-cf-cruz .cf106-seta.cima{ top:31%; width:15%; } .ges107-cf-cruz .cf106-seta.baixo{ top:69%; width:15%; }
+.ges107-cf-cruz .cf106-seta.esq{ left:32.75%; width:9%; } .ges107-cf-cruz .cf106-seta.dir{ left:67.25%; width:9%; }
+.ges107-cf-tx{ display:block; max-width:100%; font:400 17px/1.04 var(--cf-tit, "Lilita One", sans-serif); font-size:4.1cqi; color:#fff; text-align:center;
+  text-shadow:var(--cf-cont, 0 2px 0 #090e25); overflow-wrap:break-word; pointer-events:none; }
+/* a frase da grade no balão branco das falas (a faixinha laranja do time e a pontinha) */
+.ges107-cf-grade .cf106-card-peca{ width:90%; }
+.ges107-cf-balao{ position:relative; display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:100%; min-height:60%; padding:8px 8px 8px 17px;
+  border-radius:16px; background:#ffffff; border:3px solid #14102e; box-shadow:0 5px 0 rgba(20,16,46,.28); }
+.ges107-cf-balao::before{ content:''; position:absolute; left:7px; top:9px; bottom:9px; width:6px; border-radius:3px; background:#ff8a2a; }
+.ges107-cf-balao::after{ content:''; position:absolute; left:28%; bottom:-11px; width:16px; height:16px; background:#ffffff; border-right:3px solid #14102e;
+  border-bottom:3px solid #14102e; border-radius:0 0 4px 0; transform:rotate(45deg); }
+.ges107-cf-balao b{ position:relative; z-index:1; min-width:0; font:400 18px/1.06 var(--cf-tit, "Lilita One", sans-serif); color:#1b1530; text-align:center; overflow-wrap:break-word; }

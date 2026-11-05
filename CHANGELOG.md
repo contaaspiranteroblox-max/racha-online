@@ -2,6 +2,78 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v107 — 05/11/2026 · os emojis e as falas arrastando, o árbitro arrastando na sala e na partida, o perfil pelo nome e o anel do chute bem branco
+
+A pedido, com dois vídeos e uma foto de outro jogo: *"mostrei como funcionam os emojis e as msg rápidas: não precisa clicar, é
+só arrastar para o lado que você quer e vai aparecer as msg e emojis; nos players dá para arrastar o player para o time ou
+reserva — quero essa função no meio da partida e na sala quando cria, pois é mais prático arrastando; se clicar no nome de
+alguém no chat você pode entrar no perfil da pessoa, adicionar ela e ver estatísticas — quero isso no chat; e nas salas
+personalizadas poder clicar no perfil da pessoa e ver"*. Dos vídeos e da foto vem só o jeito de usar: os desenhos, as cores e
+os textos são os do RACHA. A física não muda (o build confere: `sha256 ad9f1d2216409b0e`). O backup do antes: a etiqueta git
+`antes-v107` (a v106).
+
+- **OS GESTOS DO EMOJI E DAS FALAS** (`tools/v107/gestos.py`, `gestos.js` e `app/public/game/v107-gestos.css`): nos dois
+  botões do lado do placar — o do emoji e o das falas —, **segurar e arrastar** sem tirar o dedo: aparece no meio da tela a
+  cruz dos 5 daquele botão (os 5 emojis da cruz da v106 ou as 5 frases da cruz nova, com as setinhas entre o meio e cada
+  lado), o aro pequeno em volta do botão (o botão anda um pouco com o dedo) e o X de cancelar do lado de fora, um pouco para
+  baixo (fora das 4 direções). O lado para onde o dedo vai acende uma opção; parado perto do começo, a do meio; **soltar
+  manda** (o balão de sempre em cima da tampinha) e soltar no X não manda nada. O **toque rápido** continua o de sempre (a
+  cruz da v106; o menu das 8 frases), assim como o teclado e o controle; o toque e o segurar são decididos pela hora de cada
+  evento (o celular ocupado não transforma um toque em gesto). Cada gesto tem o seu dedo: dá para correr com o analógico num
+  dedão e mandar o emoji com o outro (o PASSE e o CHUTE também seguem). O ritmo é o de sempre (no aparelho e no servidor), sem
+  as transições com Reduzir animações, e nada cobre os controles, a pausa, o placar, os outros botões nem a barra da sala
+  (844 × 390 com o entalhe, 667 × 375, 740 × 360, 1280 × 720, 1920 × 1080 e o treino). As falas continuam só nas partidas
+  (contra os bots e online). **A cruz das frases**: 5 das 8 — Golaço! em cima, Boa! à esquerda, Passa! no meio, Que defesa! à
+  direita e Foi mal! embaixo, no começo —, guardada em `racha-falas-v107` (na cópia do progresso da conta). No **COFRE ›
+  EMOJI**, a troca **EMOJIS | FRASES**: em FRASES, a cruz das 5 frases (tocar num lugar acende; tocar numa das 8 frases põe no
+  lugar aceso; o PADRÃO volta as de fábrica). O servidor não muda (o `emote {e}` e a `fala {i}` já existiam).
+- **O ÁRBITRO ARRASTANDO NA SALA E NA PARTIDA** (`tools/v107/painel.js` e `app/public/game/v107-painel.css`): **na sala
+  online**, o árbitro aperta o cartão de alguém e arrasta (o arrasto começa depois de 8 px; tocar sem mexer continua abrindo a
+  ficha; na coluna que rola, o dedo na vertical rola e de lado arrasta). A cópia do cartão vai com o dedo, com a etiqueta do
+  que acontece ao soltar (PARA O TIME B, PARA O BANCO, TROCAR COM…), e o lugar embaixo acende — o outro time (a primeira vaga
+  livre; o time cheio acende vermelho e avisa), uma VAGA LIVRE, o cartão de outra pessoa (os dois trocam) e QUEM ASSISTE (o
+  banco). Ao soltar vão as mesmas ações da ficha: o servidor não muda e confere tudo. Quem não é o árbitro não arrasta. **Na
+  partida**, o painel dos jogadores arrasta já com o movimento, sem o meio segundo de segurar (o segurar continua valendo);
+  soltar um arrasto não abre nada. **A faixa**: cada mudança do árbitro vira uma faixa curta em cima, para todo mundo da sala,
+  na tela da sala e na partida (embaixo do placar) — "fulano foi para o TIME B" / "fulano foi para o BANCO" —, a partir da linha
+  que o servidor já mandava no chat da sala. A sala neste aparelho (você e os bots) continua com o toque no cartão.
+- **O PERFIL PELO NOME** (`tools/v107/perfil.py`, `perfil.js`, `app/public/game/v107-perfil.css` e `server/convite107.js`):
+  tocar no nome de alguém em qualquer chat (o painel da barra do lobby, a tela inteira do Chat do Brasil, a sala, a partida, a
+  equipe, o clube e os amigos) abre a **janelinha colada no nome** (a pontinha aponta para ele, sempre dentro da tela e da área
+  segura; fecha tocando fora, no ✕ ou no Esc), com três botões grandes: **PERFIL** (azul), **CONVIDAR** (verde) e
+  **DENUNCIAR** (vermelho, com o motivo ali mesmo), e SILENCIAR · BLOQUEAR embaixo. O seu nome: só o MEU PERFIL; quem não tem
+  conta: o PERFIL diz "sem conta" e o CONVIDAR fica apagado com o motivo. O **PERFIL** abre o perfil do jogo (partidas,
+  vitórias, gols, assistências, melhor da partida, tempo jogado, a COMPETIÇÃO e o ADICIONAR) no lobby, na sala e por cima da
+  partida. O **CONVIDAR** chama para a sua sala quem escreveu, **mesmo quem ainda não é seu amigo**: o jogo manda
+  `convite {mid, canal}` (o número da mensagem) e o servidor acha quem escreveu a mensagem recente (até 15 min; não a escondida
+  pela moderação nem a da equipe dos outros) e confere tudo — as duas contas, a sala (nem a ranqueada nem cheia), o bloqueio dos
+  dois lados, quem aparece online e recebe convites, quem já está na sala —, com os limites para quem não é amigo (1 a cada
+  10 s, 6 a cada 10 min, a mesma pessoa 1 a cada 2 min e quem recebe no máximo 8 a cada 10 min; por conta: reconectar não
+  zera). Tudo que depende de quem recebe dá o mesmo texto ("Não deu para convidar essa pessoa agora.") e os limites de quem
+  convida são conferidos antes de olhar quem recebe: o convite não revela quem está online escondido. Quem recebe vê o convite
+  de sempre (ENTRAR ou RECUSAR) dizendo que veio pelo chat; os amigos continuam pelo ID; em Ajustes › Privacidade, "Receber
+  convites para jogar" vale também para o convite pelo chat. **Nas salas personalizadas**, tocar no cartão de alguém mostra o
+  perfil para todo mundo (a janelinha com o PERFIL; para o árbitro, a ficha dele com o VER PERFIL primeiro); o mesmo no painel
+  dos jogadores da partida. Só contas: o bot, a vaga livre e o visitante não têm perfil.
+- **O ANEL DO CHUTE BEM BRANCO** (`tools/v107/chute.py` e `chute.js`), a pedido: *"quando o jogador chuta, o arco ao redor
+  deve ficar bem branco: a opacidade do chute tá muito fraca"*. Na v96 (a pedido de então) o branco do anel tinha ficado
+  suave, no máximo 30% (`V95S.luz = 0,3`); agora volta a 1 e passa do branco da v95: apertou o CHUTE, o anel em volta da
+  tampinha acende em **branco opaco** (o anel cheio de branco, a borda de fora e um brilho um pouco maior; medido na tela,
+  o anel vai a 253 de 255, contra 185 com o branco suave); o PASSE acende quase igual (86%, como na v95). Segurando fica;
+  soltou ou foi só um toque, some rápido, como sempre. Vale para você e para os outros (online, pelo botão de cada um no
+  quadro do servidor), na partida, no treino, no replay e na Oficina (a troca no desenho de lá). Só o desenho: o botão, o
+  chute e a força não mudam.
+- **Testes**: `tests/v107_gestos_test.py` (o toque de verdade pelo CDP: os 5 lados nos dois botões, o X, o toque rápido, dois
+  dedos, o mouse, o ritmo, 6 tamanhos, a cruz das frases e o COFRE, o Reduzir animações e o online com duas sessões),
+  `tests/v107_painel_test.py` (a plataforma de teste e três navegadores: os arrastos na sala e na partida, com o mouse e com o
+  dedo, quem não é o árbitro, o toque que abre a ficha e a faixa), `tests/v107_perfil_test.py` (três navegadores logados: a
+  janelinha no chat, o PERFIL no lobby, na sala e na partida, o convite pelo chat para quem não é amigo, a denúncia, o cartão da
+  sala e o painel da partida), `tests/v107_convite_servidor_test.mjs` (o convite pela mensagem, as regras e os limites) e `tests/v107_chute_test.py` (o
+  anel aceso opaco e os pixels do anel na partida com o CHUTE e o PASSE). Os
+  testes de antes que liam a ficha velha do chat (`v81`, `v103_chat_perfil`, `v105_chat_lobby`, `v88_cliente`) leem a
+  janelinha nova; o `v98_rachao_online` espera a comemoração de cada gol antes do próximo (com a máquina ocupada, os 2,7 s fixos
+  não bastavam); o `v92_pacote` confere os arquivos e as marcas da v107.
+
 ## v106 — 05/11/2026 · o jogo de corpo no meio-termo, o COFRE no estilo das fotos, as bolas e as mascotes novas e os emojis da partida
 
 A pedido: *"bom, antes o jogo de corpo deslizava muito, agora gruda muito: tem que ser o meio-termo, porque senão os players

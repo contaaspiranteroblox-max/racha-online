@@ -2031,6 +2031,9 @@
 <link rel="stylesheet" href="./v105-chat.css">
 <link rel="stylesheet" href="./v106-cofre.css">
 <link rel="stylesheet" href="./v106-emotes.css">
+<link rel="stylesheet" href="./v107-gestos.css">
+<link rel="stylesheet" href="./v107-painel.css">
+<link rel="stylesheet" href="./v107-perfil.css">
 <script src="./rua.js"></script>
 <script src="./arena.js"></script>
 <script src="./lobby.js"></script>
@@ -2764,7 +2767,8 @@
   var CHAVES = ['streetball-conta-v1', 'racha-treino-perfil-v1', 'streetball-v49', 'racha-tampa-v1', 'racha-tampa-rascunho-v1',
     'racha-clubes-v1', 'streetball-treino-v1', 'streetball-recordes-v1', 'racha-v71-padrao', 'racha-v80-padrao',
     'racha-hud-layouts-v1',    // v92 Fase 1: os layouts dos controles da tela também vão para a conta (tools/v92/hud.js)
-    'racha-emotes-v106'];      // v106: os 5 emojis da cruz da partida (tools/v106/emotes.js)
+    'racha-emotes-v106',       // v106: os 5 emojis da cruz da partida (tools/v106/emotes.js)
+    'racha-falas-v107'];       // v107: as 5 frases da cruz das falas (tools/v107/gestos.js)
   var R = window.RACHA82 = {chaves:CHAVES, dono:'', conta:null, pl:null, nuvem:undefined, meta:null, trocou:false, de:'', aplicou:false, conflito:null, primeira:null, sujo:false};
   var LS = null; try { LS = window.localStorage; } catch (e) { return; }
   function le(k){ try { return LS.getItem(k); } catch (e) { return null; } }
@@ -33211,7 +33215,7 @@ const V88_NOTIF = [['tudo', 'Avisos dentro do jogo', 'O balão de cima quando ch
   ['clube', 'Clube', 'Convites, pedidos e avisos do clube'], ['recompensas', 'Prêmios e correio', 'Cartas para coletar e recompensas'], ['sistema', 'Avisos do RACHA', 'Manutenção, eventos e novidades']];
 function v88NotifSalva(cat, on){ try { const o = JSON.parse(localStorage.getItem('racha88-notif') || '{}'); o[cat] = !!on; localStorage.setItem('racha88-notif', JSON.stringify(o)); } catch (_) {} }
 const V88_PRIV = [['mostraOnline', 'Aparecer online para os amigos', 'Desligado, você aparece offline (e ninguém vê em que sala você está)'],
-  ['aceitaConvites', 'Receber convites para jogar', 'Desligado, os amigos não conseguem chamar você para a sala'],
+  ['aceitaConvites', 'Receber convites para jogar', 'Desligado, ninguém chama você para a sala (nem os amigos, nem pelo chat)'],
   ['aceitaPedidos', 'Receber pedidos de amizade', 'Desligado, só você manda pedidos'],
   ['perfilPublico', 'Perfil aberto', 'Ligado, quem não é seu amigo também vê o seu perfil completo']];
 function v88AjSocial(){
@@ -45425,7 +45429,7 @@ DES.jogador = function (g, M, q, x, y, r, escala, eu, skinId) {
     let luz = 1; try { luz = V95S.luz || 1; } catch (_) {}   // (v96: o branco com opacidade baixa — V95S.luz, tools/v96/conta.js)
     g.globalAlpha = Math.min(1, wb) * luz;
     g.save(); g.shadowColor = 'rgba(255,255,255,.85)'; g.shadowBlur = Math.max(2, r * escala * .22);
-    g.beginPath(); g.arc(x, y, re, 0, TAU); g.arc(x, y, ri, 0, TAU, true); g.fillStyle = 'rgba(255,255,255,.84)'; g.fill(); g.restore();
+    g.beginPath(); g.arc(x, y, re, 0, TAU); g.arc(x, y, ri, 0, TAU, true); g.fillStyle = '#ffffff'; g.fill(); g.restore();   // (v107: o branco opaco)
     g.lineWidth = w * 1.2; g.strokeStyle = '#ffffff'; g.beginPath(); g.arc(x, y, re - w * .6, 0, TAU); g.stroke();
     g.globalAlpha = 1;
   }
@@ -61596,6 +61600,1456 @@ v88On('carteira', () => { if (v88Aberta('cofre')) v106Repinta(); });   // (o sal
 
 window.RachaCofre106 = {aba:() => V106.aba, sub:() => V106.sub, slot:() => V106.slot, vai:alvo => { v106VaiPara(alvo); v106Repinta(); }, abas:V106_ABAS.map(a => a[0]),
   aVenda:() => v106TampinhasAVenda().map(i => i.id), clube:() => V106.clube};
+
+/* ======================================================================= RACHA v107 · o perfil pelo nome no chat, na sala e na partida (tools/v107/perfil.js) */
+/* ---------------------------------------------------------------- tools/v107/perfil.js */
+/* ======================================================================================================================
+   RACHA v107 · O PERFIL PELO NOME — NO CHAT, NA SALA E NA PARTIDA (tools/v107/perfil.js + app/public/game/v107-perfil.css;
+   o convite pelo chat no servidor: server/convite107.js)
+   O pedido (05/11/2026): "Na foto que mandei, como você pode ver, se clicar no nome de alguém no chat você pode entrar no
+   perfil da pessoa, adicionar ela e ver estatísticas — quero isso no chat. E nas salas personalizadas poder clicar no perfil
+   da pessoa e ver." (A foto era de outro jogo: de lá vem só o jeito — a janelinha do lado do nome com três botões grandes
+   empilhados. O desenho é o do RACHA: o azul-marinho, o contorno preto, os botões com o degrau.)
+   1) A JANELINHA DO NOME: tocar no nome de alguém em qualquer chat (o Chat do Brasil no painel — o que a barra do lobby abre —
+      e na tela inteira, o da sala, o da partida, o da equipe, o do clube e o dos amigos) abre, colada no nome (a pontinha
+      aponta para ele; sempre dentro da tela e da área segura), PERFIL (azul), CONVIDAR (verde) e DENUNCIAR (vermelho), e
+      embaixo Silenciar e Bloquear. Fecha tocando fora, no ✕ ou no Esc. É a ficha de sempre por baixo (o c81FichaAbre da v81
+      com a v88 e a v103: o cabeçalho, a denúncia com o motivo ali mesmo, o DENUNCIADA), arrumada como a janelinha. O seu
+      nome: MEU PERFIL (sem convidar nem denunciar). Quem não tem conta: o PERFIL diz "sem conta" e o CONVIDAR fica apagado
+      com o motivo.
+   2) PERFIL: o perfil do jogo (os números, a COMPETIÇÃO e o ADICIONAR) — no lobby, na sala e por cima da partida (o
+      v103PerfilAbre). Sem estar na conta, diz que precisa entrar (e, no lobby, abre o ENTRAR NA CONTA).
+   3) CONVIDAR: chama quem escreveu para a SUA sala, mesmo quem não é seu amigo (convite {mid, canal}: o servidor acha quem
+      escreveu a mensagem recente e confere tudo, com os limites — server/convite107.js); os amigos vão pelo ID, como no
+      AMIGOS › CHAMAR. Sem sala, o aviso de sempre ("Crie ou entre numa sala para convidar."). Quem recebe vê o convite de
+      sempre (ENTRAR ou RECUSAR) dizendo que veio pelo chat.
+   4) A SALA E O PAINEL DA PARTIDA: tocar no cartão de alguém (a tela da sala) ou no nome (o painel dos jogadores da partida)
+      mostra o perfil para todo mundo — quem não é o árbitro ganha a janelinha com o PERFIL; o árbitro, a ficha de sempre com
+      o VER PERFIL primeiro (no painel da partida, por cima do jogo). Só contas: o bot, a vaga livre e o visitante não têm.
+      O toque continua o toque: os ganchos são as funções que abrem as fichas (slClique, v103Ficha) e o clique do painel — o
+      segurar e arrastar do árbitro (v104) não muda e o toque depois de um arrasto não abre nada.
+   Nada aqui mexe na física, nos controles, na partida, no que o chat mostra nem nos emojis.
+   ====================================================================================================================== */
+const PF107 = {pop:null, seta:null, casa:null, ancora:null, ancoraT:0, ret:null, aberta:'', ctx:'', lobbyAbre:null, membro:null,
+  conv:new Map(), pend:null, arrastouT:0, vigia:0, ligado:false, camadaJogo:false, lado:'', engole:0, ctxNovo:''};
+const PF107_CONV_MS = 2*60e3;   // (o mesmo do servidor: a mesma pessoa, um convite a cada 2 min)
+
+/* ---------------------------------------------------------------- 0) o básico */
+function pf107Logado(){ try { return typeof v88Logado === 'function' && v88Logado(); } catch (_) { return false; } }
+function pf107PubDoId(id){ try { return c81Conta(id); } catch (_) { const m = /^c(\d{1,9})$/.exec(String(id || '')); return m ? String(Number(m[1])).padStart(6, '0') : ''; } }
+function pf107Amigo(pub){ try { return !!pub && Array.isArray(V88.amigos) && V88.amigos.some(c => v88Pub(c.idPublico) === pub); } catch (_) { return false; } }
+function pf107Ins(){ try { return lbInsets(); } catch (_) { return {t:0, r:0, b:0, l:0}; } }
+function pf107Ic(nome){
+  try { const i = v88IcEl(nome); i.classList.add('pf107-ic'); return i; }
+  catch (_) { const i = nodo('i', 'pf107-ic'); i.innerHTML = (typeof C81_SVG !== 'undefined' && C81_SVG[nome]) || ''; return i; }
+}
+// um botão grande (o rótulo num <span>, o motivo num <small>: os testes de antes leem o .c81-f-bt span)
+function pf107Bt(txt, cor, ic, fn, sub, rot){
+  const b = novoBotao('c81-f-bt pf107-bt pf107-' + cor, rot || null);
+  b.append(pf107Ic(ic), nodo('span', 'pf107-rot', txt));
+  if (sub){ b.appendChild(nodo('small', 'pf107-sub', sub)); b.classList.add('pf107-com-sub'); }
+  if (fn) b.addEventListener('click', fn);
+  return b;
+}
+function pf107Link(txt, fn, cls){
+  const b = novoBotao('c81-f-bt pf107-link' + (cls ? ' ' + cls : ''));
+  b.appendChild(nodo('span', null, txt)); b.addEventListener('click', fn); return b;
+}
+function pf107Sub(b, t){                                      // o motivo embaixo do rótulo (troca na hora)
+  if (!b) return;
+  let s = b.querySelector('.pf107-sub'); if (!s){ s = nodo('small', 'pf107-sub'); b.appendChild(s); b.classList.add('pf107-com-sub'); }
+  s.textContent = t; b.classList.remove('pf107-pisca'); void b.offsetWidth; b.classList.add('pf107-pisca');
+}
+
+/* ---------------------------------------------------------------- 1) o lugar da janelinha: colada no que foi tocado, dentro da tela */
+function pf107Seta(lado, ret, b){
+  let s = PF107.seta;
+  if (!s){ s = PF107.seta = nodo('i', 'pf107-seta'); s.setAttribute('aria-hidden', 'true'); s.hidden = true; document.body.appendChild(s); }
+  if (!lado || !ret){ s.hidden = true; PF107.lado = ''; return; }
+  let sx, sy;
+  if (lado === 'dir' || lado === 'esq'){
+    sy = Math.max(b.y + 18, Math.min(b.y + b.h - 18, ret.top + ret.height/2));
+    sx = lado === 'dir' ? b.x + 2 : b.x + b.w - 2;
+  } else {
+    sx = Math.max(b.x + 20, Math.min(b.x + b.w - 20, ret.left + Math.min(ret.width/2, 26)));
+    sy = lado === 'baixo' ? b.y + 2 : b.y + b.h - 2;
+  }
+  s.style.left = Math.round(sx) + 'px'; s.style.top = Math.round(sy) + 'px'; s.dataset.lado = lado; s.hidden = false; PF107.lado = lado;
+}
+// ret: o retângulo do nome (ou do cartão) na tela; sem ele, no meio. Tenta do lado direito, embaixo, em cima e à esquerda, na
+// área segura (o entalhe e a barra do iPhone ficam de fora), e corrige se o pai mexer no "fixed" (a caixa do chat animando)
+function pf107Posiciona(el, ret){
+  if (!el || el.hidden) return;
+  const sa = pf107Ins(), M = 8, vw = innerWidth, vh = innerHeight;
+  const x0 = sa.l + M, x1 = vw - sa.r - M, y0 = sa.t + M, y1 = vh - sa.b - M;
+  el.style.maxWidth = Math.max(160, x1 - x0) + 'px'; el.style.maxHeight = Math.max(140, y1 - y0) + 'px';
+  el.style.left = x0 + 'px'; el.style.top = y0 + 'px';
+  const w = el.offsetWidth, h = el.offsetHeight;
+  let lado = '', x = (x0 + x1 - w)/2, y = (y0 + y1 - h)/2;
+  if (ret && (ret.width > 0 || ret.height > 0)){
+    const G = 13, cy = ret.top + ret.height/2, topo = cy - Math.min(30, h/2);
+    const cands = [['dir', ret.right + G, topo], ['baixo', ret.left - 6, ret.bottom + G], ['cima', ret.left - 6, ret.top - G - h], ['esq', ret.left - G - w, topo]];
+    const cabe = c => c[0] === 'dir' ? c[1] + w <= x1 : c[0] === 'esq' ? c[1] >= x0 : c[0] === 'baixo' ? c[2] + h <= y1 : c[2] >= y0;
+    const c = cands.find(cabe) || cands.slice().sort((a, b) => {
+      const sobra = q => q[0] === 'dir' ? x1 - ret.right : q[0] === 'esq' ? ret.left - x0 : q[0] === 'baixo' ? y1 - ret.bottom : ret.top - y0;
+      return sobra(b) - sobra(a);
+    })[0];
+    lado = c[0]; x = c[1]; y = c[2];
+  }
+  x = Math.max(x0, Math.min(x1 - w, x)); y = Math.max(y0, Math.min(y1 - h, y));
+  el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px';
+  const q = el.getBoundingClientRect();                     // (algum pai com transform: o "fixed" fica preso nele; corrige pelo que mediu)
+  if (Math.abs(q.left - Math.round(x)) > .5 || Math.abs(q.top - Math.round(y)) > .5){
+    el.style.left = Math.round(2*Math.round(x) - q.left) + 'px'; el.style.top = Math.round(2*Math.round(y) - q.top) + 'px';
+  }
+  // a pontinha só quando a janelinha ficou mesmo colada (encostada no lado escolhido)
+  const colada = lado && ret && (lado === 'dir' ? Math.abs(x - ret.right) < 30 : lado === 'esq' ? Math.abs(x + w - ret.left) < 30 : lado === 'baixo' ? Math.abs(y - ret.bottom) < 30 : Math.abs(y + h - ret.top) < 30);
+  pf107Seta(colada ? lado : '', ret, {x, y, w, h});
+  el.dataset.pf107Lado = colada ? lado : 'meio';
+}
+
+/* ---------------------------------------------------------------- 2) abrir, fechar e o toque fora */
+function pf107Aberta(){
+  if (PF107.aberta === 'chat') return C81.ficha && !C81.ficha.hidden ? C81.ficha : null;
+  if (PF107.aberta === 'membro') return PF107.pop && !PF107.pop.hidden ? PF107.pop : null;
+  return null;
+}
+function pf107Fecha(){
+  if (PF107.aberta === 'chat'){ try { c81FichaFecha(); } catch (_) {} }
+  else if (PF107.aberta === 'membro') pf107MembroFecha();
+  pf107Desliga();
+}
+function pf107Fora(e){
+  const el = pf107Aberta(); if (!el){ pf107Desliga(); return; }
+  const t = e.target; if (!(t instanceof Node) || el.contains(t)) return;
+  if (CB && CB.pn && t === CB.pn) PF107.engole = performance.now() + 700;   // (o fundo escuro do painel: esse toque só fecha a janelinha)
+  pf107Fecha();
+}
+document.addEventListener('click', e => {
+  if (!PF107.engole) return;
+  const agora = performance.now(), alvo = e.target; if (agora > PF107.engole){ PF107.engole = 0; return; }
+  if (CB && CB.pn && alvo === CB.pn){ PF107.engole = 0; e.stopPropagation(); e.preventDefault(); }
+}, true);
+function pf107Tecla(e){ if (e.key === 'Escape' && pf107Aberta()){ e.stopPropagation(); e.preventDefault(); pf107Fecha(); } }
+// o Esc da v70 fecha a camada de cima (a tela, o painel do chat, a janela): a janelinha passa a ser a de cima enquanto está
+// aberta (o Esc fecha só ela; leve: não prende o foco nem deixa o painel do chat inerte)
+try { if (typeof V70C_LISTA !== 'undefined' && Array.isArray(V70C_LISTA) && !V70C_LISTA.some(d => d && d.q === '.pf107-pop')) V70C_LISTA.unshift({q:'.pf107-pop', fecha:() => pf107Fecha(), leve:true}); } catch (_) {}
+function pf107Gira(){ if (pf107Aberta()) pf107Fecha(); }
+function pf107Vigia(){                                        // a janelinha some junto com o lugar dela (a tela, a sala, o painel, a partida)
+  const el = pf107Aberta(); if (!el){ pf107Desliga(); return; }
+  let some = false;
+  try {
+    const r = NET49.room;
+    if (PF107.ctx === 'tela') some = !lobby.aberto || lobby.tela !== 'chat';
+    else if (PF107.ctx === 'solta') some = lobby.aberto !== PF107.lobbyAbre;
+    else if (PF107.ctx === 'sala') some = !lobby.aberto || lobby.tela !== 'sala' || !r || !PF107.membro || !r.members.some(x => x.id === PF107.membro.id);
+    else if (PF107.ctx === 'painel') some = lobby.aberto || !V93P.el.p || V93P.el.p.hidden || !r || !PF107.membro || !r.members.some(x => x.id === PF107.membro.id) || (typeof PAUSA !== 'undefined' && PAUSA.aberta);
+  } catch (_) {}
+  if (some) pf107Fecha();
+}
+function pf107Liga(){
+  if (!PF107.ligado){
+    PF107.ligado = true;
+    document.addEventListener('pointerdown', pf107Fora, true);
+    document.addEventListener('keydown', pf107Tecla, true);
+    addEventListener('resize', pf107Gira);
+  }
+  clearInterval(PF107.vigia); PF107.vigia = setInterval(pf107Vigia, 400);
+}
+function pf107Desliga(){
+  clearInterval(PF107.vigia); PF107.vigia = 0;
+  if (PF107.seta) PF107.seta.hidden = true;
+  if (pf107Aberta()) return;
+  PF107.aberta = ''; PF107.ctx = ''; PF107.membro = null;
+  if (!PF107.ligado) return;
+  PF107.ligado = false;
+  document.removeEventListener('pointerdown', pf107Fora, true);
+  document.removeEventListener('keydown', pf107Tecla, true);
+  removeEventListener('resize', pf107Gira);
+}
+// a janela de sempre (o perfil, a ficha do árbitro, a confirmação) por cima da partida: a camada da v103 (só a janela aparece)
+function pf107SobreJogo(){
+  try {
+    if (lobby.aberto || !LB || !LB.raiz) return;
+    PF107.camadaJogo = true;
+    LB.raiz.classList.add('v103-pop-jogo'); LB.raiz.hidden = false;
+  } catch (_) {}
+}
+
+/* ---------------------------------------------------------------- 3) o que cada botão faz */
+function pf107PrecisaConta(oque){
+  const txt = 'Entre na sua conta para ' + (oque || 'ver o perfil') + '.';
+  if (lobby.aberto && typeof v84AbreLogin === 'function' && window.RACHA84 && !window.RACHA84.embutido && typeof v88TemPlataforma === 'function' && v88TemPlataforma()){
+    pf107Fecha(); try { cbFecha(); } catch (_) {}
+    try { aviso(txt); } catch (_) {}
+    v84AbreLogin('entrar');                                   // (o mesmo ENTRAR NA CONTA das telas que pedem conta)
+    return;
+  }
+  try { c81Aviso(txt); } catch (_) { try { x49Toast(txt); } catch (_) {} }
+}
+function pf107Perfil(pub){                                    // o perfil do jogo de outra pessoa (no lobby, na sala e por cima da partida)
+  if (!pub) return;
+  if (!pf107Logado()) return pf107PrecisaConta('ver o perfil');
+  pf107Fecha();
+  if (typeof v103PerfilAbre === 'function') return v103PerfilAbre(pub);
+  if (typeof v88AbrePerfil === 'function') v88AbrePerfil(pub);
+}
+function pf107MeuPerfil(){                                    // o seu: a tela do PERFIL no lobby; na partida, o da conta por cima do jogo
+  pf107Fecha();
+  if (lobby.aberto){
+    try { cbFecha(); } catch (_) {}
+    const volta = lobby.tela === 'sala' || lobby.tela === 'chat' ? lobby.tela : null;   // (o VOLTAR do perfil volta para a sala ou para o chat)
+    if (lobby.tela !== 'perfil') abreTela('perfil', volta);
+    return;
+  }
+  if (!pf107Logado() || typeof v88PerfilPinta !== 'function') return x49Toast('O seu perfil fica no menu: abra depois da partida.');
+  try { cbFecha(); } catch (_) {}
+  pf107SobreJogo();
+  abrePop(c => { c.classList.add('v88-pop', 'v88-perfil-pop'); v88Carregando(c, 'Abrindo o perfil…'); });
+  v88Q('social.perfil', {idPublico:V88.eu}).then(p => { if (!LB.pop.hidden && LB.popCaixa.classList.contains('v88-perfil-pop')) v88PerfilPinta(p); }).catch(e => {
+    if (!LB.pop.hidden && LB.popCaixa.classList.contains('v88-perfil-pop')){ LB.popCaixa.textContent = ''; v88Erro(LB.popCaixa, e.message); const a = nodo('div', 'pop-acoes'); a.appendChild(botaoPop('FECHAR', '', () => { som.clique(); fechaPop(); })); LB.popCaixa.appendChild(a); }
+  });
+}
+function pf107Bloqueia(pub, nome){
+  if (!pf107Logado()) return pf107PrecisaConta('bloquear');
+  pf107Fecha();
+  if (!lobby.aberto){ try { cbFecha(); } catch (_) {} pf107SobreJogo(); }
+  v88Bloqueia(pub, nome);
+}
+// CONVIDAR: como o botão fica (apagado com o motivo, ou com a dica de sempre) — a conferência de verdade é a do servidor
+function pf107ConviteEstado(a){
+  if (!a.conta) return {apagado:true, sub:'sem conta: só quem tem conta'};
+  if (!pf107Logado()) return {apagado:true, sub:'entre na conta para convidar'};
+  if (a.escondida) return {apagado:true, sub:'mensagem escondida'};
+  const r = NET49.room, id = 'c' + Number(a.conta);
+  if (r && !r.local && Array.isArray(r.members) && r.members.some(x => x && x.id === id)) return {apagado:true, sub:'já está na sua sala'};
+  const t = PF107.conv.get(a.conta);
+  if (t && Date.now() - t < PF107_CONV_MS) return {apagado:true, rot:'CONVIDADO', sub:'convite enviado'};
+  const amigo = pf107Amigo(a.conta);
+  if (!a.mid && !amigo) return {apagado:true, sub:'só pelo chat ou para amigos'};
+  if (!r) return {sub:'crie ou entre numa sala', dica:true};
+  if (r.local) return {sub:'só nas salas online', dica:true};
+  if (r.ranked) return {sub:'a ranqueada não recebe', dica:true};
+  return {sub:(amigo ? 'seu amigo · ' : '') + 'para a sua sala'};
+}
+function pf107Convida(a, b){
+  som.clique();
+  const diz = t => { try { c81Aviso(t); } catch (_) {} pf107Sub(b, t.replace(/\.$/, '')); try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {} };
+  const r = NET49.room;
+  if (!pf107Logado()) return diz('Entre na sua conta para convidar.');
+  if (!r) return diz('Crie ou entre numa sala para convidar.');
+  if (r.local) return diz('A sala neste aparelho não recebe convidados: crie uma sala online para convidar.');
+  if (r.ranked) return diz('A ranqueada não recebe convidados.');
+  if (!NET49.id || !NET49.ws || NET49.ws.readyState !== 1){ try { v88Conecta(); } catch (_) {} return diz('Conectando às salas… tente de novo em instantes.'); }
+  PF107.pend = {conta:a.conta, nome:a.nome || '', ate:Date.now() + 10000};
+  PF107.conv.set(a.conta, Date.now());
+  if (pf107Amigo(a.conta) || !a.mid) v88Convida(a.conta, 'sala');          // os amigos: pelo ID (o caminho de sempre)
+  else net49Send({type:'convite', mid:a.mid, canal:a.canal || undefined}); // quem não é amigo: pelo número da mensagem
+  pf107Fecha();
+}
+
+/* ---------------------------------------------------------------- 4) a janelinha do chat (a ficha de sempre, arrumada) */
+function pf107Classes(F){                                      // as peças da ficha com as classes da janelinha (o mesmo desenho nas duas)
+  const q = s => F.querySelector(s);
+  F.classList.add('pf107-pop');
+  const cab = q('.c81-f-cab'); if (cab) cab.classList.add('pf107-cab');
+  const tp = q('.c81-f-tampa'); if (tp) tp.classList.add('pf107-tampa');
+  const tx = q('.c81-f-tx'); if (tx) tx.classList.add('pf107-id');
+  const x = q('.c81-f-x'); if (x) x.classList.add('pf107-x');
+  const nota = q('.c81-f-nota'); if (nota){ nota.classList.add('pf107-nota'); if (!nota.textContent) nota.hidden = true; }
+  const ac = q('.c81-f-acoes'); if (ac) ac.classList.add('pf107-acoes');
+  return {cab, tp, tx, x, nota, ac};
+}
+function pf107FichaMonta(m, sala){
+  const F = C81.ficha; if (!F || F.hidden || !m) return;
+  const id = c81Id(m, sala), conta = c81Conta(id), eu = c81Eu(m, sala), nome = c81Nome(m, sala);
+  const mid = sala ? m.mid : m.id, canal = sala ? (m.canal === 'equipe' ? 'equipe' : 'sala') : 'brasil';
+  const P = pf107Classes(F), ac = P.ac; if (!ac) return;
+  F.classList.remove('v88-f-den', 'pf107-den'); F.classList.add('pf107-chat');
+  F.setAttribute('aria-label', 'Jogador ' + nome);
+  ac.textContent = '';
+  // PERFIL (o seu: MEU PERFIL)
+  if (eu) ac.appendChild(pf107Bt('MEU PERFIL', 'azul', 'perfil', () => { som.clique(); pf107MeuPerfil(); }, '', 'Abrir o seu perfil'));
+  else if (conta) ac.appendChild(pf107Bt('PERFIL', 'azul', 'perfil', () => { som.clique(); pf107Perfil(conta); }, pf107Logado() ? '' : 'entre na conta para ver', 'Ver o perfil de ' + nome));
+  else { const k = pf107Bt('PERFIL', 'azul', 'perfil', null, 'sem conta'); k.disabled = true; k.setAttribute('aria-label', nome + ' não tem conta (sem perfil)'); ac.appendChild(k); }
+  if (!eu){
+    // CONVIDAR (para a sua sala)
+    const a = {conta, mid, canal, nome, escondida:!!m.escondida};
+    const st = pf107ConviteEstado(a);
+    const k = pf107Bt(st.rot || 'CONVIDAR', 'verde', 'convite', null, st.sub, 'Convidar ' + nome + ' para a sua sala');
+    k.disabled = !!st.apagado; if (st.dica) k.classList.add('pf107-dica');
+    k.addEventListener('click', () => pf107Convida(a, k));
+    ac.appendChild(k);
+    // DENUNCIAR (a mensagem; a denunciada fica apagada)
+    if (!m.escondida){
+      const ja = !!mid && BRASIL.denunciados.has(mid);
+      const d = pf107Bt(ja ? 'DENUNCIADA' : 'DENUNCIAR', 'vermelho', 'bandeira', () => {
+        if (!mid || BRASIL.denunciados.has(mid)) return;
+        som.clique();
+        if (typeof v88DenunciaFicha === 'function') return v88DenunciaFicha({canal, mid, texto:c81Texto(m, sala), nome});
+        BRASIL.denunciados.add(mid);                          // (sem a v88: a denúncia direta da v81)
+        if (sala) net49Send({type:'report', mid}); else brasilSend({type:'brasil_report', id:mid});
+        c81FichaFecha(); c81Aviso('Denúncia enviada. Com mais denúncias a mensagem some e quem escreveu fica um tempo sem falar.');
+      }, ja ? 'já foi para a moderação' : '', 'Denunciar a mensagem de ' + nome);
+      if (ja || !mid) d.disabled = true;
+      ac.appendChild(d);
+    }
+    // embaixo: silenciar (só para você) e bloquear (a conta)
+    const lk = nodo('div', 'pf107-links'), mudo = c81Mudo(id);
+    lk.appendChild(pf107Link(mudo ? 'DEIXAR FALAR' : 'SILENCIAR', () => {
+      som.clique();
+      if (mudo) BRASIL.silenciados.delete(id); else BRASIL.silenciados.add(id);
+      brasilSalvarMudo(); c81FichaFecha(); cbPintaPainel(); cbPinta();
+      try { if (BRASIL.aberto) brasilRenderLista(true); } catch (_) {}
+      c81Aviso(mudo ? nome + ' voltou a aparecer para você.' : nome + ' silenciado: as mensagens dele não aparecem mais para você.');
+    }));
+    if (conta && pf107Logado()) lk.appendChild(pf107Link('BLOQUEAR', () => { som.clique(); pf107Bloqueia(conta, nome); }, 'pf107-link-verm'));
+    ac.appendChild(lk);
+  }
+}
+// a do clube e a dos amigos (v88FichaCh: a mesma caixa): PERFIL, CONVIDAR (amigo: pelo ID; o clube: pela mensagem), DENUNCIAR
+function pf107FichaChMonta(m, canal){
+  const F = C81.ficha; if (!F || F.hidden || !m) return;
+  const pub = /^\d{6,9}$/.test(String(m.de)) ? v88Pub(m.de) : '', nome = m.nome || 'Jogador', mudo = v88Silenciado(m.de);
+  const P = pf107Classes(F), ac = P.ac; if (!ac) return;
+  F.classList.remove('v88-f-den', 'pf107-den'); F.classList.add('pf107-chat');
+  F.setAttribute('aria-label', 'Jogador ' + nome);
+  ac.textContent = '';
+  if (pub) ac.appendChild(pf107Bt('PERFIL', 'azul', 'perfil', () => { som.clique(); pf107Perfil(pub); }, '', 'Ver o perfil de ' + nome));
+  else { const k = pf107Bt('PERFIL', 'azul', 'perfil', null, 'sem conta'); k.disabled = true; ac.appendChild(k); }
+  const a = {conta:pub, mid:canal === 'clube' ? m.mid : '', canal:'clube', nome, escondida:!!m.escondida};
+  const st = pf107ConviteEstado(a);
+  const k = pf107Bt(st.rot || 'CONVIDAR', 'verde', 'convite', null, st.sub, 'Convidar ' + nome + ' para a sua sala');
+  k.disabled = !!st.apagado; if (st.dica) k.classList.add('pf107-dica');
+  k.addEventListener('click', () => pf107Convida(a, k));
+  ac.appendChild(k);
+  if (m.mid){
+    const ja = BRASIL.denunciados.has(m.mid);
+    const d = pf107Bt(ja ? 'DENUNCIADA' : 'DENUNCIAR', 'vermelho', 'bandeira', () => { if (BRASIL.denunciados.has(m.mid)) return; som.clique(); v88DenunciaFicha({canal, mid:m.mid, texto:m.texto, nome}); }, ja ? 'já foi para a moderação' : '');
+    d.disabled = ja; ac.appendChild(d);
+  }
+  const lk = nodo('div', 'pf107-links');
+  lk.appendChild(pf107Link(mudo ? 'DEIXAR FALAR' : 'SILENCIAR', () => { som.clique(); c81FichaFecha(); v88Silencia(m.de, !mudo); c81Aviso(mudo ? nome + ' voltou a aparecer para você.' : nome + ' silenciado (só para você).'); cbPintaPainel(); }));
+  if (pub) lk.appendChild(pf107Link('BLOQUEAR', () => { som.clique(); pf107Bloqueia(pub, nome); }, 'pf107-link-verm'));
+  ac.appendChild(lk);
+}
+// onde ela mora: dentro do painel do chat (quando ele está aberto e o nome é dele) ou solta por cima de tudo (a tela inteira do
+// Chat do Brasil, a ficha aberta com o painel fechado)
+function pf107Hospeda(F, fora){
+  if (!PF107.casa) PF107.casa = F.parentNode;
+  if (fora){ if (F.parentNode !== document.body) document.body.appendChild(F); F.classList.add('pf107-fora'); }
+  else { if (PF107.casa && F.parentNode !== PF107.casa) PF107.casa.appendChild(F); F.classList.remove('pf107-fora'); }
+}
+function pf107Mostra(F, anc, ctx){
+  if (!F || F.hidden) return;
+  if (PF107.aberta === 'membro') pf107MembroFecha();
+  const noPainel = !!(CB.aberto && CB.pn && !CB.pn.hidden && (!anc || CB.pn.contains(anc)));
+  pf107Hospeda(F, !noPainel);
+  if (noPainel){ try { const cx = CB.pn.querySelector('.c81-caixa'); if (cx && cx.getAnimations) for (const a of cx.getAnimations()) a.finish(); } catch (_) {} }
+  PF107.ret = anc ? anc.getBoundingClientRect() : null;
+  PF107.aberta = 'chat'; PF107.ctx = noPainel ? 'painel-chat' : (ctx || 'solta'); PF107.lobbyAbre = lobby.aberto;
+  pf107Posiciona(F, PF107.ret);
+  pf107Liga();
+}
+function pf107FichaSolta(){                                   // fechou: a ficha volta para a caixa do painel, sem o jeito de janelinha
+  const F = C81.ficha; if (!F) return;
+  F.classList.remove('pf107-pop', 'pf107-chat', 'pf107-fora', 'pf107-den');
+  for (const k of ['left', 'top', 'maxWidth', 'maxHeight']) F.style[k] = '';
+  delete F.dataset.pf107Lado;
+  if (PF107.casa && F.parentNode !== PF107.casa) PF107.casa.appendChild(F);
+  if (PF107.aberta === 'chat'){ PF107.aberta = ''; pf107Desliga(); }
+}
+
+/* ---------------------------------------------------------------- 5) os ganchos do chat */
+// o nome tocado (o painel: o .c81-nome de cada linha, também os do clube e dos amigos): a janelinha abre colada nele
+document.addEventListener('click', e => {
+  const a = e.target instanceof Element ? e.target.closest('.c81-nome') : null;
+  if (a){ PF107.ancora = a; PF107.ancoraT = performance.now(); }
+}, true);
+if (typeof c81FichaAbre === 'function'){
+  const c81FichaAbreAntes107 = c81FichaAbre;
+  c81FichaAbre = function(m, sala){
+    const anc = PF107.ancora && PF107.ancora.isConnected && performance.now() - PF107.ancoraT < 800 ? PF107.ancora : null, ctx = PF107.ctxNovo || '';
+    PF107.ancora = null; PF107.ctxNovo = '';
+    const out = c81FichaAbreAntes107.apply(this, arguments);
+    try { pf107FichaMonta(m, sala); pf107Mostra(C81.ficha, anc, ctx); } catch (e) { console.error('v107 a janelinha do nome', e); }
+    return out;
+  };
+}
+if (typeof v88FichaCh === 'function'){
+  const v88FichaChAntes107 = v88FichaCh;
+  v88FichaCh = function(m, canal){
+    const anc = PF107.ancora && PF107.ancora.isConnected && performance.now() - PF107.ancoraT < 800 ? PF107.ancora : null;
+    PF107.ancora = null;
+    const out = v88FichaChAntes107.apply(this, arguments);
+    try { pf107FichaChMonta(m, canal); pf107Mostra(C81.ficha, anc); } catch (e) { console.error('v107 a janelinha do nome (clube/amigos)', e); }
+    return out;
+  };
+}
+if (typeof c81FichaFecha === 'function'){
+  const c81FichaFechaAntes107 = c81FichaFecha;
+  c81FichaFecha = function(){ const r = c81FichaFechaAntes107.apply(this, arguments); try { pf107FichaSolta(); } catch (_) {} return r; };
+}
+// a denúncia com o motivo (v88): troca o conteúdo da ficha — dentro da janelinha, com o mesmo desenho, no mesmo lugar
+if (typeof v88DenunciaFicha === 'function'){
+  const v88DenunciaFichaAntes107 = v88DenunciaFicha;
+  v88DenunciaFicha = function(){
+    const r = v88DenunciaFichaAntes107.apply(this, arguments);
+    try {
+      const F = C81.ficha;
+      if (F && !F.hidden && PF107.aberta === 'chat' && F.classList.contains('pf107-pop')){
+        pf107Classes(F); F.classList.add('pf107-den');
+        const volta = F.querySelector('.v88-f-volta'), envia = F.querySelector('.v88-f-envia');
+        if (volta) volta.classList.add('pf107-bt', 'pf107-cinza');
+        if (envia) envia.classList.add('pf107-bt', 'pf107-vermelho');
+        pf107Posiciona(F, PF107.ret);
+      }
+    } catch (e) { console.error('v107 a denúncia na janelinha', e); }
+    return r;
+  };
+}
+// a tela inteira do Chat do Brasil: o nome e a tampinha abrem a janelinha (antes: só o SILENCIAR numa janela no meio)
+if (typeof brasilRenderLista === 'function'){
+  const brasilRenderListaAntes107 = brasilRenderLista;
+  brasilRenderLista = function(){
+    const r = brasilRenderListaAntes107.apply(this, arguments);
+    try {
+      const L = (BRASIL.msgs || []).filter(m => m && !BRASIL.silenciados.has(m.from));
+      document.querySelectorAll('#br-lista .br-msg').forEach((d, i) => {
+        const m = L[i]; if (m && m.id) d.dataset.pf107Id = m.id;
+        const nm = d.querySelector('.br-nome');
+        if (nm && !nm.hasAttribute('role')){ nm.setAttribute('role', 'button'); nm.tabIndex = 0; nm.style.cursor = 'pointer'; nm.setAttribute('aria-label', 'Ver ' + (m && m.nome || 'Jogador')); }
+      });
+    } catch (_) {}
+    return r;
+  };
+}
+function pf107MsgDaLinha(row){
+  const id = row && row.dataset.pf107Id;
+  if (id){ const m = (BRASIL.msgs || []).find(x => x && x.id === id); if (m) return m; }
+  const linhas = Array.from(document.querySelectorAll('#br-lista .br-msg')), i = linhas.indexOf(row);
+  return (BRASIL.msgs || []).filter(m => m && !BRASIL.silenciados.has(m.from))[i] || null;
+}
+function pf107TelaToque(e){
+  const t = e.target instanceof Element ? e.target.closest('#br-lista .br-nome, #br-lista .br-tampa') : null; if (!t) return false;
+  const row = t.closest('.br-msg'), m = pf107MsgDaLinha(row); if (!m) return false;
+  e.preventDefault(); e.stopImmediatePropagation();
+  try { som.clique(); } catch (_) {}
+  PF107.ancora = (row && row.querySelector('.br-nome')) || t; PF107.ancoraT = performance.now(); PF107.ctxNovo = 'tela';
+  c81FichaAbre(m, false);
+  return true;
+}
+document.addEventListener('click', pf107TelaToque, true);
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target instanceof Element && e.target.matches('#br-lista .br-nome')) pf107TelaToque(e); }, true);
+
+/* ---------------------------------------------------------------- 6) a janelinha de quem está na sala (o cartão e o painel da partida) */
+function pf107PopEl(){
+  if (!PF107.pop){
+    const p = PF107.pop = nodo('div', 'pf107-pop pf107-membro'); p.hidden = true;
+    p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Jogador');
+    document.body.appendChild(p);
+  }
+  return PF107.pop;
+}
+function pf107MembroFecha(){
+  const p = PF107.pop; if (p && !p.hidden){ p.hidden = true; p.textContent = ''; }
+  if (PF107.aberta === 'membro'){ PF107.aberta = ''; PF107.membro = null; pf107Desliga(); }
+}
+function pf107NomeTime(t){ try { return typeof TIME80 !== 'undefined' && TIME80[t] ? TIME80[t].nome : (t ? 'Time B' : 'Time A'); } catch (_) { return t ? 'Time B' : 'Time A'; } }
+function pf107Membro(m, anc, ctx){
+  if (!m) return;
+  try { if (PF107.aberta === 'chat') c81FichaFecha(); } catch (_) {}
+  const r = NET49.room, pub = m.bot ? '' : pf107PubDoId(m.id), eu = m.id === NET49.id, arb = !!r && m.id === (r.admin || r.host);
+  const p = pf107PopEl(); p.textContent = '';
+  const cab = nodo('div', 'pf107-cab'), tp = nodo('span', 'pf107-tampa');
+  try { const c = brasilTampa({skin:m.skin, avatar:m.avatar}), k = nodo('canvas'); k.width = k.height = 80; k.getContext('2d').drawImage(c, 0, 0); k.setAttribute('aria-hidden', 'true'); tp.appendChild(k); } catch (_) {}
+  const tx = nodo('div', 'pf107-id'), b = nodo('b', null, m.name || 'Jogador');
+  try { v79SeloMarca(b, eu ? v79SeloEu() : v79SeloDoMembro(m.id)); } catch (_) {}
+  const t = r && m.slot >= 0 ? Math.floor(m.slot/r.n) : -1, det = [];
+  det.push(pub ? 'ID ' + pub : 'sem conta');
+  det.push(t >= 0 ? pf107NomeTime(t) : m.banco ? 'no banco' : 'assistindo');
+  if (arb) det.push('árbitro');
+  tx.append(b, nodo('small', null, det.join(' · ')));
+  const x = novoBotao('pf107-x', 'Fechar'); x.textContent = '✕'; x.addEventListener('click', () => { som.clique(); pf107MembroFecha(); });
+  cab.append(tp, tx, x);
+  const ac = nodo('div', 'pf107-acoes');
+  if (eu) ac.appendChild(pf107Bt('MEU PERFIL', 'azul', 'perfil', () => { som.clique(); pf107MeuPerfil(); }, '', 'Abrir o seu perfil'));
+  else if (pub) ac.appendChild(pf107Bt('PERFIL', 'azul', 'perfil', () => { som.clique(); pf107Perfil(pub); }, pf107Logado() ? 'estatísticas e adicionar' : 'entre na conta para ver', 'Ver o perfil de ' + (m.name || 'Jogador')));
+  else { const k = pf107Bt('PERFIL', 'azul', 'perfil', null, 'sem conta'); k.disabled = true; ac.appendChild(k); }
+  p.append(cab, ac);
+  const nota = ctx === 'sala' ? (eu ? 'Só o árbitro escolhe os times. Peça para ele te colocar.' : arb ? (m.name || 'Ele') + ' é o árbitro da sala.' : 'Só o árbitro mexe nos times.') : '';
+  if (nota) p.appendChild(nodo('p', 'pf107-nota', nota));
+  p.setAttribute('aria-label', 'Jogador ' + (m.name || ''));
+  p.hidden = false;
+  PF107.aberta = 'membro'; PF107.ctx = ctx || 'sala'; PF107.membro = {id:m.id}; PF107.lobbyAbre = lobby.aberto;
+  PF107.ret = anc ? anc.getBoundingClientRect() : null;
+  pf107Posiciona(p, PF107.ret);
+  pf107Liga();
+  try { x.focus({preventScroll:true}); } catch (_) {}
+}
+// a tela da sala: quem não é o árbitro toca no cartão e ganha a janelinha com o PERFIL (o árbitro continua com a ficha dele)
+if (typeof slClique === 'function'){
+  const slCliqueAntes107 = slClique;
+  slClique = function(e){
+    try {
+      const r = NET49.room, card = e && e.target && e.target.closest ? e.target.closest('.sl-card') : null;
+      if (card && r && typeof v103SalaSrv === 'function' && v103SalaSrv(r) && !(typeof v103Arb === 'function' && v103Arb(r))){
+        const m = r.members.find(x => x.id === card.dataset.id);
+        if (m && !m.bot){ som.clique(); pf107Membro(m, card, 'sala'); return; }
+      }
+    } catch (er) { console.error('v107 o cartão da sala', er); }
+    return slCliqueAntes107.apply(this, arguments);
+  };
+}
+// a ficha do árbitro (o cartão de alguém na sala ou o nome no painel da partida): o VER PERFIL primeiro (só para contas)
+function pf107FichaArbitro(m){
+  const c = LB.popCaixa; if (!m || m.bot || LB.pop.hidden || !c.classList.contains('v103-ficha')) return;
+  const pub = pf107PubDoId(m.id); if (!pub || m.id === NET49.id) return;
+  const a = c.querySelector('.v103-acoes'); if (!a || a.querySelector('.pf107-ver')) return;
+  const b = botaoPop('VER PERFIL', 'azul pf107-ver', () => { som.clique(); fechaPop(); pf107Perfil(pub); });
+  b.setAttribute('aria-label', 'Ver o perfil de ' + (m.name || 'Jogador'));
+  a.insertBefore(b, a.firstChild);
+}
+if (typeof v103Ficha === 'function'){
+  const v103FichaAntes107 = v103Ficha;
+  v103Ficha = function(m){
+    pf107Fecha();
+    const out = v103FichaAntes107.apply(this, arguments);
+    try { pf107FichaArbitro(m); } catch (e) { console.error('v107 a ficha do árbitro', e); }
+    return out;
+  };
+  try { if (window.RachaArbitro103) window.RachaArbitro103.ficha = v103Ficha; } catch (_) {}   // (quem abre pela API também ganha o VER PERFIL)
+}
+// o painel dos jogadores da partida: tocar num nome (o árbitro: a ficha dele por cima do jogo; os outros: a janelinha). O
+// segurar e arrastar do árbitro é o da v104 (pointer): o toque que termina um arrasto não abre nada
+function pf107PainelToque(li){
+  const r = NET49.room, id = li && li.dataset.id; if (!r || !id || !NET49.playing) return;
+  const m = (r.members || []).find(x => x && x.id === id); if (!m || m.bot) return;
+  const arb = typeof v104Arb === 'function' ? v104Arb() : (typeof v103Arb === 'function' && v103Arb(r));
+  if (arb && typeof v103Ficha === 'function'){ try { som.clique(); } catch (_) {} pf107SobreJogo(); v103Ficha(m); return; }
+  try { som.clique(); } catch (_) {}
+  pf107Membro(m, li, 'painel');
+}
+// o painel é só para ver (pointer-events:none: o toque passa para o jogo); as linhas de quem é gente de verdade passam a
+// receber o toque (o resto do painel continua deixando passar)
+if (typeof v95Linha === 'function'){
+  const v95LinhaAntes107 = v95Linha;
+  v95Linha = function(o){
+    const li = v95LinhaAntes107.apply(this, arguments);
+    try { if (o && o.id && !o.bot && o.st !== 'vazio' && o.st !== 'bot' && NET49.playing){ li.classList.add('pf107-toca'); li.setAttribute('role', 'button'); li.setAttribute('aria-label', 'Ver ' + (o.nome || 'Jogador')); } } catch (_) {}
+    return li;
+  };
+}
+if (typeof v104Fim === 'function'){
+  const v104FimAntes107 = v104Fim;
+  v104Fim = function(){ try { if (typeof V104D !== 'undefined' && V104D.arr) PF107.arrastouT = performance.now(); } catch (_) {} return v104FimAntes107.apply(this, arguments); };
+}
+try {
+  if (typeof V93P !== 'undefined' && V93P.el && V93P.el.p) V93P.el.p.addEventListener('click', e => {
+    if (performance.now() - PF107.arrastouT < 700) return;
+    try { if (typeof V104D !== 'undefined' && (V104D.arr || V104D.ini)) return; } catch (_) {}
+    const li = e.target instanceof Element ? e.target.closest('li[data-id]') : null; if (!li || !V93P.el.p.contains(li)) return;
+    pf107PainelToque(li);
+  });
+} catch (e) { console.error('v107 o painel da partida', e); }
+
+/* ---------------------------------------------------------------- 7) as janelas de sempre: por cima da partida, o seu perfil e o convite pelo chat */
+const abrePopAntes107 = abrePop;
+abrePop = function(){
+  try { if (PF107.camadaJogo && !lobby.aberto && NET49.playing && LB.raiz){ LB.raiz.classList.add('v103-pop-jogo'); LB.raiz.hidden = false; } } catch (_) {}
+  const r = abrePopAntes107.apply(this, arguments);
+  try { pf107ConviteNota(); } catch (_) {}
+  return r;
+};
+const fechaPopAntes107 = fechaPop;
+fechaPop = function(){
+  const r = fechaPopAntes107.apply(this, arguments);
+  setTimeout(() => { try { if (LB.pop.hidden) PF107.camadaJogo = false; } catch (_) {} }, 0);   // (a confirmação que abre logo depois continua por cima)
+  return r;
+};
+if (typeof v88PerfilPinta === 'function'){                    // o seu perfil (a relação "eu"): sem bloquear, silenciar nem denunciar você mesmo
+  const v88PerfilPintaAntes107 = v88PerfilPinta;
+  v88PerfilPinta = function(p){
+    const r = v88PerfilPintaAntes107.apply(this, arguments);
+    try { if (p && p.relacao === 'eu') for (const b of LB.popCaixa.querySelectorAll('.v88-pf-mais .v88-link')) if ((b.textContent || '').trim() !== 'Fechar') b.remove(); } catch (_) {}
+    return r;
+  };
+}
+function pf107ConviteNota(){                                  // quem recebe o convite pelo chat: a janela de sempre diz de onde veio
+  const c = LB.popCaixa; if (!c || !c.classList.contains('v88-convite-pop') || c.querySelector('.pf107-conv-nota')) return;
+  const h = c.querySelector('h2'); if (!h) return;
+  const cv = (V88.convites || []).slice().reverse().find(x => x && x.via === 'chat' && ((x.de && x.de.nome) || 'Um amigo') + ' chamou você!' === h.textContent);
+  if (!cv) return;
+  h.insertAdjacentElement('afterend', nodo('p', 'pop-txt pf107-conv-nota', cv.amigo ? 'Pelo chat · vocês são amigos' : 'Pelo chat · vocês ainda não são amigos'));
+}
+// o que o servidor responde ao convite: na partida (o lobby escondido) e com o painel do chat aberto, o aviso aparece também
+const net49MessageAntes107 = net49Message;
+net49Message = function(m){
+  const out = net49MessageAntes107.apply(this, arguments);
+  try {
+    if (m && (m.type === 'convite_enviado' || m.type === 'convite_erro')){
+      const P0 = PF107.pend;
+      if (P0 && Date.now() < P0.ate){
+        PF107.pend = null;
+        if (m.type === 'convite_erro' && !/já convidou/.test(m.motivo || '')) PF107.conv.delete(P0.conta);
+      }
+      const t = m.type === 'convite_enviado' ? 'Convite enviado para ' + (m.nome || 'a pessoa') + '.' : (m.motivo || 'O convite não foi.');
+      if (CB.aberto || !lobby.aberto) c81Aviso(t);
+    }
+  } catch (_) {}
+  return out;
+};
+
+window.RachaPerfil107 = {
+  abre:(m, sala, el) => { if (el){ PF107.ancora = el; PF107.ancoraT = performance.now(); } return c81FichaAbre(m, sala); },
+  membro:(m, el, ctx) => pf107Membro(m, el, ctx || 'sala'), painel:li => pf107PainelToque(li), fecha:() => pf107Fecha(),
+  estado:() => { const el = pf107Aberta(), q = el ? el.getBoundingClientRect() : null, s = PF107.seta && !PF107.seta.hidden ? PF107.seta.getBoundingClientRect() : null;
+    return {aberta:el ? PF107.aberta : '', ctx:PF107.ctx, lado:PF107.lado, caixa:q ? {x:q.left, y:q.top, w:q.width, h:q.height} : null, seta:s ? {x:s.left + s.width/2, y:s.top + s.height/2} : null,
+      ancora:PF107.ret ? {x:PF107.ret.left, y:PF107.ret.top, w:PF107.ret.width, h:PF107.ret.height} : null, fora:!!(el && !el.closest('#cp')), area:pf107Ins()}; },
+  convite:a => pf107ConviteEstado(a), limites:{mesmaPessoaMs:PF107_CONV_MS}
+};
+try { if (C81.ficha && !PF107.casa) PF107.casa = C81.ficha.parentNode; } catch (_) {}   // (a caixa do painel: para onde a ficha volta)
+
+/* ======================================================================= RACHA v107 · arrastar os jogadores na sala e na partida (tools/v107/painel.js) */
+/* ---------------------------------------------------------------- tools/v107/painel.js */
+/* ======================================================================================================================
+   RACHA v107 · ARRASTAR OS JOGADORES NA SALA E NA PARTIDA (o árbitro arrasta; a faixa conta para a sala quem foi movido)
+   O pedido (05/11/2026): "No vídeo aparece o botão pausar, cartões e o dos players; nos players dá para arrastar o player para
+   o time ou reserva. Quero essa função no meio da partida e na sala quando cria, pois é mais prático arrastando." (o vídeo era
+   de outro jogo — as três colunas, o arrastar e a faixa de quem foi movido —: de lá vem só o jeito; os desenhos e os textos
+   são do RACHA).
+     1) a SALA online (a do servidor, antes e durante a partida): o árbitro aperta o cartão de alguém e arrasta. O arrasto só
+        começa depois de 8 px — tocar sem mexer continua abrindo a ficha da v103 (o mesmo slClique → v103Ficha), e o segurar
+        parado e a rolagem das colunas continuam como eram. A cópia do cartão vai com o dedo, com a etiqueta do que acontece ao
+        soltar, e o lugar embaixo acende:
+          – o OUTRO TIME (a primeira vaga livre dele; o time cheio acende vermelho: solte em cima de alguém para trocar);
+          – uma VAGA LIVRE (entra ali);
+          – o cartão de OUTRA PESSOA (os dois trocam; quem assiste entra no lugar e quem estava vai para o banco);
+          – QUEM ASSISTE (o banco).
+        Ao soltar vão as mesmas ações do servidor da ficha (adm mover e reserva, pelo v103Manda): o servidor confere tudo, como
+        sempre. Quem não é o árbitro não arrasta. Na coluna que rola, o dedo na vertical rola a coluna e de lado arrasta;
+     2) a PARTIDA (o painel dos jogadores da v104): o arrasto começa com o movimento (os mesmos 8 px), sem esperar o meio
+        segundo — o segurar continua valendo, o banco continua à mão e tocar continua chegando como toque (o click); a cópia
+        do nome sai com a tampinha (o cloneNode deixava o canvas em branco), é feita do nome que está na tela (o painel se refaz
+        quando o ping muda) e nem ela nem os filhos recebem toques (senão ela esconderia o lugar embaixo do dedo);
+     3) a FAIXA: cada mudança do árbitro (o servidor já manda para a sala a linha "fulano foi para o Time B" no chat) vira uma
+        faixa curta em cima, para todo mundo da sala, na tela da sala e na partida: "fulano foi para o TIME B" / "... foi para o
+        BANCO" (com a troca embaixo, quando teve), com os nomes dos times do jogo (TIME80).
+   Depois de um arrasto, o click que o navegador manda no fim não abre nada (nem a ficha nem o que tocar no painel abrir).
+   A sala NESTE APARELHO (você e os bots) continua como era: tocar no cartão (ela não tem as ações do servidor).
+   ====================================================================================================================== */
+const PN107 = {ini:null, arr:null, fantasma:null, alvo:null, fimT:-1e9, faixa:null, faixaT:0, faixaMs:2600};   // (faixaMs: quanto a faixa fica)
+const PN107_LIMIAR = 8;                                                   // (px na tela: até aqui é toque; depois, arrasto)
+const PN107_DICA = 'ÁRBITRO: arraste um jogador para o banco, para uma vaga ou para outro jogador (troca)';
+const PN107_LEGENDA = ' · arraste ou toque num jogador: outro time, vaga, banco ou troca — vale também com a partida rolando';   // (cabe como a de antes)
+const pn107Calmo = () => { try { return !!CONTA.menosAnim; } catch (_) { return false; } };
+const pn107Nome = m => String(m && m.name || 'Jogador').toUpperCase();
+function pn107CopiaTelas(de, para){                                       // (o cloneNode não copia o desenho dos canvas: a tampinha sairia em branco)
+  const a = de.querySelectorAll('canvas'), b = para.querySelectorAll('canvas');
+  for (let i = 0; i < a.length && i < b.length; i++){ try { b[i].getContext('2d').drawImage(a[i], 0, 0); } catch (_) {} }
+}
+// a cópia nunca recebe toques, nem os filhos dela: um filho com pointer-events:auto (o .pf107-toca do perfil da v107 nas linhas
+// do painel, copiado junto) fica por cima do lugar embaixo do dedo e o soltar não acha nada (o elementFromPoint pega a cópia)
+function pn107SemToque(g){ if (g) for (const x of [g, ...g.querySelectorAll('*')]) x.style.setProperty('pointer-events', 'none', 'important'); }
+window.addEventListener('pointerdown', () => { PN107.fimT = -1e9; }, true);   // (um toque novo: o click dele vale)
+window.addEventListener('click', e => {                                   // o click do fim de um arrasto não é um toque
+  if (performance.now() - PN107.fimT > 500) return;
+  const t = e.target, meio = document.getElementById('sl-meio'), p = typeof V93P !== 'undefined' && V93P.el ? V93P.el.p : null;
+  if ((meio && meio.contains(t)) || (p && p.contains(t))){ e.stopPropagation(); e.preventDefault(); }
+}, true);
+
+/* ---------------------------------------------------------------- 1) a sala: o árbitro arrasta os cartões */
+const pn107SalaArb = () => { try { const r = NET49.room; return !!(r && lobby.aberto && lobby.tela === 'sala' && SL.el && !SL.el.hidden && v103Arb(r)); } catch (_) { return false; } };
+const pn107Membro = id => { const r = NET49.room; return (r && (r.members || []).find(x => x.id === id)) || null; };
+function pn107AlvoSala(x, y){                                             // o que está embaixo do dedo (a cópia não recebe toques)
+  const meio = document.getElementById('sl-meio'), el = document.elementFromPoint(x, y);
+  if (!meio || !el || !meio.contains(el)) return null;
+  const c = el.closest('.sl-card[data-id]'); if (c) return {el:c, tipo:'card', id:c.dataset.id};
+  const v = el.closest('.sl-vaga[data-slot]'); if (v) return {el:v, tipo:'vaga', slot:+v.dataset.slot};
+  const col = el.closest('.sl-col[data-time]'); if (!col) return null;
+  const t = +col.dataset.time;
+  return t === 0 || t === 1 ? {el:col, tipo:'time', time:t} : t < 0 ? {el:col, tipo:'banco'} : null;
+}
+function pn107Acao(D, A, r){                                              // soltar o D aqui: {ok, acao, o, txt} · ok false: o aviso · null: nada muda
+  const n = r.n | 0;
+  if (A.tipo === 'card'){
+    const T = pn107Membro(A.id); if (!T || T.id === D.id) return null;
+    if (T.slot >= 0) return T.slot === D.slot ? null : {ok:true, acao:'mover', o:{id:D.id, slot:T.slot}, txt:'TROCAR COM ' + pn107Nome(T)};
+    if (D.slot < 0) return null;                                          // (os dois assistindo: nada muda)
+    return {ok:true, acao:'mover', o:{id:T.id, slot:D.slot}, txt:'TROCAR COM ' + pn107Nome(T)};   // (quem assiste entra no lugar; o D vai para o banco)
+  }
+  if (A.tipo === 'vaga'){
+    if (!Number.isInteger(A.slot) || A.slot < 0 || A.slot >= r.roster.length || r.roster[A.slot] || A.slot === D.slot) return null;
+    return {ok:true, acao:'mover', o:{id:D.id, slot:A.slot}, txt:'PARA O ' + v103NomeT(Math.floor(A.slot/n))};
+  }
+  if (A.tipo === 'time'){
+    if (A.time === v103TimeDe(D, r)) return null;
+    if (!v103TemVaga(r, A.time)) return {ok:false, txt:'O ' + v103NomeT(A.time) + ' ESTÁ CHEIO', aviso:'O ' + v103NomeT(A.time) + ' está cheio: solte em cima de alguém para trocar.'};
+    return {ok:true, acao:'mover', o:{id:D.id, time:A.time}, txt:'PARA O ' + v103NomeT(A.time)};
+  }
+  if (A.tipo === 'banco') return D.slot < 0 ? null : {ok:true, acao:'reserva', o:{id:D.id}, txt:'PARA O BANCO'};
+  return null;
+}
+function pn107Pega(){                                                     // passou dos 8 px: o cartão levanta (a cópia vai com o dedo)
+  const I = PN107.ini, m = I && pn107Membro(I.id);
+  if (I && I.card && !I.card.isConnected)                                 // (a sala se refez entre o aperto e o movimento: o mesmo cartão, novo)
+    I.card = [...document.querySelectorAll('#sl-meio .sl-card[data-id]')].find(c => c.dataset.id === I.id) || null;
+  const card = I && I.card;
+  if (!card || !m || !pn107SalaArb()){ pn107Fim(); return false; }
+  const q = card.getBoundingClientRect(), w = card.offsetWidth || q.width, h = card.offsetHeight || q.height, s = q.width/Math.max(1, w);   // (a sala é escalada: a cópia também)
+  const g = card.cloneNode(true);
+  g.classList.remove('novo', 'pn107-alvo', 'pn107-nao', 'pn107-origem'); g.classList.add('pn107-fantasma');
+  for (const a of ['role', 'tabindex', 'aria-label']) g.removeAttribute(a);
+  g.setAttribute('aria-hidden', 'true'); for (const x of g.querySelectorAll('[id]')) x.removeAttribute('id');
+  pn107CopiaTelas(card, g);
+  const tag = nodo('span', 'pn107-acao'); g.appendChild(tag);
+  g.style.cssText = 'position:fixed;left:0;top:0;margin:0;width:' + w + 'px;height:' + h + 'px;z-index:60;transform-origin:0 0;';
+  pn107SemToque(g);
+  (LB.raiz || document.body).appendChild(g);
+  card.classList.add('pn107-origem'); SL.el.classList.add('pn107-arrastando');
+  PN107.fantasma = g;
+  PN107.arr = {id:m.id, card, tag, s, dx:I.x - q.left, dy:I.y - q.top, x0:q.left, y0:q.top};
+  try { if (navigator.vibrate) navigator.vibrate(15); } catch (_) {}
+  try { som.clique(); } catch (_) {}
+  return true;
+}
+function pn107Move(x, y){
+  const A = PN107.arr, g = PN107.fantasma, r = NET49.room; if (!A || !g) return;
+  g.style.transform = 'translate(' + Math.round(x - A.dx) + 'px,' + Math.round(y - A.dy) + 'px) scale(' + A.s + ') rotate(-1.5deg)';
+  const D = pn107Membro(A.id), alvo = D && r ? pn107AlvoSala(x, y) : null, ac = alvo ? pn107Acao(D, alvo, r) : null, el = ac ? alvo.el : null;
+  const antes = PN107.alvo;
+  if (!antes || antes.el !== el || antes.ok !== !!(ac && ac.ok)){
+    if (antes && antes.el) antes.el.classList.remove('pn107-alvo', 'pn107-nao');
+    if (el) el.classList.add(ac.ok ? 'pn107-alvo' : 'pn107-nao');
+  }
+  PN107.alvo = el ? {el, ok:!!ac.ok} : null;
+  A.tag.textContent = ac ? ac.txt : ''; A.tag.classList.toggle('pn107-acao-nao', !!(ac && !ac.ok));
+}
+function pn107Solta(x, y){                                                // soltou: a ação do servidor (a mesma da ficha) · true = mandou
+  const A = PN107.arr, r = NET49.room; if (!A || !r || !pn107SalaArb()) return false;
+  const D = pn107Membro(A.id), alvo = D ? pn107AlvoSala(x, y) : null, ac = alvo ? pn107Acao(D, alvo, r) : null;
+  if (!ac) return false;
+  if (!ac.ok){ x49Toast(ac.aviso || ac.txt); try { som.erro(); } catch (_) {} return false; }
+  try { som.clique(); } catch (_) {}
+  v103Manda(ac.acao, ac.o);
+  return true;
+}
+function pn107Fim(volta){                                                 // acabou (soltou, cancelou ou a sala sumiu): a cópia sai e a sala se refaz
+  const A = PN107.arr, g = PN107.fantasma;
+  if (PN107.alvo && PN107.alvo.el) PN107.alvo.el.classList.remove('pn107-alvo', 'pn107-nao');
+  if (A && A.card) A.card.classList.remove('pn107-origem');
+  if (SL.el) SL.el.classList.remove('pn107-arrastando');
+  PN107.ini = PN107.arr = PN107.fantasma = PN107.alvo = null;
+  if (g){
+    if (pn107Calmo()) g.remove();
+    else {                                                                // (cancelou: a cópia volta para o lugar; mandou: some onde soltou)
+      g.style.transition = 'transform .16s ease-out, opacity .16s ease-out';
+      if (volta && A) g.style.transform = 'translate(' + Math.round(A.x0) + 'px,' + Math.round(A.y0) + 'px) scale(' + A.s + ')';
+      g.style.opacity = '0';
+      setTimeout(() => g.remove(), 190);
+    }
+  }
+  if (A){ PN107.fimT = performance.now(); try { slRender(); } catch (_) {} }
+}
+document.addEventListener('pointerdown', e => {
+  if (PN107.arr || (e.button != null && e.button > 0) || e.isPrimary === false) return;
+  const card = e.target && e.target.closest ? e.target.closest('#sl-meio .sl-card[data-id]') : null;
+  if (!card || !pn107SalaArb()) return;                                   // (quem não é o árbitro: o toque de sempre)
+  pn107Fim();
+  PN107.ini = {x:e.clientX, y:e.clientY, id:card.dataset.id, card, pid:e.pointerId, tipo:e.pointerType, rola:!!card.closest('.sl-caixa.pn107-rola')};
+}, true);
+document.addEventListener('pointermove', e => {
+  const I = PN107.ini; if (!I || e.pointerId !== I.pid) return;
+  if (I.tipo === 'mouse' && !(e.buttons & 1)) return pn107Fim(true);      // (soltou o botão fora da janela: não vale)
+  if (!PN107.arr){
+    const dx = e.clientX - I.x, dy = e.clientY - I.y;
+    if (Math.hypot(dx, dy) <= PN107_LIMIAR) return;                       // (ainda é toque)
+    if (I.rola && I.tipo !== 'mouse' && Math.abs(dy) > Math.abs(dx)) return;   // (na coluna que rola, o dedo na vertical é a rolagem dela)
+    if (!pn107Pega()) return;
+  } else if (!pn107SalaArb()) return pn107Fim(true);                      // (a sala fechou ou deixou de ser o árbitro no meio)
+  e.preventDefault();
+  pn107Move(e.clientX, e.clientY);
+}, {capture:true, passive:false});
+document.addEventListener('pointerup', e => {
+  const I = PN107.ini; if (!I || e.pointerId !== I.pid) return;
+  if (!PN107.arr) return pn107Fim();                                      // (não mexeu: é toque — o click abre a ficha)
+  e.preventDefault(); e.stopPropagation();
+  let ok = false; try { ok = pn107Solta(e.clientX, e.clientY); } catch (er) { console.error('v107 soltar', er); }
+  pn107Fim(!ok);
+}, true);
+document.addEventListener('pointercancel', e => { const I = PN107.ini; if (I && e.pointerId === I.pid) pn107Fim(true); }, true);   // (a coluna rolou: era rolagem)
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && PN107.arr){ e.stopPropagation(); pn107Fim(true); } }, true);
+document.addEventListener('contextmenu', e => { if (PN107.arr) e.preventDefault(); }, true);
+addEventListener('blur', () => { if (PN107.ini) pn107Fim(true); });
+function pn107SalaArruma(){                                               // cada vez que a sala se refaz: quem arrasta, as colunas que rolam e a legenda
+  const el = SL.el; if (!el || el.hidden) return;
+  const arb = pn107SalaArb();
+  el.classList.toggle('pn107-arb', arb);
+  if (!arb) return;
+  for (const cx of el.querySelectorAll('.sl-caixa')) cx.classList.toggle('pn107-rola', cx.scrollHeight > cx.clientHeight + 2);
+  const d = el.querySelector('.sl-legenda .sl-leg-dica');
+  if (d && /^ · toque num jogador/.test(d.textContent || '')) d.textContent = PN107_LEGENDA;
+}
+if (typeof slRender === 'function'){
+  const slRenderAntes107 = slRender;
+  slRender = function(){
+    if (PN107.arr) return;                                                // (arrastando: a sala não se refaz embaixo do dedo; refaz ao soltar)
+    const out = slRenderAntes107.apply(this, arguments);
+    try { pn107SalaArruma(); } catch (e) { console.error('v107 sala', e); }
+    return out;
+  };
+}
+
+/* ---------------------------------------------------------------- 2) a partida: o painel da v104 arrasta já com o movimento */
+// (antes: segurar meio segundo e só então arrastar; mexer antes cancelava). O pointermove aqui (na janela) vem antes do da v104
+// (no documento): passou dos 8 px, o nome levanta na hora e o da v104 segue com a cópia, os alvos e o soltar de sempre.
+window.addEventListener('pointermove', e => {
+  if (typeof V104D === 'undefined') return;
+  const I = V104D.ini; if (!I || V104D.arr || e.pointerId !== I.pid) return;
+  if (e.pointerType === 'mouse' && !(e.buttons & 1)) return;
+  if (Math.hypot(e.clientX - I.x, e.clientY - I.y) <= PN107_LIMIAR) return;
+  clearTimeout(V104D.t); V104D.t = null;
+  try { v104Pega(); } catch (er) { console.error('v107 painel', er); }
+}, {capture:true, passive:true});
+if (typeof v104Pega === 'function'){
+  const v104PegaAntes107 = v104Pega;
+  v104Pega = function(){                                                  // (e a cópia do nome com a tampinha desenhada)
+    try {                                                                 // (o painel se refaz quando o ping muda: o nome apertado pode ser um li novo)
+      const I = V104D.ini, p = V93P.el && V93P.el.p;
+      if (I && I.li && !I.li.isConnected && p){ const li = [...p.querySelectorAll('li[data-id]')].find(x => x.dataset.id === I.id); if (li) I.li = li; }
+    } catch (_) {}
+    const out = v104PegaAntes107.apply(this, arguments);
+    try { if (V104D.arr && V104D.arr.li && V104D.fantasma){ pn107CopiaTelas(V104D.arr.li, V104D.fantasma); pn107SemToque(V104D.fantasma); V104D.fantasma.setAttribute('aria-hidden', 'true'); } } catch (_) {}
+    return out;
+  };
+}
+if (typeof v104Fim === 'function'){
+  const v104FimAntes107 = v104Fim;
+  v104Fim = function(){ if (V104D.arr) PN107.fimT = performance.now(); return v104FimAntes107.apply(this, arguments); };   // (o click do fim do arrasto não vale)
+}
+if (typeof v93PainelPinta === 'function'){
+  const v93PainelPintaAntes107 = v93PainelPinta;
+  v93PainelPinta = function(){
+    const out = v93PainelPintaAntes107.apply(this, arguments);
+    try { const d = V93P.el && V93P.el.p && V93P.el.p.querySelector('.v104-dica'); if (d && d.textContent !== PN107_DICA) d.textContent = PN107_DICA; } catch (_) {}
+    return out;
+  };
+}
+
+/* ---------------------------------------------------------------- 3) a faixa: quem foi movido (para todo mundo da sala) */
+const PN107_SRV_TIMES = ['Time A', 'Time B'];                             // (como o servidor escreve: server/turma.js, adm › feito)
+function pn107LeLinha(txt, r){                                            // "fulano foi para o Time B (trocou com beltrano)" → {nome, dest, sub}
+  const s = String(txt || ''), k = s.indexOf(' foi para o '); if (k <= 0) return null;
+  let nome = '';                                                          // (o nome mais comprido da sala que começa a linha; senão, o que vem antes)
+  for (const m of (r.members || [])){ const nm = String(m.name || ''); if (nm && nm.length > nome.length && s.startsWith(nm + ' foi para o ')) nome = nm; }
+  if (!nome) nome = s.slice(0, k);
+  const resto = s.slice(nome.length + ' foi para o '.length);
+  let dest = -2, cauda = '';
+  if (/^banco\b/.test(resto)){ dest = -1; cauda = resto.slice(5); }
+  else for (let t = 0; t < 2; t++) if (resto.startsWith(PN107_SRV_TIMES[t])){ dest = t; cauda = resto.slice(PN107_SRV_TIMES[t].length); }
+  if (dest < -1 || (cauda && !/^ \(.*\)$|^ no lugar de /.test(cauda))) return null;
+  const sub = cauda.replace(/^ \((.*)\)$/, '$1').trim()
+    .replace(/\bTime ([AB])\b/g, (_, l) => v103NomeT(l === 'B' ? 1 : 0)).replace(/\bbanco\b/g, 'BANCO');
+  return {nome, dest, sub};
+}
+function pn107FaixaTopo(){                                                // na partida: logo embaixo do placar (que cresce com o HUD); na sala: o do CSS
+  try {
+    if (RQ.on && !lobby.aberto){
+      const c = cv.getBoundingClientRect(), k = c.width/W, hk = HUDX.k || 1;
+      return Math.round(c.top + (PLACAR80.y + PLACAR80.h)*hk*k + 10) + 'px';
+    }
+  } catch (_) {}
+  return '';
+}
+function pn107Faixa(L){
+  let f = PN107.faixa;
+  if (!f){
+    f = PN107.faixa = nodo('div', 'pn107-faixa'); f.id = 'pn107-faixa'; f.hidden = true;
+    f.setAttribute('role', 'status'); f.setAttribute('aria-live', 'polite');
+    document.body.appendChild(f);
+  }
+  f.textContent = '';
+  const destino = L.dest < 0 ? 'BANCO' : v103NomeT(L.dest), cor = L.dest < 0 ? '#e8ecff' : (TIME80[L.dest] && TIME80[L.dest].claro) || '#ffd23f';
+  const l1 = nodo('b', 'pn107-f1'), dst = nodo('span', 'pn107-fdest', destino); dst.style.setProperty('--c', cor);
+  l1.append(nodo('span', 'pn107-fnm', L.nome), document.createTextNode(' foi para o '), dst);
+  f.append(l1, nodo('small', 'pn107-f2', L.sub || ''));
+  f.style.top = pn107FaixaTopo();
+  f.classList.toggle('pn107-calmo', pn107Calmo()); f.classList.remove('pn107-sai', 'pn107-entra'); f.hidden = false;
+  void f.offsetWidth; f.classList.add('pn107-entra');
+  clearTimeout(PN107.faixaT);
+  PN107.faixaT = setTimeout(() => { f.classList.remove('pn107-entra'); f.classList.add('pn107-sai'); PN107.faixaT = setTimeout(() => { f.hidden = true; f.classList.remove('pn107-sai'); }, 260); }, PN107.faixaMs);
+}
+if (typeof net49Message === 'function'){
+  const net49MessageAntes107 = net49Message;
+  net49Message = function(m){
+    const out = net49MessageAntes107.apply(this, arguments);
+    try {                                                                 // (a linha do árbitro, ao vivo: o histórico de quem entra não vira faixa)
+      const r = NET49.room;
+      if (m && m.type === 'say' && m.sys && !m.who && r && v103SalaSrv(r)){ const L = pn107LeLinha(m.text, r); if (L) pn107Faixa(L); }
+    } catch (e) { console.error('v107 faixa', e); }
+    return out;
+  };
+}
+window.RachaPainel107 = {
+  limiar:PN107_LIMIAR, le:pn107LeLinha, faixa:pn107Faixa, acao:pn107Acao, salaArb:pn107SalaArb,
+  estado:() => ({ini:!!PN107.ini, arr:!!PN107.arr, alvo:PN107.alvo ? PN107.alvo.el.className : '', acao:PN107.arr ? PN107.arr.tag.textContent : '',
+    faixa:PN107.faixa && !PN107.faixa.hidden ? PN107.faixa.textContent : ''})
+};
+
+/* ======================================================================= RACHA v107 · os gestos do emoji e das falas (tools/v107/gestos.js) */
+/* ---------------------------------------------------------------- tools/v107/gestos.js */
+/* ======================================================================================================================
+   RACHA v107 · OS GESTOS DO EMOJI E DAS FALAS (segurar, arrastar para o lado e soltar)
+   O pedido (05/11/2026): "Neste vídeo mostrei como funcionam os emojis e msg rápidas no MamoBall: não precisa clicar, é só
+   arrastar para o lado que você quer e vai aparecer as msg e emojis." O vídeo era de outro jogo: de lá vem só o JEITO (o
+   toque que segura e arrasta); os desenhos, os nomes, as cores e as frases são os do RACHA.
+     1) NA PARTIDA (o treino, contra os bots e o online), nos dois botões do lado do placar — o do emoji (v106) e o das falas
+        (v93; o das falas só existe nas partidas, como antes) —: segurar e arrastar sem tirar o dedo. Assim que o dedo anda
+        (ou fica parado um instante), aparece no MEIO DA TELA a cruz dos 5 daquele botão (cima, esquerda, meio, direita e
+        baixo: os 5 emojis da cruz da v106 ou as 5 frases da cruz nova) e, em volta do botão, o aro do analógico pequeno (o
+        botão vai um pouco junto com o dedo, dentro do aro com as 4 setinhas), com o X de cancelar do lado de fora. Para onde o
+        dedo vai (a partir de onde tocou) acende uma opção (o brilho laranja e a setinha daquele lado); parado perto do começo,
+        a do meio. SOLTAR manda a acesa (o balão de sempre em cima da tampinha); soltar em cima do X — ou o sistema tirar o
+        dedo — não manda nada.
+     2) O TOQUE RÁPIDO é o de sempre: tocar e soltar logo, sem arrastar, abre a cruz da v106 ou o menu das 8 frases da v93 (e
+        tocar numa opção manda). O teclado (E e 1 a 5; T e 1 a 8) e o controle também continuam.
+     3) Cada gesto tem o seu dedo (o pointerId do toque no botão, preso nele): o analógico, o PASSE e o CHUTE continuam com os
+        outros dedos — dá para correr com um dedão e mandar o emoji com o outro. O aro, o X e a cruz não pegam toque nenhum
+        (pointer-events: none): um dedo que pousar em cima deles cai no jogo, como sempre.
+     4) O ritmo de sempre (o do aparelho e o do servidor: quem manda é o emo106Manda e o v93FalaManda), o Reduzir animações
+        (sem as transições), os emojis dos outros (decididos do lado de quem recebe, como antes) e os rótulos para o leitor de
+        tela. Nada cobre os controles, a pausa nem o placar (o aro, o X e a cruz procuram o lugar livre; a cruz encolhe se
+        precisar).
+     5) A CRUZ DAS FRASES: as 5 do gesto (das 8 frases da v93: Golaço! em cima, Boa! à esquerda, Passa! no meio, Que defesa!
+        à direita e Foi mal! embaixo, no começo), guardada em racha-falas-v107 (que vai na cópia do progresso da conta:
+        tools/v82/inicio.js e app/contracts/progresso.ts). As 8 continuam no toque rápido.
+     6) O COFRE › EMOJI ganha a troca EMOJIS | FRASES em cima da grade: em FRASES, a cruz das 5 frases (tocar num lugar acende;
+        tocar numa frase da grade põe no lugar aceso; o PADRÃO volta as de fábrica), no mesmo estilo da cruz dos emojis.
+   A API para os testes: window.RachaGestos107. Nada aqui mexe na física, na bola, nos comandos nem no bloco PHYS: só os dois
+   botões (o toque), a tela por cima e uma chave a mais no armazenamento.
+   ====================================================================================================================== */
+
+/* ---------------------------------------------------------------- 1) a cruz das frases (5 das 8 da v93) */
+const GES107_LUGARES = ['cima', 'esquerda', 'meio', 'direita', 'baixo'];
+const GES107_NOMES = ['CIMA', 'ESQUERDA', 'MEIO', 'DIREITA', 'BAIXO'];
+const GES107_FRASES_PADRAO = [0, 3, 2, 1, 4];                  // Golaço! · Boa! · Passa! · Que defesa! · Foi mal! (os índices da V93F_FRASES)
+const GES107_CHAVE = 'racha-falas-v107';                       // (vai na cópia do progresso da conta — tools/v82/inicio.js)
+const GES107_TOQUE_MS = 220;                                   // (soltar antes disso, sem arrastar, é o toque de sempre)
+const GES107_FOLGA = 9;                                        // (px: o dedo que anda mais que isso já é o gesto)
+const GES107 = {frases:GES107_FRASES_PADRAO.slice(), ouvintes:new Set(), g:null, el:{}, engole:null, enviados:[], cancelados:0, toques:0,
+  gestos:0, ultimo:null, geo:null, cofre:'emojis', cofreSlot:2, erros:0, vigia:0};
+function ges107Erro(onde, e){ if (GES107.erros++ < 4) console.error('v107 gestos (' + onde + ')', e); }
+function ges107Frases93(){ return typeof V93F_FRASES !== 'undefined' && Array.isArray(V93F_FRASES) ? V93F_FRASES : []; }
+function ges107Norma(s){                                       // 5 frases diferentes da lista (o que faltar vem do padrão)
+  const n = ges107Frases93().length || 8, L = [], usados = new Set();
+  for (let i = 0; i < 5; i++){ const v = Array.isArray(s) ? s[i] : null; if (Number.isInteger(v) && v >= 0 && v < n && !usados.has(v)){ L[i] = v; usados.add(v); } else L[i] = null; }
+  const sobra = GES107_FRASES_PADRAO.concat(Array.from({length:n}, (_, i) => i));
+  for (let i = 0; i < 5; i++) if (L[i] == null){ L[i] = !usados.has(GES107_FRASES_PADRAO[i]) ? GES107_FRASES_PADRAO[i] : sobra.find(v => !usados.has(v)); usados.add(L[i]); }
+  return L;
+}
+function ges107Le(){ try { const o = JSON.parse(localStorage.getItem(GES107_CHAVE) || 'null'); GES107.frases = ges107Norma(o && o.s); } catch (_) { GES107.frases = GES107_FRASES_PADRAO.slice(); } }
+function ges107Grava(){ try { localStorage.setItem(GES107_CHAVE, JSON.stringify({v:1, s:GES107.frases})); } catch (_) {} }
+function ges107Avisa(){ const s = GES107.frases.slice(); for (const f of [...GES107.ouvintes]) try { f(s.slice()); } catch (e) { ges107Erro('mudou', e); } }
+const ges107Num = v => typeof v === 'number' ? v : typeof v === 'string' && /^\s*\d+\s*$/.test(v) ? Number(v) : NaN;   // (só número: o null não vira 0)
+function ges107PoeFrase(lugar, i){                             // troca o lugar (0 a 4); a frase que já estava em outro lugar troca com ele
+  lugar = ges107Num(lugar); i = ges107Num(i);
+  if (!(Number.isInteger(lugar) && lugar >= 0 && lugar < 5) || !(Number.isInteger(i) && i >= 0 && i < ges107Frases93().length)) return null;
+  const s = GES107.frases.slice();
+  if (s[lugar] === i) return s;
+  const j = s.indexOf(i);
+  if (j >= 0) s[j] = s[lugar];
+  s[lugar] = i;
+  GES107.frases = s;
+  ges107Grava(); ges107Avisa();
+  try { if (typeof v105Empurra === 'function') v105Empurra(); } catch (_) {}   // (a cópia vai para a conta logo, como a dos emojis)
+  return s.slice();
+}
+function ges107PadraoFrases(){
+  if (GES107.frases.join() === GES107_FRASES_PADRAO.join()) return GES107.frases.slice();
+  GES107.frases = GES107_FRASES_PADRAO.slice(); ges107Grava(); ges107Avisa();
+  try { if (typeof v105Empurra === 'function') v105Empurra(); } catch (_) {}
+  return GES107.frases.slice();
+}
+function ges107Mudou(fn){ if (typeof fn !== 'function') return () => {}; GES107.ouvintes.add(fn); return () => { GES107.ouvintes.delete(fn); }; }
+ges107Le();
+addEventListener('storage', e => {                             // (outra aba do jogo trocou as frases: esta acompanha)
+  try { if (e.key === GES107_CHAVE){ const antes = GES107.frases.join(); ges107Le(); if (GES107.frases.join() !== antes) ges107Avisa(); } } catch (_) {}
+});
+
+/* ---------------------------------------------------------------- 2) os dois botões: o que cada um mostra e manda */
+const GES107_TIPOS = {
+  emoji:{
+    bt:() => EMO106.el && EMO106.el.bt, pode:() => emo106Pode(), espera:() => emo106Espera(performance.now()),
+    itens:() => EMO106.slots.slice(), nome:id => (window.RachaEmotes106 ? RachaEmotes106.nome(id) : String(id)),
+    manda:i => emo106Manda(EMO106.slots[i]), rotulo:'Emojis da partida: arraste até um e solte para mandar'},
+  falas:{
+    bt:() => V93F.el && V93F.el.bt, pode:() => v93FalaPode(), espera:() => Math.max(0, V93F.ult + V93F_INTERVALO - performance.now()),
+    itens:() => GES107.frases.slice(), nome:i => ges107Frases93()[i] || '',
+    manda:i => v93FalaManda(GES107.frases[i]), rotulo:'Falas rápidas: arraste até uma e solte para mandar'}
+};
+const GES107_DICA = 'Toque para abrir. Ou segure e arraste para o lado da opção e solte para mandar; solte no X para cancelar.';
+
+/* ---------------------------------------------------------------- 3) as peças por cima: o aro, o botão que anda, o X e a cruz */
+const GES107_SVG_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg>';
+const GES107_SVG_CHEV = '<svg viewBox="0 0 24 14" aria-hidden="true"><path d="M3.5 11.5L12 3.5l8.5 8" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function ges107Monta(){
+  if (GES107.el.cruz) return;
+  const wrap = document.getElementById('wrap') || document.body;
+  const aro = nodo('div', 'ges107-aro'); aro.hidden = true; aro.setAttribute('aria-hidden', 'true');
+  for (const d of ['cima', 'esquerda', 'direita', 'baixo']) aro.appendChild(nodo('i', 'ges107-aro-seta ' + d));
+  const pino = nodo('div', 'ges107-pino'); pino.hidden = true; pino.setAttribute('aria-hidden', 'true');
+  const x = nodo('div', 'ges107-x'); x.hidden = true; x.setAttribute('role', 'img'); x.setAttribute('aria-label', 'Cancelar: soltar aqui não manda nada'); x.innerHTML = GES107_SVG_X;
+  const cruz = nodo('div', 'ges107-cruz'); cruz.hidden = true; cruz.setAttribute('role', 'group');
+  const fundo = nodo('i', 'ges107-fundo'); fundo.setAttribute('aria-hidden', 'true'); cruz.appendChild(fundo);
+  const chev = ['cima', 'esquerda', 'direita', 'baixo'].map(d => { const c = nodo('i', 'ges107-chev ' + d); c.setAttribute('aria-hidden', 'true'); c.innerHTML = GES107_SVG_CHEV; cruz.appendChild(c); return c; });
+  const ops = GES107_LUGARES.map((lugar, i) => { const o = nodo('div', 'ges107-op ' + lugar); o.setAttribute('role', 'img'); o.dataset.i = String(i); cruz.appendChild(o); return o; });
+  const vivo = nodo('span', 'ges107-vivo'); vivo.setAttribute('role', 'status'); vivo.setAttribute('aria-live', 'polite');
+  const dica = nodo('span', 'ges107-vivo', GES107_DICA); dica.id = 'ges107-dica'; dica.hidden = true;
+  wrap.append(aro, pino, x, cruz, vivo, dica);
+  GES107.el = {aro, pino, x, cruz, fundo, chev, ops, vivo, dica};
+}
+function ges107Fala(t){ try { const v = GES107.el.vivo; if (v){ v.textContent = ''; setTimeout(() => { try { v.textContent = t; } catch (_) {} }, 30); } } catch (_) {} }
+// a cruz daquele botão: os 5 emojis (desenhados como na cruz da v106) ou as 5 frases (as pílulas brancas das falas)
+function ges107PintaCruz(tipo, med){
+  const E = GES107.el, T = GES107_TIPOS[tipo], itens = T.itens();
+  E.cruz.classList.toggle('emoji', tipo === 'emoji'); E.cruz.classList.toggle('falas', tipo === 'falas');
+  E.cruz.setAttribute('aria-label', T.rotulo);
+  E.cruz.style.setProperty('--ges107-s', med.s + 'px'); E.cruz.style.setProperty('--ges107-f', med.f + 'px'); E.cruz.style.setProperty('--ges107-h', med.h + 'px');
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  E.ops.forEach((o, i) => {
+    const v = itens[i], nome = T.nome(v);
+    o.setAttribute('aria-label', nome + ' (' + GES107_LUGARES[i] + ')');
+    if (tipo === 'emoji'){
+      let c = o.querySelector('canvas');
+      if (!c || o.querySelector('b')){ o.textContent = ''; c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); o.appendChild(c); }
+      const px = Math.max(16, Math.round(med.s*.92*dpr));
+      if (c.width !== px || c.dataset.e !== v){
+        c.width = c.height = px; c.dataset.e = v;
+        const g = c.getContext('2d');
+        if (g){ g.clearRect(0, 0, px, px); const r = px/2/1.08; try { emo106Desenha(g, v, px/2 + r*.06, px/2 - r*.04, r, {alcance:1.12}); } catch (e) { ges107Erro('emoji', e); } }
+      }
+      o.dataset.v = v;
+    } else {
+      if (o.querySelector('canvas') || !o.querySelector('b')){ o.textContent = ''; o.appendChild(nodo('b')); }
+      o.querySelector('b').textContent = nome; o.dataset.v = String(v);
+    }
+  });
+}
+
+/* ---------------------------------------------------------------- 4) o lugar de cada peça (sem cobrir os controles, a pausa nem o placar) */
+function ges107Tela(){                                         // a parte da tela que se vê (sem as áreas do entalhe e da barra de gestos)
+  let sa = {t:0, r:0, b:0, l:0};
+  try { const s = getComputedStyle(document.documentElement), n = v => parseFloat(v) || 0; sa = {t:n(s.paddingTop), r:n(s.paddingRight), b:n(s.paddingBottom), l:n(s.paddingLeft)}; } catch (_) {}
+  const T = {l:sa.l, t:sa.t, r:innerWidth - sa.r, b:innerHeight - sa.b};
+  try { const c = cv.getBoundingClientRect(); T.c = [(Math.max(c.left, T.l) + Math.min(c.right, T.r))/2, (Math.max(c.top, T.t) + Math.min(c.bottom, T.b))/2, Math.min(c.bottom, T.b) - Math.max(c.top, T.t)]; }
+  catch (_) { T.c = [(T.l + T.r)/2, (T.t + T.b)/2, T.b - T.t]; }
+  return T;
+}
+function ges107Obst(bt){                                       // o que as peças não cobrem (em px da página): {c:[x, y, r]} ou {r:[l, t, r, b]}
+  const o = [];
+  try {
+    const c = cv.getBoundingClientRect(), k = c.width/W, hk = HUDX.k || 1;
+    for (const id of HE_ORDEM){ if (!controleVisivel(id)) continue; const e = el(id); o.push({c:[c.left + e.x*k, c.top + e.y*k, e.r*k + 6], nome:id, peso:1000}); }
+    try { const b = BTN_PAUSA; o.push({r:[c.left + b.x*k - 4, c.top + b.y*k - 4, c.left + (b.x + b.w)*k + 4, c.top + (b.y + b.h)*k + 4], nome:'pausa', peso:1000}); } catch (_) {}
+    try { const pw = v80PlacarW()*hk; o.push({r:[c.left + (W/2 - pw/2)*k - 3, c.top - 2, c.left + (W/2 + pw/2)*k + 3, c.top + (PLACAR80.y + PLACAR80.h)*hk*k + 4], nome:'placar', peso:1000}); } catch (_) {}
+  } catch (_) {}
+  const outros = [['jogadores', V93P.el && V93P.el.bt], ['falas', V93F.el && V93F.el.bt], ['emoji', EMO106.el && EMO106.el.bt], ['barra', X49UI.onlinebar]];
+  for (const q of document.querySelectorAll('.c81')) outros.push(['chat', q]);
+  for (const [nome, x] of outros){
+    try {
+      if (!x || x === bt || x.hidden || x.closest('[hidden]')) continue;
+      const r = x.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || getComputedStyle(x).display === 'none' || getComputedStyle(x).visibility === 'hidden') continue;
+      o.push({r:[r.left - 3, r.top - 3, r.right + 3, r.bottom + 3], nome, peso:nome === 'barra' || nome === 'chat' ? 1000 : 200});
+    } catch (_) {}
+  }
+  return o;
+}
+function ges107Prende(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function ges107CustoCirc(cx, cy, r, obst, T){
+  let c = 0;
+  if (cx - r < T.l - .5 || cy - r < T.t - .5 || cx + r > T.r + .5 || cy + r > T.b + .5) c += 500;
+  for (const o of obst){
+    if (o.c){ if (Math.hypot(cx - o.c[0], cy - o.c[1]) < r + o.c[2]) c += o.peso; }
+    else { const nx = ges107Prende(cx, o.r[0], o.r[2]), ny = ges107Prende(cy, o.r[1], o.r[3]); if (Math.hypot(nx - cx, ny - cy) < r) c += o.peso; }
+  }
+  return c;
+}
+function ges107CustoRet(R, obst, T){                           // R = [l, t, r, b]
+  let c = 0;
+  if (R[0] < T.l - .5 || R[1] < T.t - .5 || R[2] > T.r + .5 || R[3] > T.b + .5) c += 500;
+  for (const o of obst){
+    if (o.c){ const nx = ges107Prende(o.c[0], R[0], R[2]), ny = ges107Prende(o.c[1], R[1], R[3]); if (Math.hypot(nx - o.c[0], ny - o.c[1]) < o.c[2]) c += o.peso; }
+    else if (R[0] < o.r[2] && R[2] > o.r[0] && R[1] < o.r[3] && R[3] > o.r[1]) c += o.peso;
+  }
+  return c;
+}
+// o aro em volta do botão (o maior que cabe; sem lugar em volta — o botão na beirada de cima —, ele desce um pouco e o botão vai junto)
+function ges107LugarAro(r, obst, T){
+  const br = r.w/2, cx0 = r.l + br, cy0 = r.t + r.h/2;
+  let m = null;
+  for (const k of [1.62, 1.5, 1.4, 1.3]){
+    const R = Math.max(br + 6, br*k);
+    for (const [ox, oy] of [[0, 0], [0, 3], [0, 6], [0, 9], [0, 12], [0, 15], [0, 19], [-5, 0], [5, 0], [-5, 6], [5, 6], [-8, 9], [8, 9]]){
+      const cx = cx0 + ox, cy = cy0 + oy, custo = ges107CustoCirc(cx, cy, R + 2, obst, T) + (1.62 - k)*12 + Math.hypot(ox, oy)*.9;
+      if (!m || custo < m.custo) m = {cx, cy, R, br, ox, oy, custo};
+    }
+  }
+  return m;
+}
+// o X de cancelar: do lado de fora (longe do meio da tela), um pouco para baixo — fora das 4 direções retas, para o arrasto de
+// sempre não cair nele sem querer
+function ges107LugarX(aro, obst, T){
+  const xr = Math.max(16, Math.round(aro.br*.8)), fora = aro.cx < (T.l + T.r)/2 ? -1 : 1, d = aro.R + xr + 6;
+  let m = null;
+  [38, 22, 55, 0, 70, 90, 125, 145, -25].forEach((a, ordem) => {
+    for (const lado of [fora, -fora]){
+      const rad = a*Math.PI/180, cx = aro.cx + lado*Math.cos(rad)*d, cy = aro.cy + Math.sin(rad)*d;
+      const custo = ges107CustoCirc(cx, cy, xr + 2, obst, T) + ordem*2 + (lado === fora ? 0 : 40);
+      if (!m || custo < m.custo) m = {cx, cy, r:xr, custo};
+    }
+  });
+  return m;
+}
+// as medidas da cruz (o tamanho de cada opção cresce com a tela; no celular deitado, os 5 cabem no meio sem chegar nos controles)
+function ges107Medidas(T){
+  const h = T.c[2];
+  const s = Math.round(ges107Prende(h*.155, 48, 112)), f = Math.round(ges107Prende(h*.046, 14, 28));
+  return {s, gap:Math.round(s*.42), f, h:Math.round(f*2.3), gapH:Math.round(f*1.75), gapV:Math.round(f*1.1)};
+}
+function ges107Posicoes(tipo, med){                            // o meio de cada opção e de cada setinha (em px, a partir do meio da cruz)
+  const E = GES107.el, P = [], C = [];
+  if (tipo === 'emoji'){
+    const d = med.s + med.gap;
+    P.push([0, -d], [-d, 0], [0, 0], [d, 0], [0, d]);
+    const m = med.s/2 + med.gap/2;
+    C.push([0, -m], [-m, 0], [m, 0], [0, m]);
+    return {P, C, tam:P.map(() => [med.s, med.s])};
+  }
+  const w = E.ops.map(o => Math.max(med.h*1.4, o.offsetWidth || med.h*3)), dv = med.h + med.gapV;
+  const de = w[2]/2 + med.gapH + w[1]/2, dd = w[2]/2 + med.gapH + w[3]/2;
+  P.push([0, -dv], [-de, 0], [0, 0], [dd, 0], [0, dv]);
+  C.push([0, -(med.h + med.gapV)/2], [-(w[2] + med.gapH)/2, 0], [(w[2] + med.gapH)/2, 0], [0, (med.h + med.gapV)/2]);
+  return {P, C, tam:w.map(x => [x, med.h])};
+}
+function ges107LugarCruz(tipo, med, obst, T){
+  const L = ges107Posicoes(tipo, med), [cx0, cy0] = T.c;
+  let m = null;
+  [[0, 1], [-12, 1], [12, 1], [-24, 1], [24, 1], [0, .9], [-14, .9], [14, .9], [0, .8], [-16, .8], [16, .8], [0, .72], [-18, .72], [0, .64]].forEach(([dy, esc], ordem) => {
+    const cx = cx0, cy = cy0 + dy, rets = L.P.map(([x, y], i) => { const [w, h] = L.tam[i]; return [cx + (x - w/2)*esc, cy + (y - h/2)*esc, cx + (x + w/2)*esc, cy + (y + h/2)*esc]; });
+    let custo = ordem*3;
+    for (const R of rets) custo += ges107CustoRet([R[0] - 4, R[1] - 4, R[2] + 4, R[3] + 4], obst, T);
+    if (!m || custo < m.custo) m = {cx, cy, esc, custo, rets, L};
+  });
+  return m;
+}
+function ges107Lugar(){                                        // (no começo do gesto: o aro, o X e a cruz no lugar livre)
+  const g = GES107.g, E = GES107.el; if (!g || !E.cruz) return;
+  const T = ges107Tela(), obst = ges107Obst(g.bt), wr = (E.cruz.offsetParent || document.getElementById('wrap') || document.body).getBoundingClientRect();
+  const aro = ges107LugarAro(g.r, obst, T);
+  const obstX = obst.concat([{c:[aro.cx, aro.cy, aro.R + 4], nome:'aro', peso:1000}]);
+  const x = ges107LugarX(aro, obstX, T);
+  const med = ges107Medidas(T);
+  ges107PintaCruz(g.tipo, med);
+  E.cruz.style.transform = 'none'; E.cruz.style.left = '0px'; E.cruz.style.top = '0px';
+  const obstC = obstX.concat([{c:[x.cx, x.cy, x.r + 4], nome:'x', peso:1000}]);
+  const cz = ges107LugarCruz(g.tipo, med, obstC, T);
+  // o aro (com as setinhas no meio da faixa entre o botão e a borda)
+  const A = E.aro;
+  A.style.width = A.style.height = Math.round(2*aro.R) + 'px';
+  A.style.left = Math.round(aro.cx - aro.R - wr.left) + 'px'; A.style.top = Math.round(aro.cy - aro.R - wr.top) + 'px';
+  A.style.setProperty('--ges107-ra', ((aro.br + aro.R)/2).toFixed(1) + 'px');
+  A.style.setProperty('--ges107-sa', Math.max(4, Math.min(7, (aro.R - aro.br)*.62)).toFixed(1) + 'px');
+  // o botão que anda (a cópia do desenho do botão, no lugar dele; o de verdade fica parado e transparente)
+  const Pn = E.pino;
+  Pn.style.width = Pn.style.height = Math.round(g.r.w) + 'px';
+  Pn.style.left = Math.round(aro.cx - g.r.w/2 - wr.left) + 'px'; Pn.style.top = Math.round(aro.cy - g.r.h/2 - wr.top) + 'px';
+  Pn.style.transform = 'translate(0px, 0px)';
+  const svg = g.bt.querySelector('svg'); Pn.textContent = ''; if (svg) Pn.appendChild(svg.cloneNode(true));
+  Pn.classList.toggle('falas', g.tipo === 'falas');
+  E.x.style.width = E.x.style.height = Math.round(2*x.r) + 'px';
+  E.x.style.left = Math.round(x.cx - x.r - wr.left) + 'px'; E.x.style.top = Math.round(x.cy - x.r - wr.top) + 'px';
+  // a cruz: o meio dela no meio da tela (ou um pouco acima/abaixo e menor, se precisar), as opções em volta
+  const C = E.cruz;
+  C.style.left = Math.round(cz.cx - wr.left) + 'px'; C.style.top = Math.round(cz.cy - wr.top) + 'px';
+  C.style.transform = cz.esc === 1 ? 'none' : 'scale(' + cz.esc + ')';
+  E.ops.forEach((o, i) => { o.style.left = cz.L.P[i][0] + 'px'; o.style.top = cz.L.P[i][1] + 'px'; });
+  E.chev.forEach((c, i) => { c.style.left = cz.L.C[i][0] + 'px'; c.style.top = cz.L.C[i][1] + 'px'; c.style.width = Math.round(med.s*.3 + 6) + 'px'; });
+  const raio = Math.max(...cz.rets.map(R => Math.max(Math.abs(R[0] - cz.cx), Math.abs(R[2] - cz.cx), Math.abs(R[1] - cz.cy), Math.abs(R[3] - cz.cy))))/cz.esc;
+  E.fundo.style.width = E.fundo.style.height = Math.round(2*raio + 24) + 'px';
+  E.fundo.style.left = E.fundo.style.top = Math.round(-raio - 12) + 'px';
+  // a folga do meio: o dedo que anda menos que isso fica no meio
+  const morto = Math.max(12, Math.min(22, g.r.w*.36));          // (o botão encosta na beirada de cima: para cima, o dedo anda pouco)
+  GES107.geo = {aro:{cx:aro.cx, cy:aro.cy, R:aro.R, br:aro.br, ox:aro.ox, oy:aro.oy, curso:Math.max(3, aro.R - aro.br - 2), custo:aro.custo},
+    x:{cx:x.cx, cy:x.cy, r:x.r, custo:x.custo}, cruz:{cx:cz.cx, cy:cz.cy, esc:cz.esc, custo:cz.custo, rets:cz.rets}, morto, tela:T};
+}
+
+/* ---------------------------------------------------------------- 5) o gesto: segurar, arrastar e soltar */
+const GES107_MAX_MS = 20000;                                   // (um gesto esquecido — o dedo que sumiu sem aviso — acaba sozinho)
+function ges107Comeca(tipo, e){
+  const T = GES107_TIPOS[tipo], bt = T.bt();
+  if (GES107.g && performance.now() - GES107.g.t0 > GES107_MAX_MS) ges107Fim('cancela');
+  if (!bt || bt.hidden || GES107.g || (e.button != null && e.button > 0)) return;
+  let pode = false; try { pode = !!T.pode(); } catch (_) {}
+  if (!pode) return;
+  GES107.engole = null;
+  const r = bt.getBoundingClientRect();
+  // (ts0: a hora do toque no relógio dos eventos — o celular ocupado pode atrasar a fila, mas não a hora de cada evento)
+  const g = GES107.g = {tipo, id:e.pointerId, x0:e.clientX, y0:e.clientY, x:e.clientX, y:e.clientY, t0:performance.now(), ts0:e.timeStamp || performance.now(),
+    fase:'armado', sel:'meio', max:0, bt, r:{l:r.left, t:r.top, w:r.width, h:r.height}, ptr:e.pointerType || ''};
+  try { bt.setPointerCapture(e.pointerId); } catch (_) {}
+  if (e.pointerType === 'mouse') e.preventDefault();            // (o arrasto do mouse não seleciona nada)
+  g.timer = setTimeout(() => { try { if (GES107.g === g && g.fase === 'armado') ges107Abre(true); } catch (er) { ges107Erro('abre', er); } }, GES107_TOQUE_MS);
+  clearInterval(GES107.vigia); GES107.vigia = setInterval(ges107Vigia, 120);
+}
+function ges107Abre(porTempo){
+  const g = GES107.g; if (!g) return;
+  clearTimeout(g.timer);
+  g.fase = 'aberto'; g.porTempo = !!porTempo; GES107.gestos++;
+  // (uma janela por vez: a cruz do toque, o menu das falas e o painel dos jogadores somem enquanto o dedo segura — e voltam se
+  //  no fim era só um toque rápido; mandou ou cancelou, a cruz e o menu fecham de vez)
+  document.documentElement.classList.add('ges107-aberto');
+  ges107Monta();
+  const E = GES107.el;
+  for (const k of ['aro', 'pino', 'x', 'cruz']) E[k].hidden = false;
+  E.cruz.classList.remove('cancela', 'espera');
+  ges107Lugar();
+  g.bt.classList.add('ges107-segura');
+  ges107Atualiza();
+}
+function ges107Escolhe(g){                                      // a opção acesa: o X, o meio (perto do começo) ou o lado que mais andou
+  const G = GES107.geo, dx = g.x - g.x0, dy = g.y - g.y0, d = Math.hypot(dx, dy);
+  if (G && G.x && Math.hypot(g.x - G.x.cx, g.y - G.x.cy) <= G.x.r + 6) return 'cancela';
+  const morto = G ? G.morto : 18, antes = g.sel;
+  if (d < (antes === 'meio' || antes === 'cancela' ? morto : morto*.7)) return 'meio';
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  let hor = ax >= ay;                                           // (na diagonal, o lado de antes fica até o outro passar um pouco)
+  if ((antes === 'esquerda' || antes === 'direita') && ay < ax*1.25) hor = true;
+  else if ((antes === 'cima' || antes === 'baixo') && ax < ay*1.25) hor = false;
+  return hor ? (dx < 0 ? 'esquerda' : 'direita') : (dy < 0 ? 'cima' : 'baixo');
+}
+function ges107Atualiza(){
+  const g = GES107.g, E = GES107.el, G = GES107.geo; if (!g || g.fase !== 'aberto' || !G) return;
+  g.sel = ges107Escolhe(g);
+  const i = GES107_LUGARES.indexOf(g.sel);
+  E.ops.forEach((o, j) => { const on = j === i; if (o.classList.contains('on') !== on) o.classList.toggle('on', on); if (on) o.setAttribute('aria-current', 'true'); else o.removeAttribute('aria-current'); });
+  const lado = {cima:0, esquerda:1, direita:2, baixo:3}[g.sel];
+  E.chev.forEach((c, j) => { const on = j === lado; if (c.classList.contains('on') !== on) c.classList.toggle('on', on); });
+  for (const s of E.aro.children){ const on = s.classList.contains(g.sel); if (s.classList.contains('on') !== on) s.classList.toggle('on', on); }
+  E.x.classList.toggle('on', g.sel === 'cancela'); E.cruz.classList.toggle('cancela', g.sel === 'cancela');
+  let esp = 0; try { esp = GES107_TIPOS[g.tipo].espera(); } catch (_) {}
+  E.cruz.classList.toggle('espera', esp > 0);
+  // o botão vai junto com o dedo, um pouco (dentro do aro)
+  const dx = g.x - g.x0, dy = g.y - g.y0, d = Math.hypot(dx, dy), t = Math.min(d, G.aro.curso), k = d > 0 ? t/d : 0;
+  E.pino.style.transform = 'translate(' + (dx*k).toFixed(1) + 'px, ' + (dy*k).toFixed(1) + 'px)';
+  E.pino.classList.toggle('cancela', g.sel === 'cancela');
+}
+function ges107Move(e){
+  const g = GES107.g; if (!g || e.pointerId !== g.id) return;
+  g.x = e.clientX; g.y = e.clientY;
+  const d = Math.hypot(g.x - g.x0, g.y - g.y0); if (d > g.max) g.max = d;
+  if (g.fase === 'armado'){ if (g.max <= GES107_FOLGA) return; ges107Abre(false); }
+  else { if (g.max > GES107_FOLGA) g.porTempo = false; ges107Atualiza(); }
+  if (e.cancelable) e.preventDefault();
+}
+function ges107Solta(e){
+  const g = GES107.g; if (!g || e.pointerId !== g.id) return;
+  if (e.clientX || e.clientY){ g.x = e.clientX; g.y = e.clientY; }
+  // o toque rápido (soltou logo, sem arrastar): o clique de sempre abre a cruz / o menu. Vale a hora dos eventos: o gesto que
+  // abriu pelo relógio só porque a fila atrasou (o celular ocupado) volta a ser o toque
+  const dur = (e.timeStamp || performance.now()) - g.ts0;
+  if (g.fase === 'armado' || (g.porTempo && g.max <= GES107_FOLGA && dur < GES107_TOQUE_MS)){
+    if (g.fase !== 'armado') GES107.gestos--;
+    GES107.toques++; ges107Fim('toque'); return;
+  }
+  ges107Atualiza();
+  GES107.engole = {bt:g.bt, ate:performance.now() + 650};
+  const sel = g.sel, tipo = g.tipo;
+  if (sel === 'cancela'){ ges107Fim('cancela'); return; }
+  ges107Fim();
+  ges107Manda(tipo, GES107_LUGARES.indexOf(sel));
+}
+function ges107Perde(e){                                        // (o sistema tirou o dedo — ou o toque foi parar em outro lugar —: não manda nada)
+  const g = GES107.g; if (!g || e.pointerId !== g.id) return;
+  if (g.fase !== 'armado') GES107.engole = {bt:g.bt, ate:performance.now() + 650};
+  ges107Fim('cancela');
+}
+function ges107Fim(motivo){
+  const g = GES107.g; if (!g) return;
+  clearTimeout(g.timer); clearInterval(GES107.vigia); GES107.vigia = 0;
+  GES107.g = null;
+  if (motivo === 'cancela' && g.fase !== 'armado'){ GES107.cancelados++; GES107.ultimo = {tipo:g.tipo, cancelou:true, t:Math.round(performance.now())}; ges107Fala('Cancelado: nada foi mandado'); }
+  try { if (g.bt.hasPointerCapture && g.bt.hasPointerCapture(g.id)) g.bt.releasePointerCapture(g.id); } catch (_) {}
+  g.bt.classList.remove('ges107-segura');
+  document.documentElement.classList.remove('ges107-aberto');
+  if (g.fase !== 'armado' && motivo !== 'toque'){                 // (o gesto foi usado: a cruz do toque e o menu das falas fecham de vez)
+    try { if (EMO106.cruz) emo106Cruz(false); } catch (_) {}
+    try { if (V93F.menu) v93FalaMenu(false); } catch (_) {}
+  }
+  const E = GES107.el;
+  if (E.cruz){
+    for (const k of ['aro', 'pino', 'x', 'cruz']) E[k].hidden = true;
+    E.x.classList.remove('on'); E.pino.classList.remove('cancela');
+  }
+}
+function ges107Manda(tipo, i){
+  const T = GES107_TIPOS[tipo]; let ok = false, valor = null, nome = '';
+  try { valor = T.itens()[i]; nome = T.nome(valor); ok = !!T.manda(i); } catch (e) { ges107Erro('manda', e); }
+  const r = {tipo, lugar:GES107_LUGARES[i], i, valor, nome, ok, t:Math.round(performance.now())};
+  GES107.enviados.push(r); if (GES107.enviados.length > 20) GES107.enviados.shift();
+  GES107.ultimo = r;
+  ges107Fala(ok ? nome + ' mandado' : 'Espere um pouco para mandar de novo');
+  return ok;
+}
+function ges107Vigia(){                                         // (a partida parou, o botão sumiu, o replay do gol: o gesto acaba sem mandar)
+  const g = GES107.g; if (!g){ clearInterval(GES107.vigia); GES107.vigia = 0; return; }
+  let pode = false; try { pode = !!GES107_TIPOS[g.tipo].pode() && !g.bt.hidden && performance.now() - g.t0 < GES107_MAX_MS; } catch (_) {}
+  if (!pode){ if (g.fase !== 'armado') GES107.engole = {bt:g.bt, ate:performance.now() + 650}; ges107Fim('cancela'); return; }
+  if (g.fase === 'aberto'){ let esp = 0; try { esp = GES107_TIPOS[g.tipo].espera(); } catch (_) {} GES107.el.cruz.classList.toggle('espera', esp > 0); }
+}
+// o clique que vem depois do gesto (o mouse, ou o toque que andou pouco) não abre a cruz do toque de novo
+addEventListener('click', e => {
+  try {
+    const q = GES107.engole, g = GES107.g, t = e.target;
+    const nosBotoes = b => b && t && (b === t || b.contains(t));
+    if (g && g.fase === 'aberto' && (nosBotoes(GES107_TIPOS.emoji.bt()) || nosBotoes(GES107_TIPOS.falas.bt()))){ e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (!q) return;
+    if (performance.now() > q.ate){ GES107.engole = null; return; }
+    if (nosBotoes(q.bt)){ GES107.engole = null; e.preventDefault(); e.stopImmediatePropagation(); }
+  } catch (_) {}
+}, true);
+function ges107Liga(tipo){                                      // o toque nos dois botões (os de sempre: a v106 e a v93 continuam com o clique)
+  const bt = GES107_TIPOS[tipo].bt(); if (!bt || bt.dataset.ges107) return;
+  bt.dataset.ges107 = tipo;
+  bt.setAttribute('aria-describedby', 'ges107-dica');
+  const pega = (nome, fn) => bt.addEventListener(nome, e => { try { fn(e); } catch (er) { ges107Erro(nome, er); } });
+  pega('pointerdown', e => ges107Comeca(tipo, e));
+  pega('pointermove', ges107Move);
+  pega('pointerup', ges107Solta);
+  pega('pointercancel', ges107Perde);
+  pega('lostpointercapture', ges107Perde);
+  bt.addEventListener('contextmenu', e => e.preventDefault());   // (segurar no Android não abre o menu do navegador)
+}
+ges107Monta();
+ges107Liga('emoji'); ges107Liga('falas');
+addEventListener('resize', () => { try { if (GES107.g){ if (GES107.g.fase !== 'armado') GES107.engole = {bt:GES107.g.bt, ate:performance.now() + 650}; ges107Fim('cancela'); } } catch (_) {} });
+addEventListener('blur', () => { try { if (GES107.g) ges107Fim('cancela'); } catch (_) {} });
+
+/* ---------------------------------------------------------------- 6) o COFRE › EMOJI: a troca EMOJIS | FRASES e a cruz das frases */
+const GES107_COFRE = [['emojis', 'EMOJIS', 'Emojis: os 5 da cruz do botão do emoji'], ['frases', 'FRASES', 'Frases: as 5 da cruz do botão das falas']];
+function ges107CofreRepinta(){ try { if (v88Aberta('cofre') && V106.aba === 'emoji') v106Repinta(); } catch (_) {} }
+function ges107CofreTroca(){
+  const nav = nodo('nav', 'cf106-sub ges107-cf-troca'); nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Os emojis ou as frases da partida');
+  for (const [id, rot, aria] of GES107_COFRE){
+    const on = id === GES107.cofre, b = novoBotao('cf106-sub-bt' + (on ? ' on' : ''), aria);
+    b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(on)); b.dataset.k = 'emo-modo:' + id; b.textContent = rot;
+    b.addEventListener('click', () => { if (id === GES107.cofre) return; try { som.clique(); } catch (_) {} GES107.cofre = id; v106Repinta(); });
+    nav.appendChild(b);
+  }
+  return nav;
+}
+function ges107CofreBalao(s){                                   // a frase no balão branco das falas (a faixinha laranja e a pontinha)
+  const b = nodo('span', 'ges107-cf-balao'); b.setAttribute('aria-hidden', 'true'); b.appendChild(nodo('b', null, s)); return b;
+}
+function ges107CofreCruz(){
+  const F = ges107Frases93(), box = nodo('div', 'cf106-cruz ges107-cf-cruz'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Os 5 lugares da cruz das falas');
+  for (const d of ['cima', 'esq', 'dir', 'baixo']){ const s = nodo('i', 'cf106-seta ' + d); s.innerHTML = V106_SVG.seta; box.appendChild(s); }
+  V106_LUGARES.forEach((nome, i) => {
+    const on = i === GES107.cofreSlot, s = F[GES107.frases[i]] || '';
+    const b = novoBotao('cf106-lugar l' + i + (on ? ' on' : '') + ' cheio', 'Lugar ' + nome.toLowerCase() + ': ' + s + (on ? ' (aceso)' : ''));
+    b.dataset.k = 'lugar-frase:' + i; b.setAttribute('aria-pressed', String(on));
+    b.appendChild(nodo('span', 'ges107-cf-tx', s));
+    b.addEventListener('click', () => { try { som.clique(); } catch (_) {} GES107.cofreSlot = i; v106Repinta(); });
+    box.appendChild(b);
+  });
+  return box;
+}
+function ges107CofreFrases(lado, rola, dir){
+  const F = ges107Frases93(), S = GES107.frases, i0 = ges107Prende(GES107.cofreSlot | 0, 0, 4);
+  v106Pedestal(lado, {topo:{rot:'PADRÃO', aria:'Voltar as 5 frases da cruz para o padrão', k:'topo:padrao-frases', fn:ges107CofrePadrao},
+    peca:ges107CofreCruz(), semPedestal:true, cls:'cruz ges107-cf-lado', nome:V106_LUGARES[i0] + ' · ' + (F[S[i0]] || ''), sub:'O LUGAR ACESO'});
+  v106Dica(dir, 'Toque num lugar da cruz e depois na frase: ela vai para o lugar aceso (' + V106_LUGARES[i0].toLowerCase() + ')');
+  const g = v106GradeEl('ges107-cf-grade');
+  F.forEach((s, i) => {
+    const lugar = S.indexOf(i);
+    g.appendChild(v106Card({k:'frase:' + i, nome:lugar >= 0 ? V106_LUGARES[lugar] : '', st:lugar >= 0 ? 'equipado' : 'seu', mini:ges107CofreBalao(s),
+      aria:'Pôr "' + s + '" no lugar ' + V106_LUGARES[i0].toLowerCase() + (lugar >= 0 ? ' (já está no lugar ' + V106_LUGARES[lugar].toLowerCase() + ')' : ''), fn:() => ges107CofrePoe(i)}));
+  });
+  rola.appendChild(g);
+  rola.appendChild(nodo('p', 'cf106-nota ges107-cf-nota', 'Na partida, segure o botão das falas e arraste para o lado da frase (estas 5). Um toque rápido no botão abre as 8.'));
+}
+function ges107CofrePoe(i){
+  const lugar = ges107Prende(GES107.cofreSlot | 0, 0, 4), s = ges107Frases93()[i];
+  if (!ges107PoeFrase(lugar, i)){ try { som.erro(); } catch (_) {} return; }
+  try { som.compra(); } catch (_) {}
+  aviso('"' + s + '" no lugar ' + V106_LUGARES[lugar].toLowerCase() + '!');
+  v106Repinta();
+}
+function ges107CofrePadrao(){ ges107PadraoFrases(); aviso('As 5 frases da cruz voltaram para o padrão.'); v106Repinta(); }
+if (typeof v106Emoji === 'function'){                           // (a aba EMOJI de sempre, com a troca em cima; em FRASES, a cruz das falas)
+  const v106EmojiAntes107 = v106Emoji;
+  v106Emoji = function(lado, rola, dir){
+    try { dir.appendChild(ges107CofreTroca()); } catch (e) { ges107Erro('cofre', e); }
+    if (GES107.cofre === 'frases') return ges107CofreFrases(lado, rola, dir);
+    return v106EmojiAntes107.apply(this, arguments);
+  };
+  ges107Mudou(() => { if (GES107.cofre === 'frases') ges107CofreRepinta(); });
+}
+
+/* ---------------------------------------------------------------- 7) a API (para os testes e quem mais quiser ler) */
+window.RachaGestos107 = {
+  lugares:() => GES107_LUGARES.slice(),
+  todas:() => ges107Frases93().slice(),                                    // as 8 frases da v93 (o toque rápido mostra todas)
+  frases:() => GES107.frases.slice(),                                       // a cruz das falas: os índices [cima, esquerda, meio, direita, baixo]
+  textos:() => GES107.frases.map(i => ges107Frases93()[i]),
+  padrao:() => GES107_FRASES_PADRAO.slice(),
+  poeFrase:(lugar, i) => ges107PoeFrase(lugar, i),                          // troca e grava (devolve os 5; null se não deu)
+  padraoFrases:() => ges107PadraoFrases(),
+  mudouFrases:fn => ges107Mudou(fn),
+  cofre:m => { if (m === 'emojis' || m === 'frases'){ GES107.cofre = m; ges107CofreRepinta(); } return GES107.cofre; },
+  cofreSlot:() => GES107.cofreSlot,
+  cancela:() => { if (GES107.g) ges107Fim('cancela'); return true; },
+  estado:() => {
+    const g = GES107.g, G = GES107.geo;
+    return {ativo:!!g, tipo:g ? g.tipo : null, fase:g ? g.fase : null, sel:g ? g.sel : null, ptr:g ? g.id : null,
+      inicio:g ? [g.x0, g.y0] : null, dedo:g ? [g.x, g.y] : null, enviados:GES107.enviados.map(x => Object.assign({}, x)), ultimo:GES107.ultimo ? Object.assign({}, GES107.ultimo) : null,
+      cancelados:GES107.cancelados, toques:GES107.toques, gestos:GES107.gestos, frases:GES107.frases.slice(), textos:GES107.frases.map(i => ges107Frases93()[i]),
+      geo:G ? JSON.parse(JSON.stringify(G)) : null};
+  }
+};
+
+/* ======================================================================= RACHA v107 · o anel do chute bem branco (tools/v107/chute.js) */
+/* ---------------------------------------------------------------- tools/v107/chute.js */
+/* ======================================================================================================================
+   RACHA v107 · O ANEL DO CHUTE BEM BRANCO
+   O pedido (05/11/2026): "quando o jogador chuta, o arco ao redor deve ficar bem branco: a opacidade do chute tá muito fraca".
+   Na v96 (a pedido de então) o branco do anel tinha ficado suave, no máximo 30% (V95S.luz = 0,3, tools/v96/conta.js). Agora
+   volta forte e passa do branco da v95: apertou o CHUTE, o anel em volta da tampinha acende em BRANCO OPACO (o anel cheio de
+   branco, a borda de fora e um brilho um pouco maior); o PASSE acende quase igual (86%, como na v95: dá para ver qual foi).
+   Segurando fica; soltou ou foi só um toque, some rápido — como sempre. Vale para você e para os outros (online, pelo botão de
+   cada um no quadro do servidor), na partida, no treino, no replay e na Oficina (tools/v107/chute.py troca o branco de lá).
+   Só o desenho: o botão, o chute e a força não mudam.
+   ====================================================================================================================== */
+try { V95S.luz = 1; } catch (_) {}                         // (tools/v95/times.js e tools/oficina/desenho.js multiplicam por ele)
+
+function v107SpriteBranco(rpx){                              // o anel aceso: o mesmo anel da v95, mas com o branco opaco
+  const re = rpx*AROV.ate, ri = rpx*Math.max(1.02, AROV.de - .02), m = Math.ceil(re + rpx*.36 + 4);
+  const c = document.createElement('canvas'); c.width = c.height = 2*m;
+  const g = c.getContext('2d');
+  const anel = () => { g.beginPath(); g.arc(m, m, re, 0, TAU); g.arc(m, m, ri, 0, TAU, true); };
+  g.save(); g.shadowColor = 'rgba(255,255,255,.95)'; g.shadowBlur = Math.max(2, rpx*.28);
+  anel(); g.fillStyle = '#ffffff'; g.fill(); g.restore();
+  anel(); g.fillStyle = '#ffffff'; g.fill();                 // (de novo, sem a sombra: o branco cheio até a borda)
+  const w = Math.max(1, rpx*.06);
+  g.lineWidth = w; g.strokeStyle = '#ffffff'; g.beginPath(); g.arc(m, m, re - w/2, 0, TAU); g.stroke();
+  g.lineWidth = Math.max(.75, rpx*.03); g.beginPath(); g.arc(m, m, ri + g.lineWidth/2, 0, TAU); g.stroke();
+  return c;
+}
+v95SpriteBrancoDe = function(rpx){                           // (a mesma caixa das imagens prontas dos anéis, com a chave nova)
+  const key = 'w|' + rpx + '|b107'; let c = SPR_ARO.get(key);
+  if (!c){ if (SPR_ARO.size > 72) SPR_ARO.clear(); c = v107SpriteBranco(rpx); SPR_ARO.set(key, c); }
+  return c;
+};
+window.RachaChute107 = {luz: () => V95S.luz, sprite: rpx => v95SpriteBrancoDe(rpx)};
 
 montaAbas();
 if (onbPrecisa()) onbAbre();   // v57: a primeira vez (antes do presente)

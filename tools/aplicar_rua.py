@@ -98,6 +98,27 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
      check no equipado). A mesma tela 'cofre' da v90, com o render trocado por cima (tudo que abria o COFRE abre o novo); as
      tampinhas do catálogo à venda aparecem sozinhas (mesmo com as prontas escondidas) e os emojis de reação da partida entram
      pela window.RachaEmotes106 (sem ela, o aviso de que chegam na próxima versão).
+ v107 · o perfil pelo nome (tools/v107/perfil.py + perfil.js + app/public/game/v107-perfil.css, por último; o convite pelo chat no
+     servidor: server/convite107.js): tocar no nome de alguém em qualquer chat (o painel, a tela inteira do Chat do Brasil, a sala,
+     a partida, a equipe, o clube e os amigos) abre a janelinha colada no nome — PERFIL (o perfil do jogo, com os números e o
+     ADICIONAR, também por cima da partida), CONVIDAR (para a sua sala, mesmo quem não é amigo: convite {mid}, com os limites do
+     servidor; os amigos pelo ID) e DENUNCIAR (com o motivo), e SILENCIAR · BLOQUEAR embaixo —; na tela da sala, o cartão de
+     alguém abre a janelinha com o PERFIL (quem não é o árbitro) ou a ficha do árbitro com o VER PERFIL primeiro; o mesmo no
+     painel dos jogadores da partida (o arrastar do árbitro da v104 não muda).
+ v107 · arrastar (tools/v107/painel.py + painel.js + app/public/game/v107-painel.css, por último): na sala online o árbitro aperta
+     o cartão de alguém e arrasta (depois de 8 px; tocar sem mexer continua abrindo a ficha) para o outro time, uma VAGA LIVRE, o
+     cartão de outra pessoa (troca) ou QUEM ASSISTE (o banco) — a cópia vai com o dedo, o lugar acende e o soltar manda as mesmas
+     ações da ficha (adm mover e reserva); na partida o painel dos jogadores da v104 arrasta já com o movimento (sem o meio
+     segundo); e a faixa "fulano foi para o TIME B" / "... foi para o BANCO" para a sala toda, da linha que o servidor já manda.
+ v107 · gestos (tools/v107/gestos.py + gestos.js + app/public/game/v107-gestos.css, por último): o emoji e as falas sem precisar
+     clicar — segurar e arrastar no botão do emoji (v106) ou no das falas (v93): a cruz dos 5 no meio da tela, o aro do analógico
+     pequeno em volta do botão (que anda um pouco com o dedo) e o X de cancelar do lado; o lado para onde o dedo vai acende uma
+     opção (parado, a do meio) e soltar manda (no X, nada). O toque rápido continua abrindo a cruz e o menu das 8 frases de
+     sempre; cada gesto com o seu dedo (o analógico, o PASSE e o CHUTE seguem com os outros); a cruz das 5 frases em
+     racha-falas-v107 (na cópia da conta) e editada no COFRE › EMOJI (a troca EMOJIS | FRASES); a API window.RachaGestos107.
+ v107 · o anel do chute (tools/v107/chute.py + chute.js, por último): "quando o jogador chuta, o arco ao redor deve ficar bem
+     branco" — o V95S.luz volta a 1 (a v96 tinha deixado em 0,3) e o anel aceso fica com o branco opaco, na partida, no replay
+     e na Oficina (a troca no desenho de lá).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -150,7 +171,11 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v105/borda',                                                                # v105: o TAMANHO DA BORDA da tampinha (sem · fina · normal · grossa)
               'v106/conteudo',                                                             # v106: as 6 bolas novas (3 padrões novos) e as 6 mascotes em medalhão (à venda, as peças no fim das listas)
               'v106/emotes',                                                               # v106: os emojis da partida (o balão em cima da tampinha, a cruz dos 5 e o online)
-              'v106/cofre']                                                                # v106: o COFRE no estilo das fotos (o pedestal, as abas CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS e os cartões bege)
+              'v106/cofre',                                                                # v106: o COFRE no estilo das fotos (o pedestal, as abas CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS e os cartões bege)
+              'v107/perfil',                                                               # v107: o perfil pelo nome (a janelinha PERFIL · CONVIDAR · DENUNCIAR no chat, o cartão da sala e o painel da partida)
+              'v107/painel',                                                               # v107: o árbitro arrastando os jogadores na sala (o cartão) e na partida (sem segurar), e a faixa de quem foi movido
+              'v107/gestos',                                                               # v107: segurar e arrastar no botão do emoji e no das falas (a cruz no meio da tela, o aro e o X; a cruz das frases no COFRE)
+              'v107/chute']                                                                # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

@@ -12,6 +12,34 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
+## v107 · o convite pelo chat (`convite107.js`)
+
+Tocar no nome de alguém no chat abre a janelinha com PERFIL, CONVIDAR e DENUNCIAR (o jogo: `tools/v107/perfil.js`); o CONVIDAR
+chama quem escreveu para a **sua** sala, mesmo quem ainda não é seu amigo. Cliente → servidor: `convite {mid, canal?}` — o
+número de uma mensagem do chat (`m123` do Chat do Brasil, `CODIGO-12` da sala ou da equipe, `k…` do clube; sem o `canal`, ele
+sai do jeito do número). O servidor acha quem escreveu e a conexão das salas dessa pessoa e só manda o convite se:
+
+* quem convida entrou com a **conta** (o visitante não convida), está numa **sala** (não a ranqueada, não cheia) e não está
+  silenciado por denúncias (no Chat do Brasil ou na sala);
+* a mensagem é de **até 15 min**, não foi escondida pela moderação, não é do sistema e quem convida podia ver (a da equipe, só
+  o time dele; a do clube, só do clube dele; a da sala, só da sala em que ele está) — e é de uma **conta** (o visitante não é
+  convidado);
+* nenhum dos dois **bloqueou** o outro; quem recebe está online nas salas, **aparece online** (mostrar status), **recebe
+  convites** (Ajustes › Privacidade) e não está na sua sala;
+* os **limites** (por conta: reconectar não zera), para quem não é amigo dos dois lados: **1 a cada 10 s** e **6 a cada 10 min**
+  de quem convida, a **mesma pessoa 1 a cada 2 min** e quem recebe **no máximo 8 convites pelo chat a cada 10 min** (somando
+  todo mundo); e o balde de sempre de todos os convites (5 seguidos, depois 1 a cada 5 s). Os limites de quem convida são
+  conferidos antes de olhar quem recebe: o "calma" nunca diz se a pessoa está online.
+
+Depois é o caminho de sempre: `convite_recebido {id, tipo:'sala', time:-1, de:{p, nome, selo}, sala, expira, via:'chat', amigo}`
+para quem recebe (ENTRAR ou RECUSAR: `convite_resposta {id, aceita}`; vale 60 s), `convite_enviado {id, para, tipo, nome, mid,
+via:'chat'}` para quem chamou e `convite_resultado`. O erro, `convite_erro {para:'', mid, via:'chat', motivo}`, tem **um texto só**
+para tudo que depende de quem recebe ou da mensagem (offline, escondido, sem convites, o bloqueio de qualquer lado, sem conta, a
+mensagem velha, escondida ou que não existe, quem já recebeu convites demais): "Não deu para convidar essa pessoa agora." — o
+convite não conta nada que o chat já não mostra (e o erro não leva o ID de ninguém). Os amigos continuam também pelo ID
+(`convite {para, tipo}`, abaixo). O jogo de antes não manda o `mid`. Ligado no `turma.js` com uma linha
+(`require('./convite107').aplica(Turma, …)`). Teste: `node tests/v107_convite_servidor_test.mjs`.
+
 ## v106 · os emojis da partida (`emotes106.js`)
 
 O balão com a reação em cima da tampinha (o jogo: `tools/v106/emotes.js`). Cliente → servidor: `emote {e}` (o id de um dos 20
@@ -394,7 +422,7 @@ Cliente → servidor: `hello {token, name, skin, avatar, flag, conta?, clube?}` 
 `p2p {on}` · `cupCreate {name}` · `cupNext` · `cupEnd` · `club_req {rid, op, args}` ·
 `brasil_join {name, skin, avatar, token}` · `brasil_say {text}` · `brasil_report {id}` · `fila {n, pts}` · `fila_sai` (v79) ·
 `auto_entrar {n, ranked}` · `auto_cmd {seq, mx, my, k?}` · `auto_sair` · `auto_status` (v83, a partida autoritativa — acima).
-v88 (o social): `relacoes {conta}` · `amigos_status` · `convite {para, tipo}` (`tipo`: `sala` ou `time`) ·
+v88 (o social): `relacoes {conta}` · `amigos_status` · `convite {para, tipo}` (`tipo`: `sala` ou `time`; v107: ou `convite {mid, canal?}`, pelo chat) ·
 `convite_resposta {id, aceita}` · `dm {para, texto}` · `dm_hist {com}` · `clube_say {texto}` · `clube_hist` ·
 `chat_denuncia {canal, mid, motivo}` · `say {text, canal:'equipe'}` · `report {mid, motivo}` · `brasil_report {id, motivo}`.
 No `snapshot` da partida normal, `data.goal.el` é a hora do gol (v80).
@@ -446,4 +474,5 @@ python3 tests/online_test.py       # o jogo de verdade no navegador: sessões in
 node tests/plataforma_salas_test.mjs   # montado na plataforma (sessão do site e selo conferido)
 node tests/v88_social_test.js          # v88: o social ao vivo (status, convites, chat dos amigos/clube/equipe, bloqueio, denúncia)
 node tests/v88_salas_plataforma_test.mjs   # v88: o mesmo, montado na plataforma de teste (tests/plataforma)
+node tests/v107_convite_servidor_test.mjs  # v107: o convite pelo chat (quem não é amigo, as regras, os limites, o texto do erro)
 ```

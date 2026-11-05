@@ -279,6 +279,13 @@ if out=$(node tests/v106_corpo_test.mjs 2>&1); then echo "$out" | tail -1; else 
 # bilhete, a tampinha da conta e o escudo do clube); ~2 s.
 printf '%-12s ' "v106_mascotes"
 if out=$(node tests/v106_mascotes_servidor_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+# v107: O CONVITE PELO CHAT (server/convite107.js): convidar quem escreveu uma mensagem recente (o Chat do Brasil, a sala, a equipe,
+# o clube) para a sua sala, mesmo quem não é amigo — as regras de sempre (conta, sala, ranqueada, cheia, bloqueio dos dois lados,
+# quem recebe convites, quem já está), as do chat (a mensagem de até 15 min, a escondida, a do sistema, a da equipe dos outros, o
+# visitante), os limites (10 s, 6 em 10 min, 2 min a mesma pessoa, 8 para quem recebe; reconectar não zera), o texto do erro que
+# não conta nada de quem recebe e os amigos pelo ID como antes; < 1 s.
+printf '%-12s ' "v107_convite"
+if out=$(node tests/v107_convite_servidor_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 # v105: O CHAT NA TELA DO LOBBY. O v105_chat_lobby (Python; a plataforma de teste e dois navegadores na parte 6) a barra do chat
 # da partida de volta à tela inicial: o lugar em 10 tamanhos sem encostar em nenhum botão, tocar abre e minimizar volta, sem
 # servidor/desligada/fora do ar, na partida, nada por quadro e o Chat do Brasil de verdade entre duas contas (o VER PERFIL por cima).
@@ -302,7 +309,25 @@ if out=$(node tests/v106_mascotes_servidor_test.mjs 2>&1); then echo "$out" | ta
 # tampinha salva, o emoji da tampinha, a bola), a ★ da RODA, a tampinha à venda que aparece sozinha, o cadeado e a janelinha de
 # compra (sem conta, na demonstração e com a conta no servidor), a cruz dos emojis com uma API falsa, o escudo (sem clube, o
 # pessoal, o da conta com o dono e com o membro) e tudo cabendo de 568×320 a 1920×1080 e no iPhone com o entalhe; ~2 min.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre; do
+# v107: O PERFIL PELO NOME (tools/v107/perfil.js): o v107_perfil (Python; a plataforma de teste e três navegadores logados, ninguém
+# amigo de ninguém) a janelinha colada no nome com PERFIL, CONVIDAR e DENUNCIAR (no painel, no 844 × 390 com e sem a área segura do
+# iPhone e na tela inteira do Chat do Brasil; fecha tocando fora e no Esc), o PERFIL com os números e o ADICIONAR (no lobby, na
+# sala e por cima da partida), o seu nome e quem não tem conta, a denúncia com o motivo indo para o banco, o convite pelo chat
+# para quem não é amigo (chega, e o ENTRAR põe na sala), o cartão da sala (a janelinha com o PERFIL; a ficha do árbitro com o VER
+# PERFIL), o painel dos jogadores da partida e sem estar na conta; ~5 min.
+# v107: O ÁRBITRO ARRASTANDO NA SALA E NA PARTIDA (tools/v107/painel.js): o v107_painel (Python; a plataforma de teste e três
+# navegadores, os arrastos com o mouse e com o dedo de verdade) na sala o cartão para o outro time, para o banco, para a VAGA
+# LIVRE e em cima de outro (troca) — a cópia com a etiqueta, o lugar que acende e os três vendo —, quem não é o árbitro sem
+# arrastar, o tocar que abre a ficha, na partida o painel arrastando sem segurar (com o dedo para o banco, com o mouse para a
+# vaga) e a faixa "fulano foi para o TIME B" para os três, o toque no painel chegando como toque e a partida seguindo; ~1,5 min.
+# v107: OS GESTOS DO EMOJI E DAS FALAS (tools/v107/gestos.js): o v107_gestos (Python; o toque de verdade pelo CDP) arrastar para os
+# 5 lados nos dois botões (o balão certo em cima da tampinha), o X e o toque cancelado que não mandam nada, o toque rápido de
+# sempre, dois dedos (o analógico andando com um e o emoji com o outro; o PASSE no meio), o mouse, o ritmo, as peças em 6 tamanhos
+# sem cobrir nada, a cruz das frases (racha-falas-v107 na cópia da conta e o COFRE › EMOJI › FRASES), o Reduzir animações e o online
+# com duas sessões; ~9 min.
+# v107: O ANEL DO CHUTE BEM BRANCO (tools/v107/chute.js): o v107_chute (Python) o V95S.luz em 1 e a imagem do anel aceso
+# opaca, os pixels do anel na partida segurando o CHUTE (quase branco) e o PASSE, o soltar e a Oficina com o mesmo branco; ~15 s.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

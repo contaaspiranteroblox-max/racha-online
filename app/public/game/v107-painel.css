@@ -1,0 +1,50 @@
+/* RACHA v107 · arrastar os jogadores na sala e na partida, e a faixa de quem foi movido — tools/v107/painel.js */
+
+/* ---- a sala: o árbitro pega o cartão (tocar sem mexer continua abrindo a ficha) ---- */
+#lb #tela-sala.pn107-arb .sl-card{ cursor:grab; touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+#lb #tela-sala.pn107-arb .sl-caixa.pn107-rola .sl-card{ touch-action:pan-y; }   /* (a coluna que rola: o dedo na vertical rola; de lado, arrasta) */
+#lb #tela-sala.pn107-arrastando, #lb #tela-sala.pn107-arrastando *{ cursor:grabbing !important; }
+#lb #tela-sala .sl-card.pn107-origem{ opacity:.32; filter:saturate(.5); }
+#lb #tela-sala.pn107-arrastando .sl-vaga{ filter:brightness(1.2); }      /* (arrastando: as vagas aparecem mais) */
+
+/* o lugar embaixo do dedo acende (o time e quem assiste: a caixa da coluna; a vaga; o cartão de quem troca) */
+#lb #tela-sala .sl-col.pn107-alvo > .sl-caixa{ outline:5px solid #ffd23f; outline-offset:-5px; filter:brightness(1.12);
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.25), 0 0 0 4px rgba(255,210,63,.4), 0 0 36px rgba(255,210,63,.55) !important; }
+#lb #tela-sala .sl-col.pn107-nao > .sl-caixa{ outline:6px solid #ff2d2d; outline-offset:-6px; filter:saturate(.45) brightness(.82); }   /* (o time cheio: aqui não) */
+#lb #tela-sala .sl-vaga.pn107-alvo{ outline:4px solid #ffd23f; outline-offset:2px; border-color:#ffd23f !important; background:rgba(255,210,63,.26) !important; color:#fff8dc !important; }
+#lb #tela-sala .sl-card.pn107-alvo{ outline:4px solid #ffd23f; outline-offset:3px; filter:brightness(1.12); }
+
+/* as cópias que vão com o dedo (a da sala e a do painel da v104) nunca recebem toques, nem os filhos (um filho com
+   pointer-events:auto esconderia o lugar embaixo do dedo); o painel.js põe o mesmo, inline, com !important */
+#lb .sl-card.pn107-fantasma, #lb .sl-card.pn107-fantasma *, .v93-pj.v104-fantasma, .v93-pj.v104-fantasma *{ pointer-events:none !important; }
+
+/* a cópia que vai com o dedo, com a etiqueta do que acontece ao soltar (por cima: o dedo não cobre) */
+#lb .sl-card.pn107-fantasma{ box-shadow:0 0 0 4px #ffd23f, 0 18px 34px rgba(0,0,0,.55) !important; opacity:.96; animation:none !important; cursor:grabbing; }
+#lb .sl-card.pn107-fantasma .pn107-acao{ position:absolute; left:50%; bottom:calc(100% + 14px); transform:translateX(-50%); padding:7px 18px 9px; border-radius:999px;
+  border:3px solid #05060c; background:#ffd23f; color:#1d1503; font:400 26px/1 var(--v91-tit, "Lilita One", sans-serif); letter-spacing:.6px; white-space:nowrap;
+  box-shadow:0 4px 0 rgba(0,0,0,.45); pointer-events:none; }
+#lb .sl-card.pn107-fantasma .pn107-acao.pn107-acao-nao{ background:#3b1a1e; color:#ffc2bb; }
+#lb .sl-card.pn107-fantasma .pn107-acao:empty{ display:none; }
+
+/* ---- a faixa: "fulano foi para o TIME B" (para todo mundo da sala, na tela da sala e na partida; na partida o top vem do
+   painel.js: logo embaixo do placar, que cresce com o HUD) ---- */
+.pn107-faixa{ position:fixed; left:50%; top:calc(env(safe-area-inset-top, 0px) + 15vh); z-index:99990; transform:translateX(-50%); pointer-events:none;
+  box-sizing:border-box; max-width:min(92vw, 760px); padding:10px 24px 11px; border-radius:16px; border:3px solid #05060c; text-align:center; color:#fff;
+  background:linear-gradient(180deg, rgba(34,44,104,.97) 0%, rgba(15,21,60,.97) 100%);
+  box-shadow:inset 0 0 0 2px rgba(120,150,255,.24), inset 0 3px 0 rgba(255,255,255,.08), 0 6px 0 rgba(0,0,0,.45), 0 16px 36px rgba(0,0,0,.45); }
+.pn107-faixa[hidden]{ display:none; }
+.pn107-f1{ display:block; font:400 clamp(17px, 2.5vw, 27px)/1.15 var(--v91-tit, "Lilita One", sans-serif); letter-spacing:.4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 2px 0 rgba(0,0,0,.5); }
+.pn107-fnm{ color:#ffffff; }
+.pn107-fdest{ color:var(--c, #ffd23f); }
+.pn107-f2{ display:block; margin-top:3px; font:700 clamp(12px, 1.5vw, 15px)/1.2 var(--v91-txt, "Barlow", sans-serif); color:#c9d2f6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pn107-f2:empty{ display:none; }
+.pn107-faixa.pn107-entra{ animation:pn107Entra .28s cubic-bezier(.2,1.4,.4,1) both; }
+.pn107-faixa.pn107-sai{ animation:pn107Sai .24s ease-in both; }
+@keyframes pn107Entra{ from{ opacity:0; transform:translate(-50%, -14px) scale(.94); } to{ opacity:1; transform:translate(-50%, 0) scale(1); } }
+@keyframes pn107Sai{ from{ opacity:1; transform:translate(-50%, 0); } to{ opacity:0; transform:translate(-50%, -10px); } }
+.pn107-faixa.pn107-calmo{ animation:none !important; }
+@media (prefers-reduced-motion:reduce){ .pn107-faixa{ animation:none !important; } }
+@media (max-height:430px), (max-width:700px){
+  .pn107-faixa{ top:calc(env(safe-area-inset-top, 0px) + 12vh); padding:6px 14px 7px; border-radius:12px; border-width:2.5px; }
+}

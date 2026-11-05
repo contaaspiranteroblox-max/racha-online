@@ -1,6 +1,6 @@
 """RACHA v103 · o perfil pelo chat (passa/falha), com o jogo logado na plataforma de teste (o código de verdade de app/api
 com SQLite e o servidor das salas montado no mesmo endereço) e duas contas em dois navegadores (a Ana e o Beto):
-  1. o Beto escreve no Chat do Brasil; a Ana toca no nome dele: a ficha tem o VER PERFIL (o primeiro botão; antes só
+  1. o Beto escreve no Chat do Brasil; a Ana toca no nome dele: a ficha tem o VER PERFIL (v107: o PERFIL da janelinha) (o primeiro botão; antes só
      aparecia com o jogo dentro do site);
   2. o VER PERFIL abre o perfil do Beto DENTRO do jogo (o mesmo do RANKING e dos AMIGOS: o nome e o ID dele);
   3. tocar na tampinha da ficha também abre o perfil;
@@ -32,9 +32,9 @@ async def principal():
             await rt(A, "(() => { const m = BRASIL.msgs.find(x => /bora racha/.test(x.texto || x.text || '')); window.RachaChat81.abreFicha(m, false); return 1; })()")
             await asyncio.sleep(.3)
             fic = await rt(A, "(() => { const F = C81.ficha; return {vis:!!F && !F.hidden, bts:[...F.querySelectorAll('.c81-f-bt span')].map(s => s.textContent), id:(F.querySelector('.c81-f-tx small') || {}).textContent || ''}; })()")
-            P.confere(fic['vis'] and fic['bts'] and fic['bts'][0] == 'VER PERFIL' and beto['pub'] in fic['id'], '1) a ficha do Beto (o nome no chat) tem o VER PERFIL, o primeiro botão', fic)
+            P.confere(fic['vis'] and fic['bts'] and fic['bts'][0] in ('VER PERFIL', 'PERFIL') and beto['pub'] in fic['id'], '1) a ficha do Beto (o nome no chat) tem o VER PERFIL (v107: o PERFIL da janelinha), o primeiro botão', fic)
             await A.screenshot(path='tests/saida/v103_chat_ficha.png')
-            await rt(A, "(() => { [...C81.ficha.querySelectorAll('.c81-f-bt')].find(b => /VER PERFIL/.test(b.textContent)).click(); return 1; })()")
+            await rt(A, "(() => { [...C81.ficha.querySelectorAll('.c81-f-bt')].find(b => /^(VER )?PERFIL$/.test((b.querySelector('span') || b).textContent.trim())).click(); return 1; })()")
             pf = await espera(A, "(() => { const c = LB.popCaixa; return !LB.pop.hidden && c.classList.contains('v88-perfil-pop') && /betov103/i.test(c.textContent || '') ? (c.textContent || '').slice(0, 200) : ''; })()", 10000)
             await A.screenshot(path='tests/saida/v103_chat_perfil.png')
             P.confere(bool(pf) and beto['pub'] in pf, '2) o VER PERFIL abre o perfil do Beto dentro do jogo (o nome e o ID dele)', pf)
@@ -66,7 +66,7 @@ async def principal():
             await asyncio.sleep(1.0)
             vis = await rt(A, """(() => { const r = NET49.room, b = r.members.find(x => x.name !== NET49.name && x.id !== NET49.id);
               window.RachaChat81.abreFicha({id:b.id, name:b.name, text:'passa a bola', mid:'x'}, true);
-              const k = [...C81.ficha.querySelectorAll('.c81-f-bt')].find(x => /VER PERFIL/.test(x.textContent)); if (!k) return {semBotao:true};
+              const k = [...C81.ficha.querySelectorAll('.c81-f-bt')].find(x => /^(VER )?PERFIL$/.test((x.querySelector('span') || x).textContent.trim())); if (!k) return {semBotao:true};
               k.click(); return {ok:1}; })()""")
             pj = await espera(A, """(() => { const p = LB.pop, c = LB.popCaixa; if (LB.raiz.hidden || p.hidden || !c.classList.contains('v88-perfil-pop')) return '';
               const r = c.getBoundingClientRect(); return r.width > 100 && r.top >= 0 && r.bottom <= innerHeight + 2 && NET49.playing && !lobby.aberto ? 'ok' : ''; })()""", 10000)
