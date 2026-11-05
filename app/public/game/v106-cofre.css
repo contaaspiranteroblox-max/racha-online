@@ -1,0 +1,178 @@
+/* =====================================================================================================================
+   RACHA v106 · O COFRE NO ESTILO DAS FOTOS (tools/v106/cofre.js). Só o jeito das fotos de referência: em cima a faixa de
+   sempre com o VOLTAR azul; à esquerda a peça grande no pedestal (o botão em cima e a placa do nome embaixo); à direita a
+   barra escura das abas (a escolhida com o sublinhado branco) e a grade de cartões bege (o cadeado, o check verde e a
+   faixinha da raridade). As medidas são as do palco das telas (888 de altura no computador e no celular deitado; menos com o
+   Tamanho da interface maior): a peça encolhe na altura que sobra e só a grade rola.
+   ===================================================================================================================== */
+#lb #lb-camada .lb-tela.cf106-tela{
+  --cf-bege:#e6c28b; --cf-bege2:#d3a96b; --cf-bege3:#f5e0b9; --cf-borda:#8b6334; --cf-borda2:#5a3b16; --cf-tinta:#4a2c0e;
+  --cf-noite:#121a3a; --cf-noite2:#1d2a5c; --cf-linha:#090e25; --cf-azul:#55a3ff; --cf-ciano:#33c8ff;
+  --cf-azul-f:linear-gradient(180deg, #5eaaff 0%, #2f7be8 52%, #1f5cc8 100%);
+  --cf-roxo-f:linear-gradient(180deg, #bd73ff 0%, #9748f6 52%, #7a2fe2 100%);
+  --cf-tit:"Lilita One", "Anton", Impact, "Arial Black", sans-serif;
+  --cf-txt:"Barlow", system-ui, "Segoe UI", Roboto, sans-serif;
+  --cf-cont:0 2px 0 #090e25, 0 -2px 0 #090e25, 2px 0 0 #090e25, -2px 0 0 #090e25, 2px 2px 0 #090e25, -2px 2px 0 #090e25, 0 4px 5px rgba(0,0,0,.45);
+}
+#lb #lb-camada .lb-tela.cf106-tela > .tl-corpo.v88-corpo{ padding:16px 30px 14px; display:flex; overflow:hidden; }
+/* o VOLTAR azul (como nas fotos): só o desenho do botão de sempre */
+#lb.v91.v95v.v101 #lb-camada .lb-tela.cf106-tela > .tl-cab.v91-cab .tl-voltar::before,
+#lb #lb-camada .lb-tela.cf106-tela > .tl-cab .tl-voltar::before{
+  background:var(--cf-azul-f) !important; border:2px solid #0b1f4a !important;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.42), inset 0 -5px 0 rgba(0,20,80,.32), 0 4px 0 #0b2a66, 0 8px 14px rgba(0,0,0,.4) !important; }
+
+/* ---------------------------------------------------------------- o esqueleto: a peça à esquerda, as abas e a grade à direita */
+/* (o lado e a direita são contêineres: a peça e as abas medem o espaço que sobra — cqh/cqi; quem não tem as unidades do contêiner
+   fica com o tamanho fixo da linha de antes) */
+.cf106{ flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:clamp(350px, 27%, 470px) minmax(0, 1fr); grid-template-rows:minmax(0, 1fr); gap:26px; }
+.cf106-lado{ position:relative; min-width:0; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:4px 0 8px;
+  container-type:size; }
+.cf106-dir{ min-width:0; min-height:0; display:flex; flex-direction:column; gap:12px; container-type:inline-size; }
+
+/* ---------------------------------------------------------------- as abas (a barra escura; a escolhida com o sublinhado branco) */
+.cf106-abas{ flex:none; display:flex; align-items:stretch; gap:2px; padding:0 8px; height:86px; box-sizing:border-box; overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+  background:linear-gradient(180deg, rgba(27,38,80,.97) 0%, rgba(14,20,46,.97) 100%); border:3px solid var(--cf-linha); border-radius:16px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 0 rgba(0,0,0,.25), 0 6px 14px rgba(0,0,0,.42); }
+.cf106-abas::-webkit-scrollbar{ display:none; }
+#lb .cf106-aba{ position:relative; flex:1 0 auto; min-width:0; margin:0; padding:0 16px; padding:0 clamp(8px, 1.4cqi, 20px); border:0; border-radius:10px 10px 0 0; background:none; cursor:pointer;
+  font:400 28px/1 var(--cf-tit); font-size:clamp(20px, 2.75cqi, 31px); letter-spacing:.3px; color:var(--cf-azul); text-shadow:var(--cf-cont); white-space:nowrap; box-shadow:none; }
+#lb .cf106-aba > span{ position:relative; top:-3px; }
+#lb .cf106-aba.on{ color:#fff; }
+#lb .cf106-aba.on::after{ content:''; position:absolute; left:12%; right:12%; bottom:0; height:7px; border-radius:6px 6px 0 0; background:#fff; box-shadow:0 0 12px rgba(255,255,255,.6); }
+@media (hover:hover){ #lb .cf106-aba:not(.on):hover{ color:#9cc9ff; } }
+#lb .cf106-aba:focus-visible{ outline-offset:-5px !important; }
+/* as sub-abas pequenas (MAIS) */
+.cf106-sub{ flex:none; display:flex; flex-wrap:wrap; gap:10px; }
+#lb .cf106-sub-bt{ height:56px; padding:0 22px; border:3px solid var(--cf-linha); border-radius:30px; background:linear-gradient(180deg, #24336a, #141d44); cursor:pointer;
+  font:400 23px/1 var(--cf-tit); color:var(--cf-azul); text-shadow:var(--cf-cont); box-shadow:inset 0 2px 0 rgba(255,255,255,.1), 0 4px 0 rgba(0,0,0,.35); }
+#lb .cf106-sub-bt.on{ background:linear-gradient(180deg, #ffffff, #dfe7ff); color:#13204a; text-shadow:none; }
+/* a dica de uma linha embaixo das abas */
+.cf106-dica{ flex:none; margin:0; padding:0 8px; font:700 21px/1.2 var(--cf-txt); color:#d4dcff; text-shadow:0 2px 0 rgba(0,0,0,.65); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf106-dica.sem-conta{ color:#ffe08a; }
+
+/* ---------------------------------------------------------------- a grade (só ela rola) e os cartões bege */
+.cf106-rola{ flex:1 1 auto; min-height:0; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; padding:20px 8px 26px 20px; margin:0;
+  scrollbar-width:thin; scrollbar-color:rgba(170,180,255,.55) transparent; -webkit-overflow-scrolling:touch; }
+.cf106-rola::-webkit-scrollbar{ width:10px; } .cf106-rola::-webkit-scrollbar-thumb{ background:rgba(170,180,255,.45); border-radius:10px; }
+.cf106-grade{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:24px 18px; }
+.cf106-grade.cf106-grade-emj, .cf106-grade.cf106-grade-emo{ grid-template-columns:repeat(auto-fill, minmax(124px, 1fr)); gap:20px 14px; }
+.cf106-grade-emj .cf106-card-nome, .cf106-grade-emo .cf106-card-nome{ font-size:16px; }   /* (os nomes dos emojis são compridos: COMEMORANDO) */
+.cf106-card{ position:relative; aspect-ratio:1 / 1.04; border-radius:16px; border:3px solid var(--cf-borda); box-sizing:border-box;
+  background:linear-gradient(180deg, var(--cf-bege3) 0%, var(--cf-bege) 24%, var(--cf-bege2) 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6), inset 0 -5px 0 rgba(120,78,28,.3), 0 6px 0 var(--cf-borda2), 0 11px 14px rgba(0,0,0,.38); }
+.cf106-card[data-r]::after{ content:''; position:absolute; left:14%; right:14%; bottom:5px; height:5px; border-radius:4px; background:var(--r); opacity:.92; pointer-events:none;
+  box-shadow:0 0 0 1px rgba(60,35,10,.25); }
+.cf106-card[data-r="comum"]::after{ opacity:.55; }
+#lb .cf106-card-bt{ position:absolute; inset:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; margin:0;
+  padding:9px 8px 15px; border:0; border-radius:13px; background:none; box-shadow:none; color:var(--cf-tinta); cursor:pointer; min-width:0; min-height:0; }
+.cf106-card-peca{ flex:1 1 auto; min-height:0; width:76%; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.cf106-card-peca > canvas{ display:block; width:100%; height:auto; max-height:100%; aspect-ratio:1; object-fit:contain; filter:drop-shadow(0 4px 3px rgba(70,40,10,.38)); }
+.cf106-card-pe{ flex:none; max-width:100%; min-height:24px; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.cf106-card-nome{ display:block; max-width:100%; font:400 19px/1.1 var(--cf-tit); color:var(--cf-tinta); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 0 rgba(255,255,255,.45); }
+.cf106-card-tag{ font:800 16px/1 var(--cf-txt); letter-spacing:1px; color:rgba(74,44,14,.8); }
+#lb .cf106-card .v88-preco, #lb .cf106-card .cf106-precos{ gap:4px; padding:3px 10px 3px 6px; border-radius:20px; background:rgba(28,18,8,.82); box-shadow:inset 0 1px 0 rgba(255,255,255,.15); }
+#lb .cf106-card .cf106-precos{ display:inline-flex; gap:6px; } #lb .cf106-card .cf106-precos .v88-preco{ padding:0; background:none; box-shadow:none; }
+#lb .cf106-card .v88-preco i{ font-size:19px; } #lb .cf106-card .v88-preco b{ font-size:20px; color:#fff; }
+.cf106-card.st-equipado{ box-shadow:inset 0 2px 0 rgba(255,255,255,.6), inset 0 -5px 0 rgba(120,78,28,.3), 0 0 0 3px rgba(255,255,255,.75), 0 6px 0 var(--cf-borda2), 0 11px 18px rgba(0,0,0,.4); }
+@media (hover:hover){ #lb .cf106-card-bt:hover{ filter:brightness(1.06); } }
+#lb .cf106-card-bt:active{ transform:translateY(2px); }
+#lb .cf106-card-bt:focus-visible{ outline-offset:4px !important; border-radius:16px; }
+/* o cadeado e o check (no canto de cima, saindo um pouco do cartão) */
+.cf106-cad{ position:absolute; left:-12px; top:-15px; width:38px; height:44px; pointer-events:none; filter:drop-shadow(0 2px 0 rgba(0,0,0,.3)); }
+.cf106-check{ position:absolute; left:-16px; top:-19px; width:54px; height:46px; pointer-events:none; filter:drop-shadow(0 2px 1px rgba(0,0,0,.35)); }
+.cf106-cad svg, .cf106-check svg{ display:block; width:100%; height:100%; }
+/* a ★ das favoritas da RODA */
+#lb .cf106-fav{ position:absolute; right:-10px; top:-12px; width:44px; height:44px; min-width:0; min-height:0; margin:0; padding:0; border-radius:50%; border:3px solid var(--cf-linha); cursor:pointer;
+  background:linear-gradient(180deg, #2a376b, #151d42); color:#6f7aa6; font:400 24px/1 var(--cf-tit); text-shadow:none; box-shadow:0 3px 0 rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; }
+#lb .cf106-fav.on{ color:#ffd21f; background:linear-gradient(180deg, #4a3a10, #2a2008); border-color:#1a1204; text-shadow:0 0 8px rgba(255,210,31,.6); }
+/* o CRIAR PERSONALIZADO (o roxo com o +) */
+.cf106-card.cf106-criar{ border-color:#3a1680; background:var(--cf-roxo-f);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.45), inset 0 -5px 0 rgba(40,0,90,.35), 0 6px 0 #250b5c, 0 11px 14px rgba(0,0,0,.38); }
+.cf106-criar-ic{ flex:none; width:46%; aspect-ratio:1; pointer-events:none; } .cf106-criar-ic svg{ display:block; width:100%; height:100%; filter:drop-shadow(0 3px 0 rgba(0,0,0,.25)); }
+.cf106-criar-tx{ font:400 19px/1.08 var(--cf-tit); color:#fff; text-shadow:var(--cf-cont); text-align:center; white-space:pre-line; letter-spacing:.3px; pointer-events:none; }
+/* as partes dentro da grade (o fio branco das fotos separando) */
+.cf106-secao{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin:30px 2px 16px; padding-top:18px; border-top:3px solid rgba(255,255,255,.6); }
+.cf106-secao h3{ margin:0; font:400 28px/1 var(--cf-tit); color:#fff; letter-spacing:.5px; text-shadow:var(--cf-cont); }
+.cf106-secao small{ font:700 19px/1.25 var(--cf-txt); color:#c9d2ff; text-shadow:0 2px 0 rgba(0,0,0,.6); }
+.cf106-nota{ margin:18px 4px 0; font:700 19px/1.3 var(--cf-txt); color:#c9d2ff; text-shadow:0 2px 0 rgba(0,0,0,.6); }
+.cf106-aviso{ max-width:760px; margin:40px auto; padding:30px 34px; text-align:center; border-radius:18px; border:3px solid var(--cf-linha);
+  background:linear-gradient(180deg, rgba(30,42,88,.95), rgba(15,21,50,.96)); box-shadow:inset 0 2px 0 rgba(255,255,255,.1), 0 10px 22px rgba(0,0,0,.4); }
+.cf106-aviso b{ display:block; font:400 34px/1.15 var(--cf-tit); color:#fff; text-shadow:var(--cf-cont); }
+.cf106-aviso p{ margin:12px 0 0; font:600 22px/1.35 var(--cf-txt); color:#c9d2ff; }
+
+/* ---------------------------------------------------------------- à esquerda: o botão de cima, a peça no pedestal e a placa */
+#lb .cf106-topo-bt{ flex:none; min-width:250px; height:80px; margin:0; padding:0 30px; border:3px solid #0b1f4a; border-radius:14px; background:var(--cf-azul-f); cursor:pointer;
+  font:400 28px/1 var(--cf-tit); color:#fff; text-shadow:var(--cf-cont); letter-spacing:.4px; white-space:nowrap;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.42), inset 0 -5px 0 rgba(0,20,80,.32), 0 5px 0 #0b2a66, 0 10px 16px rgba(0,0,0,.38); }
+#lb .cf106-topo-bt:active{ transform:translateY(3px); box-shadow:inset 0 3px 0 rgba(255,255,255,.35), 0 2px 0 #0b2a66; }
+.cf106-topo-vago{ flex:none; height:80px; }
+.cf106-palco{ position:relative; flex:0 1 auto; min-height:0; display:flex; flex-direction:column; align-items:center; }
+.cf106-peca{ position:relative; z-index:1; width:300px; width:min(300px, 44cqh, 86cqi); aspect-ratio:1; display:flex; align-items:center; justify-content:center; }
+.cf106-peca > canvas{ display:block; width:100%; height:100%; filter:drop-shadow(0 12px 9px rgba(0,0,0,.5)); animation:cf106-entra .32s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes cf106-entra{ from{ transform:scale(.86); opacity:.4; } to{ transform:none; opacity:1; } }
+/* o pedestal: o disco cinza (o tampo claro e a beirada escura) */
+.cf106-pedestal{ position:relative; display:block; width:310px; width:min(310px, 46cqh, 90cqi); aspect-ratio:3.6; margin-top:-50px; margin-top:calc(-.16 * min(310px, 46cqh, 90cqi)); border-radius:50%;
+  background:linear-gradient(180deg, #9aa0a8 0%, #6b717a 46%, #3c4148 100%); box-shadow:inset 0 -6px 10px rgba(0,0,0,.35), 0 16px 22px rgba(0,0,0,.5); }
+.cf106-pedestal::before{ content:''; position:absolute; left:3%; right:3%; top:-14%; height:76%; border-radius:50%;
+  background:radial-gradient(ellipse at 50% 42%, #f3f5f7 0%, #d4d8dd 34%, #a4aab2 68%, #7e848c 100%); box-shadow:inset 0 -4px 8px rgba(0,0,0,.28), 0 2px 0 rgba(255,255,255,.3); }
+.cf106-pedestal::after{ content:''; position:absolute; left:24%; right:24%; top:4%; height:34%; border-radius:50%; background:radial-gradient(ellipse, rgba(255,255,255,.55), rgba(255,255,255,0) 72%); }
+/* a placa do nome (a faixa escura com a pontinha embaixo) */
+.cf106-placa{ position:relative; flex:none; min-width:250px; max-width:96%; box-sizing:border-box; padding:12px 30px 14px; text-align:center; border:3px solid var(--cf-linha); border-radius:8px 8px 4px 4px;
+  background:linear-gradient(180deg, #27365f 0%, #182448 100%); box-shadow:inset 0 2px 0 rgba(255,255,255,.12), 0 8px 14px rgba(0,0,0,.4); }
+.cf106-placa::after{ content:''; position:absolute; left:50%; bottom:-15px; width:26px; height:26px; transform:translateX(-50%) rotate(45deg); background:#182448;
+  border-right:3px solid var(--cf-linha); border-bottom:3px solid var(--cf-linha); border-radius:0 0 4px 0; }
+.cf106-placa b{ position:relative; z-index:1; display:block; font:400 32px/1.1 var(--cf-tit); color:#fff; text-shadow:var(--cf-cont); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf106-placa small{ position:relative; z-index:1; display:block; margin-top:4px; font:800 16px/1.1 var(--cf-txt); letter-spacing:1.2px; color:#9fb3ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* SEM CLUBE (o "NO CLUB" das fotos) */
+.cf106-vazio{ display:block; margin:40px 0 18px; font:400 78px/1 var(--cf-tit); color:#fff; text-align:center; letter-spacing:1px;
+  text-shadow:0 4px 0 #090e25, 0 -3px 0 #090e25, 3px 0 0 #090e25, -3px 0 0 #090e25, 3px 3px 0 #090e25, -3px 3px 0 #090e25, 0 8px 14px rgba(0,0,0,.5); }
+.cf106-palco.sem + .cf106-ir-clube, .cf106-lado > .cf106-ir-clube{ margin-top:6px; }
+/* o cartão do perfil (CARTÕES): o banner, a tampinha e o nome */
+.cf106-palco.cartao .cf106-peca{ width:auto; aspect-ratio:auto; }
+.cf106-cartao{ position:relative; z-index:1; width:400px; width:min(400px, 98cqi); aspect-ratio:400 / 220; border-radius:18px; overflow:hidden; border:4px solid var(--cf-linha); box-sizing:border-box;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.18), 0 12px 18px rgba(0,0,0,.5); animation:cf106-entra .32s cubic-bezier(.2, 1.4, .4, 1) both; }
+.cf106-cartao-fundo{ position:absolute; inset:0; width:100%; height:100%; }
+.cf106-cartao::after{ content:''; position:absolute; inset:0; background:linear-gradient(0deg, rgba(6,8,26,.78) 0%, rgba(6,8,26,0) 58%); pointer-events:none; }
+.cf106-cartao-av{ position:absolute; z-index:1; left:6%; bottom:9%; width:31%; height:auto; aspect-ratio:1; filter:drop-shadow(0 6px 6px rgba(0,0,0,.5)); }
+.cf106-cartao-nome{ position:absolute; z-index:1; left:40%; right:5%; bottom:16%; font:400 34px/1.05 var(--cf-tit); color:#fff; text-shadow:var(--cf-cont); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf106-cartao-marca{ position:absolute; z-index:1; right:5%; top:8%; font:800 18px/1 var(--cf-txt); letter-spacing:3px; color:rgba(255,255,255,.8); text-shadow:0 2px 0 rgba(0,0,0,.6); }
+.cf106-palco.cartao .cf106-pedestal{ margin-top:-36px; }
+
+/* ---------------------------------------------------------------- EMOJI: a cruz dos 5 lugares (cima, esquerda, meio, direita, baixo) */
+.cf106-palco.cruz .cf106-peca{ width:430px; width:min(430px, 62cqh, 100cqi); }
+.cf106-cruz{ position:relative; width:100%; aspect-ratio:1; }
+.cf106-cruz.off{ opacity:.5; filter:saturate(.4); }
+#lb .cf106-lugar{ position:absolute; width:22%; height:22%; min-width:0; min-height:0; margin:0; padding:0; transform:translate(-50%, -50%); border-radius:50%; border:4px solid #08112e; cursor:pointer;
+  background:radial-gradient(circle at 50% 34%, #2f4f95 0%, #1c3168 58%, #132451 100%); box-shadow:inset 0 3px 0 rgba(255,255,255,.18), inset 0 -4px 0 rgba(0,0,0,.25), 0 5px 0 rgba(0,0,0,.38);
+  display:flex; align-items:center; justify-content:center; }
+#lb .cf106-lugar.l0{ left:50%; top:11.5%; } #lb .cf106-lugar.l1{ left:11.5%; top:50%; } #lb .cf106-lugar.l2{ left:50%; top:50%; }
+#lb .cf106-lugar.l3{ left:88.5%; top:50%; } #lb .cf106-lugar.l4{ left:50%; top:88.5%; }
+#lb .cf106-lugar.on{ border-color:#fff; box-shadow:0 0 0 5px rgba(255,255,255,.35), 0 0 26px rgba(90,200,255,.85), 0 5px 0 rgba(0,0,0,.38); }
+#lb .cf106-lugar:disabled{ cursor:default; opacity:1; filter:none; }
+.cf106-lugar-mais{ width:52%; height:52%; pointer-events:none; } .cf106-lugar-mais svg{ display:block; width:100%; height:100%; }
+.cf106-lugar > canvas{ width:94%; height:94%; pointer-events:none; }
+.cf106-seta{ position:absolute; width:25%; aspect-ratio:130 / 34; transform:translate(-50%, -50%); pointer-events:none; }
+.cf106-seta svg{ display:block; width:100%; height:100%; }
+.cf106-seta.cima{ left:50%; top:28.5%; } .cf106-seta.baixo{ left:50%; top:71.5%; transform:translate(-50%, -50%) rotate(180deg); }
+.cf106-seta.esq{ left:28.5%; top:50%; transform:translate(-50%, -50%) rotate(-90deg); } .cf106-seta.dir{ left:71.5%; top:50%; transform:translate(-50%, -50%) rotate(90deg); }
+
+/* ---------------------------------------------------------------- a janelinha (a peça grande, o preço e COMPRAR / CANCELAR) */
+#lb #lb-camada .pop-caixa.cf106-pop{ width:min(940px, 92%); }
+#lb .cf106-pop .cf106-pop-mini{ border-color:var(--cf-borda, #8b6334) !important; background:linear-gradient(180deg, #f5e0b9 0%, #e6c28b 26%, #d3a96b 100%) !important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6), inset 0 -6px 0 rgba(120,78,28,.3), 0 6px 0 #5a3b16 !important; }
+#lb .cf106-pop .cf106-pop-mini canvas{ width:196px; height:196px; filter:drop-shadow(0 6px 5px rgba(70,40,10,.4)); }
+#lb .cf106-pop .cf106-pop-nota{ margin:2px 0 0; }
+#lb .cf106-pop .cf106-precos{ display:inline-flex; gap:18px; }
+.cf106-pecas{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; }
+.cf106-pecas li{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:6px 12px; border-radius:10px; background:rgba(8,10,30,.45); font:700 21px/1.2 "Barlow", sans-serif; color:#e6e9ff; }
+#lb .cf106-pecas .v88-preco i{ font-size:22px; } #lb .cf106-pecas .v88-preco b{ font-size:22px; }
+
+/* ---------------------------------------------------------------- em pé (a janela do computador estreita): a peça em cima, menor */
+#lb.retrato .cf106{ grid-template-columns:minmax(0, 1fr); grid-template-rows:auto minmax(0, 1fr); gap:16px; }
+#lb.retrato .cf106-lado{ container-type:inline-size; flex-direction:row; flex-wrap:wrap; justify-content:center; gap:14px 24px; padding:0; }
+#lb.retrato .cf106-topo-vago{ display:none; }
+#lb.retrato .cf106-peca{ width:220px; } #lb.retrato .cf106-pedestal{ width:230px; margin-top:-36px; }
+#lb.retrato .cf106-palco.cruz .cf106-peca{ width:330px; } #lb.retrato .cf106-cartao{ width:340px; }
+/* reduzir animações (o sistema ou os Ajustes): a peça entra sem o pulinho */
+@media (prefers-reduced-motion:reduce){ .cf106-peca > canvas, .cf106-cartao{ animation:none; } }
+#lb.calmo .cf106-peca > canvas, #lb.calmo .cf106-cartao{ animation:none; }

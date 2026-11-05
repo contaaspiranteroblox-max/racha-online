@@ -2,6 +2,98 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v106 — 05/11/2026 · o jogo de corpo no meio-termo, o COFRE no estilo das fotos, as bolas e as mascotes novas e os emojis da partida
+
+A pedido: *"bom, antes o jogo de corpo deslizava muito, agora gruda muito: tem que ser o meio-termo, porque senão os players
+ficam fechando o caminho — tem que ser uma boa disputa de bola; quero o cofre nesse estilo das fotos; crie mais bolas e skins,
+não muitas, e crie emojis e um balão para emoji na partida"*, com 5 capturas do inventário de outro jogo. Delas vem só a
+organização (as abas, o pedestal, os cartões com o cadeado e o visto, o CRIAR PERSONALIZADO e a cruz dos emojis): nenhum
+desenho foi copiado, tudo é desenhado em código. A física das salas muda de propósito, só no atrito tampinha × tampinha (o
+núcleo, o mesmo do servidor e do aparelho); o bloco da física do jogo não muda (o build confere: `sha256 ad9f1d2216409b0e`).
+O backup do antes: a etiqueta git `antes-v106` (a v105).
+
+- **O JOGO DE CORPO NO MEIO-TERMO** (`server/partida/nucleo.js`: o `atritoJogJog` do `PERFIL_V92` de 0,5 para 0,2; o mesmo
+  arquivo do servidor, da previsão do online e da partida neste aparelho). Medido no núcleo: quem fica de frente para você só
+  fecha o caminho quando você vem quase reto — até 25° da linha dos centros (na v105, até 52,5°; na v104, 2,5°); a 30° e a 45°
+  você passa por ele. Empurrando quem está parado a 15°, você escorrega em volta dele (107° em 1 s; a v105 grudava: 0°; a v104:
+  131°) e ainda leva ele um pouco (4 u; v104: 2,4; v105: 7,1). Correndo um contra o outro quase reto, o empurra-empurra
+  continua (a disputa de bola); com 1 u de desvio, um passa pelo outro em 0,4 s (v104: 0,3 s). A bola, o chute e a virada não
+  mudam. 48 partidas de bots (1x1 a 4x4): nenhuma travada (o pior trecho com a bola parada: 1,9 s). A página da v105 segue o
+  atrito que a sala manda (não precisa atualizar para jogar).
+- **AS BOLAS NOVAS** (`tools/v106/bolas.js`; os itens no `app/contracts/catalogo88.json`, o mesmo do jogo e da plataforma,
+  pelo `tools/v106/catalogo.py`): 6 bolas à venda na LOJA › BOLAS, com 3 padrões novos pintados ponto a ponto na esfera (a luz,
+  a sombra e o contorno como os da bola de sempre) e girando com a mesma matriz do giro — os **gomos de praia** (BOLA DE PRAIA
+  e BOLA DO ARRAIÁ, com as cores das bandeirinhas; raras, 3.000 moedas), as **labaredas** (BOLA DE FOGO, 60 gemas, e BOLA
+  MAÇARICO, a chama azul, 70 gemas; épicas) e o **espaço** (BOLA GALÁXIA e CÉU DO SERTÃO, com a Via Láctea dando a volta na
+  bola; lendárias, 150 gemas). Aparecem na partida, no treino, no replay, na Oficina (o mapa com a bola de cada um) e em toda
+  miniatura. Só o desenho: o raio, a colisão e a física não mudam.
+- **AS MASCOTES** (`tools/v106/mascotes.js` e `conteudo.js`): 6 tampinhas à venda na LOJA › TAMPINHAS › MASCOTES — os bichos
+  do Brasil em medalhão, de contorno grosso e olhar bravo, piscando de vez em quando: ARARA INVOCADA, ONÇA-PRETA e MICO-LEÃO
+  BOLADO (lendárias, 150 gemas), GUARÁ DA VÁRZEA, TUCANO MARRENTO e JACARÉ PAPO-AMARELO (épicas, 80 gemas). Cada uma é a cara
+  da mascote (ocupa a tampinha inteira) com a borda nova **MEDALHÃO** (o aro de metal com o chanfro, os rebites, a estrela e o
+  filete colorido; vale o TAMANHO DA BORDA da v105). As peças entram no FIM das listas (as caras nos lugares 87 a 92, a
+  Medalhão no 28): os códigos de sempre não mudam (a Fundador continua no 86, a Aura no 26 e a BOTÃO no 27). As peças são da
+  conta: quem comprou vê e usa a cara (e a Medalhão, que vem com qualquer mascote) no CRIAR TAMPINHA; quem não tem não vê, não
+  monta pelo código colado nem pela sorteada, e elas não se vendem avulsas (o EQUIPAR do editor explica e manda para a LOJA).
+  O COMPRAR (pelo preço do catálogo: a plataforma recusa outro) abre o EQUIPAR AGORA; a mascote equipada fica na conta, em
+  qualquer aparelho, e aparece para todo mundo na partida. Com as prontas escondidas da v101, as mascotes são a exceção
+  (continuam na LOJA, nas miniaturas e no COFRE). Os bots não pegam. As peças entram antes da releitura das tampinhas
+  adiadas da v105: a mascote equipada e as salvas com ela não somem ao entrar de novo.
+- **OS EMOJIS DA PARTIDA** (`tools/v106/emotes.py`, `emotes.js`, `app/public/game/v106-emotes.css` e `server/emotes106.js`):
+  **20 emojis** de graça, desenhados no canvas e nítidos em qualquer tamanho — RINDO, CHORANDO DE RIR, COMEMORANDO, VALEU, NA
+  MORAL, PISCADA, ZOANDO, CONFIANTE, APAIXONADO, SURPRESO, PENSANDO, DESCONFIADO, AFF, NERVOSO, ASSUSTADO, SONO, TRISTE,
+  CHORANDO, BRAVO e FURIOSO —, carinhas laranja dentro do contorno branco de um balão de fala com a pontinha, prontas numa
+  imagem por tamanho (nada é redesenhado a cada quadro). **Na partida** (o treino, contra os bots e o online), o botão do
+  emoji do lado do placar, no lugar livre (sem encostar nos controles, na pausa, no placar, nos botões das falas e dos
+  jogadores nem na barra da sala; conferido em 6 tamanhos, com o entalhe do iPhone); tocar abre a **cruz dos 5** (cima,
+  esquerda, meio, direita e baixo: VALEU, RINDO, COMEMORANDO, BRAVO e CHORANDO no começo; fecha tocando fora ou sozinha em 6 s)
+  e o escolhido aparece num **balão branco em cima da sua tampinha**, a pontinha apontando para ela, do tamanho da tampinha na
+  câmera (nunca menos de 44 px), com um "pop" (sem ele com Reduzir animações), por 2,5 s; ele segue a tampinha, fica
+  transparente com a bola atrás e espera no replay e na pausa. Um a cada 1,5 s (no máximo 3 em 6 s), com a espera no botão; no
+  computador, E abre a cruz e 1 a 5 escolhem (se o E não for de outra ação nos Ajustes › Controles); no controle, o SELECT e o
+  direcional. **Online**, `emote {e}`: o servidor confere o emoji (só os 20 da lista: nada de texto livre) e o ritmo (1 a cada
+  1 s e 3 a cada 5 s por pessoa na sala, mesmo reconectando; só quem joga, com a partida rolando, e sem silêncio por
+  denúncias) e repassa `emote {id, e}` para a sala, menos para quem tem bloqueio com quem mandou; a página da v105 ignora a
+  mensagem nova. Em **Ajustes › Visual › Emojis dos outros na partida** (ligada) dá para ficar só com o seu. Contra os bots,
+  depois de um gol, às vezes (1 em 4) um bot de quem marcou comemora e um do outro time lamenta. Os 5 da cruz vão na cópia do
+  progresso da conta (`racha-emotes-v106`, em `tools/v82/inicio.js` e `app/contracts/progresso.ts`: sem a chave na lista, a
+  plataforma recusaria a cópia inteira).
+- **O COFRE NO ESTILO DAS FOTOS** (`tools/v106/cofre.js` e `app/public/game/v106-cofre.css`): a mesma tela COFRE de sempre
+  (o render da v90 trocado por cima: o atalho COFRE do lobby, o toque na tampinha grande, o "+ FAVORITA" da RODA e o
+  `v90AbreCofre` com a categoria antiga abrem o novo), com o desenho novo — em cima a faixa de sempre, com o VOLTAR azul; à
+  esquerda a peça escolhida GRANDE num pedestal cinza, com um botão em cima e a placa do nome embaixo; à direita a barra
+  escura das abas **CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS** (a escolhida com o sublinhado branco) e a grade
+  de cartões bege (a peça no meio, o CADEADO e o preço no que não é seu, o CHECK verde no equipado e a raridade numa
+  faixinha na cor dela). Tocar num seu equipa na hora (o pedestal muda); tocar num bloqueado abre a janelinha com a peça, o
+  preço (com a oferta da semana, quando tem) e COMPRAR / CANCELAR — a compra da loja (o servidor confere o preço e o
+  saldo). **CARTÕES**: os banners, com o cartão do perfil equipado à esquerda. **SKIN**: o CRIAR PERSONALIZADO (roxo, o
+  primeiro: o editor volta para o COFRE), a equipada, as criadas (com a ★ das favoritas da RODA), as da conta e, numa parte
+  só delas, as tampinhas do catálogo **À VENDA** (as mascotes) — aparecem sozinhas, mesmo com as prontas escondidas da v101
+  (a nota diz que as *outras* prontas saíram); embaixo, EMOJI NA TAMPINHA (o emoji que vai no meio da tampinha).
+  **EMOJI**: os emojis da partida — a cruz dos 5 lugares (tocar escolhe o lugar aceso) e a grade dos 20 (tocar põe no lugar
+  aceso), com o PADRÃO. **ESCUDO DO CLUBE**: o escudo do seu clube no pedestal (ou SEM CLUBE, com o IR PARA O CLUBE) e os
+  escudos prontos; só o dono troca (o mesmo caminho do lápis do clube) e tem o CRIAR PERSONALIZADO do escudo. **BOLA**: a
+  equipada no pedestal e todas as bolas do catálogo (as novas aparecem sozinhas). **MAIS**: AVATARES, EFEITOS,
+  COMEMORAÇÕES e GOLS, nas sub-abas. Sem conta, tudo à vista (o bloqueado explica que precisa entrar na conta). Cabe e é
+  tocável de 568 × 320 a 1920 × 1080 e no iPhone com o entalhe (só a grade rola); as abas andam com as setas do teclado.
+- **AS MASCOTES SÓ COM QUEM COMPROU, TAMBÉM NO SERVIDOR** (`server/mascotes106.js`, chamado pelo `server/fundador96.js`, e
+  `app/api/racha/mascotes.ts`): o jogo já não deixa montar a tampinha com as peças das mascotes sem a mascote; agora o
+  servidor confere também, para quem monta o código na mão (como na tampinha dos fundadores). A plataforma põe as mascotes
+  compradas nas relações da conta (`mascotes`; no bilhete assinado das salas, `m`) e avisa o servidor das salas logo depois
+  da compra; quem aparece com a cara de uma mascote que não tem, ou com a Medalhão sem nenhuma mascote, fica com a tampinha
+  padrão — no cartão da sala, na partida, na lista e no Chat do Brasil. As mascotes de cada um não vão para os outros. A
+  tampinha da conta e o escudo do clube com peça de mascote também só se guardam com a mascote (o escudo de antes, posto
+  por outro dono, continua valendo nas outras mudanças do clube).
+- **Testes**: `tests/v106_corpo_test.mjs` (o jogo de corpo contra a v104 e a v105), `tests/v106_conteudo_test.py` (as peças no
+  fim das listas e os códigos de sempre iguais, as 6 mascotes e as 6 bolas desenhadas, as peças só para quem tem, a LOJA e,
+  na plataforma de teste, comprar e equipar a Onça-Preta e a Bola de Fogo; os lugares das peças iguais no jogo, no servidor
+  e na plataforma), `tests/v106_emotes_test.py` e `tests/v106_emotes_servidor_test.js` (os 20 desenhados, a cruz e a
+  gravação, o HUD em 6 tamanhos, o balão, os Ajustes, o teclado, o controle, o online com duas sessões e o ritmo no
+  servidor), `tests/v106_cofre_test.py` (as 6 abas e o pedestal, os caminhos de sempre, o CRIAR, equipar, a ★, as à venda, a
+  compra sem conta, na demonstração e com a conta, a cruz dos emojis, o escudo e seis tamanhos) e
+  `tests/v106_mascotes_servidor_test.mjs` (as peças, o servidor das salas e a plataforma de teste). O `v101` lê as classes
+  novas do COFRE, o `v102` aceita a Medalhão depois da BOTÃO e o `v92_pacote` confere os arquivos e as marcas da v106.
+
 ## v105 — 05/11/2026 · o jogo de corpo, o analógico sem atraso, o online sem a bola atravessando, o chat no lobby, a tampinha que fica e o tamanho da borda
 
 A pedido: *"quero melhorar o jogo de corpo — os jogadores, quando se encostam para disputar a bola, deslizam muito; quero um chat

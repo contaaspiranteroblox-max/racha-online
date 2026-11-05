@@ -15,6 +15,7 @@
    elas vêm assinadas no bilhete da conta (a, b, o, c, k, q) e o jogo manda um bilhete novo depois de mudar um amigo
    ({type:'relacoes', conta}). Nada aqui mexe na partida: as salas, a física, a fila e os resultados continuam como antes.
    ===================================================================================================================== */
+const M106 = require('./mascotes106');                 // v106: a lista das mascotes da conta (as relações e o bilhete)
 const {limpa, confere} = require('./banco');
 
 const PUB_RE = /^\d{6,9}$/;
@@ -28,7 +29,7 @@ const pubDoId = id => (typeof id === 'string' && /^c\d{1,9}$/.test(id) ? pub6(id
 let MAX_GENTE_SALA = 12, FILTRADO = () => false;
 function configura(o){ if (o.maxGente) MAX_GENTE_SALA = o.maxGente; if (typeof o.filtrado === 'function') FILTRADO = o.filtrado; }
 
-function relVazia(){ return {amigos:new Set(), bloq:new Set(), mostra:true, convites:true, clube:null, cos:{}}; }
+function relVazia(){ return {amigos:new Set(), bloq:new Set(), mostra:true, convites:true, clube:null, cos:{}, masc:new Set()}; }   // v106: + masc (as mascotes da conta)
 function relDe(o){                                        // {amigos, bloqueios, mostraOnline, aceitaConvites, clube, cos} ou o bilhete (a, b, o, c, k, q)
   const r = relVazia();
   if (!o || typeof o !== 'object') return r;
@@ -41,9 +42,10 @@ function relDe(o){                                        // {amigos, bloqueios,
   r.clube = typeof k === 'string' && /^[pk]\w{1,20}$/.test(k) ? k : null;
   const q = o.cos || o.q;
   if (q && typeof q === 'object') for (const [t, v] of Object.entries(q)) if (/^[a-z]{3,12}$/.test(t) && typeof v === 'string' && /^[a-z0-9_]{2,40}$/.test(v)) r.cos[t] = v;
+  r.masc = new Set(M106.lista(o.mascotes !== undefined ? o.mascotes : o.m));   // v106: as mascotes compradas (só para conferir a tampinha: não vão para os outros)
   return r;
 }
-const relDoBilhete = o => (o ? {a:o.a, b:o.b, o:o.o, c:o.c, k:o.k, q:o.q} : null);
+const relDoBilhete = o => (o ? {a:o.a, b:o.b, o:o.o, c:o.c, k:o.k, q:o.q, m:o.m} : null);   // v106: + m (as mascotes)
 
 function aplica(Turma){
   const P = Turma.prototype;

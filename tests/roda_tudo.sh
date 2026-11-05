@@ -270,6 +270,15 @@ done
 # direções, e no simulador da rede a bola desenhada fora das tampinhas e os 60 quadros por segundo das salas.
 printf '%-12s ' "v105_rede"
 if out=$(node tests/v105_rede_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+# v106: O JOGO DE CORPO NO MEIO-TERMO (o atrito de 0,5 para 0,2): quem fecha o caminho, quem está parado e o empurra-empurra,
+# contra a v104 e a v105; < 1 s.
+printf '%-12s ' "v106_corpo"
+if out=$(node tests/v106_corpo_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+# v106: AS MASCOTES SÓ COM QUEM COMPROU (server/mascotes106.js e app/api/racha/mascotes.ts): as peças pelo lugar nas listas, o
+# servidor das salas (o bilhete, a troca no meio da sala, a compra que vale na hora) e a plataforma de teste (as relações, o
+# bilhete, a tampinha da conta e o escudo do clube); ~2 s.
+printf '%-12s ' "v106_mascotes"
+if out=$(node tests/v106_mascotes_servidor_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 # v105: O CHAT NA TELA DO LOBBY. O v105_chat_lobby (Python; a plataforma de teste e dois navegadores na parte 6) a barra do chat
 # da partida de volta à tela inicial: o lugar em 10 tamanhos sem encostar em nenhum botão, tocar abre e minimizar volta, sem
 # servidor/desligada/fora do ar, na partida, nada por quadro e o Chat do Brasil de verdade entre duas contas (o VER PERFIL por cima).
@@ -280,7 +289,20 @@ if out=$(node tests/v105_rede_test.mjs 2>&1); then echo "$out" | tail -1; else f
 # v105: O TAMANHO DA BORDA (tools/v105/borda.js): o v105_borda confere o código (vai e volta; a NORMAL igual à de antes; o jogo
 # de antes lê a mesma tampinha), os pixels de cada tamanho (a BOTÃO, a de dentes, a cara animada, sem borda), o editor e o
 # servidor; ~30 s.
-for t in v105_chat_lobby v105_cosmeticos v105_borda; do
+# v106: AS BOLAS E AS MASCOTES (tools/v106/): o v106_conteudo confere as peças no fim das listas (os códigos de sempre iguais aos
+# do master), as 6 mascotes e as 6 bolas desenhadas (diferentes, nada fora do círculo, nítidas em 40 px, girando), o catálogo,
+# as peças só para quem tem e, na plataforma de teste, comprar e equipar uma mascote e uma bola pela conta com as prontas
+# escondidas, entrar de novo e a partida; ~1,5 min.
+# v106: OS EMOJIS DA PARTIDA (tools/v106/emotes.js e server/emotes106.js): o v106_emotes confere os 20 emojis desenhados (nada
+# fora do balão, cada um diferente), a cruz dos 5 e a gravação (e a cópia da conta), o botão e a cruz em 6 tamanhos sem cobrir
+# nada, o balão em cima da tampinha (seguindo, sumindo, o pop, o intervalo, os bots), a chave dos Ajustes, o teclado, o online
+# com duas sessões e o servidor (roda o tests/v106_emotes_servidor_test.js: a lista, o ritmo, quem joga, o bloqueio); ~4 min.
+# v106: O COFRE NO ESTILO DAS FOTOS (tools/v106/cofre.js): o v106_cofre (Python; a parte da conta sobe a plataforma de teste e dois
+# navegadores) as 6 abas e o pedestal de cada uma, os caminhos de sempre abrindo o COFRE novo, o CRIAR PERSONALIZADO, equipar (a
+# tampinha salva, o emoji da tampinha, a bola), a ★ da RODA, a tampinha à venda que aparece sozinha, o cadeado e a janelinha de
+# compra (sem conta, na demonstração e com a conta no servidor), a cruz dos emojis com uma API falsa, o escudo (sem clube, o
+# pessoal, o da conta com o dono e com o membro) e tudo cabendo de 568×320 a 1920×1080 e no iPhone com o entalhe; ~2 min.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

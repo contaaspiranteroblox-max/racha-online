@@ -154,7 +154,8 @@ async def principal():
           try { net49Send({type:'profile', name:'X', skin:pre}); } catch (e) { r.erroEnvio = String(e); } NET49.ws = ws0;
           r.enviou = enviados.length ? enviados[0].skin === TP_PADRAO_COD : null;
           abreTela('cofre'); let tela = document.querySelector('#lb-camada .lb-tela:not([hidden])');
-          r.cofre = {exclusivas:tela.querySelectorAll('.cf90-tp.exclusiva').length, nota:!!tela.querySelector('.v101-cofre-nota'), criar:!!tela.querySelector('.cf90-criar')}; fechaTela();
+          // (v106: o COFRE novo, no estilo das fotos: os cartões são .cf106-card e o CRIAR é o .cf106-criar — o aviso da v101 é o mesmo)
+          r.cofre = {exclusivas:tela.querySelectorAll('.cf90-tp.exclusiva, .cf106-card.exclusiva').length, nota:!!tela.querySelector('.v101-cofre-nota'), criar:!!tela.querySelector('.cf90-criar, .cf106-criar')}; fechaTela();
           abreTela('skins', 'cofre'); tela = document.querySelector('#lb-camada .lb-tela:not([hidden])');
           r.editor = [...tela.querySelectorAll('.tpe-aba')].map(b => b.textContent.trim()).join('|'); fechaTela();
           abreTela('loja'); r.lojaExclusivas = /TAMPINHAS EXCLUSIVAS/.test(document.querySelector('#lb-camada .lb-tela:not([hidden])').textContent); fechaTela();

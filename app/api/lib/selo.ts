@@ -79,7 +79,7 @@ export function confereSelo(txt: unknown): Selo | null {
 // k: o clube, q: os cosméticos equipados) — o servidor das salas usa no status dos amigos, nos convites, no chat dos amigos e
 // do clube e no bloqueio, quando ele roda em outro lugar (montado aqui, ele pergunta direto ao banco).
 export const BILHETE_MS = 15 * 60 * 1000; // v100: a validade do bilhete da conta nas salas
-export type ExtraBilhete = { a?: string[]; b?: string[]; o?: 0 | 1; c?: 0 | 1; k?: string | null; q?: Record<string, string> };
+export type ExtraBilhete = { a?: string[]; b?: string[]; o?: 0 | 1; c?: 0 | 1; k?: string | null; q?: Record<string, string>; m?: string[] };   // v106: + m (as mascotes compradas)
 export function bilheteDaConta(idPublico: number, nome: string, selos: string[] = [], extra: ExtraBilhete = {}): string | null {
   const seg = segredoSalas();
   if (!seg) return null;
@@ -91,6 +91,7 @@ export function bilheteDaConta(idPublico: number, nome: string, selos: string[] 
   if (extra.c === 0) x.c = 0;
   if (extra.k) x.k = extra.k;
   if (extra.q && Object.keys(extra.q).length) x.q = extra.q;
+  if (extra.m && extra.m.length) x.m = extra.m.filter((i) => /^tp_m_[a-z0-9_]{2,30}$/.test(i)).slice(0, 30);   // v106: as mascotes (o servidor das salas confere a tampinha)
   const agora = Date.now(); // v88.1: + quando foi assinado (t): o servidor das salas recusa o bilhete de antes do ZERAR CONTAS
   // v100 (segurança): vale 15 minutos (eram 30): o jogo pede outro a cada 9 e só usa o de até 12 — um bilhete que vazou abre
   // as salas por menos tempo

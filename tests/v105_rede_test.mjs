@@ -39,7 +39,9 @@ function empurra(perfil, th) {                      // A encostado em B (parado)
 }
 console.log('1) o jogo de corpo (o núcleo das salas, o mesmo do servidor e da previsão)');
 {
-  const V92 = N.PERFIL_V92, V91 = N.PERFIL_V91;
+  // (v106: o padrão foi para o meio-termo, atrito 0,2 — tests/v106_corpo_test.mjs; aqui fica conferido o jogo de corpo da v105,
+  //  com o atrito de 0,5 dela)
+  const V92 = Object.assign({}, N.PERFIL_V92, { atritoJogJog: 0.5 }), V91 = N.PERFIL_V91;
   const p92 = [0.1, 0.5, 1.5].map(d => frente(V92, d)), p91 = [0.1, 0.5, 1.5].map(d => frente(V91, d));
   confere(p92.every(x => x === null) && p91.every(x => x !== null && x < 0.7),
     'correndo um contra o outro (desvio de 0,1, 0,5 e 1,5 u): agora se seguram por 2 s; no perfil da v91 passavam um pelo outro em ' + p91.map(x => x && x.toFixed(2)).join(', ') + ' s', { p92, p91 });

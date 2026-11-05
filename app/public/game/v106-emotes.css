@@ -1,0 +1,45 @@
+/* =====================================================================================================================
+   RACHA v106 · OS EMOJIS DA PARTIDA (o JS em tools/v106/emotes.js)
+   O botão do emoji do lado do placar (a mesma cara do das falas e do dos jogadores: o círculo escuro e o desenho branco) e a
+   cruz com os 5 emojis rápidos (cima, esquerda, meio, direita e baixo), embaixo dele. O lugar e o tamanho do botão vêm do JS
+   (como os dos outros dois); a espera entre um emoji e outro é o setor escuro que vai sumindo no botão (--emo106-p, de 1 a 0).
+   O balão em cima da tampinha é desenhado no canvas do jogo (não aqui).
+   ===================================================================================================================== */
+.emo106-bt{ position:absolute; z-index:6; display:grid; place-items:center; padding:0; border:0; border-radius:50%; overflow:visible;
+  background:rgba(8,10,28,.62); color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.22), 0 3px 8px rgba(0,0,0,.35); cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.emo106-bt[hidden]{ display:none; }
+.emo106-bt svg{ position:relative; width:58%; height:58%; }
+.emo106-bt[aria-expanded="true"]{ background:rgba(255,166,26,.92); box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(0,0,0,.35); }
+.emo106-bt::after{ content:''; position:absolute; inset:-6px; border-radius:50%; }   /* (a área de toque um pouco maior que o desenho) */
+.emo106-espera{ position:absolute; inset:0; border-radius:50%; pointer-events:none; display:none;
+  background:conic-gradient(rgba(0,0,0,.62) calc(var(--emo106-p, 0) * 1turn), transparent 0); }
+.emo106-bt.espera .emo106-espera{ display:block; }
+.emo106-bt.espera svg{ opacity:.6; }
+.emo106-bt.nao{ animation:emo106-nao .36s ease-in-out; }
+@keyframes emo106-nao{ 25%{ transform:translateX(-3px); } 50%{ transform:translateX(3px); } 75%{ transform:translateX(-2px); } }
+
+/* a cruz: os 5 lugares em volta do meio (alvos grandes; no celular, 52 px) */
+.emo106-cruz{ --emo106-op:60px; position:absolute; z-index:7; display:grid; gap:4px; padding:8px;
+  grid-template-columns:repeat(3, var(--emo106-op)); grid-template-rows:repeat(3, var(--emo106-op));
+  grid-template-areas:". cima ." "esquerda meio direita" ". baixo .";
+  border-radius:50%; background:radial-gradient(circle closest-side, rgba(8,10,28,.62) 0 70%, rgba(8,10,28,0) 100%);
+  transform-origin:50% 0; animation:emo106-in .15s ease-out; }
+.emo106-cruz[hidden]{ display:none; }
+@keyframes emo106-in{ from{ opacity:0; transform:translateY(-6px) scale(.82); } to{ opacity:1; transform:none; } }
+.emo106-op{ position:relative; display:grid; place-items:center; width:100%; height:100%; padding:0; border:0; border-radius:50%; cursor:pointer;
+  background:rgba(14,18,40,.86); box-shadow:0 0 0 2px rgba(255,255,255,.3), 0 3px 8px rgba(0,0,0,.35);
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.emo106-op:active{ transform:scale(.93); }
+.emo106-op:focus-visible{ outline:3px solid #ffd23f; outline-offset:2px; }
+.emo106-cima{ grid-area:cima; } .emo106-esquerda{ grid-area:esquerda; } .emo106-meio{ grid-area:meio; } .emo106-direita{ grid-area:direita; } .emo106-baixo{ grid-area:baixo; }
+.emo106-meio{ background:rgba(255,166,26,.32); box-shadow:0 0 0 2px rgba(255,214,120,.65), 0 3px 8px rgba(0,0,0,.35); }
+.emo106-op-cv{ width:94%; height:94%; pointer-events:none; }
+.emo106-cruz.espera .emo106-op{ opacity:.5; }
+/* o número de cada lugar (o atalho do teclado: E abre, 1 a 5 escolhem) só aparece com o mouse */
+.emo106-n{ display:none; position:absolute; right:-2px; bottom:-2px; place-items:center; width:18px; height:18px; border-radius:6px;
+  background:#1b1530; color:#fff; font:800 11px/1 var(--v91-num, "Barlow Condensed", system-ui, sans-serif); font-style:normal; box-shadow:0 0 0 1.5px rgba(255,255,255,.5); }
+@media (hover:hover) and (pointer:fine){ .emo106-n{ display:grid; } }
+@media (max-height:430px), (max-width:700px){ .emo106-cruz{ --emo106-op:52px; gap:3px; padding:6px; } }
+@media (prefers-reduced-motion:reduce){ .emo106-cruz, .emo106-bt.nao{ animation:none; } }
+html.v70-calmo .emo106-cruz, html.v70-calmo .emo106-bt.nao{ animation:none; }

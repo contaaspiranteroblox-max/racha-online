@@ -66,6 +66,7 @@ const hashMapa = mapa => require('crypto').createHash('sha256').update(JSON.stri
 let RCH = null; try { RCH = require('./partida/rachao'); } catch (e) { RCH = null; console.error('salas do Rachão desligadas: ' + (e && e.message)); }
 const grupo93 = require('./grupo93');                 // v93 · Fase 4: o grupo com líder (jogar junto com os amigos na ranqueada)
 const fila95 = require('./fila95');                   // v95: a ranqueada ao vivo (quantos online, jogando e procurando em cada tamanho)
+const emotes106 = require('./emotes106');             // v106: os emojis da partida (emote {e}: o balão em cima da tampinha para todos da sala)
 
 const MODOS = ['futebol', 'curva', 'ginga', 'volei', 'americano', 'basquete'];   // (todos os que o jogo sabe conferir)
 const MODOS_SALA = ['futebol', 'curva'];             // v70.2: as salas só abrem FUTEBOL e COM CURVA (os outros modos ficaram guardados no jogo)
@@ -1740,6 +1741,7 @@ social88.configura({maxGente:MAX_GENTE, filtrado});
 grupo93.aplica(Turma);                                 // v93 · Fase 4 (depois do social: o grupo usa os amigos, o bloqueio e o status)
 grupo93.configura({filaMax:FILA_MAX_MS, filaMista:FILA_MISTA_MS});
 fila95.aplica(Turma);                                  // v95 (depois do grupo: a volta da fila é a dele)
+emotes106.aplica(Turma);                               // v106: os emojis da partida (server/emotes106.js)
 
 /* a página que abriu o jogo pode falar com o servidor? Mesmo endereço do servidor e o próprio computador (localhost) sempre;
    outras só se estiverem na lista (RACHA_ORIGENS / --origens). Sem cabeçalho Origin (programa, não navegador): pode. */

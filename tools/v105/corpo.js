@@ -2,7 +2,7 @@
    RACHA v105 · O JOGO DE CORPO NA PARTIDA DESTE APARELHO (o pedido: "quando se encostam para disputar a bola eles deslizam
    muito")
    O núcleo das salas (server/partida/nucleo.js, o mesmo do servidor e da previsão do online) ganhou o atrito tampinha ×
-   tampinha (atritoJogJog: 0,5 no padrão) e o contato que já vem encostado segurado antes de andar (contatoJog). A partida
+   tampinha (atritoJogJog no padrão: 0,5 na v105; 0,2 desde a v106, o meio-termo) e o contato que já vem encostado segurado antes de andar (contatoJog). A partida
    contra os bots roda no motor do jogo (o bloco da física, que não muda): aqui ela recebe o mesmo —
      · o atrito na batida jogador × jogador (rqColide; o build troca o 0 pelo V105_AJJ);
      · o contatoJog no começo do passo, com as velocidades do analógico e dos bots já postas: a amostraBotoes é chamada

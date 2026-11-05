@@ -12,6 +12,7 @@
    confere com o jogo.
    ===================================================================================================================== */
 const TP_B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const M106 = require('./mascotes106');                 // v106: as peças das mascotes (a cara e a Medalhão) só com quem comprou
 const FUNDADOR = Object.freeze({ item: 'tp_fundador', borda: 26, icone: 86 });
 
 function pecasDoCodigo(s) {                              // {borda, padrao, icone} (os lugares nas listas) ou null
@@ -28,7 +29,10 @@ function temPecaFundador(s) {
   return p.icone === FUNDADOR.icone || (p.tipo === 'T' && p.borda === FUNDADOR.borda);
 }
 function ehFundador(c) { return !!(c && c.rel && c.rel.cos && c.rel.cos.fundador === FUNDADOR.item); }
-function skinValida(c, s) { return temPecaFundador(s) && !ehFundador(c) ? '' : s; }
+function skinValida(c, s) {                             // v106: + as peças das mascotes (server/mascotes106.js)
+  if (temPecaFundador(s) && !ehFundador(c)) return '';
+  return M106.podeUsar(c, pecasDoCodigo(s)) ? s : '';
+}
 
 function aplica(Turma) {
   const P = Turma.prototype;
@@ -67,7 +71,7 @@ function aplica(Turma) {
     const brAntes = P.brasilRecebe;
     P.brasilRecebe = function (c, m) {
       const r = brAntes.apply(this, arguments);
-      try { if (c && m && m.type === 'brasil_join' && temPecaFundador(c.skin) && !ehFundador(c)) c.skin = ''; } catch (_) {}
+      try { if (c && m && m.type === 'brasil_join' && c.skin && skinValida(c, c.skin) !== c.skin) c.skin = ''; } catch (_) {}   // (v106: e as mascotes)
       return r;
     };
   }

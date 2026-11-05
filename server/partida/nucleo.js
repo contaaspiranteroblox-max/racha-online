@@ -13,7 +13,8 @@
    Os números vêm de um PERFIL (em u, as unidades do jogo; 1 u = 19 px). PERFIL_V91 reproduz a v91 exatamente;
    PERFIL_V92 é o padrão novo (os mesmos números de física + o toque armado e a rede do gol segurando a tampinha também
    no servidor, como no jogo offline; desde a v103, o CHUTE uns 6% mais forte: 360, era 340; desde a v105, o JOGO DE
-   CORPO: as tampinhas encostadas se seguram em vez de escorregar uma em volta da outra — atritoJogJog).
+   CORPO: as tampinhas encostadas se seguram em vez de escorregar uma em volta da outra — atritoJogJog; na v106, o
+   meio-termo: 0,2).
    O painel de testes da versão experimental troca o perfil; a versão oficial usa o
    padrão e o servidor só aceita perfil de fora com RACHA_EXPERIMENTAL=1.
    Determinístico: nada de Math.random aqui (o servidor e a previsão precisam dar o mesmo resultado).
@@ -94,7 +95,12 @@
   // curva de 30° levava uns 6 passos (100 ms) para valer, a de 90° passava uns 80 ms ainda escorregando para o lado de antes
   // e a meia-volta parava um passo inteiro (17 ms) antes de voltar. Agora a tampinha vai na hora para onde o analógico aponta
   // (a velocidade toda, na direção nova), e o analógico tem 64 direções (eram 32: os degraus de 11,25° viram 5,6°).
-  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360, atritoJogJog: 0.5, viraNaHora: 1, direcoes: 64 }));
+  // v106 (a pedido: "antes deslizava muito, agora gruda muito: tem que ser o meio-termo, senão os players ficam fechando o
+  // caminho — tem que ser uma boa disputa de bola"): o atrito de 0,5 para 0,2. Medido no núcleo (tests/v106_corpo_test.mjs):
+  // quem fica de frente para você fecha o caminho só quando você vem quase reto (até uns 25° da linha dos centros; com 0,5 eram
+  // 52°, e sem atrito, como até a v104, 2,5°); mais de lado você passa por ele escorregando quase como antes; empurrando
+  // quem está parado você ainda leva ele um pouco, e correndo um contra o outro quase de frente continua o empurra-empurra.
+  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360, atritoJogJog: 0.2, viraNaHora: 1, direcoes: 64 }));
 
   // os limites que o painel e o servidor aceitam (o servidor corta qualquer coisa fora disto)
   const LIMITES = Object.freeze({

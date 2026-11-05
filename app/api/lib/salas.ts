@@ -28,7 +28,7 @@ function cabecalhos(req: IncomingMessage): Headers {
 // v88: relacoesDe (os amigos, os bloqueios e a privacidade da conta, do banco) e denuncia (a denúncia de uma mensagem do chat
 // vai para a tabela denuncias, a mesma do RACHA CONTROL). Sem eles (os testes antigos), o servidor das salas usa o que vem
 // assinado no bilhete e guarda as denúncias só na memória.
-export type RelacoesConta = { amigos: string[]; bloqueios: string[]; mostraOnline: boolean; aceitaConvites: boolean; clube: string | null; cos: Record<string, string> };
+export type RelacoesConta = { amigos: string[]; bloqueios: string[]; mostraOnline: boolean; aceitaConvites: boolean; clube: string | null; cos: Record<string, string>; mascotes?: string[] };   // v106: + as mascotes compradas (server/mascotes106.js)
 export type DenunciaChat = { autor: string; alvo: string; motivo: string; texto: string; canal: string; mid?: string; sala?: string };
 export type OpcoesSalas = {
   selosDe?: (usuarioId: number) => Promise<string[]>;

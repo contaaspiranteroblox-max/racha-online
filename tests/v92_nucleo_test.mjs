@@ -196,7 +196,7 @@ console.log('\n3) o perfil de fora é limpo');
   confere(!iguais.length, 'o PERFIL_V92 (o padrão) resolve exatamente nas constantes da fisica.js (as do jogo)', iguais);
   const d = Object.keys(N.PERFIL_V92).filter(k => N.PERFIL_V92[k] !== N.PERFIL_V91[k]);
   confere(JSON.stringify(d.sort()) === JSON.stringify(['atritoJogJog', 'bufferToque', 'direcoes', 'forcaChute', 'jogRede', 'viraNaHora']) && N.PERFIL_V92.forcaChute === 360 && N.PERFIL_V92.forcaPasse === N.PERFIL_V91.forcaPasse
-    && N.PERFIL_V92.atritoJogJog === 0.5 && N.PERFIL_V91.atritoJogJog === 0 && N.PERFIL_V92.viraNaHora === 1 && N.PERFIL_V91.viraNaHora === 0 && N.PERFIL_V92.direcoes === 64 && N.PERFIL_V91.direcoes === 32,
+    && N.PERFIL_V92.atritoJogJog === 0.2 && N.PERFIL_V91.atritoJogJog === 0 && N.PERFIL_V92.viraNaHora === 1 && N.PERFIL_V91.viraNaHora === 0 && N.PERFIL_V92.direcoes === 64 && N.PERFIL_V91.direcoes === 32,
     'o PERFIL_V92 só difere do v91 no toque armado, na rede, no CHUTE da v103 (360, era 340) e na v105: o jogo de corpo (o atrito tampinha × tampinha 0,5), a virada na hora e as 64 direções (o PASSE e o resto da física são os mesmos)', d);
 }
 

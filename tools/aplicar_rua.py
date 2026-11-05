@@ -80,6 +80,24 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v105 · tamanho da borda (tools/v105/borda.py + borda.js, por último): no CRIAR TAMPINHA, na aba BORDA, o TAMANHO DA BORDA
      (SEM · FINA · NORMAL · GROSSA) para toda borda; o tamanho vai no fim do código da tampinha (só quando não é a normal: os
      códigos de sempre não mudam e o jogo de antes mostra a borda normal).
+ v106 · as bolas e as mascotes (tools/v106/conteudo.py + mascotes.js, bolas.js e conteudo.js, por último; os itens no
+     app/contracts/catalogo88.json pelo tools/v106/catalogo.py): 6 bolas à venda com 3 padrões novos desenhados em código e
+     girando como a de sempre (os gomos de praia, as labaredas e o espaço) e 6 mascotes à venda — os bichos do Brasil em
+     medalhão (a arara-azul, a onça-preta, o mico-leão-dourado, o lobo-guará, o tucano e o jacaré), cada uma com a cara (um
+     ícone com cara: true) e a borda MEDALHÃO, as peças no FIM das listas (os códigos de sempre não mudam) e entrando antes
+     da releitura das tampinhas adiadas da v105; as peças são da conta (só quem comprou vê e usa no editor), os bots não
+     pegam e as mascotes são a exceção das prontas escondidas da v101.
+ v106 · emojis (tools/v106/emotes.py + emotes.js + app/public/game/v106-emotes.css, por último): os EMOJIS DA PARTIDA — 20
+     carinhas desenhadas em código (no balão branco de fala, prontas numa imagem por tamanho), a cruz dos 5 rápidos (cima,
+     esquerda, meio, direita, baixo; em racha-emotes-v106, que vai na cópia da conta), o botão do lado do placar, o balão em
+     cima da tampinha com o "pop" (no treino, contra os bots e no online: emote {e}, server/emotes106.js), os emojis dos outros
+     em Ajustes › Visual, os bots depois do gol e a API do COFRE (window.RachaEmotes106).
+ v106 · cofre (tools/v106/cofre.py + cofre.js + app/public/game/v106-cofre.css, por último): o COFRE no estilo das fotos enviadas
+     (a peça escolhida grande no pedestal à esquerda, com o botão em cima e a placa do nome embaixo; à direita a barra das abas
+     CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS e a grade de cartões bege, com o cadeado e o preço no que não é seu e o
+     check no equipado). A mesma tela 'cofre' da v90, com o render trocado por cima (tudo que abria o COFRE abre o novo); as
+     tampinhas do catálogo à venda aparecem sozinhas (mesmo com as prontas escondidas) e os emojis de reação da partida entram
+     pela window.RachaEmotes106 (sem ela, o aviso de que chegam na próxima versão).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -129,7 +147,10 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v105/rede',                                                                 # v105: o contato desenhado no online (a bola nunca desenhada dentro de uma tampinha)
               'v105/chat_lobby',                                                           # v105: o chat na tela do lobby (a barra da partida, embaixo, entre os atalhos e o JOGAR)
               'v105/cosmeticos',                                                           # v105: as tampinhas criadas ficam na conta (sem sumir ao entrar de novo) e a borda BOTÃO chapada para todo mundo
-              'v105/borda']                                                                # v105: o TAMANHO DA BORDA da tampinha (sem · fina · normal · grossa)
+              'v105/borda',                                                                # v105: o TAMANHO DA BORDA da tampinha (sem · fina · normal · grossa)
+              'v106/conteudo',                                                             # v106: as 6 bolas novas (3 padrões novos) e as 6 mascotes em medalhão (à venda, as peças no fim das listas)
+              'v106/emotes',                                                               # v106: os emojis da partida (o balão em cima da tampinha, a cruz dos 5 e o online)
+              'v106/cofre']                                                                # v106: o COFRE no estilo das fotos (o pedestal, as abas CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS e os cartões bege)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

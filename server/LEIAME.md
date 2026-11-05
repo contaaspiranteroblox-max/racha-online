@@ -12,6 +12,26 @@ Abra o endereço que ele mostrar. O jogo, aberto por esse endereço, conecta soz
 configurar nada): GALERA/COMUNIDADE › SALAS mostra **ONLINE**. Para jogar com quem está na mesma rede, abra
 `http://<o IP deste computador>:8080/game/racha.html` no celular dos outros.
 
+## v106 · os emojis da partida (`emotes106.js`)
+
+O balão com a reação em cima da tampinha (o jogo: `tools/v106/emotes.js`). Cliente → servidor: `emote {e}` (o id de um dos 20
+emojis da lista fixa: `rindo`, `chorando_rir`, `comemorando`, `valeu`, `na_moral`, `piscada`, `zoando`, `confiante`, `apaixonado`,
+`surpreso`, `pensando`, `desconfiado`, `aff`, `nervoso`, `assustado`, `sono`, `triste`, `chorando`, `bravo`, `furioso`).
+Servidor → cliente: `emote {id, e}` (o `id` de rede de quem mandou) para todos da sala, menos para quem mandou e para quem tem
+bloqueio com ele. Só de quem está jogando numa sala com a partida rolando (quem assiste e quem não está numa sala são
+ignorados), não silenciado nela, só os 20 da lista e no ritmo: no máximo 1 a cada 1 s e 3 a cada 5 s por pessoa na sala (o
+resto é ignorado, sem erro; reconectar não zera). O jogo de antes não manda e ignora o `emote` que chega. Ligado no `turma.js`
+com uma linha (`emotes106.aplica(Turma)`). Teste: `node tests/v106_emotes_servidor_test.js`.
+
+## v106 · as mascotes só com quem comprou (`mascotes106.js`)
+
+As 6 mascotes da LOJA (os itens `tp_m_*`) trazem duas peças que viajam no código da tampinha: a cara de cada uma (os ícones 87
+a 92) e a borda Medalhão (a 28, que vem com qualquer mascote). A plataforma põe as mascotes compradas nas relações da conta
+(`mascotes`; no bilhete assinado, `m`) e avisa na hora depois da compra; como a tampinha dos fundadores (`fundador96.js`, que
+chama este arquivo), quem aparece com uma peça de mascote que não comprou fica com a tampinha padrão — no cartão da sala, na
+partida, na lista e no Chat do Brasil. As mascotes de cada um não vão para os outros (ficam fora do `cos`). Teste:
+`node tests/v106_mascotes_servidor_test.mjs` (com a plataforma de teste: a tampinha da conta e o escudo do clube também).
+
 ## v93 · as partidas, o placar e o social (`turma.js`, `partida/sala.js`)
 
 **Fase 2 (as partidas):** cliente → servidor: `hello {…, v93:1}` (o aparelho conhece a contagem e o replay) ·

@@ -15,6 +15,7 @@ JS = """(() => {
   const tipos = [['b', TP_BORDAS, 'Borda'], ['f', TP_FORMAS, 'Forma'], ['p', TP_PADROES, 'Padrão'], ['i', TP_ICONES, 'Ícone']];
   for (const [t, lista, nomeTipo] of tipos) for (const it of lista) {
     if (!it || !it.id || it.id === '--') continue;
+    if (it.loja) continue;                               // (v106: as peças das mascotes vêm com o item da LOJA: não se vendem avulsas)
     const pr = TP_PRECO[it.pr] || TP_PRECO.gratis;
     L.push({k: t + ':' + it.id, tipo: t, id: it.id, nome: String(it.nome || it.id), tipoNome: nomeTipo, raridade: it.pr, moedas: pr.m | 0, gemas: pr.g | 0, anim: !!(it.anim || it.cara)});
   }

@@ -16,6 +16,7 @@ import { contaDe, equipadosDe, empurraRelacoes } from "./comum";
 import { garanteCarteira, movimentar, entregarItens } from "../economia";
 import { CATALOGO, precoDe, ofertasDaSemana, destaquesDoDia, podeEquipar, pacoteCat, pecaDoCodigo, codigoPeca, itemCat, nomeDoCodigo, segundaUtc, diaUtc, type Venda } from "@contracts/v88";
 import { garanteFundador } from "../fundador";
+import { ehItemMascote } from "../mascotes";   // v106
 
 // as ofertas que o RACHA CONTROL pôs num evento temporário ativo (config.ofertas: {"codigo": desconto%})
 export async function ofertasDosEventos(): Promise<Record<string, number>> {
@@ -112,6 +113,7 @@ export const lojaRouter = createRouter({
         const novos = await entregarItens(u.id, codigos, "compra", "Loja: " + v.nome, tx);
         return { carteira: { moedas: m.moedas, gemas: m.gemas }, itens: novos };
       });
+      if (codigos.some(ehItemMascote)) await empurraRelacoes(u.id);   // v106: a mascote comprada vale na hora no servidor das salas (a tampinha com ela)
       return { ok: true, codigo: input.codigo, nome: v.nome, pago: { moedas: v.moedas, gemas: v.gemas }, ...r };
     }),
 

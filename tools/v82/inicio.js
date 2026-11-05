@@ -11,7 +11,8 @@
   'use strict';
   var CHAVES = ['streetball-conta-v1', 'racha-treino-perfil-v1', 'streetball-v49', 'racha-tampa-v1', 'racha-tampa-rascunho-v1',
     'racha-clubes-v1', 'streetball-treino-v1', 'streetball-recordes-v1', 'racha-v71-padrao', 'racha-v80-padrao',
-    'racha-hud-layouts-v1'];   // v92 Fase 1: os layouts dos controles da tela também vão para a conta (tools/v92/hud.js)
+    'racha-hud-layouts-v1',    // v92 Fase 1: os layouts dos controles da tela também vão para a conta (tools/v92/hud.js)
+    'racha-emotes-v106'];      // v106: os 5 emojis da cruz da partida (tools/v106/emotes.js)
   var R = window.RACHA82 = {chaves:CHAVES, dono:'', conta:null, pl:null, nuvem:undefined, meta:null, trocou:false, de:'', aplicou:false, conflito:null, primeira:null, sujo:false};
   var LS = null; try { LS = window.localStorage; } catch (e) { return; }
   function le(k){ try { return LS.getItem(k); } catch (e) { return null; } }

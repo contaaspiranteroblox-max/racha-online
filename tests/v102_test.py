@@ -204,7 +204,7 @@ async def principal():
         try:
             r = await rt(pg, """(() => {
               const r = {}, B = TP_MAPA.b.get('bt');
-              r.existe = !!B; r.indice = TP_BORDAS.indexOf(B); r.ultima = r.indice === TP_BORDAS.length - 1; r.gratis = B && B.pr === 'gratis' && tpTem('b', 'bt');
+              r.existe = !!B; r.indice = TP_BORDAS.indexOf(B); r.depois = TP_BORDAS.slice(r.indice + 1).map(x => x.id); r.gratis = B && B.pr === 'gratis' && tpTem('b', 'bt');   // (v106: depois dela, só a Medalhão das mascotes)
               const D = TP_PADRAO_D(); D.b = 'bt'; D.bc = ['#ffffff', '#1d1d1d']; D.p = 'ls'; D.pc = ['#ffffff', '#e0262c', '#1d1d1d']; D.i = '--'; D.ie = 0;
               const cod = tpCodigo(D); r.volta = tpLe(cod).b === 'bt'; r.cod = cod;
               // os códigos de sempre continuam iguais (a inicial e uma com a borda do lugar 26, a última de antes)
@@ -222,7 +222,7 @@ async def principal():
               const D2 = tpLe(cod); D2.i = SK76_CARAS[0].id; const c2 = document.createElement('canvas'); c2.width = c2.height = 200; const g2 = c2.getContext('2d');
               tpDesenha(g2, 100, 100, 90, D2, 7); r.caraAro = Array.from(g2.getImageData(100 + Math.round(90*.9), 100, 1, 1).data);
               return r; })()""")
-            P.confere(r['existe'] and r['ultima'] and r['indice'] == 27, 'a BOTÃO no fim da lista (lugar 27: os códigos de sempre não mudam)', r)
+            P.confere(r['existe'] and r['indice'] == 27 and r['depois'] in ([], ['mh']), 'a BOTÃO no fim da lista (lugar 27: os códigos de sempre não mudam; depois dela, só a Medalhão da v106)', r)
             P.confere(r['gratis'], 'a BOTÃO é grátis (já é sua)', r['gratis'])
             P.confere(r['volta'] and r['padraoIgual'], 'o código guarda a BOTÃO e a tampinha inicial continua com o mesmo código', r)
             a, k, m2, f = r['aro'], r['contorno'], r['meio'], r['fora']

@@ -122,7 +122,7 @@ async def principal():
             n = await rt(pg, "({vel:VEL_JOG/U(1), passe:FORCA_KICK, chute:FORCA_POWER, rj:R_JOG/U(1), rb:R_BOLA/U(1), teto:LIMITE_VEL_BOLA/U(1), fator:FATOR_BOLA, alc:ALCANCE_CHUTE/U(1), mb:MASSA_BOLA, mj:MASSA_JOG, qp:Q_PAREDE, qt:Q_TRAVE, qr:Q_REDE, qjj:V92_QJJ, qjp:V92_QJP, dirs:V92_DIRECOES, cool:COOLDOWN_BOTAO})")
             esperado = {'vel': 14.1, 'passe': 212.5, 'chute': 360, 'rj': 2, 'rb': 1, 'teto': 46.75, 'fator': .99, 'alc': 3.5, 'mb': 10, 'mj': 1.25, 'qp': .65, 'qt': .6, 'qr': .15, 'qjj': .3, 'qjp': .65, 'dirs': 64, 'cool': .02}
             n105 = await rt(pg, "({ajj:V105_AJJ, vira:V105_VIRA})")
-            P.confere(all(abs(n[k] - v) < 1e-9 for k, v in esperado.items()) and n105 == {'ajj': 0.5, 'vira': True}, 'os números da física do aparelho são os da v91 com o CHUTE da v103 (velocidade 14,1 u/s, PASSE 212,5, CHUTE 360, bola 46,75 u/s, 0,99…) e a v105 (o jogo de corpo 0,5, a virada na hora, 64 direções)', [n, n105])
+            P.confere(all(abs(n[k] - v) < 1e-9 for k, v in esperado.items()) and n105 == {'ajj': 0.2, 'vira': True}, 'os números da física do aparelho são os da v91 com o CHUTE da v103 (velocidade 14,1 u/s, PASSE 212,5, CHUTE 360, bola 46,75 u/s, 0,99…), a v105 (a virada na hora, 64 direções) e a v106 (o jogo de corpo no meio-termo: 0,2)', [n, n105])
             # (v103: o CHUTE padrão ficou 6% mais forte — o lance roda com o CHUTE de antes, 340: o que se confere aqui é a física
             #  tique a tique, igual à v91 com os mesmos números)
             # (v105: e sem o jogo de corpo, com a virada de sempre e as 32 direções — a física da v91, tique a tique)

@@ -7,6 +7,7 @@
 import { eq, and, or, inArray } from "drizzle-orm";
 import { getDb } from "../../queries/connection";
 import { ehFundador, ITEM_FUNDADOR } from "../fundador";
+import { mascotesDaConta } from "../mascotes";   // v106: as mascotes compradas (o servidor das salas confere a tampinha)
 import { usuarios, amizades, bloqueios, mensagens, clubeMembros, selos, ranqueada, passeTemporada } from "@db/schema";
 import { avisaConta, relacoesMudaram, type RelacoesConta } from "../../lib/salas";
 import { formatarIdPublico, tituloPorNivel } from "@contracts/racha";
@@ -83,6 +84,8 @@ export async function relacoesDe(usuarioId: number, db: Conn = getDb()): Promise
     clube: membro ? "p" + membro.clubeId : null,
     // v96: + o selo de fundador (assinado no bilhete: o servidor das salas só deixa a tampinha dos fundadores com quem é)
     cos: Object.assign(equipadosDe(u), (await ehFundador(usuarioId, db)) ? { fundador: ITEM_FUNDADOR } : {}),
+    // v106: + as mascotes compradas (o servidor das salas só deixa as peças delas com quem tem: server/mascotes106.js)
+    mascotes: await mascotesDaConta(usuarioId, db),
   };
 }
 export async function relacoesPorPub(pub: string): Promise<RelacoesConta | null> {

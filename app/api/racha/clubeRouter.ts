@@ -18,6 +18,7 @@ import { notifica, empurraRelacoes, cartoesDe } from "./v88/comum";
 import { autenticado, exigeLimite, type CtxAutenticado } from "./guard";
 import { formatarIdPublico } from "@contracts/racha";
 import { podeUsarCodigo, AVISO_FUNDADOR } from "./fundador";
+import { podeUsarMascote, AVISO_MASCOTE } from "./mascotes";   // v106: as peças das mascotes só com quem comprou
 import { ehDuplicado } from "./erros";   // v102: a chave repetida dentro do erro do drizzle (.cause)
 
 const MAX_MEMBROS = 30;
@@ -247,6 +248,7 @@ export const clubeRouter = createRouter({
       if (await meuVinculo(c.usuario.id)) throw new TRPCError({ code: "CONFLICT", message: "Saia do seu clube antes de criar outro." });
       if (await db.query.clubes.findFirst({ where: eq(clubes.nomeChave, chave) })) throw new TRPCError({ code: "CONFLICT", message: "Já existe um clube com esse nome." });
       if (!(await podeUsarCodigo(c.usuario.id, input.escudo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_FUNDADOR });   // v96
+      if (!(await podeUsarMascote(c.usuario.id, input.escudo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_MASCOTE });   // v106
       try {
         await db.insert(clubes).values({
           nome, nomeChave: chave, descricao: input.descricao, pais: input.pais, tipo: input.tipo,
@@ -285,6 +287,10 @@ export const clubeRouter = createRouter({
       const v = await exigeDono(c.usuario.id);
       if (v.clubeId !== input.id) throw new TRPCError({ code: "FORBIDDEN", message: "Só o dono do clube pode fazer isso." });
       if (!(await podeUsarCodigo(c.usuario.id, input.escudo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_FUNDADOR });   // v96
+      if (input.escudo !== undefined) {                     // v106: o escudo novo com peça de mascote, só de quem tem (o de antes continua valendo)
+        const atual = await getDb().query.clubes.findFirst({ where: eq(clubes.id, input.id), columns: { escudo: true } });
+        if (input.escudo !== (atual?.escudo ?? null) && !(await podeUsarMascote(c.usuario.id, input.escudo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_MASCOTE });
+      }
       const { id, ...mud } = input;
       const set = Object.fromEntries(Object.entries(mud).filter(([, x]) => x !== undefined));
       if (Object.keys(set).length) await getDb().update(clubes).set(set).where(eq(clubes.id, id));
@@ -525,6 +531,7 @@ export const clubeRouter = createRouter({
     const c = ctx as unknown as CtxAutenticado;
     await exigeLimite(`tampa:${c.usuario.id}`, 60, 60 * 60 * 1000, "Muitas trocas seguidas. Tente mais tarde.");
     if (!(await podeUsarCodigo(c.usuario.id, input.codigo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_FUNDADOR });   // v96
+    if (!(await podeUsarMascote(c.usuario.id, input.codigo))) throw new TRPCError({ code: "FORBIDDEN", message: AVISO_MASCOTE });   // v106
     await getDb().update(usuarios).set({ tampa: input.codigo }).where(eq(usuarios.id, c.usuario.id));
     return { ok: true };
   }),

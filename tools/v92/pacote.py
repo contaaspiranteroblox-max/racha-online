@@ -126,6 +126,20 @@ with zipfile.ZipFile(saida) as z:
     # v105: o TAMANHO DA BORDA da tampinha (sem · fina · normal · grossa; o tamanho no fim do código)
     assert {'tools/v105/borda.py', 'tools/v105/borda.js', 'tests/v105_borda_test.py'} <= nomes, 'faltam os arquivos da v105 (o tamanho da borda) no ZIP'
     assert all(x in jogo for x in (b'window.RachaBorda105', b'function tpSoDesenho', b'TAMANHO DA BORDA')), 'o jogo do ZIP não tem o tamanho da borda da v105'
+    # v106: as bolas e as mascotes novas (os 3 padrões de bola, as 6 mascotes em medalhão e a borda Medalhão; os itens no catálogo)
+    assert {'tools/v106/conteudo.py', 'tools/v106/conteudo.js', 'tools/v106/mascotes.js', 'tools/v106/bolas.js', 'tools/v106/catalogo.py', 'tests/v106_conteudo_test.py'} <= nomes, 'faltam os arquivos da v106 (as bolas e as mascotes) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaConteudo106', b'function msc106Mascote', b'function bl106Desenha', b'"tp_m_oncapreta"', b'"bola_sertao"')), 'o jogo do ZIP não tem as bolas e as mascotes da v106'
+    # v106: os emojis da partida (o balão em cima da tampinha, a cruz dos 5, o online e a API do COFRE)
+    assert {'tools/v106/emotes.py', 'tools/v106/emotes.js', 'app/public/game/v106-emotes.css', 'server/emotes106.js', 'tests/v106_emotes_test.py',
+            'tests/v106_emotes_servidor_test.js'} <= nomes, 'faltam os arquivos da v106 (os emojis da partida) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaEmotes106', b'<link rel="stylesheet" href="./v106-emotes.css">', b"'racha-emotes-v106'")), 'o jogo do ZIP não tem os emojis da partida da v106'
+    assert b"emotes106.aplica(Turma)" in z.read('server/turma.js'), 'o servidor do ZIP não tem os emojis da partida da v106'
+    # v106: as mascotes só com quem comprou (o servidor das salas e a plataforma conferem as peças delas)
+    assert {'server/mascotes106.js', 'app/api/racha/mascotes.ts', 'tests/v106_mascotes_servidor_test.mjs'} <= nomes, 'faltam os arquivos da v106 (as mascotes no servidor) no ZIP'
+    assert b"require('./mascotes106')" in z.read('server/fundador96.js') and b'mascotesDaConta' in z.read('app/api/racha/v88/comum.ts'), 'o servidor do ZIP não confere as mascotes da v106'
+    # v106: o COFRE no estilo das fotos (o pedestal, as abas CARTÕES · SKIN · EMOJI · ESCUDO DO CLUBE · BOLA · MAIS e os cartões bege)
+    assert {'app/public/game/v106-cofre.css', 'tools/v106/cofre.py', 'tools/v106/cofre.js', 'tests/v106_cofre_test.py'} <= nomes, 'faltam os arquivos da v106 (o cofre) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaCofre106', b'<link rel="stylesheet" href="./v106-cofre.css">', b'CRIAR\\nPERSONALIZADO')), 'o jogo do ZIP não tem o cofre da v106'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)
