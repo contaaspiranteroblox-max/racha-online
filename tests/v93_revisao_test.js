@@ -41,7 +41,7 @@ function cliente(t, nome, extra){
     tipos: () => ws.caixa.map(x => x.type),
     limpa: () => { ws.caixa.length = 0; },
     sala: () => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === 'room') return ws.caixa[i].room; return null; }};
-  k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAA' + nome.toLowerCase().padEnd(4, 'x'), flag:'BR', v93:1}, extra || {}));
+  k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAA' + nome.toLowerCase().padEnd(4, 'x'), flag:'BR', v93:1, v105:1}, extra || {}));
   k.id = k.ult('hello').id; k.token = k.ult('hello').token;
   return k;
 }

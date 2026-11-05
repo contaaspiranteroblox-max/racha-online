@@ -9,7 +9,8 @@ server/partida/sala.js — o que roda as salas hospedadas):
      da v84) — no kickBall, pelos botões de verdade (Espaço e K), na partida autoritativa e no motor das salas (pelo chute e
      pelo comando da rede, o mesmo valor do aparelho);
   3. o teto: o CHUTE numa bola que já corre na mesma direção para em 46,75 u/s (jogo, partida autoritativa e sala);
-  4. a mecânica clássica: o analógico de 32 direções (o mesmo no jogo e no servidor), os botões 1/2/3 com os 0,02 s,
+  4. a mecânica: o analógico de 64 direções (v105; eram 32 — o mesmo no jogo e no núcleo das salas), a virada na hora (v105: a
+     direção nova vale no passo seguinte, com a corrida toda; até a v104, somada à velocidade e cortada no teto), os botões 1/2/3 com os 0,02 s,
      o movimento que soma e corta no teto, a quadra da v84;
   5. nenhum erro de JavaScript.
 Uso: python3 tests/v86_chute_test.py"""
@@ -106,6 +107,8 @@ for (const [nome, bt] of [['passe', 2], ['chute', 3]]) {
   out.sala_antesTeto = p.chuta(q, F.FORCA_POWER) ? Math.hypot(p.B.vx, p.B.vy) : -1;
   q.fila.chegou = 0; p.passo(); out.sala_teto = Math.hypot(p.B.vx, p.B.vy); }
 out.dirs = ENTRADAS.map(e => { const d = F.direcaoOriginal(e[0], e[1]); return [d.mx, d.my]; });
+{ const N = require(RAIZ + '/server/partida/nucleo.js'), n = N.resolve(N.PERFIL_V92).DIRECOES;   // (v105: as salas arredondam pelo núcleo, com as 64 direções do perfil)
+  out.dirsNucleo = ENTRADAS.map(e => { const d = N.direcao(e[0], e[1], n); return [d.mx, d.my]; }); out.nDirs = n; }
 console.log(JSON.stringify(out));
 """
 
@@ -152,14 +155,14 @@ async def principal():
     P.confere(perto(s['auto_teto'], teto) and perto(s['sala_teto'], teto), 'no servidor também: %.1f (autoritativa) e %.1f px/s (sala)' % (s['auto_teto'], s['sala_teto']), s)
 
     print('\n4) a mecânica clássica')
-    S = 2*math.pi/32
+    S = 2*math.pi/64
     quant = all(abs(math.atan2(d[1], d[0])/S - round(math.atan2(d[1], d[0])/S)) < 1e-9 and abs(math.hypot(*d) - 1) < 1e-9 for d in r['dirs'])
-    P.confere(quant, 'o analógico do jogo anda em 32 direções (11,25°), com a mesma velocidade perto ou longe do centro', r['dirs'][:3])
-    P.confere(all(abs(a[0] - c[0]) < 1e-12 and abs(a[1] - c[1]) < 1e-12 for a, c in zip(r['dirs'], s['dirs'])), 'o servidor arredonda a direção igual ao jogo (%d entradas)' % len(ENTRADAS))
+    P.confere(quant and s['nDirs'] == 64, 'o analógico do jogo anda em 64 direções (5,625°; v105 — eram 32), com a mesma velocidade perto ou longe do centro', r['dirs'][:3])
+    P.confere(all(abs(a[0] - c[0]) < 1e-12 and abs(a[1] - c[1]) < 1e-12 for a, c in zip(r['dirs'], s['dirsNucleo'])), 'o núcleo das salas arredonda a direção igual ao jogo (%d entradas)' % len(ENTRADAS))
     v1, v2, solto = r['mov']['v1'], r['mov']['v2'], r['mov']['solto']
     vj = k['VEL_JOG']; e = vj/math.sqrt(2)
-    P.confere(perto(v1[1], vj) and perto(v2[0], -e) and perto(v2[1], vj - e) and solto == [0, 0],
-              'o movimento soma a direção nova à velocidade e corta no teto; soltou, para na hora (v84)', r['mov'])
+    P.confere(perto(v1[1], vj) and perto(v2[0], -e) and perto(v2[1], -e) and solto == [0, 0],
+              'a virada na hora (v105): a direção nova vale no passo seguinte, com a corrida toda (até a v104 ela era somada à velocidade e cortada no teto); soltou, para na hora', r['mov'])
     P.confere(r['trocaRapida'] == 1 and r['trocaDepois'] == 3 and r['estadoSolto'] == 1,
               'os botões 1/2/3 da v84: do PASSE para o CHUTE em menos de 0,02 s o aperto ainda não vale; depois vale; soltou, volta ao 1',
               {k2: r[k2] for k2 in ('trocaRapida', 'trocaDepois', 'estadoSolto')})

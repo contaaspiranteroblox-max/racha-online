@@ -340,7 +340,7 @@ function cliente(nome, extra) {
   c.abre = () => new Promise((res, rej) => {
     c.ws = new WebSocket('ws://127.0.0.1:' + porta + '/');
     c.ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (_) { return; } c.msgs.push(m); if (m.type === 'hello') { c.id = m.id; c.token = m.token; } };
-    c.ws.onopen = () => { c.manda(Object.assign({ type: 'hello', name: nome, token: c.token || undefined, v93: 1 }, extra || {})); res(); };
+    c.ws.onopen = () => { c.manda(Object.assign({ type: 'hello', name: nome, token: c.token || undefined, v93: 1, v105: 1 }, extra || {})); res(); };
     c.ws.onerror = rej;
   });
   c.manda = o => c.ws.send(JSON.stringify(o));

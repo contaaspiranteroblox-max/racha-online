@@ -37,7 +37,7 @@ function cliente(t, nome, extra){
     ult: (tipo, f) => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === tipo && (!f || f(ws.caixa[i]))) return ws.caixa[i]; return null; },
     limpa: () => { ws.caixa.length = 0; },
     sala: () => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === 'room') return ws.caixa[i].room; return null; }};
-  k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAAxxxx', flag:'BR', v93:1}, extra || {}));
+  k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAAxxxx', flag:'BR', v93:1, v105:1}, extra || {}));
   const h = k.ult('hello'); k.id = h && h.id; k.token = h && h.token;
   return k;
 }

@@ -35,7 +35,7 @@ console.log('\n1) a fila: a ranqueada contra os bots no servidor');
     const k = { ws, c: t.conecta(ws, { headers: {}, socket: { remoteAddress: '10.0.0.' + Math.floor(Math.random() * 250) } }) };
     k.manda = (m) => ws.emit('message', JSON.stringify(m));
     k.ult = (tipo) => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === tipo) return ws.caixa[i]; return null; };
-    k.manda({ type: 'hello', name: nome, v93: 1 });
+    k.manda({ type: 'hello', name: nome, v93: 1, v105: 1 });
     return k;
   };
   const A = cliente('Ana');

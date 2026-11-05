@@ -2,6 +2,94 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v105 — 05/11/2026 · o jogo de corpo, o analógico sem atraso, o online sem a bola atravessando, o chat no lobby, a tampinha que fica e o tamanho da borda
+
+A pedido: *"quero melhorar o jogo de corpo — os jogadores, quando se encostam para disputar a bola, deslizam muito; quero um chat
+visível na tela do lobby igual o de dentro da partida, lá embaixo; tirar todo lag possível das partidas online, deixar muito
+fluido, sem player atravessando bola quando o ping está ruim; quando o jogador cria uma skin e reloga no jogo, a skin some;
+quero a borda lisa padrão no jogo, a inicial para geral, e mais parecida (parece que tem uma sombra ali por dentro); o
+analógico está com um mini delay"*, com as duas tampinhas de referência. A física das salas muda de propósito (o núcleo, o
+mesmo do servidor e do aparelho); o bloco da física do jogo não muda (o build confere: `sha256 ad9f1d2216409b0e`). O backup do
+antes: a etiqueta git `antes-v105` (a v104).
+
+- **O JOGO DE CORPO** (`server/partida/nucleo.js`: `atritoJogJog` 0,5 no `PERFIL_V92` e o `contatoJog` no passo; o mesmo arquivo
+  do servidor, da previsão do online e da sala neste aparelho; `tools/v105/corpo.js` para a partida contra os bots). O que
+  acontecia: a batida tampinha × tampinha não tinha atrito e acontecia depois de andar — duas tampinhas correndo uma contra a
+  outra com um desvio de 0,1 u passavam uma pela outra em ~0,4 s, e quem empurrava de lado escorregava em volta do outro (mais
+  de 120° por segundo). Agora o contato que já vem encostado se segura antes de andar (sem quique: é o empurra-empurra) e o
+  atrito segura o deslize de lado: de frente, as duas se seguram; empurrando quem está parado até uns 27° da linha dos centros,
+  você leva ele junto; mais de lado, você ainda passa (escorregando mais devagar contra quem segura). A trombada de quem chega
+  correndo continua com o quique de sempre. A bola, o chute e o DB não mudam. O motor dos mapas da Oficina usa o mesmo
+  (`server/partida/mapa.js`, com a regra de colisão dos times). Os **bots não encalham**: com o atrito, dois bots se
+  empurrando de frente ficavam parados para sempre (num 3x3, 10 minutos do lado da bola); agora, parado encostado em alguém
+  por 200 ms, o bot desvia 70° por 400 ms, sempre no mesmo sentido (os dois passam um pelo outro) — no servidor
+  (`server/partida/bot.js`), no motor dos mapas e na partida deste aparelho. 48 partidas de bots (1x1 a 4x4): nenhuma travada.
+- **O ANALÓGICO SEM O MINI ATRASO: A VIRADA NA HORA** (`viraNaHora` no núcleo). Medido no jogo: a velocidade da tampinha era a
+  direção nova SOMADA à de antes e cortada no teto — cada virada só chegava na metade do caminho por passo: a curva de 30°
+  levava ~100 ms para valer, a de 90° passava ~80 ms escorregando para o lado de antes e a meia-volta parava um passo inteiro
+  antes de voltar. Agora a tampinha vai na hora para onde o analógico aponta (a corrida toda na direção nova, já no primeiro
+  quadro — o desenho entre os passos também), e o analógico tem **64 direções** (eram 32: os degraus de 11,25° viram 5,6°). Na
+  GINGA a arrancada do drible continua mandando. O perfil da v91 (o "Restaurar v91" do painel de testes) tem tudo como antes.
+- **O ONLINE SEM A BOLA ATRAVESSANDO A TAMPINHA** (`tools/v105/rede.js`). O que acontecia com o ping ruim: o que vai para a tela
+  é o lugar do mundo previsto MAIS o deslize de cada correção (a mola da v96) — cada coisa com a sua mola, e a bola desenhada
+  deslizava para o lugar certo por dentro da tampinha desenhada. Agora, no fim de cada quadro, a bola desenhada sai de dentro
+  de qualquer tampinha (a sua por último: o seu toque manda), sem entrar nas traves, na rede nem nas linhas, e o empurrão entra
+  na mola da bola (sem vaivém), com teto por quadro (1100 px/s: a sobreposição grande sai em dois ou três quadros, sem a bola
+  pular). No simulador da rede: a bola dentro de uma tampinha caiu de 3,4% para 0,8% dos quadros no 4G
+  e de 4,3% para 0,4% no 4G ruim, e a mais funda de ~26 px (a bola tem 19) para ~9 px, sem piorar o resto (separar as
+  tampinhas umas das outras também foi medido e ficou de fora: o outro jogador dava arrancos). `RACHA_CONFIG.contato105 = false`
+  desliga.
+- **60 QUADROS POR SEGUNDO NAS SALAS** (`server/turma.js`, `quadrosDe`; eram 30): as correções da previsão ficam com a metade do
+  tamanho — no 4G ruim, a correção da sua tampinha (p95) de 6,2 para 2,5 px —, por uns 20 KB/s num 2v2 (29 KB/s num 4v4). As
+  salas do mapa da Oficina e as do Rachão seguem com 30; `RACHA_QUADROS=30` volta ao de antes.
+- **A PÁGINA DE ANTES PEDE PARA ATUALIZAR** (`server/turma.js`): com a física das salas nova, a página do jogo de antes (o app
+  instalado que ficou aberto no fundo, a aba esquecida) preveria a própria tampinha com a física velha — um tranco a cada
+  virada. O jogo novo diz que é a v105 no hello; a página de antes (a que manda o v93 e não o v105) não cria, não entra, não
+  volta para a sala do RACHA e não entra na fila da ranqueada: aparece *"Tem jogo novo (a física das salas mudou): atualize o
+  jogo — recarregue a página ou feche e abra o app — para jogar online"*. As salas do Rachão seguem como antes.
+- **O CHAT NA TELA DO LOBBY** (`tools/v105/chat_lobby.js` e `app/public/game/v105-chat.css`): a barra do chat da partida (a
+  etiqueta BRASIL, NOME: a última mensagem, as não lidas e o ^) volta para a tela inicial com o Chat do Brasil e a cara da da
+  partida — embaixo, no vão entre a barra de atalhos e o JOGAR; nos apertados (o iPhone com o entalhe, o 800 × 336), logo em
+  cima da barra de atalhos; sem lugar, não aparece. Tocar abre o painel de sempre (as mensagens, o campo e o ENVIAR; o nome
+  abre a ficha com o VER PERFIL — o painel fecha antes, para o perfil não ficar atrás). O lugar é medido só quando o lobby
+  muda de tamanho (nada por quadro). Sem servidor ou com o "Chat na tela" desligado: sem a barra; com o Chat do Brasil
+  desligado nos Ajustes, a barra diz isso; o servidor fora do ar: "Chat do Brasil fora do ar".
+- **A TAMPINHA CRIADA NÃO SOME MAIS AO ENTRAR DE NOVO** (`tools/v105/cosmeticos.js` e `cosmeticos.py`). A causa (reproduzida na
+  v104 só abrindo o jogo de novo, sem conta nenhuma): a leitura da chave das tampinhas (`racha-tampa-v1`, no `tools/tampa_rua.js`)
+  roda no começo do script, antes de as peças das versões seguintes — as caras e os aros animados da v76 e da v96 e a borda
+  BOTÃO da v102 — entrarem nas listas; o código de toda tampinha feita com uma delas era recusado: a equipada voltava a ser a
+  inicial, a salva sumia do inventário e a gravação seguinte apagava de vez (no aparelho e, com a cópia, na conta). Como a v102
+  pôs a BOTÃO no editor, quase toda tampinha nova sumia ao "relogar". Agora o que não dá para ler no começo fica guardado e é
+  lido de novo no fim, com todas as peças. E a cópia na conta: vai logo depois de cada mudança nas tampinhas (em ~1 s; antes,
+  de 8 a 12 s depois e nunca no meio da partida), o SAIR DA CONTA manda o que falta antes de encerrar a sessão, com o app
+  fechando o envio sai com keepalive, e no QUAL PROGRESSO FICA? (e no LEVAR O PROGRESSO PARA A CONTA) as tampinhas dos dois
+  lados juntam (as apagadas de propósito não voltam; a equipada é a equipada por último); a tampinha da conta que o aparelho
+  nunca viu entra nas salvas.
+- **A BORDA BOTÃO PARA TODO MUNDO, CHAPADA COMO NAS IMAGENS**: a tampinha inicial (e as do time, as da Oficina e as de versões
+  antigas) e toda tampinha com a borda de fábrica aparecem com a BOTÃO de aro branco (os códigos não mudam: é só o desenho); as
+  novas já nascem com ela. E a BOTÃO ficou chapada — sem o degradê de relevo do aro, sem o brilho e sem a sombra por dentro: o
+  contorno escuro fino por fora, o aro branco liso, um filete escuro fino entre o aro e o desenho e o desenho cheio no meio, nas
+  proporções medidas nas duas imagens. O tamanho da tampinha, o alcance e a física não mudam.
+- **O TAMANHO DA BORDA DA TAMPINHA** (`tools/v105/borda.py` e `borda.js`), a pedido: *"crie uma função tamanho da borda, sem
+  borda, na skin"*. No CRIAR TAMPINHA, na aba BORDA, embaixo das cores: o **TAMANHO DA BORDA**, com SEM · FINA · NORMAL ·
+  GROSSA (a NORMAL é a de sempre; grátis), para toda borda — a BOTÃO, as de dentes, as acesas e com as caras animadas. Na
+  FINA e na GROSSA o desenho do meio cresce ou diminui e a borda fica mais fina ou mais grossa (na BOTÃO o aro branco com 4,5%
+  ou 17% do raio — o normal tem 9%; nas de dentes o meio com 80% ou 66% do raio — o normal tem 74%). **SEM BORDA** a tampinha
+  fica só com o desenho, cheio até a beirada, chapado: sem a saia, os dentes, o aro, o contorno, a luz e a animação do aro
+  aceso (com uma cara animada, a cara ocupa a tampinha inteira); a faixa das bordas continua mostrando cada borda no tamanho
+  normal. O tamanho vai no fim do código da tampinha (2 bits, só quando não é a normal): os códigos de sempre não mudam (200
+  tampinhas sorteadas no teste), o jogo de antes lê a mesma tampinha com a borda normal, e o servidor das salas e a plataforma
+  só olham o começo do código e o tamanho dele (o mais comprido, sem borda, fica com 39 letras de 44). O emoji em cima da
+  tampinha cobre o meio de cada tamanho. Só desenho: o tamanho da tampinha, o alcance e a física não mudam.
+- **Testes**: `tests/v105_rede_test.mjs` (o corpo e a virada no núcleo; o contato desenhado e os 60 quadros no simulador da
+  rede), `tests/v105_chat_lobby_test.py` (o lugar em 10 tamanhos, abrir e minimizar, desligada/fora do ar, na partida, nada por
+  quadro e o Chat do Brasil de verdade entre duas contas) e `tests/v105_cosmeticos_test.py` (a criada com a BOTÃO e com a cara
+  animada continuando ao abrir o jogo de novo, a borda de fábrica com a BOTÃO, o aro chapado medido nos pixels, as tampinhas
+  juntando no QUAL PROGRESSO FICA? e, com a conta, a cópia indo logo, o SAIR que manda antes de sair e um navegador novo). As comparações históricas (o lance da v91 tique a tique, os quadros
+  da v98, o DB contra o núcleo de referência, a v95 × v96 da rede) rodam com a física da v104 — sem o corpo, com a virada de
+  antes e as 32 direções; o `servidor_test` reconhece o quadro de mentira pelo conteúdo (com 60 por segundo o passo 3 também
+  é de verdade); o `v92_pacote` confere os 60 quadros por segundo do servidor oficial (o admin pede 30 e fica o padrão); e o `tests/v105_borda_test.py` (o tamanho da borda: o código, os pixels de cada tamanho, o editor e o servidor).
+
 ## v104 — 04/11/2026 · o correio de verdade, o árbitro arrastando no painel e a tela inteira só com o jogo
 
 A pedido, com o jogo já na VPS nova e três prints (o painel dos jogadores, o correio com erro e a tela cheia): *"quero o nome

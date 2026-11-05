@@ -265,6 +265,25 @@ for t in v104_painel v104_ranking; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done
+# v105: O JOGO DE CORPO, A VIRADA NA HORA E O ONLINE SEM A BOLA ATRAVESSANDO (ver o CHANGELOG.md, v105). O v105_rede (Node) confere
+# no núcleo das salas o empurra-empurra (as tampinhas se seguram de frente; de lado ainda passam), a virada na hora e as 64
+# direções, e no simulador da rede a bola desenhada fora das tampinhas e os 60 quadros por segundo das salas.
+printf '%-12s ' "v105_rede"
+if out=$(node tests/v105_rede_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+# v105: O CHAT NA TELA DO LOBBY. O v105_chat_lobby (Python; a plataforma de teste e dois navegadores na parte 6) a barra do chat
+# da partida de volta à tela inicial: o lugar em 10 tamanhos sem encostar em nenhum botão, tocar abre e minimizar volta, sem
+# servidor/desligada/fora do ar, na partida, nada por quadro e o Chat do Brasil de verdade entre duas contas (o VER PERFIL por cima).
+# v105: AS TAMPINHAS CRIADAS NA CONTA E A BORDA BOTÃO PARA TODO MUNDO (ver o tools/v105/cosmeticos.js). O v105_cosmeticos (Python;
+# a parte da conta sobe a plataforma de teste) a criada com a BOTÃO e com a cara animada continuando ao abrir o jogo de novo, a
+# borda de fábrica com a BOTÃO, o aro chapado medido nos pixels, as tampinhas juntando no QUAL PROGRESSO FICA? e, com a conta, a
+# cópia indo logo, o SAIR que manda antes de sair, o mesmo navegador e um navegador novo; ~2 min.
+# v105: O TAMANHO DA BORDA (tools/v105/borda.js): o v105_borda confere o código (vai e volta; a NORMAL igual à de antes; o jogo
+# de antes lê a mesma tampinha), os pixels de cada tamanho (a BOTÃO, a de dentes, a cara animada, sem borda), o editor e o
+# servidor; ~30 s.
+for t in v105_chat_lobby v105_cosmeticos v105_borda; do
+  printf '%-12s ' "$t"
+  if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
+done
 # v92: os dois ZIPs prontos (o oficial sem o painel; o de testes com ele) servidos pelo node server.js, como num servidor
 # (v100: e o do lançamento, --lancamento: sem o presente de teste; nenhum dos três com segredo, banco, chave ou pacote)
 printf '%-12s ' "v92_pacote"

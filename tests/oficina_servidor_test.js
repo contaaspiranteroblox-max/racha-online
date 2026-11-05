@@ -461,7 +461,7 @@ function publicosEFisica(){
 function v93NasSalas(){
   console.log('\n9) a v93 nas salas com mapa: o 3, 2, 1, JÁ!, o painel de jogadores e o admin da sala (até 4 times)');
   const t = novaTurma();
-  const A = entra(t, 'Ana', {v93:1}), B = entra(t, 'Bia', {v93:1}), C = entra(t, 'Caio', {v93:1});
+  const A = entra(t, 'Ana', {v93:1, v105:1}), B = entra(t, 'Bia', {v93:1, v105:1}), C = entra(t, 'Caio', {v93:1, v105:1});
   const pub = A.pede('publicar', {mapa:mapa4(), visibilidade:'publico'});
   A.manda({type:'create', mapa:{id:pub.meta.id}, bots:true, n:1});
   const code = A.sala().code;
@@ -504,7 +504,7 @@ function v93NasSalas(){
 function revisao(){
   console.log('\n10) a revisão de segurança desta versão: a troca de mapa no ritmo, o pedido recusado sem mexer na sala, as vagas sem bots, os números da pessoa, a mensagem grande, o não listado e as falas silenciadas');
   const t = novaTurma();
-  const A = entra(t, 'Ana', {v93:1}), B = entra(t, 'Bia', {v93:1}), C = entra(t, 'Caio', {v93:1});
+  const A = entra(t, 'Ana', {v93:1, v105:1}), B = entra(t, 'Bia', {v93:1, v105:1}), C = entra(t, 'Caio', {v93:1, v105:1});
   anda(20000); const m1 = A.pede('publicar', {mapa:mapaBase({nome:'Dois'}), visibilidade:'publico'});
   anda(20000); const m4 = A.pede('publicar', {mapa:mapa4(), visibilidade:'publico'});
   anda(20000); const mn = A.pede('publicar', {mapa:mapaBase({nome:'Escondido'}), visibilidade:'naoListado'});

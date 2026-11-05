@@ -121,13 +121,13 @@ function joga(o) {
   let tk = 0, AG = 1000;
   const inbox = [], boxB = [], saida = [];
   const P = new PartidaSala({ n: 1, jogo: 'futebol', map: 4, tempo: 0, jogadores: [{ netId: 'A', nome: 'Ana' }, { netId: 'B', nome: 'Beto' }], agora: () => AG,
-    entradas: o.ligado !== false, onSnapshot: d => saida.push({ em: tk + (o.latQ | 0), d: JSON.parse(JSON.stringify(d)) }) });
+    entradas: o.ligado !== false, fisica: o.fisica || undefined, onSnapshot: d => saida.push({ em: tk + (o.latQ | 0), d: JSON.parse(JSON.stringify(d)) }) });
   P.estado = 'jogo'; P.B.x = P.G.CX; P.B.y = P.G.LY0 + 60;    // (a bola longe dos dois)
   P.jog[0].x = P.G.CX - 300; P.jog[0].y = P.G.CY + 150; P.jog[1].x = P.G.CX + 250; P.jog[1].y = P.G.CY + 100;
   for (const q of P.jog) q.fila.chegou = AG;
   const ctx = aparelho(m => { if (m.type === 'input') inbox.push({ em: tk + (o.latA | 0), m }); }, cfg);
   const T = ctx.__T;
-  const room = { servidor: true, nucleo: N.VERSAO, fisica: N.PERFIL_V92, n: 1, jogo: 'futebol', roster: ['A', 'B'], round: 1 };
+  const room = { servidor: true, nucleo: N.VERSAO, fisica: o.fisica || N.PERFIL_V92, n: 1, jogo: 'futebol', roster: ['A', 'B'], round: 1 };
   Object.assign(T.NET49, { playing: true, host: false, localSlot: 0, room, lastTick: -1 });
   T.RQ.jog = P.jog.map(q => ({ x: q.x, y: q.y }));
   T.inicia(room);
@@ -174,7 +174,9 @@ const resumo = r => ({ quadros: r.quadros, saltos: r.saltosNz, soma: r.saltosSom
   confere(on3.r102.travadas >= 1 && on3.saltosSoma <= off3.saltosSoma + 2, 'o aparelho travado: o tempo do mundo não pula mais que antes (' + on3.saltosSoma + ' passos, antes ' + off3.saltosSoma + '; travadas vistas: ' + on3.r102.travadas + ')', [resumo(on3), resumo(off3)]);
   // o Beto em zigue-zague com 6 passos de atraso para cima: a previsão anda ele com o que ele apertou (Q.ent)
   const zz = tk => { const g = Math.floor(tk / 20) % 4; return [[1, 0], [0, 1], [-1, 0], [0, -1]][g]; };
-  const o2 = { passos: 420, latA: 2, latB: 6, latQ: 3, ana: tk => [0, 0], beto: zz };
+  // (v105: com a física da v104 — a virada de antes: com a virada na hora a velocidade do quadro já é a direção que ele quer, e
+  //  as duas previsões dão no mesmo; o que se mede aqui é a fila do servidor ajudando quando a velocidade atrasa)
+  const o2 = { passos: 420, latA: 2, latB: 6, latQ: 3, ana: tk => [0, 0], beto: zz, fisica: Object.assign({}, N.PERFIL_V92, { atritoJogJog: 0, viraNaHora: 0, direcoes: 32 }) };
   const off2 = joga(Object.assign({}, o2, { ligado: false })), on2 = joga(o2);
   confere(on2.erroB < off2.erroB * 0.95, 'o Beto mudando de direção: a correção da previsão dele é menor com as direções do servidor (' + on2.erroB.toFixed(2) + ' px por quadro, antes ' + off2.erroB.toFixed(2) + ')', [resumo(on2), resumo(off2)]);
 }

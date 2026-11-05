@@ -2028,6 +2028,7 @@
 <link rel="stylesheet" href="./v103.css">
 <link rel="stylesheet" href="./v103-controles.css">
 <link rel="stylesheet" href="./v104.css">
+<link rel="stylesheet" href="./v105-chat.css">
 <script src="./rua.js"></script>
 <script src="./arena.js"></script>
 <script src="./lobby.js"></script>
@@ -2604,6 +2605,7 @@
         method: ehQuery ? 'GET' : 'POST',
         headers: cab,
         credentials: 'include',
+        keepalive: !ehQuery && R84.manterViva === true && (typeof TextEncoder === 'function' ? new TextEncoder().encode(corpo).length : corpo.length*3) < 60000,   // v105: com o app fechando, o envio termina
         body: ehQuery ? undefined : corpo
       }).then(function(r){
         return r.text().then(function(tx){
@@ -2992,6 +2994,7 @@ const TICKS_POR_S = 60;                              // o passo fixo da física:
 // O atrito de cada material: tampinha .3, bola .5, trave .1; num contato vale a média geométrica (sqrt(a*b)). O jogador não gira
 // [escolha] a bola é um disco sólido: inércia = ½ × massa × raio²
 let V92_QJJ = 0.3, V92_QJP = 0.65, V92_DIRECOES = 32;   // v92: tampinha × tampinha, tampinha × muro da área, direções do analógico (os da v91)
+var V105_AJJ = 0, V105_VIRA = false;                      // v105: o atrito tampinha × tampinha (o jogo de corpo) e a virada na hora (o v92AplicaFisica põe os do perfil)
 let LIMIAR_QUIQUE = U(1);                             // [escolha] px/s: batida mais lenta que isso não quica (evita a bola tremer encostada)
 const DOMINIO_LIGADO = false;                          // domínio no PASSE (pedido seu): bola vindo na sua direção é dominada. false = o PASSE sempre chuta
 const ZONA_MORTA = 0.00001;                              // epsilon de normalização; entrada ativa mantém velocidade contínua
@@ -4293,7 +4296,7 @@ function rqPre(){                                      // começo do tick: os bo
   for (const q of RQ.bots){
     q.ax = q.x; q.ay = q.y;
     const d = direcaoOriginal(q.mx, q.my);
-    if (d.mx || d.my){ q.vx += d.mx*vmax; q.vy += d.my*vmax; const v = Math.hypot(q.vx, q.vy); if (v > vmax){ q.vx *= vmax/v; q.vy *= vmax/v; } }
+    if (d.mx || d.my){ if (V105_VIRA){ q.vx = d.mx*vmax; q.vy = d.my*vmax; } else { q.vx += d.mx*vmax; q.vy += d.my*vmax; const v = Math.hypot(q.vx, q.vy); if (v > vmax){ q.vx *= vmax/v; q.vy *= vmax/v; } } }   // (v105: a virada na hora)
     else q.vx = q.vy = 0;
     if (q.chutar){ rqChuta(q, q.chutar); q.chutar = 0; }
   }
@@ -4312,7 +4315,7 @@ function rqParedes(q){                                 // os mesmos limites que 
 function rqColide(){                                   // chamado no collide(): bots x bola e paredes, e jogador x jogador
   const J = RQ.jog;
   for (const q of RQ.bots){ hitBodies(q, B, QUIQUE_BOLA, ATRITO_JOG_BOLA); rqParedes(q); }
-  for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], V92_QJJ, 0);
+  for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], V92_QJJ, V105_AJJ);   // (v105: com o atrito do jogo de corpo)
   if (RQ.estado === 'saida') rqBarreira();
 }
 function rqBarreira(){ for (const q of RQ.jog) rqBarreiraUm(q); }   // na saída: cada um no seu campo; quem não dá a saída fica fora do círculo
@@ -18997,6 +19000,7 @@ function tpCodigo(D){                                   // o desenho em texto
   if (D.p !== 'li') pos(D.pp);
   if (D.i !== '--') pos(D.ip);
   if (I && I.texto){ const t = Array.from(tpTexto(D.t)); put(t.length, 2); for (const ch of t) put(TP_LETRA_I.get(ch) || 0, 6); }
+  if (D.k === 'T' && ((D.bt | 0) & 3)) put((D.bt | 0) & 3, 2);   // v105: o tamanho da borda (1 fina · 2 grossa · 3 sem borda; a normal não vai)
   while (bits.length % 6) bits.push(0);
   let s = D.k === 'E' ? 'E.' : 'T.';
   for (let i = 0; i < bits.length; i += 6){ let v = 0; for (let j = 0; j < 6; j++) v = v*2 + bits[i + j]; s += TP_B64[v]; }
@@ -19023,12 +19027,13 @@ function tpLe(s){                                       // o código de volta pa
     D.ip = i.id !== '--' ? pos() : [50, 50, 50, 0];
     D.t = '';
     if (i.texto){ const n = get(2); let t = ''; for (let j = 0; j < n; j++) t += TP_LETRAS[get(6)] || ''; D.t = tpTexto(t); }
+    D.bt = k === 'T' && at + 2 <= bits.length ? get(2) : 0;   // v105: o tamanho da borda (no fim; sem ele, os zeros do fim = a normal)
   } catch (_) { D = null; }
   if (TP_LIDOS.size > 400) TP_LIDOS.clear();
   TP_LIDOS.set(s, D ? tpCopia(D) : null);
   return D;
 }
-function tpCopia(D){ return {k:D.k, b:D.b, bc:D.bc.slice(), p:D.p, pc:D.pc.slice(), pp:D.pp.slice(), i:D.i, ic:D.ic.slice(), ip:D.ip.slice(), ie:D.ie | 0, t:D.t || ''}; }
+function tpCopia(D){ return {k:D.k, b:D.b, bc:D.bc.slice(), p:D.p, pc:D.pc.slice(), pp:D.pp.slice(), i:D.i, ic:D.ic.slice(), ip:D.ip.slice(), ie:D.ie | 0, t:D.t || '', bt:D.k === 'T' ? (D.bt | 0) & 3 : 0}; }   // v105: + bt (o tamanho da borda)
 const tpNorm = D => tpLe(tpCodigo(D)) || tpCopia(D);    // o desenho como ele fica depois de salvo (as cores em 7 bits)
 
 /* ---------------------------------------------------------------- 5) o desenho na tela */
@@ -19134,8 +19139,9 @@ function tpSaia(g, x, y, r, D){                          // a saia pintada (meta
   g.stroke();
 }
 function tpTampa(g, x, y, r, D, semente){               // a tampinha inteira (r = a ponta dos dentes, como a de sempre)
+  if (tpSemBorda(D)) return tpSoDesenho(g, x, y, r, D, semente);   // v105: SEM BORDA (tools/v105/borda.js)
   tpSaia(g, x, y, r, D);
-  const rt = r*.74, B = TP_MAPA.b.get(D.b) || TP_BORDAS[0];
+  const rt = r*tpMiolo(D), B = TP_MAPA.b.get(D.b) || TP_BORDAS[0];   // v105: o meio pelo tamanho da borda (a normal: .74)
   tpCirc(g, x, y, rt + r*.035, tpMix(D.pc[0], '#000000', .62));
   g.save(); g.beginPath(); g.arc(x, y, rt, 0, TP_TAU); g.clip();
   tpPintaTampo(g, x, y, rt, D, semente); tpLuz(g, x, y, rt);
@@ -19268,14 +19274,17 @@ try {
   const o = JSON.parse(localStorage.getItem(TP_CHAVE) || 'null');
   if (o && typeof o === 'object'){
     if (Array.isArray(o.itens)) TP.itens = new Set(o.itens.filter(x => typeof x === 'string' && /^[bfpi]:[a-z0-9-]{2}$/.test(x)));
-    if (Array.isArray(o.salvas)) TP.salvas = o.salvas.filter(s => s && tpEhCodigo(s.c) && s.c[0] === 'T' && tpLe(s.c)).slice(0, 24).map(s => ({c:s.c, n:Array.from(semLixo(String(s.n || ''))).slice(0, 20).join('').trim() || 'Minha tampinha', f:s.f === true}));   // v70: f = favorita
+    if (Array.isArray(o.salvas)) TP.salvas = o.salvas.filter(s => s && tpEhCodigo(s.c) && s.c[0] === 'T' && tpLe(s.c)).slice(0, 24).map(s => ({c:s.c, n:Array.from(semLixo(String(s.n || ''))).slice(0, 20).join('').trim() || 'Minha tampinha', f:s.f === true, ...(+s.t > 0 ? {t:Math.floor(+s.t)} : {})}));   // v70: f = favorita · v105: t = a hora em que a salva mudou (as tampinhas juntam entre os aparelhos)
     if (tpEhCodigo(o.equipada) && o.equipada[0] === 'T' && tpLe(o.equipada)) TP.equipada = o.equipada;
+    if (+o.te > 0 || Array.isArray(o.x)) TP.v105 = {te:+o.te > 0 ? Math.floor(+o.te) : 0, x:Array.isArray(o.x) ? o.x.slice(0, 64) : []};   // v105: a hora do equipar e as salvas apagadas
+    const adia105 = c => tpEhCodigo(c) && c[0] === 'T' && !tpLe(c);   // v105: as peças da v76, v96 e v102 entram depois: o código fica para ler no fim
+    if (adia105(o.equipada) || (Array.isArray(o.salvas) && o.salvas.some(s => s && adia105(s.c)))) TP.adiadas = {equipada:adia105(o.equipada) ? o.equipada : '', salvas:Array.isArray(o.salvas) ? o.salvas.slice(0, 24) : []};
   }
 } catch (_) {}
 // v70: as peças compradas moram também na conta, junto com o saldo (uma gravação só na compra: não sobra compra pela metade)
 for (const k of (Array.isArray(CONTA.pecas) ? CONTA.pecas : [])) if (/^[bfpi]:[a-z0-9-]{2}$/.test(k)) TP.itens.add(k);
 if (!Array.isArray(CONTA.pecas) || CONTA.pecas.length !== TP.itens.size){ CONTA.pecas = [...TP.itens]; contaSalvar(); }
-function tpSalva(){ try { localStorage.setItem(TP_CHAVE, JSON.stringify({itens:[...TP.itens], salvas:TP.salvas, equipada:TP.equipada})); } catch (_) {} }
+function tpSalva(){ try { const h = TP.v105 || {}; localStorage.setItem(TP_CHAVE, JSON.stringify(Object.assign({itens:[...TP.itens], salvas:TP.salvas, equipada:TP.equipada}, h.te > 0 ? {te:h.te} : {}, Array.isArray(h.x) && h.x.length ? {x:h.x} : {}))); } catch (_) {} }   // v105: + te e x (tools/v105/cosmeticos.js)
 const tpChave = (tipo, id) => tipo + ':' + id;           // b:dt · f:es · p:xd · i:co
 const tpMapaDe = tipo => tipo === 'b' ? TP_MAPA.b : tipo === 'f' ? TP_MAPA.f : tipo === 'p' ? TP_MAPA.p : TP_MAPA.i;
 function tpTem(tipo, id){ const it = tpMapaDe(tipo).get(id); return !it || it.pr === 'gratis' || TP.itens.has(tpChave(tipo, id)); }
@@ -19771,7 +19780,7 @@ function tpeMinis(agora){                                // as miniaturas da fai
         const b = itens[i++], D = tpCopia(ED.D), id = b.dataset.id;
         if (tipo === 'p'){ D.p = id; D.pp = [50, 50, 50, 0]; D.i = '--'; }
         else if (tipo === 'i'){ D.i = id; D.ip = [50, 50, 50, 0]; if (id === 'tx' && !D.t) D.t = 'R'; }
-        else D.b = id;
+        else { D.b = id; if (D.bt === 3) D.bt = 0; }   // v105: sem borda, cada borda aparece no tamanho normal
         const box = b.querySelector('.tpe-mini-cv'); box.textContent = ''; box.appendChild(tpMiniatura(D, 92));
       }
       if (i < itens.length) requestAnimationFrame(lote);
@@ -25304,7 +25313,7 @@ function sk76Verniz(g, rt){                                 // o esmalte por cim
   g.fillStyle = e; g.fillRect(-rt, -rt, 2*rt, 2*rt);
 }
 function sk76Cara(g, x, y, r, D, cara, t, esc){             // o miolo (recortado no círculo) com a cara no tempo t e o verniz
-  const rt = r*.74;
+  const rt = r*tpMiolo(D);   // v105: o meio pelo tamanho da borda (a normal: .74; sem borda: a tampinha inteira)
   g.save(); g.beginPath(); g.arc(x, y, rt, 0, SK76_TAU); g.clip(); g.translate(x, y);
   try { cara.pinta(g, rt, t, rt*(esc || tpEscalaDe(g))); } catch (e) { sk76Erro(e); }
   sk76Verniz(g, rt);
@@ -25313,8 +25322,8 @@ function sk76Cara(g, x, y, r, D, cara, t, esc){             // o miolo (recortad
 function sk76Desenha(g, x, y, r, D, t, esc){                // a tampinha inteira desenhada agora (o editor, os cartões e o desenho parado)
   const A = sk76Anim(D);
   if (!A || !A.cara){ tpTampaAntes76(g, x, y, r, D, tpSemente(tpCodigo(D))); }
-  else { tpSaia(g, x, y, r, D); tpCirc(g, x, y, r*.775, '#07060a'); sk76Cara(g, x, y, r, D, A.cara, t == null ? A.cara.t0 : t, esc); }
-  if (A && A.aro && t != null) sk76Aro(g, x, y, r, D, t);
+  else { tpSaia(g, x, y, r, D); if (!tpSemBorda(D)) tpCirc(g, x, y, r*(tpMiolo(D) + .035), '#07060a'); sk76Cara(g, x, y, r, D, A.cara, t == null ? A.cara.t0 : t, esc); }   // v105: o tamanho da borda
+  if (A && A.aro && t != null && !tpSemBorda(D)) sk76Aro(g, x, y, r, D, t);
 }
 const tpTampaAntes76 = tpTampa;
 tpTampa = function(g, x, y, r, D, semente){                 // o desenho parado (as imagens prontas, as miniaturas): a cara no quadro t0
@@ -25341,7 +25350,7 @@ function sk76Base(D, cod, rpx){                             // a parte parada da
   const k = cod + '|' + rpx; let c = SK76_BASE.get(k); if (c) return c;
   if (SK76_BASE.size > 120) SK76_BASE.clear();
   const lado = Math.ceil(2*(rpx*1.16 + 3)); c = document.createElement('canvas'); c.width = c.height = lado;
-  const g = c.getContext('2d'); tpSaia(g, lado/2, lado/2, rpx, D); tpCirc(g, lado/2, lado/2, rpx*.775, '#07060a');
+  const g = c.getContext('2d'); tpSaia(g, lado/2, lado/2, rpx, D); if (!tpSemBorda(D)) tpCirc(g, lado/2, lado/2, rpx*(tpMiolo(D) + .035), '#07060a');   // v105: o tamanho da borda
   SK76_BASE.set(k, c); return c;
 }
 const tpPoeAntes76 = tpPoe;
@@ -25354,7 +25363,7 @@ tpPoe = function(g, x, y, r, D, cod, esc){                  // na tela que se me
     g.drawImage(base, x - m, y - m, 2*m, 2*m);
     sk76Cara(g, x, y, r, D, A.cara, t, esc);
   } else tpPoeAntes76.apply(this, arguments);
-  if (A.aro) try { sk76Aro(g, x, y, r, D, t); } catch (e) { sk76Erro(e); }
+  if (A.aro && !tpSemBorda(D)) try { sk76Aro(g, x, y, r, D, t); } catch (e) { sk76Erro(e); }   // v105: sem borda, sem o aro aceso
 };
 
 /* ---------------------------------------------------------------- 5) os bots não pegam as animadas (ficam para quem joga) */
@@ -34998,7 +35007,8 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
        contador de toques no comando, que não deixa um toque se perder na rede).
    Os números vêm de um PERFIL (em u, as unidades do jogo; 1 u = 19 px). PERFIL_V91 reproduz a v91 exatamente;
    PERFIL_V92 é o padrão novo (os mesmos números de física + o toque armado e a rede do gol segurando a tampinha também
-   no servidor, como no jogo offline; desde a v103, o CHUTE uns 6% mais forte: 360, era 340).
+   no servidor, como no jogo offline; desde a v103, o CHUTE uns 6% mais forte: 360, era 340; desde a v105, o JOGO DE
+   CORPO: as tampinhas encostadas se seguram em vez de escorregar uma em volta da outra — atritoJogJog).
    O painel de testes da versão experimental troca o perfil; a versão oficial usa o
    padrão e o servidor só aceita perfil de fora com RACHA_EXPERIMENTAL=1.
    Determinístico: nada de Math.random aqui (o servidor e a previsão precisam dar o mesmo resultado).
@@ -35038,6 +35048,8 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
     quiqueTrave: 0.6,     // bola × trave
     quiqueRede: 0.15,     // bola × rede
     quiqueJogJog: 0.3,    // tampinha × tampinha
+    atritoJogJog: 0,      // v105: o atrito tampinha × tampinha (o jogo de corpo); 0 = escorrega como até a v104
+    viraNaHora: 0,        // v105: 1 = a tampinha vai na hora para onde o analógico aponta (0 = a velocidade aditiva com teto de sempre)
     quiqueJogParede: 0.65,// tampinha × muro da área
     limiarQuique: 1,      // u/s: batida mais lenta que isso não quica
     direcoes: 32,         // setores do analógico (0 = livre)
@@ -35066,14 +35078,25 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
   // teto, então o chute sozinho fica um pouco mais perto dele. O PASSE fica em 212,5: ele decide o DB com a bola rolando (a
   // bola não pode sair do alcance antes do CHUTE do passo seguinte) e qualquer aumento derruba o DB — no laboratório
   // (tests/v92_db/lab.cjs, o cenário "normal"), com o PASSE a 213 a chance cai de 76% para 31%; a 220, para 0%.
-  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360 }));
+  // v105 (a pedido: "quando se encostam para disputar a bola eles deslizam muito"): o JOGO DE CORPO — o atrito entre as
+  // tampinhas (0,5) e o contato que já vem encostado segurado antes de andar (contatoJog). Sem ele, duas tampinhas correndo
+  // uma contra a outra com um desvio de 0,1 u passavam uma pela outra em 0,4 s, e quem empurrava de lado escorregava em volta
+  // do outro (mais de 120° por segundo). Agora: de frente, elas se seguram (o empurra-empurra); empurrando quem está parado
+  // até uns 27° da linha dos centros, você leva ele junto; mais de lado que isso, você ainda passa por ele (escorregando mais
+  // devagar contra quem segura). A bola, o chute, o DB e o resto da física: os mesmos números.
+  // v105 (a pedido: "o analógico está com um mini delay"): a VIRADA NA HORA — com a velocidade aditiva com teto (a de sempre:
+  // a direção nova SOMADA à velocidade de antes e cortada no teto), cada virada só chegava na metade do caminho por passo: uma
+  // curva de 30° levava uns 6 passos (100 ms) para valer, a de 90° passava uns 80 ms ainda escorregando para o lado de antes
+  // e a meia-volta parava um passo inteiro (17 ms) antes de voltar. Agora a tampinha vai na hora para onde o analógico aponta
+  // (a velocidade toda, na direção nova), e o analógico tem 64 direções (eram 32: os degraus de 11,25° viram 5,6°).
+  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360, atritoJogJog: 0.5, viraNaHora: 1, direcoes: 64 }));
 
   // os limites que o painel e o servidor aceitam (o servidor corta qualquer coisa fora disto)
   const LIMITES = Object.freeze({
     rJog: [1.2, 3.2], raioChute: [1.4, 4.2], massaJog: [0.3, 6], velJog: [7, 24],
     forcaPasse: [80, 500], forcaChute: [120, 700], rBola: [0.5, 1.8], massaBola: [2, 30], limiteBola: [20, 90],
     fatorBola: [0.97, 0.998], amortAngular: [0, 4], atritoBola: [0, 1], atritoJog: [0, 1], atritoTrave: [0, 1],
-    quiqueBola: [0, 0.9], quiqueParede: [0, 1], quiqueTrave: [0, 1], quiqueRede: [0, 0.8], quiqueJogJog: [0, 1],
+    quiqueBola: [0, 0.9], quiqueParede: [0, 1], quiqueTrave: [0, 1], quiqueRede: [0, 0.8], quiqueJogJog: [0, 1], atritoJogJog: [0, 1], viraNaHora: [0, 1],
     quiqueJogParede: [0, 1], limiarQuique: [0, 4], direcoes: [0, 64], bufferToque: [0, 15], jogRede: [0, 1],
     cooldownBotao: [0, 0.1],
     dbModo: [0, 1], dbJanelaParada: [0, 6], dbProtecaoParada: [0, 12], dbJanelaMovel: [0, 6], dbProtecaoMovel: [0, 12],
@@ -35081,7 +35104,7 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
     dbAnulaMs: [0, 10], dbJanelaMs: [1, 16],
   });
   const FOLGA_CHUTE = 0.5;                             // v95: o anel do chute passa do corpo pelo menos isto (u)
-  const SIM_NAO = new Set(['jogRede', 'dbModo', 'dbParede', 'dbOrdem', 'dbRelogio']);
+  const SIM_NAO = new Set(['jogRede', 'dbModo', 'dbParede', 'dbOrdem', 'dbRelogio', 'viraNaHora']);
   const INTEIROS = new Set(['bufferToque', 'dbJanelaParada', 'dbProtecaoParada', 'dbJanelaMovel', 'dbProtecaoMovel', 'dbParadaPassos']);
 
   function perfilLimpo(p, base) {                     // um perfil de fora (do painel ou da rede): só os campos conhecidos, cortados
@@ -35111,7 +35134,7 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
       ATRITO_JOG_BOLA: Math.sqrt(p.atritoJog * p.atritoBola), ATRITO_TRAVE_BOLA: Math.sqrt(p.atritoTrave * p.atritoBola),
       QUIQUE_BOLA: p.quiqueBola,
       Q_PAREDE: Math.max(p.quiqueBola, p.quiqueParede), Q_TRAVE: Math.max(p.quiqueBola, p.quiqueTrave), Q_REDE: Math.max(p.quiqueBola, p.quiqueRede),
-      Q_JOG_JOG: p.quiqueJogJog, Q_JOG_PAREDE: p.quiqueJogParede,
+      Q_JOG_JOG: p.quiqueJogJog, Q_JOG_PAREDE: p.quiqueJogParede, ATRITO_JOG_JOG: p.atritoJogJog, VIRA_NA_HORA: !!p.viraNaHora,
       LIMIAR_QUIQUE: U(p.limiarQuique),
       DIRECOES: p.direcoes, BUFFER_TOQUE: p.bufferToque, JOG_REDE: !!p.jogRede, COOLDOWN_BOTAO: p.cooldownBotao,
       // o DB por estados (experimental): [janela, proteção] em passos por contexto (0 parada, 1 andando, 2 parede)
@@ -35645,7 +35668,7 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
         for (const p of G.POSTS) hitPoint(q, p[0], p[1], G.POST_R, 0.3, 0, lq);
       }
     }
-    for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], C.Q_JOG_JOG, 0);
+    for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], C.Q_JOG_JOG, C.ATRITO_JOG_JOG);
     if (M.estado === 'saida') for (const q of J) barreiraUm(M, q);
     for (const s of G.WALL_SEGS) hitSeg(B, s[0], s[1], s[2], s[3], C.Q_PAREDE, C.ATRITO_BOLA, lq);
     hitBox(B, G.GL, G.GT, G.GR, G.GB, C.Q_PAREDE, C.ATRITO_BOLA, lq);
@@ -35681,17 +35704,57 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
        cb.toques()              — depois de cada subpasso (autoria);
        cb.gol(lado) → 'para'?   — a bola cruzou a linha num subpasso (devolver 'para' interrompe o passo).
      Tampinha cinemática (a previsão do aparelho para os outros jogadores): não usa entrada nem é empurrada. */
+  /* ---------- v105 · O JOGO DE CORPO: o contato que já vem encostado ----------
+     As batidas acontecem depois de andar: a tampinha encostada em outra anda o primeiro subpasso com a velocidade toda do
+     analógico (inclusive a parte de lado) e só então a batida corrige — com isso ela escorregava em volta da outra mesmo com
+     atrito. Aqui, no começo do passo (as velocidades do analógico já postas, antes de andar), cada par que já está encostado
+     (até FOLGA_CORPO px de folga) perde a parte da velocidade que aperta um contra o outro (sem quique: é o empurra-empurra,
+     não uma trombada) e o atrito (até atritoJogJog × o aperto) segura o deslize de lado. A trombada de quem chega correndo
+     continua sendo a batida de sempre (com o quique tampinha × tampinha). pode(a, b): quem bate em quem (o motor dos mapas
+     tem a regra de colisão entre os times). */
+  const FOLGA_CORPO = 1;
+  // o impulso do passo de uma tampinha: a direção do analógico (d) → a velocidade. v105: com VIRA_NA_HORA, a velocidade toda
+  // na direção nova; sem, a de sempre (somada à de antes e cortada no teto). Sem direção: parada.
+  function anda(q, d, C) {
+    if (d.mx || d.my) {
+      if (C.VIRA_NA_HORA) { q.vx = d.mx * C.VEL_JOG; q.vy = d.my * C.VEL_JOG; return; }
+      q.vx += d.mx * C.VEL_JOG; q.vy += d.my * C.VEL_JOG;
+      const v = Math.hypot(q.vx, q.vy);
+      if (v > C.VEL_JOG) { q.vx *= C.VEL_JOG / v; q.vy *= C.VEL_JOG / v; }
+    } else { q.vx = 0; q.vy = 0; }
+  }
+  function contatoJog(J, C, pode) {
+    const mu = C.ATRITO_JOG_JOG;
+    if (!(mu > 0)) return;
+    for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) {
+      const a = J[i], b = J[k];
+      if (pode && !pode(a, b)) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+      if (d >= a.r + b.r + FOLGA_CORPO || d < 1e-6) continue;
+      const ia = a.cinematico ? 0 : 1 / a.m, ib = b.cinematico ? 0 : 1 / b.m, is = ia + ib;
+      if (is <= 0) continue;
+      const nx = dx / d, ny = dy / d, vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (vn >= 0) continue;
+      const j = -vn / is;
+      a.vx -= j * ia * nx; a.vy -= j * ia * ny;
+      b.vx += j * ib * nx; b.vy += j * ib * ny;
+      const tx = -ny, ty = nx, vt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
+      let jt = -vt / is;
+      const lim = mu * j;
+      if (jt > lim) jt = lim; else if (jt < -lim) jt = -lim;
+      a.vx -= jt * ia * tx; a.vy -= jt * ia * ty;
+      b.vx += jt * ib * tx; b.vy += jt * ib * ty;
+    }
+  }
+
   function passo(M, C, cb) {
     const B = M.B, CR = M.cr ? C.CR : null, J = presentes(M.jog);   // (v103: sem as vagas vazias)
     for (const q of J) {
       if (q.cinematico) continue;
       const d = direcao(q.mx, q.my, C.DIRECOES);
-      if (d.mx || d.my) {
-        q.vx += d.mx * C.VEL_JOG; q.vy += d.my * C.VEL_JOG;
-        const v = Math.hypot(q.vx, q.vy);
-        if (v > C.VEL_JOG) { q.vx *= C.VEL_JOG / v; q.vy *= C.VEL_JOG / v; }
-      } else { q.vx = 0; q.vy = 0; }
+      anda(q, d, C);
     }
+    contatoJog(J, C);                                // v105: o jogo de corpo (só com atrito tampinha × tampinha)
     const fb = CR && (B.z > 0 || B.vz > 0) ? CR.FREIO_AR : C.FATOR_BOLA;   // (v99: no ar a bola freia menos)
     B.vx *= fb; B.vy *= fb;
     B.w *= 1 / (1 + C.AMORT_ANGULAR / TPS);
@@ -35725,11 +35788,7 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
      passo de sempre (a velocidade aditiva com teto, 2 subpassos). */
   function passoSolo(M, C, q, c) {
     const G = M.G, lq = C.LIMIAR_QUIQUE, d = direcao(c ? c.x : 0, c ? c.y : 0, C.DIRECOES);
-    if (d.mx || d.my) {
-      q.vx += d.mx * C.VEL_JOG; q.vy += d.my * C.VEL_JOG;
-      const v = Math.hypot(q.vx, q.vy);
-      if (v > C.VEL_JOG) { q.vx *= C.VEL_JOG / v; q.vy *= C.VEL_JOG / v; }
-    } else { q.vx = 0; q.vy = 0; }
+    anda(q, d, C);
     for (let i = 0; i < 2; i++) {
       q.x += q.vx * DT / 2; q.y += q.vy * DT / 2;
       hitBox(q, G.GL, G.GT, G.GR, G.GB, C.Q_JOG_PAREDE, 0, lq);
@@ -35752,7 +35811,7 @@ try { v91TodasCabs(); } catch (e) { console.error('v91', e); }
     reflect, hitPoint, hitSeg, hitBox, hitBodies, MODOS, MARGEM_X, MARGEM_Y, novoCampo, direcao,
     chute, novoBotao, botaoComando, botaoTick, curvaTick, curvaNoAr, cvSinal, cvMarca, CV_CARGA_S, CV_ARMA_S,
     dbContexto, dbFolga, dbPack, dbUnpack,
-    barreiraUm, colide, golCruzou, passo, passoSolo, novaBola, ajustaCorpos,
+    barreiraUm, colide, golCruzou, passo, passoSolo, novaBola, ajustaCorpos, contatoJog, FOLGA_CORPO, anda,
     // v99 · os chutes do Rachão
     crOpcoes, crLetras, crNovo, crZera, crZeraBola, crComando, crTick, crAlta, crAlcanca, crFator, crDepois, crGiro, crAltura, crPack, crUnpack, crForcaSuper,
   };
@@ -35872,6 +35931,7 @@ function v92AplicaFisica(f){
   Q_PAREDE = Math.max(QUIQUE_BOLA, QUIQUE_PAREDE_BOLA); Q_TRAVE = Math.max(QUIQUE_BOLA, QUIQUE_TRAVE); Q_REDE = Math.max(QUIQUE_BOLA, QUIQUE_REDE);
   if (CAMPO.rede){ Q_POSTE = Q_TRAVE; ATRITO_POSTE = ATRITO_TRAVE_BOLA; }
   V92_QJJ = p.quiqueJogJog; V92_QJP = p.quiqueJogParede; V92_DIRECOES = p.direcoes;
+  V105_AJJ = p.atritoJogJog || 0; V105_VIRA = !!p.viraNaHora;     // v105: o jogo de corpo e a virada na hora
   LIMIAR_QUIQUE = U(p.limiarQuique); COOLDOWN_BOTAO = p.cooldownBotao;
   MARGEM_CHUTE = RAIO_CHUTE - R_JOG; ALCANCE_CHUTE = RAIO_CHUTE + R_BOLA;
   P.r = R_JOG; P.m = MASSA_JOG; B.r = R_BOLA; B.m = MASSA_BOLA; B.I = 0.5*MASSA_BOLA*R_BOLA*R_BOLA;
@@ -36503,7 +36563,8 @@ function v92Mostra(){
   // a sua tampinha: a previsão + a velocidade do próximo passo (o analógico de agora) + o deslize
   const d = V92_NUC.direcao(V92.ultInp.mx, V92.ultInp.my, C.DIRECOES), vale = M.estado === 'saida' || M.estado === 'jogo';
   let vx = 0, vy = 0;
-  if (vale && (d.mx || d.my)){ vx = eu.vx + d.mx*C.VEL_JOG; vy = eu.vy + d.my*C.VEL_JOG; const v = Math.hypot(vx, vy); if (v > C.VEL_JOG){ vx *= C.VEL_JOG/v; vy *= C.VEL_JOG/v; } }
+  if (vale && (d.mx || d.my) && C.VIRA_NA_HORA){ vx = d.mx*C.VEL_JOG; vy = d.my*C.VEL_JOG; }   // (v105: a virada na hora)
+  else if (vale && (d.mx || d.my)){ vx = eu.vx + d.mx*C.VEL_JOG; vy = eu.vy + d.my*C.VEL_JOG; const v = Math.hypot(vx, vy); if (v > C.VEL_JOG){ vx *= C.VEL_JOG/v; vy *= C.VEL_JOG/v; } }
   P.x = Math.max(G.GL + eu.r, Math.min(G.GR - eu.r, eu.x + vx*t)) + V92N.ofP[0];
   P.y = Math.max(G.GT + eu.r, Math.min(G.GB - eu.r, eu.y + vy*t)) + V92N.ofP[1];
   P.vx = eu.vx; P.vy = eu.vy; P.ax = P.x; P.ay = P.y;
@@ -36594,6 +36655,8 @@ const V92_NOMES_FIS = [                                          // [chave, tít
   ['quiqueTrave', 'Quique na trave', '', 0, 1, .05, v => v.toFixed(2)],
   ['quiqueRede', 'Quique na rede', '', 0, .8, .05, v => v.toFixed(2)],
   ['quiqueJogJog', 'Quique tampinha × tampinha', 'a trombada', 0, 1, .05, v => v.toFixed(2)],
+  ['atritoJogJog', 'Atrito tampinha × tampinha', 'o jogo de corpo: 0 = escorrega uma em volta da outra (como até a v104)', 0, 1, .05, v => v.toFixed(2)],
+  ['viraNaHora', 'Virada na hora', '1 = a tampinha vai na hora para onde o analógico aponta; 0 = a velocidade somada de antes (até a v104)', 0, 1, 1, v => v >= .5 ? 'sim' : 'não'],
   ['quiqueJogParede', 'Quique da tampinha no muro', '', 0, 1, .05, v => v.toFixed(2)],
   ['limiarQuique', 'Batida lenta não quica', 'abaixo disso a batida não quica (a bola não treme encostada)', 0, 4, .1, v => v.toFixed(1) + ' u/s'],
 ];
@@ -43897,7 +43960,7 @@ if (typeof v92Mostra === 'function') {
     if (!P.previsao) portoesECronos(P);
     for (const q of P.jog) {
       if (q.fora || q.cinematico) { if (q.fora) q.mx = q.my = 0; continue; }
-      if (q.bot) decideBot(P, q); else if (entrada) entrada(q); else q.mx = q.my = 0;
+      if (q.bot) { decideBot(P, q); desencalha(P, q); } else if (entrada) entrada(q); else q.mx = q.my = 0;   // (v105: o bot não encalha no empurra-empurra)
     }
     fisica(P);
     if (!P.previsao) {
@@ -43913,11 +43976,16 @@ if (typeof v92Mostra === 'function') {
     for (const q of J) {
       if (q.fora || q.cinematico) continue;
       const d = N.direcao(q.mx, q.my, C.DIRECOES), vmax = C.VEL_JOG * fatorVelJog(P, q);
-      if (d.mx || d.my) {
+      if ((d.mx || d.my) && C.VIRA_NA_HORA && X.acelJog >= 1) { q.vx = d.mx * vmax; q.vy = d.my * vmax; }   // v105: a virada na hora (o RACHA de sempre; quem embala aos poucos continua embalando)
+      else if (d.mx || d.my) {
         q.vx += d.mx * vmax * X.acelJog; q.vy += d.my * vmax * X.acelJog;
         const v = Math.hypot(q.vx, q.vy); if (v > vmax) { q.vx *= vmax / v; q.vy *= vmax / v; }
       } else if (X.freioJog >= 1) { q.vx = 0; q.vy = 0; }
       else { q.vx *= 1 - X.freioJog; q.vy *= 1 - X.freioJog; if (Math.hypot(q.vx, q.vy) < 2) q.vx = q.vy = 0; }
+    }
+    if (C.ATRITO_JOG_JOG > 0 && N.contatoJog) {      // v105: o jogo de corpo (o contato encostado se segura antes de andar), com a regra de colisão dos times
+      const am = P.regras.colisaoAmigos, ad = P.regras.colisaoAdversarios;
+      N.contatoJog(J, C, (a, b) => !a.fora && !b.fora && (a.time === b.time ? am : ad));
     }
     B.vx *= C.FATOR_BOLA; B.vy *= C.FATOR_BOLA;
     B.w *= 1 / (1 + C.AMORT_ANGULAR / TPS);
@@ -43947,7 +44015,7 @@ if (typeof v92Mostra === 'function') {
           for (let j = i + 1; j < J.length; j++) {
             if (J[j].fora) continue;
             if (J[i].time === J[j].time ? !amigos : !adv) continue;
-            N.hitBodies(J[i], J[j], C.Q_JOG_JOG, 0);
+            N.hitBodies(J[i], J[j], C.Q_JOG_JOG, C.ATRITO_JOG_JOG || 0);   // (v105: o jogo de corpo, o atrito do núcleo)
           }
         }
         if (P.estado === 'saida') for (const q of J) barreira(P, q);
@@ -44065,6 +44133,20 @@ if (typeof v92Mostra === 'function') {
       if (Math.hypot(B.x + ex * t - o.x, B.y + ey * t - o.y) < o.r + B.r + U(1)) return false;
     }
     return true;
+  }
+  // v105 · o bot não fica encalhado no empurra-empurra (o mesmo do server/partida/bot.js): andando para alguém e parado,
+  // encostado em outra tampinha por 12 passos, ele desvia 70° por 24 passos, sempre no mesmo sentido (os dois passam um pelo outro)
+  const ENC_PASSOS = 12, DESVIO_PASSOS = 24, DESVIO_C = Math.cos(70 * Math.PI / 180), DESVIO_S = Math.sin(70 * Math.PI / 180);
+  function desencalha(P, q) {
+    const ai = q.ai; if (!ai) return;
+    if (!(q.mx || q.my) || P.estado !== 'jogo') { ai.encT = 0; ai.desvioT = 0; return; }
+    if (ai.desvioT > 0) { ai.desvioT--; const mx = q.mx, my = q.my; q.mx = mx * DESVIO_C - my * DESVIO_S; q.my = mx * DESVIO_S + my * DESVIO_C; return; }
+    const C = P.C;
+    if (!(C.ATRITO_JOG_JOG > 0) || Math.hypot(q.vx, q.vy) >= 0.3 * C.VEL_JOG) { ai.encT = 0; return; }
+    let enc = false;
+    for (const o of P.jog) { if (o !== q && !o.fora && Math.hypot(o.x - q.x, o.y - q.y) < q.r + o.r + 1.5) { enc = true; break; } }
+    if (!enc) { ai.encT = 0; return; }
+    if (++ai.encT >= ENC_PASSOS) { ai.encT = 0; ai.desvioT = DESVIO_PASSOS; }
   }
   function decideBot(P, q) {
     const ai = q.ai, nv = NIVEIS[ai.nivel], B = P.B, C = P.C, G = P.G, ld = G.lado[lt(P, q.time)] || [1, 0];
@@ -53278,6 +53360,29 @@ function decide(p, q) {                              // (uma vez por passo, para
   q.suBot = false; if (q.botAi) q.botAi.soltar = false;   // v99: o botão do super (só fica segurado enquanto o lance pede)
   decide1(p, q);
   if (q.cr && q.cr.segura && !q.suBot && !q.botAi.soltar) { q.cr.segura = false; q.cr.cT = 0; }   // v99: desistiu do lance: cancela sem chutar
+  desencalha(p, q);
+}
+/* v105 · O BOT NÃO FICA ENCALHADO NO EMPURRA-EMPURRA. Com o jogo de corpo (o atrito tampinha × tampinha do núcleo), duas
+   tampinhas que se empurram de frente se seguram — gente dá a volta; o bot empurrava para sempre (num 3x3 de bots, dois
+   ficaram 10 minutos parados um contra o outro do lado da bola). Agora: andando para alguém e parado (menos de 30% da corrida)
+   encostado em outra tampinha por 12 passos (200 ms), ele desvia 70° por 24 passos (400 ms), sempre para o mesmo lado em volta
+   de quem segura (os dois do empurra-empurra desviam no mesmo sentido: passam um pelo outro) e volta ao plano. Sem o atrito
+   (o perfil da v91) nada disso acontece: ninguém fica parado empurrando. */
+const ENCALHE_PASSOS = 12, DESVIO_PASSOS = 24, DESVIO = 70 * Math.PI / 180, COS_D = Math.cos(DESVIO), SIN_D = Math.sin(DESVIO);
+function desencalha(p, q) {
+  const ai = q.botAi; if (!ai) return;
+  if (!(q.mx || q.my) || p.estado !== 'jogo') { ai.encT = 0; ai.desvioT = 0; return; }
+  if (ai.desvioT > 0) {                              // desviando: a direção do plano girada (o mesmo sentido para todo mundo)
+    ai.desvioT--;
+    const mx = q.mx, my = q.my; q.mx = mx * COS_D - my * SIN_D; q.my = mx * SIN_D + my * COS_D;
+    return;
+  }
+  const C = K(p);
+  if (!(C.ATRITO_JOG_JOG > 0) || Math.hypot(q.vx, q.vy) >= 0.3 * C.VEL_JOG) { ai.encT = 0; return; }
+  let encosta = false;
+  for (const o of p.jog) { if (o !== q && !o.fora && Math.hypot(o.x - q.x, o.y - q.y) < q.r + o.r + 1.5) { encosta = true; break; } }
+  if (!encosta) { ai.encT = 0; return; }
+  if (++ai.encT >= ENCALHE_PASSOS) { ai.encT = 0; ai.desvioT = DESVIO_PASSOS; }
 }
 function decide1(p, q) {
   const ai = q.botAi, nv = NIVEIS[ai.nivel], G = p.G, B = p.B;
@@ -58111,6 +58216,865 @@ if (typeof v90RkRender === 'function'){
   };
 }
 window.RachaRanking104 = {estado:() => Object.assign({}, V104RK)};
+
+/* ======================================================================= RACHA v105 · o jogo de corpo (tools/v105/corpo.js) */
+/* ======================================================================================================================
+   RACHA v105 · O JOGO DE CORPO NA PARTIDA DESTE APARELHO (o pedido: "quando se encostam para disputar a bola eles deslizam
+   muito")
+   O núcleo das salas (server/partida/nucleo.js, o mesmo do servidor e da previsão do online) ganhou o atrito tampinha ×
+   tampinha (atritoJogJog: 0,5 no padrão) e o contato que já vem encostado segurado antes de andar (contatoJog). A partida
+   contra os bots roda no motor do jogo (o bloco da física, que não muda): aqui ela recebe o mesmo —
+     · o atrito na batida jogador × jogador (rqColide; o build troca o 0 pelo V105_AJJ);
+     · o contatoJog no começo do passo, com as velocidades do analógico e dos bots já postas: a amostraBotoes é chamada
+       exatamente ali (depois do impulso do passo, antes dos subpassos).
+   O perfil da v91 (o "Restaurar v91" do painel de testes) tem atrito 0 e a virada de sempre: tudo como antes.
+   ====================================================================================================================== */
+/* ---------------------------------------------------------------- a virada na hora (o pedido: "o analógico está com um mini delay")
+   O núcleo ganhou a virada na hora (viraNaHora: a tampinha vai na hora para onde o analógico aponta, em vez de somar a direção
+   nova à velocidade de antes e cortar no teto — a curva de 30° levava ~100 ms para valer, a meia-volta parava um passo). O
+   bloco da física (o passo da sua tampinha) não muda: logo depois do impulso de sempre, aqui a velocidade vira a da direção
+   nova (a mesma direção que o passo usou: a do analógico, a do jogo jogando por você nos testes). Na GINGA a arrancada do
+   drible manda na velocidade: ali fica o de sempre. O desenho entre os passos (o 'prever') usa a mesma conta. */
+const V105V = {mx:0, my:0};
+const physicsStepAntes105 = physicsStep;
+physicsStep = function(dt, mx, my){ V105V.mx = mx; V105V.my = my; return physicsStepAntes105.apply(this, arguments); };
+function v105Vira(){
+  if (!V105_VIRA || (RQ.on && RQ.jogo === 'ginga')) return;
+  if (NET49.playing && NET49.host && NET49.localSlot < 0) return;   // (o anfitrião assistindo: a tampinha é de outro)
+  let mx = V105V.mx, my = V105V.my;
+  if (RQ.on && RQ.autoH){ mx = P.mx; my = P.my; }
+  const d = direcaoOriginal(mx, my);
+  if (d.mx || d.my){ P.vx = d.mx*VEL_JOG; P.vy = d.my*VEL_JOG; }
+}
+if (typeof v92VelProxima === 'function'){
+  const v92VelProximaAntes105 = v92VelProxima;
+  v92VelProxima = function(){
+    if (!V105_VIRA || (RQ.on && RQ.jogo === 'ginga')) return v92VelProximaAntes105.apply(this, arguments);
+    const d = direcaoOriginal(V92.ultInp.mx, V92.ultInp.my);
+    return d.mx || d.my ? [d.mx*VEL_JOG, d.my*VEL_JOG] : [0, 0];
+  };
+}
+const amostraBotoesAntes105 = amostraBotoes;
+amostraBotoes = function(){
+  try { v105Vira(); } catch (e) { console.error('v105 virada', e); }
+  const out = amostraBotoesAntes105.apply(this, arguments);
+  try {
+    if (RQ.on && V105_AJJ > 0 && RQ.jog && RQ.jog.length > 1 && typeof V92_NUC !== 'undefined' && V92_NUC && V92_NUC.contatoJog)
+      V92_NUC.contatoJog(RQ.jog, {ATRITO_JOG_JOG:V105_AJJ});
+  } catch (e) { console.error('v105 corpo', e); }
+  return out;
+};
+/* ---------------------------------------------------------------- o bot não fica encalhado no empurra-empurra (o mesmo do servidor:
+   server/partida/bot.js, desencalha) — andando para alguém e parado encostado em outra tampinha por 12 passos, ele desvia 70°
+   por 24 passos, sempre no mesmo sentido (os dois do empurra-empurra passam um pelo outro) */
+const V105_ENC = 12, V105_DESVIO = 24, V105_COS = Math.cos(70*Math.PI/180), V105_SIN = Math.sin(70*Math.PI/180);
+function v105Desencalha(q){
+  const e = q.e105 || (q.e105 = {enc:0, desvio:0});
+  if (!(q.mx || q.my) || RQ.estado !== 'jogo'){ e.enc = 0; e.desvio = 0; return; }
+  if (e.desvio > 0){ e.desvio--; const mx = q.mx, my = q.my; q.mx = mx*V105_COS - my*V105_SIN; q.my = mx*V105_SIN + my*V105_COS; return; }
+  if (Math.hypot(q.vx, q.vy) >= 0.3*VEL_JOG){ e.enc = 0; return; }
+  let encosta = false;
+  for (const o of RQ.jog){ if (o !== q && Math.hypot(o.x - q.x, o.y - q.y) < q.r + o.r + 1.5){ encosta = true; break; } }
+  if (!encosta){ e.enc = 0; return; }
+  if (++e.enc >= V105_ENC){ e.enc = 0; e.desvio = V105_DESVIO; }
+}
+if (typeof rqBots === 'function'){
+  const rqBotsAntes105 = rqBots;
+  rqBots = function(){
+    const out = rqBotsAntes105.apply(this, arguments);
+    try { if (V105_AJJ > 0 && RQ.on && RQ.bots) for (const q of RQ.bots) v105Desencalha(q); } catch (e) { console.error('v105 desencalha', e); }
+    return out;
+  };
+}
+/* ---------------------------------------------------------------- o servidor sabe que esta página tem a física nova (a página de
+   antes — o app guardado no fundo, a aba esquecida — não entra nas salas do RACHA nem na ranqueada: o aviso diz para atualizar) */
+if (typeof v70HelloExtra === 'function'){
+  const v70HelloExtraAntes105 = v70HelloExtra;
+  v70HelloExtra = function(){ const o = v70HelloExtraAntes105.apply(this, arguments) || {}; o.v105 = 1; return o; };
+}
+window.RachaCorpo105 = {atrito:() => V105_AJJ, vira:() => V105_VIRA};
+
+/* ======================================================================= RACHA v105 · o contato desenhado no online (tools/v105/rede.js) */
+/* ======================================================================================================================
+   RACHA v105 · O CONTATO DESENHADO NO ONLINE (tools/v105/rede.js — o MESMO arquivo no jogo, o build cola, e no simulador do
+   Node, tests/v102/sim.mjs). Duas partes, como o tools/v102/liso.js:
+     1) o núcleo (window.RachaContato105 no jogo; module.exports no Node): as contas, sem nada do jogo;
+     2) os ganchos no jogo (só quando este arquivo está colado no script do jogo, depois da v96).
+   O pedido (04/11/2026): "tirar todo lag possível das partidas online, deixar muito fluido, sem player atravessando bola
+   quando o ping está ruim".
+   Por que atravessava: no mundo da previsão (a física do núcleo) a bola e as tampinhas nunca ficam uma dentro da outra — a
+   batida resolve. Mas o que vai para a tela é o lugar do mundo MAIS o deslize de cada correção (a mola da v96: quando o
+   quadro do servidor chega e a previsão tinha errado — o outro mudou de direção, tocou na bola —, a diferença some andando
+   em ~90 ms, cada coisa com a sua mola e o seu teto). Com o ping ruim as correções são maiores e mais seguidas: a bola
+   desenhada deslizava para o lugar certo por DENTRO da tampinha desenhada (ou a tampinha por dentro da bola), e duas
+   tampinhas desenhadas se sobrepunham.
+   Agora, no fim de cada quadro do desenho (depois da mola, da guarda e da batida nas traves da v96), o CONTATO DESENHADO: a
+   bola desenhada sai de dentro de qualquer tampinha desenhada (a sua por último: o seu toque manda), pela linha dos
+   centros, sem entrar nas traves, na rede nem nas linhas (a batida da v96 de onde ela estava até onde foi). O empurrão entra
+   no deslize da bola (a mola continua dali: sem o vaivém de voltar para dentro e ser empurrada de novo) e tem teto por quadro
+   (1100 px/s: a sobreposição grande sai em dois ou três quadros, sem a bola pular). A bola alta dos
+   chutes do Rachão (por cima das tampinhas) e as vagas vazias ficam de fora.
+   Medido no simulador (tests/v102/sim.mjs, 4G de mentira, 8 sementes × 40 s): a bola desenhada dentro de uma tampinha
+   (mais de 3 px) caiu de 5,7% para 0,5% dos quadros no 4G e de 7,6% para 0,8% no 4G ruim, e a mais funda de 30–35 px (a
+   bola quase toda dentro) para ~12 px; o resto (os trancos, os pulos, o erro contra o servidor) fica igual dentro do
+   ruído. (Separar também as tampinhas umas das outras foi medido e saiu: o outro jogador dava arrancos.)
+   A física, a previsão, as molas e a guarda continuam com os números de sempre. RACHA_CONFIG.contato105 = false desliga.
+   ====================================================================================================================== */
+(function (raiz, fabrica) {
+  const m = fabrica();
+  if (typeof module === 'object' && module.exports) module.exports = m;
+  if (raiz) raiz.RachaContato105 = m;
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : null), function () {
+  'use strict';
+  const FOLGA = 1.5;                                  // px: a sobreposição que fica (a física deixa até ~0,2 px; isto não mexe no contato de verdade)
+  // J: [[x, y] | null] (os desenhados de cada vaga; null = vaga vazia), B: [x, y] | null (null = a bola alta: fica de fora),
+  // eu: o índice da sua tampinha (-1 = assistindo), rJ, rB: os raios (px), w (opcional): o tamanho do deslize de cada um
+  // {J: [px], B: px} — quem está mais fora do lugar (a correção maior) é quem sai mais (sem w: a bola sai toda e dois outros
+  // saem metade cada). A sua tampinha nunca sai. Muda J e B no lugar; devolve quanto mexeu (px).
+  const EPS = 2;
+  function separa(J, B, eu, rJ, rB, folga, w, soBola, capJ, capB) {
+    const f = folga == null ? FOLGA : folga, wJ = w && w.J, wB = w && Number.isFinite(w.B) ? w.B : null;
+    const pj = i => (wJ && Number.isFinite(wJ[i]) ? wJ[i] : 0) + EPS;
+    let mexeu = 0;
+    const mj = 2 * rJ - f, mb = rJ + rB - f;
+    for (let it = 0; it < 2; it++) {
+      if (!soBola) for (let i = 0; i < J.length; i++) {   // as tampinhas umas das outras
+        const a = J[i]; if (!a) continue;
+        for (let k = i + 1; k < J.length; k++) {
+          const b = J[k]; if (!b) continue;
+          let dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy);
+          if (d >= mj) continue;
+          if (d < 1e-6) { dx = 1; dy = 0; d = 1; }
+          const nx = dx / d, ny = dy / d, pen = Math.min(mj - Math.min(d, mj), capJ > 0 ? capJ : 1e9);   // (capJ: no máximo isto por quadro — sem arrancos)
+          const fa = i === eu ? 0 : k === eu ? 1 : pj(i) / (pj(i) + pj(k)), fb = 1 - fa;
+          a[0] -= nx * pen * fa; a[1] -= ny * pen * fa;
+          b[0] += nx * pen * fb; b[1] += ny * pen * fb;
+          mexeu += pen;
+        }
+      }
+      if (!B) continue;
+      for (let i = 0; i < J.length; i++) {                 // a bola de todas (a sua por último: o seu toque manda)
+        const k = i < J.length - 1 ? (i >= eu && eu >= 0 ? i + 1 : i) : (eu >= 0 ? eu : i);
+        const q = J[k]; if (!q) continue;
+        let dx = B[0] - q[0], dy = B[1] - q[1], d = Math.hypot(dx, dy);
+        if (d >= mb) continue;
+        if (d < 1e-6) { dx = 0; dy = -1; d = 1; }
+        const nx = dx / d, ny = dy / d, pen = Math.min(mb - Math.min(d, mb), capB > 0 ? capB : 1e9);   // (capB: a bola sai no máximo isto por quadro — sem pulo; o resto no quadro seguinte)
+        const sb = k === eu || wB == null ? 1 : (wB + EPS) / (wB + EPS + pj(k)), sj = 1 - sb;
+        B[0] += nx * pen * sb; B[1] += ny * pen * sb;
+        q[0] -= nx * pen * sj; q[1] -= ny * pen * sj;
+        mexeu += pen;
+      }
+    }
+    return mexeu;
+  }
+  // o empurrão do contato entra no deslize (a mola da v96: {x, y, vx, vy}) — no quadro seguinte o desenho já sai do lugar
+  // empurrado (sem voltar para dentro e ser empurrado de novo: o vaivém), e a parte da velocidade da mola que entrava na
+  // outra coisa sai
+  function empurra(d, ex, ey) {
+    if (!d) return;
+    const n = Math.hypot(ex, ey); if (!(n > 0.01)) return;
+    d.x += ex; d.y += ey;
+    const nx = ex / n, ny = ey / n, vn = d.vx * nx + d.vy * ny;
+    if (vn < 0) { d.vx -= vn * nx; d.vy -= vn * ny; }
+  }
+  return { VERSAO: 'v105', FOLGA, separa, empurra };
+});
+
+/* ---------------------------------------------------------------- 2) os ganchos no jogo (o desenho liso da v96, por fora) */
+if (typeof window !== 'undefined' && typeof v96Desenha === 'function' && typeof V92N === 'object' && window.RachaContato105) (function () {
+  const K = window.RachaContato105;
+  const LIGADO = !(window.RACHA_CONFIG && window.RACHA_CONFIG.contato105 === false);
+  const E = { quadros: 0, mexidos: 0, maxPx: 0, erro: null, t: 0 };
+  const CAP_PX_S = 1100;                               // px/s: o empurrão da bola por quadro tem teto (perto da guarda da v96 para a bola) — sem pulo
+  const desenhaAntes = v96Desenha;
+  v96Desenha = function () {
+    const r = desenhaAntes.apply(this, arguments);
+    if (!LIGADO || E.erro || (window.RACHA_CONFIG && window.RACHA_CONFIG.contato105 === false)) return r;   // (dá para desligar com o jogo aberto, para comparar)
+    try {
+      if (!v92RedeAtiva() || !V92N.M || !V92N.C) return r;
+      const M = V92N.M, C = V92N.C, G = M.G, eu = V92N.slot;
+      const J = [];
+      for (let i = 0; i < M.jog.length; i++) {
+        const q = M.jog[i], o = i === eu ? P : RQ.jog[i];
+        J.push(!q || q.fora || !o || o.fora ? null : [o.x, o.y]);
+      }
+      if (M.cr && V92_NUC.crAlta && V92_NUC.crAlta(M, C)) return r;   // (a bola alta dos chutes do Rachão passa por cima)
+      const B0 = [B.x, B.y], Bd = [B.x, B.y];
+      const agora = performance.now(), dt = E.t ? Math.max(1 / 240, Math.min(0.05, (agora - E.t) / 1000)) : 1 / 60; E.t = agora;
+      const px = K.separa(J, Bd, eu, C.R_JOG, C.R_BOLA, null, null, true, 0, Math.max(6, CAP_PX_S * dt));   // (só a bola: as tampinhas ficam onde a v96 pôs)
+      E.quadros++;
+      if (px > 0.01) {
+        const b = window.RachaLiso && G ? window.RachaLiso.varre(V92_NUC, G, B0[0], B0[1], Bd[0], Bd[1], C.R_BOLA, true) : Bd;   // (sem entrar nas traves, na rede e nas linhas)
+        const ex = b[0] - B0[0], ey = b[1] - B0[1], n = Math.hypot(ex, ey);
+        if (n > 0.01) {
+          E.mexidos++; if (n > E.maxPx) E.maxPx = n;
+          B.x = b[0]; B.y = b[1];
+          if (V92.cfg.bolaPrev === 'eu' && typeof V96R === 'object' && V96R) {   // (o empurrão entra no deslize da bola: no quadro seguinte ela já sai daqui)
+            K.empurra(V96R.B, ex, ey);
+            if (V96R.ant) V96R.ant.B = [B.x, B.y];
+          }
+        }
+      }
+    } catch (e) { E.erro = String(e && e.stack || e); try { console.error('v105 · o contato desenhado parou (fica o de antes):', e); } catch (_) {} }
+    return r;
+  };
+  window.RachaContato105Jogo = { ativo: () => LIGADO, estado: () => Object.assign({}, E) };
+})();
+
+/* ======================================================================= RACHA v105 · chat no lobby (tools/v105/chat_lobby.js) */
+/* ---------------------------------------------------------------- tools/v105/chat_lobby.js */
+/* ======================================================================================================================
+   RACHA v105 · O CHAT NA TELA DO LOBBY (a barra da partida, embaixo, no meio)
+   O pedido (04/11/2026): "quero um chat visível na tela do lobby igual o dentro da partida lá em baixo".
+   A barra da partida é a do chat da v81 (#cb: a etiqueta, NOME: a última mensagem, o número das não lidas e o ^) — o mesmo nó
+   muda de lugar sozinho (o menu, as telas, a sala, a partida). No lobby ela existia desde a v81, mas a v90 a guardou (o lobby
+   novo não tinha vão para ela) e, desde a v102, o chat ficou só no MENU. Agora ela volta para a tela inicial com a cara da
+   da partida (o grafite meio transparente) e o Chat do Brasil:
+     · o lugar: embaixo, no vão entre a barra de atalhos (SALAS, TREINO, OFICINA, COFRE) e o JOGAR, embaixo da tampinha (centrada
+       nela quando dá), sem encostar em nada; nos apertados (o iPhone com o entalhe e a barra de baixo, o 800 × 336), logo em
+       cima da barra de atalhos; medido só quando o lobby muda de tamanho (o lbLayout e o ResizeObserver das peças em volta) —
+       nada por quadro; sem lugar nenhum, ela não aparece e o chat continua no MENU;
+     · no celular, nunca menos de 40 px de verdade de altura (a etiqueta vira só a bandeira quando a barra fica estreita);
+     · o que aparece e o que acontece ao tocar são os da v81: a mensagem nova troca o texto na hora (com o número das não
+       lidas), tocar abre o painel (as mensagens recentes, o campo e o ENVIAR; o quadrado de cima abre o Chat do Brasil inteiro)
+       e minimizar volta para a barra; o nome abre a ficha (VER PERFIL da v88/v103 para quem tem conta);
+     · sem servidor (ou com a chave "Chat na tela" desligada) ela não aparece, como antes; com o servidor fora do ar, diz
+       "Chat do Brasil fora do ar"; com o Chat do Brasil desligado nos Ajustes (logado, a barra fica pelos amigos e o clube),
+       diz isso;
+     · a janela que abre por cima do lobby (o VER PERFIL, o BLOQUEAR…) fecha o painel do chat antes: o painel fica por cima de
+       todo o lobby e a janela ficava escondida atrás dele.
+   Na partida a barra é a de sempre (a da v81, embaixo do campo); o lobby fechado leva a barra junto (nada por cima do HUD).
+   Nada da partida, da física, da rede ou da conta muda.
+   ====================================================================================================================== */
+const V105C = {raf:0, ro:null, vistos:new Set(), sujo:true, medidas:0, pos:null};
+const V105C_MARGEM = 16;      // (no palco) entre a barra e a barra de atalhos, o MODO e o JOGAR
+const V105C_ACIMA = 10;       // (no palco) entre a barra e a tampinha (ou a vaga do grupo) em cima
+const V105C_ALTURA = 56;      // a altura da barra da partida (.c81-jogo), no palco
+const V105C_LARGURA = 600;    // a largura máxima (a da barra do menu da v81), no palco
+const V105C_MIN_REAL = 40;    // a altura mínima de verdade (px da tela): o dedo e a leitura no celular
+const V105C_MIN_LARG = 150;   // abaixo disso (px da tela) não tem lugar
+
+function v105ChatPode(){            // o lobby da v102, deitado (em pé fica o lobby de antes, sem a barra)
+  try { return typeof V102L !== 'undefined' && V102L.on && !!V102L.doca && !LB.raiz.classList.contains('retrato'); } catch (_) { return false; }
+}
+function v105Agenda(){ V105C.sujo = true; if (!V105C.raf) V105C.raf = requestAnimationFrame(v105Mede); }
+function v105Observa(els){      // o tamanho das peças em volta (a barra de atalhos ganha ou perde um botão, o grupo, o MODO)
+  if (typeof ResizeObserver !== 'function') return;
+  if (!V105C.ro) V105C.ro = new ResizeObserver(() => v105Agenda());
+  for (const e of els) if (e && !V105C.vistos.has(e)){ V105C.vistos.add(e); V105C.ro.observe(e); }
+}
+function v105Solta(p){          // sem lugar: a barra não aparece no lobby (a v90 a guarda) e o chat continua no MENU
+  p.classList.remove('v105-chat', 'v105-curta', 'v105-meio');
+  document.documentElement.style.removeProperty('--v105-cb-topo');
+  V105C.pos = {lugar:false};
+}
+
+/* ---------------------------------------------------------------- 1) o lugar (medido quando o lobby muda de tamanho) */
+function v105Mede(){
+  V105C.raf = 0;
+  const p = LB.palco;
+  if (!p || !lobby.aberto || LB.raiz.hidden) return;                  // (o lobby fechado: mede de novo quando ele abrir)
+  if (!v105ChatPode()){ v105Solta(p); V105C.sujo = false; return; }
+  const pr = p.getBoundingClientRect(), s = PALCO.s || 1;
+  if (pr.width < 2 || pr.height < 2) return;                          // (o palco escondido por uma tela: fica para depois)
+  const caixa = e => {
+    if (!e || e.hidden || e.closest('[hidden]')) return null;
+    const r = e.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return null;
+    return {l:(r.left - pr.left)/s, t:(r.top - pr.top)/s, r:(r.right - pr.left)/s, b:(r.bottom - pr.top)/s};
+  };
+  const vagas = Array.from(LB.palco.querySelectorAll('.v101-vaga')), topo = LB.palco.querySelector('.lb-topo');
+  v105Observa([V102L.doca, LB.jogar, LB.modo, LB.emblema].concat(vagas));
+  const d = caixa(V102L.doca), j = caixa(LB.jogar), m = caixa(LB.modo), e = caixa(LB.emblema), t = caixa(topo);
+  if (!d || !j || !e) return;                                         // (ainda montando: o próximo lbLayout mede)
+  V105C.medidas++; V105C.sujo = false;
+  const W = pr.width/s, H = pr.height/s;                              // (o palco, em px do palco)
+  // o que a barra não pode cobrir: a barra de atalhos, o JOGAR, o MODO, a tampinha, a barra de cima e as vagas do grupo (com
+  // o GRUPO escrito embaixo delas)
+  const obst = [d, j, e].concat(m ? [m] : [], t ? [t] : []);
+  for (const v of vagas){ const c = caixa(v); if (c) obst.push({l:c.l, t:c.t, r:c.r, b:c.b + (c.b - c.t)*.55}); }
+  const livre = q => q.l >= 0 && q.t >= 0 && q.r <= W && q.b <= H && !obst.some(o => q.l < o.r + 8 && q.r > o.l - 8 && q.t < o.b + 8 && q.b > o.t - 8);
+  // a altura: a da barra da partida, nunca menos de 40 px de verdade (o celular deitado encolhe o palco a 0,42)
+  const k0 = Math.max(1, Math.min(1.8, V105C_MIN_REAL/(V105C_ALTURA*s)));
+  let q = null;
+  // 1º) embaixo, no meio: entre a barra de atalhos e o JOGAR (e o MODO, em cima dele), embaixo da tampinha (centrada nela
+  //     quando dá), na linha de baixo dos atalhos; apertada, encolhe até 34 px de verdade antes de desistir daqui
+  {
+    const esq = d.r + V105C_MARGEM, dir = Math.min(j.l, m ? m.l : j.l) - V105C_MARGEM, larg = Math.min(V105C_LARGURA*k0, dir - esq);
+    if (larg*s >= V105C_MIN_LARG){
+      const cx = Math.max(esq + larg/2, Math.min(dir - larg/2, (e.l + e.r)/2)), x0 = cx - larg/2, x1 = cx + larg/2;
+      let teto = e.b;
+      for (const o of obst) if (o !== d && o !== j && o !== m && o !== t && o.r > x0 && o.l < x1 && o.b < d.b) teto = Math.max(teto, o.b);
+      const k = Math.min(k0, (d.b - teto - V105C_ACIMA)/V105C_ALTURA);
+      const c = {l:x0, r:x1, b:d.b, t:d.b - V105C_ALTURA*k, k, onde:'meio'};
+      if (V105C_ALTURA*k*s >= 34 && livre(c)) q = c;
+    }
+  }
+  // 2º) sem lugar embaixo da tampinha (o iPhone com o entalhe e a barra de baixo, o 800 × 336) ou apertada demais lá (menos de
+  //     200 px de verdade, o 568 × 320): em cima da barra de atalhos, da largura dela, à esquerda da tampinha (se for mais larga)
+  if (!q || (q.r - q.l)*s < 200){
+    const x0 = d.l, b = d.t - 12, t0 = b - V105C_ALTURA*k0;
+    let x1 = Math.min(d.r, d.l + V105C_LARGURA*k0, e.l - V105C_MARGEM);
+    for (const o of obst) if (o !== d && o.t < b + 8 && o.b > t0 - 8 && o.r > x0 && o.l < x1) x1 = Math.min(x1, o.l - V105C_MARGEM);   // (o amigo do grupo do lado: ela encurta)
+    const c = {l:x0, r:x1, b, t:t0, k:k0, onde:'atalhos'};
+    if ((x1 - x0)*s >= V105C_MIN_LARG && livre(c) && (!q || x1 - x0 > q.r - q.l)) q = c;
+  }
+  if (!q) return v105Solta(p);
+  const larg = q.r - q.l, curta = larg < 430*q.k;
+  p.style.setProperty('--v105-x', q.l.toFixed(1) + 'px');
+  p.style.setProperty('--v105-w', larg.toFixed(1) + 'px');
+  p.style.setProperty('--v105-b', (H - q.b).toFixed(1) + 'px');
+  p.style.setProperty('--v105-k', q.k.toFixed(4));
+  p.classList.toggle('v105-curta', curta); p.classList.toggle('v105-meio', q.onde === 'meio');
+  p.classList.add('v105-chat');
+  // o aviso de baixo (x49Toast, no meio) sobe para não cobrir a barra do meio (em px da tela, da beirada de baixo até o topo dela)
+  if (q.onde === 'meio') document.documentElement.style.setProperty('--v105-cb-topo', Math.round(innerHeight - (pr.top + q.t*s)) + 'px');
+  else document.documentElement.style.removeProperty('--v105-cb-topo');
+  V105C.pos = {lugar:true, onde:q.onde, x:Math.round(q.l), w:Math.round(larg), base:Math.round(q.b), alto:Math.round(q.b - q.t), k:+q.k.toFixed(3), curta, s:+s.toFixed(4)};
+}
+
+/* ---------------------------------------------------------------- 2) os ganchos (todos por evento: nada por quadro) */
+// o lobby mudou de tamanho (a janela, a tela cheia, girar o aparelho, o Tamanho da interface, abrir o lobby)
+const lbLayoutAntes105 = lbLayout;
+lbLayout = function(){ const r = lbLayoutAntes105.apply(this, arguments); try { v105Agenda(); } catch (_) {} return r; };
+// a v81 media o vão da fileira de baixo de novo a cada segundo enquanto a barra estava no lobby (no lobby da v102 a medida
+// dela não acha o vão e só limpava o estilo): no lobby da v102 quem põe a barra no lugar é a v105, só quando muda
+const c81LobbyAjustaAntes105 = c81LobbyAjusta;
+c81LobbyAjusta = function(){ if (v105ChatPode()) return; return c81LobbyAjustaAntes105.apply(this, arguments); };
+// a barra: os textos da v81 (pela mensagem nova, pelo estado da conexão e quando ela muda de lugar); ao chegar no lobby com a
+// medida velha (o lobby mudou de tamanho com uma tela aberta), mede de novo
+const cbPintaAntes105 = cbPinta;
+cbPinta = function(){
+  const r = cbPintaAntes105.apply(this, arguments);
+  try {
+    if (CB.el && CB.onde === 'lobby'){
+      if (V105C.sujo && !V105C.raf) v105Agenda();
+      // logado, a barra fica pelos amigos e o clube mesmo com o Chat do Brasil desligado nos Ajustes: diz isso (não "fora do ar")
+      if (!brasilLigado() && !c81Ultima()){ CB.msg.textContent = ''; CB.msg.appendChild(nodo('i', null, 'Chat do Brasil desligado nos Ajustes')); }
+    }
+  } catch (_) {}
+  return r;
+};
+// desligar o Chat do Brasil nos Ajustes (logado, a barra continua pelos amigos e o clube): a barra troca na hora
+const brasilDesligaAntes105 = brasilDesliga;
+brasilDesliga = function(){ const r = brasilDesligaAntes105.apply(this, arguments); try { cbPinta(); } catch (_) {} return r; };
+// a janela por cima do lobby (o perfil do VER PERFIL, o BLOQUEAR, a denúncia…): o painel do chat fica por cima de todo o lobby
+// (z-index 220 × 30) e a janela ficava escondida atrás dele — o painel fecha antes (a barra continua embaixo). Vale também
+// para o perfil que a v103 abre por cima da partida (a camada .v103-pop-jogo); uma janela que abre com o lobby escondido
+// (a partida) não mexe no chat
+const abrePopAntes105 = abrePop;
+abrePop = function(){
+  try { if (CB.aberto && (lobby.aberto || LB.raiz.classList.contains('v103-pop-jogo'))) cbFecha(); } catch (_) {}
+  return abrePopAntes105.apply(this, arguments);
+};
+
+try { v105Agenda(); } catch (e) { console.error('v105 chat', e); }
+window.RachaChatLobby105 = {
+  estado:() => ({pos:V105C.pos, medidas:V105C.medidas, sujo:V105C.sujo, onde:CB.onde, aberto:CB.aberto, pode:v105ChatPode(),
+    visivel:!!CB.el && !CB.el.hidden && getComputedStyle(CB.el).display !== 'none'}),
+  mede:() => { v105Mede(); return V105C.pos; }
+};
+
+/* ======================================================================= RACHA v105 (tools/v105/*.js) */
+/* ---------------------------------------------------------------- tools/v105/cosmeticos.js */
+/* ======================================================================================================================
+   RACHA v105 · AS TAMPINHAS CRIADAS FICAM NA CONTA E A BORDA BOTÃO É A DE TODO MUNDO
+   O pedido (05/11/2026): "quando o jogador cria uma skin aí ele reloga no jogo a skin some" e "quero a borda lisa padrão no
+   jogo, a inicial para geral, e deixe mais parecido: essa borda parece que tem uma sombra ali por dentro, deixe bem
+   parecido" (com as duas imagens das tampinhas de botão listradas na grama).
+
+   1) A TAMPINHA CRIADA QUE SUMIA. As criadas (a equipada e as SALVAS) moram na chave racha-tampa-v1 (no aparelho; e na conta,
+      dentro da cópia do progresso: tools/v82, progresso.salvar).
+      A CAUSA (reproduzida na v104 sem conta nenhuma, só abrindo o jogo de novo): o tools/tampa_rua.js lê essa chave no começo
+      do script, ANTES de as peças que entram depois — as caras e os aros animados da v76 e da v96 e a BOTÃO da v102 (o lugar
+      27) — estarem nas listas. O tpLe recusava o código de toda tampinha feita com uma dessas peças (e guardava o "inválido"
+      no TP_LIDOS para a sessão inteira): a equipada voltava a ser a inicial e a salva sumia do inventário; a gravação seguinte
+      apagava de vez, no aparelho e, com a cópia, na conta (e em outro aparelho, a mesma leitura recusava de novo). Como a v102
+      pôs a BOTÃO no editor a pedido, quase toda tampinha nova passou a sumir ao "relogar".
+      O conserto: a leitura do começo guarda o que ainda não dá para ler (TP.adiadas: tools/v105/cosmeticos.py) e, no fim do
+      script, com todas as peças, a v105 limpa os "inválidos" do TP_LIDOS e devolve a equipada e as salvas (v105Adiadas).
+      E a cópia na conta, que vinha atrasada (também reproduzido na plataforma de teste, com o código de verdade de app/api):
+      ela só ia de 8 a 12 s depois da última mudança (o vigia de 4 em 4 s, 5 s parado e 15 s entre um envio e outro), nunca no
+      meio da partida — e o SAIR DA CONTA encerrava a sessão ANTES de mandar o que faltava (o envio do pagehide já saía sem a
+      sessão; fechando o app, o fetch comum é cortado com a página). Criou e saiu (ou fechou o app) logo em seguida: em outro
+      aparelho entrava a cópia velha (a equipada de antes; a coluna "tampa" da conta, que já tinha a nova, só valia sem nada
+      equipado) e esse aparelho mandava a cópia velha como a mais nova; de volta ao primeiro, QUAL PROGRESSO FICA? — com O DA
+      CONTA a criada sumia ali também (com O DESTE APARELHO, sumia o que o outro tinha). Para isso:
+      · logo depois de cada mudança nas tampinhas (equipar, salvar, renomear, favoritar, apagar) a cópia vai para a conta em
+        ~1 s (e de novo, se mudar no meio do envio);
+      · o SAIR DA CONTA manda o que falta e espera a resposta (até 4,5 s) antes de encerrar a sessão;
+      · com o app indo para o fundo ou fechando, o envio da cópia sai com keepalive (o navegador termina de mandar mesmo com a
+        página fechando; até 60 KB — acima disso, o envio de sempre);
+      · as tampinhas JUNTAM em vez de uma cópia apagar a outra: quando os dois lados mudaram (QUAL PROGRESSO FICA?, as duas
+        escolhas) e no LEVAR O PROGRESSO PARA A CONTA, as salvas dos dois lados ficam (as apagadas de propósito não voltam:
+        cada salva leva a hora em que mudou e cada apagada fica marcada) e a equipada é a equipada por último (a hora do
+        equipar vai junto, "te");
+      · a tampinha da conta (a coluna "tampa", gravada em cada equipar) que este aparelho nunca viu entra nas salvas (e é
+        equipada se aqui estiver a inicial): mesmo com a cópia atrasada, a criada não some.
+   2) A BORDA BOTÃO PARA TODO MUNDO. A tampinha inicial (e as do time, as da Oficina e as de versões antigas) e toda tampinha
+      que ficou com a borda de fábrica — a Clássica no cinza da inicial (#c7cdd3 depois de salva), de quem nunca mexeu na
+      borda — aparecem com a BOTÃO, de aro branco. Os códigos não mudam (os de sempre continuam valendo, em todo lugar e em
+      todas as versões): é só o desenho. A borda escolhida de propósito fica: no editor, a Clássica escolhida (ou pintada) no
+      cinza da inicial vira um tom acima (#c9cdd3, igual a olho) para não ser lida como "de fábrica". As tampinhas novas já
+      nascem com a BOTÃO (o editor abre a inicial com a BOTÃO de aro branco).
+   3) A BOTÃO NO ESTILO DA IMAGEM: chapada — sem o degradê de relevo do aro, sem o brilho, sem a sombra por dentro e sem a luz
+      de esmalte no desenho —: o contorno escuro fino e firme por fora, o aro branco liso, um filete escuro fino entre o aro e
+      o desenho e o desenho cheio no meio, nas proporções medidas nas imagens (o desenho até 84% do raio de fora, o filete com
+      3,5%, o aro com 9% e o contorno com 3,5%; o contorno nunca mais fino que 1,2 px, o filete que 1 px e o aro que 1,6 px).
+      O aro de fábrica é branco (#f7f7f3). O tamanho da tampinha, o alcance e a física não mudam.
+   As horas das tampinhas (a de cada salva, a do equipar e as apagadas) moram no TP.v105 e vão na mesma chave racha-tampa-v1
+   (as trocas de texto do tampa_rua.js estão no tools/v105/cosmeticos.py: a leitura e o tpSalva de sempre).
+   ====================================================================================================================== */
+const V105 = {aro:'#f7f7f3', tinta:'rgba(16,12,22,.96)', filete:'rgba(16,12,22,.9)', meio:.84, cinza:'', desvio:'',
+  snap:null, snapEq:'', equipando:false, empT:0, saindo:false, juntou:new WeakSet(), hashOrig:new WeakMap(),
+  dicas:new Set(), equivale:new Map(), envios:0, ultimoEnvio:0};
+
+/* ================================================================ 2 e 3) a BOTÃO chapada e a borda de fábrica */
+try { V105.cinza = v105Q(tpLe(TP_PADRAO_COD).bc[0]) || '#c7cdd3'; } catch (_) { V105.cinza = '#c7cdd3'; }   // (o cinza da saia da inicial, como o código guarda)
+V105.desvio = v105Q('#' + (parseInt(V105.cinza.slice(1, 3), 16) + 2).toString(16).padStart(2, '0') + V105.cinza.slice(3)) || '#c9cdd3';   // (um tom acima: a Clássica escolhida de propósito)
+function v105Q(hex){                                       // a cor como o código guarda (7 bits por canal: a do editor e a salva batem)
+  if (!TP_HEX.test(hex || '')) return '';
+  const n = parseInt(hex.slice(1), 16), ch = x => { const v = (x >> 1) & 127; return ((v << 1) | (v >> 6)).toString(16).padStart(2, '0'); };
+  return '#' + ch(n >> 16 & 255) + ch(n >> 8 & 255) + ch(n & 255);
+}
+function v105DeFabrica(D){                                  // a borda que ninguém escolheu: a Clássica no cinza da inicial
+  return !!D && D.k === 'T' && D.b === 'cl' && Array.isArray(D.bc) && v105Q(D.bc[0]) === V105.cinza;
+}
+function v105ComBotao(D){ const d = tpCopia(D); d.b = V102_BORDA.id; d.bc = [V105.aro, d.bc[1] || '#1d1d1d']; return d; }
+function v105Norm(cod){                                     // o código como ele aparece (a de fábrica com a BOTÃO)
+  if (typeof cod !== 'string' || !cod) return cod;
+  let r = V105.equivale.get(cod);
+  if (r === undefined){
+    r = cod;
+    try { const D = tpEhCodigo(cod) ? tpLe(cod) : null; if (D && v105DeFabrica(D)) r = tpCodigo(v105ComBotao(D)); } catch (_) {}
+    if (V105.equivale.size > 400) V105.equivale.clear();
+    V105.equivale.set(cod, r);
+  }
+  return r;
+}
+const v105Mesma = (a, b) => a === b || (!!a && !!b && v105Norm(a) === v105Norm(b));
+
+// as medidas da BOTÃO (r = o raio de fora, como o das outras bordas — a ponta dos dentes): o desenho, o filete, o aro e o contorno
+// (o aro do TAMANHO DA BORDA, tools/v105/borda.js: a normal com 9% do raio, a fina com 4,5% e a grossa com 17%)
+const V105_ARO_TAM = [[.09, 1.6], [.045, 1], [.17, 2.4]];
+function v105Medidas(r, D){
+  const R = r*.97, wC = Math.max(1.2, R*.035), wF = Math.max(1, R*.035);
+  const k = typeof tpBordaTam === 'function' ? tpBordaTam(D) : 0, [ka, mina] = V105_ARO_TAM[k] || V105_ARO_TAM[0];
+  const rt = Math.min(R*(k ? 1 : V105.meio), R - wC - wF - Math.max(mina, R*ka));   // (pequena: o aro nunca fica mais fino que 1,6 px — a fina, 1 px)
+  return {R, wC, wF, rt};
+}
+// o aro chapado: o branco liso (a cor 1 da borda: o ARO) e o contorno escuro firme por fora — sem relevo e sem brilho
+v102Aro = function(g, x, y, r, D){
+  if (typeof tpSemBorda === 'function' && tpSemBorda(D)) return;   // (SEM BORDA: nada em volta do desenho)
+  const M = v105Medidas(r, D), aro = (D && D.bc && TP_HEX.test(D.bc[0] || '') && D.bc[0]) || V105.aro;
+  g.beginPath(); g.arc(x, y, M.R, 0, TP_TAU); g.fillStyle = aro; g.fill();
+  g.lineWidth = M.wC; g.strokeStyle = V105.tinta; g.beginPath(); g.arc(x, y, M.R - M.wC/2, 0, TP_TAU); g.stroke();
+};
+// a tampinha inteira com a BOTÃO: o aro, o desenho cheio no meio (chapado: sem a luz de esmalte) e o filete escuro entre os dois
+v102Botao = function(g, x, y, r, D, semente){
+  if (typeof tpSemBorda === 'function' && tpSemBorda(D)) return tpSoDesenho(g, x, y, r, D, semente);   // (SEM BORDA: só o desenho)
+  const M = v105Medidas(r, D), rd = M.rt + M.wF*.5;
+  v102Aro(g, x, y, r, D);
+  g.save(); g.beginPath(); g.arc(x, y, rd, 0, TP_TAU); g.clip();
+  tpPintaTampo(g, x, y, rd, D, semente);
+  g.restore();
+  g.lineWidth = M.wF; g.strokeStyle = V105.filete; g.beginPath(); g.arc(x, y, M.rt + M.wF/2, 0, TP_TAU); g.stroke();
+};
+// a borda de fábrica aparece como a BOTÃO (em todo desenho: a partida, o lobby, o perfil, as miniaturas, o chat, o replay)
+const tpTampaAntes105 = tpTampa;
+tpTampa = function(g, x, y, r, D, semente){ return tpTampaAntes105.call(this, g, x, y, r, v105DeFabrica(D) ? v105ComBotao(D) : D, semente); };
+const tpSaiaAntes105 = tpSaia;                              // (a cara animada: o aro do botão no lugar dos dentes)
+tpSaia = function(g, x, y, r, D){ return tpSaiaAntes105.call(this, g, x, y, r, v105DeFabrica(D) ? v105ComBotao(D) : D); };
+if (typeof emjRaio === 'function'){                         // (o emoji cobre o desenho do botão inteiro, até o filete)
+  const emjRaioAntes105 = emjRaio;
+  emjRaio = function(r, D){ if (D && D.k !== 'E' && (v102EhBotao(D) || v105DeFabrica(D))) return v105Medidas(r, D).rt; return emjRaioAntes105.apply(this, arguments); };
+}
+if (typeof tpeDescreve === 'function'){ const tpeDescreveAntes105 = tpeDescreve; tpeDescreve = function(D){ return tpeDescreveAntes105.call(this, v105DeFabrica(D) ? v105ComBotao(D) : D); }; }
+
+// o editor: a inicial (e a de fábrica) abre com a BOTÃO de aro branco — a criada a partir dela já nasce com a BOTÃO; sem mexer
+// em nada, ela continua sendo a mesma (o VOLTAR, o rascunho e o EQUIPAR a reconhecem: a inicial continua a inicial, com as
+// cores do time na partida)
+const v105Converte = D => (D && D.k === 'T' && v105DeFabrica(D)) ? v105ComBotao(D) : D;
+const tpeComecaAntes105 = tpeComeca;
+tpeComeca = function(){
+  const r = tpeComecaAntes105.apply(this, arguments);
+  try {
+    if (ED.modo === 'T'){
+      if (ED.D) ED.D = v105Converte(ED.D);
+      const B = ED.base && tpLe(ED.base); if (B && v105DeFabrica(B)) ED.base = tpCodigo(v105ComBotao(B));
+    }
+  } catch (e) { console.error('v105 editor', e); }
+  return r;
+};
+const tpeTrocaAntes105 = tpeTroca;
+tpeTroca = function(D){ return tpeTrocaAntes105.call(this, ED.modo === 'T' ? v105Converte(D) : D); };
+const tpeCarregaAntes105 = tpeCarrega;
+tpeCarrega = function(D){ return tpeCarregaAntes105.call(this, ED.modo === 'T' ? v105Converte(D) : D); };
+const tpeMudaAntes105 = tpeMuda;
+tpeMuda = function(fn, junta){                              // a Clássica escolhida de propósito no cinza da inicial: um tom acima
+  return tpeMudaAntes105.call(this, D => { fn(D); try { if (ED.modo === 'T' && v105DeFabrica(D)) D.bc[0] = V105.desvio; } catch (_) {} }, junta);
+};
+const tpeMudouAntes105 = tpeMudou;
+tpeMudou = function(){
+  try { if (ED.modo === 'T' && ED.D && v105Mesma(tpCodigo(ED.D), tpMinha())) return false; } catch (_) {}
+  return tpeMudouAntes105.apply(this, arguments);
+};
+const tpeAplicaAntes105 = tpeAplica;
+tpeAplica = function(cod){
+  try { if (ED.modo !== 'E' && cod !== tpMinha() && v105Mesma(cod, tpMinha())){ tpeApagaRascunho(); fechaTela(); return; } } catch (_) {}
+  return tpeAplicaAntes105.apply(this, arguments);
+};
+const tpeNomeDeAntes105 = tpeNomeDe;
+tpeNomeDe = function(D){
+  const n = tpeNomeDeAntes105.apply(this, arguments);
+  try { if (D && D.k === 'T' && n === 'Personalizada'){ const cod = tpCodigo(D), sv = TP.salvas.find(s => v105Mesma(s.c, cod)); if (sv) return sv.n; } } catch (_) {}
+  return n;
+};
+const tpeSalvarInvAntes105 = tpeSalvarInv;
+tpeSalvarInv = function(){
+  try { const cod = tpCodigo(ED.D); if (TP.salvas.some(s => s.c !== cod && v105Mesma(s.c, cod))){ aviso('Essa já está salva'); return; } } catch (_) {}
+  return tpeSalvarInvAntes105.apply(this, arguments);
+};
+
+/* ================================================================ 1) as criadas na conta */
+const v105Chave = s => s.c + '\u0001' + s.n;
+const V105_PECA = /^[bfpi]:[a-z0-9-]{2}$/;
+function v105Lido(txt){ try { const o = typeof txt === 'string' ? JSON.parse(txt) : txt; return o && typeof o === 'object' && !Array.isArray(o) ? o : null; } catch (_) { return null; } }
+function v105LimpaSalva(s){
+  if (!s || !tpEhCodigo(s.c) || s.c[0] !== 'T' || !tpLe(s.c)) return null;
+  const n = Array.from(semLixo(String(s.n || ''))).slice(0, 20).join('').trim() || 'Minha tampinha';
+  const o = {c:s.c, n, f:s.f === true};
+  if (Number.isFinite(+s.t) && +s.t > 0) o.t = Math.floor(+s.t);
+  return o;
+}
+function v105LimpaTumbas(l){
+  const m = new Map();
+  for (const x of Array.isArray(l) ? l : []){
+    if (!x || !tpEhCodigo(x.c) || typeof x.n !== 'string' || !(+x.t > 0)) continue;
+    const k = x.c + '\u0001' + x.n; if (!m.has(k) || m.get(k).t < +x.t) m.set(k, {c:x.c, n:x.n, t:Math.floor(+x.t)});
+  }
+  return [...m.values()].sort((a, b) => b.t - a.t).slice(0, 64);
+}
+// junta duas cópias da racha-tampa-v1 (a e b: {itens, salvas, equipada, te, x}); nos empates, fica o de "a"
+function v105Junta(a, b){
+  a = a || {}; b = b || {};
+  const itens = [...new Set([...(Array.isArray(a.itens) ? a.itens : []), ...(Array.isArray(b.itens) ? b.itens : [])].filter(k => typeof k === 'string' && V105_PECA.test(k)))];
+  const x = v105LimpaTumbas([...(Array.isArray(a.x) ? a.x : []), ...(Array.isArray(b.x) ? b.x : [])]);
+  const morta = new Map(x.map(t => [t.c + '\u0001' + t.n, t.t]));
+  const m = new Map(), ordem = [];
+  for (const lado of [a, b]) for (const s0 of Array.isArray(lado.salvas) ? lado.salvas : []){
+    const s = v105LimpaSalva(s0); if (!s) continue;
+    const k = v105Chave(s), t = s.t || 0;
+    if (morta.has(k) && morta.get(k) >= t) continue;      // (apagada de propósito depois desta: não volta)
+    if (!m.has(k)){ m.set(k, s); ordem.push(k); }
+    else if ((m.get(k).t || 0) < t) m.set(k, s);
+  }
+  let salvas = ordem.map((k, i) => [m.get(k), i]).sort((p, q) => (q[0].t || 0) - (p[0].t || 0) || p[1] - q[1]).map(p => p[0]);
+  while (salvas.length > 24){                                 // (o inventário tem 24 lugares: sai a mais velha que não é favorita)
+    let i = salvas.length - 1; while (i >= 0 && salvas[i].f) i--;
+    salvas.splice(i >= 0 ? i : salvas.length - 1, 1);
+  }
+  const ok = c => typeof c === 'string' && (c === '' || (tpEhCodigo(c) && c[0] === 'T' && !!tpLe(c)));
+  const ta = +a.te || 0, tb = +b.te || 0;
+  let equipada = ok(a.equipada) ? a.equipada : '', te = ta;
+  if (tb > ta && ok(b.equipada)){ equipada = b.equipada; te = tb; }
+  const o = {itens, salvas, equipada};
+  if (te) o.te = te;
+  if (x.length) o.x = x;
+  return o;
+}
+// as horas (a de cada salva, a do equipar e as apagadas) moram no TP.v105: o tampa_rua.js lê e o tpSalva de sempre grava, junto
+// da chave racha-tampa-v1 (as trocas estão no tools/v105/cosmeticos.py) — assim nenhuma gravação de antes desta etapa as perde
+const V105T = () => TP.v105 || (TP.v105 = {te:0, x:[]});
+function v105LeHoras(){ const T = V105T(); T.te = +T.te > 0 ? Math.floor(+T.te) : 0; T.x = v105LimpaTumbas(T.x); }
+function v105Fotografa(){ V105.snap = new Map(TP.salvas.map(s => [v105Chave(s), !!s.f])); V105.snapEq = TP.equipada; }
+function v105Marca(){                                        // o que mudou desde a última gravação ganha a hora de agora
+  if (!V105.snap) v105Fotografa();
+  const agora = Date.now(), vistas = new Set();
+  for (const s of TP.salvas){
+    if (!s || typeof s !== 'object') continue;
+    const k = v105Chave(s); vistas.add(k);
+    if (!V105.snap.has(k) || V105.snap.get(k) !== !!s.f) s.t = agora;
+  }
+  const T = V105T();
+  for (const [k] of V105.snap) if (!vistas.has(k)){ const i = k.indexOf('\u0001'); T.x.unshift({c:k.slice(0, i), n:k.slice(i + 1), t:agora}); }
+  // (a equipada tirada sem equipar outra — o ZERAR PROGRESSO, as trocas das versões antigas —: fica marcada, para a tampinha
+  //  da conta não voltar sozinha num outro aparelho; o nome vazio não casa com nenhuma salva)
+  if (!V105.equipando && V105.snapEq && !TP.equipada) T.x.unshift({c:V105.snapEq, n:'', t:agora});
+  if (T.x.length > 64) T.x.length = 64;
+  if (V105.equipando) T.te = agora;
+  v105Fotografa();
+}
+const tpSalvaAntes105 = tpSalva;
+tpSalva = function(){
+  try { v105Marca(); } catch (e) { console.error('v105 marca', e); }
+  const r = tpSalvaAntes105.apply(this, arguments);
+  try { v105Empurra(); } catch (_) {}
+  return r;
+};
+const tpEquipaAntes105 = tpEquipa;
+tpEquipa = function(cod){
+  V105.equipando = true;
+  try { return tpEquipaAntes105.apply(this, arguments); } finally { V105.equipando = false; }
+};
+
+// a cópia para a conta logo depois da mudança (o vigia da v82 esperava de 8 a 12 s e nunca no meio da partida)
+function v105Pode(){
+  try { return !!(C82.conta && R82.dono && R82.meta && R82.nuvem !== undefined && !C82.bloqueio && c82Pl()); } catch (_) { return false; }
+}
+function v105Sujo(){ try { const h = R82.hash(R82.copia()); return !(R82.meta.versao && h === R82.meta.hash); } catch (_) { return false; } }
+function v105Empurra(ms){
+  clearTimeout(V105.empT);
+  V105.empT = setTimeout(v105EmpurraJa, ms || 1100);
+}
+function v105EmpurraJa(){
+  V105.empT = 0;
+  if (!v105Pode() || !v105Sujo()) return;
+  if (C82.enviando || Date.now() - V105.ultimoEnvio < 2500){ v105Empurra(1500); return; }   // (um de cada vez; o limite da conta é 60 cópias em 10 min)
+  V105.ultimoEnvio = Date.now(); V105.envios++;
+  c82Envia(false);
+}
+// o SAIR DA CONTA manda o que falta antes de encerrar a sessão (no máximo ms)
+function v105Descarrega(ms){
+  return new Promise(res => {
+    const t0 = Date.now(); let tentou = 0;
+    const passo = () => {
+      try {
+        if (!v105Pode()) return res(false);
+        if (!C82.enviando && !v105Sujo()) return res(true);
+        if (Date.now() - t0 > ms) return res(false);
+        if (!C82.enviando){
+          if (tentou >= 2) return res(false);
+          tentou++; V105.ultimoEnvio = Date.now(); V105.envios++; c82Envia(false);
+        }
+      } catch (_) { return res(false); }
+      setTimeout(passo, 120);
+    };
+    passo();
+  });
+}
+if (typeof v84Sair === 'function'){
+  const v84SairAntes105 = v84Sair;
+  v84Sair = function(){
+    if (V105.saindo) return;
+    V105.saindo = true;
+    const args = arguments, ctx = this;
+    let vai = false; try { vai = v105Pode() && (C82.enviando || v105Sujo()); } catch (_) {}
+    if (vai){ try { aviso('Salvando o progresso na conta…'); } catch (_) {} }
+    clearTimeout(V105.empT);
+    (vai ? v105Descarrega(4500) : Promise.resolve(true)).then(() => { V105.saindo = false; return v84SairAntes105.apply(ctx, args); }, () => { V105.saindo = false; return v84SairAntes105.apply(ctx, args); });
+  };
+}
+// o app indo para o fundo (ou fechando): o envio da cópia sai com keepalive (o login_cedo.js lê RACHA84.manterViva no fetch)
+(function v105Fundo(){
+  const marca = v => { try { if (window.RACHA84) window.RACHA84.manterViva = v; } catch (_) {} };
+  document.addEventListener('visibilitychange', () => marca(document.visibilityState === 'hidden'), true);   // (antes do envio da v82)
+  window.addEventListener('pagehide', () => marca(true), true);
+  window.addEventListener('pageshow', () => marca(false));
+})();
+
+// os dois lados mudaram (QUAL PROGRESSO FICA?): as tampinhas juntam — o da conta leva as daqui; este aparelho fica com as da conta
+function v105Agora(){ try { tpSalva(); } catch (_) {} try { return v105Lido(localStorage.getItem(TP_CHAVE)) || {}; } catch (_) { return {}; } }
+function v105Aplica(o){                                     // a junta na memória e no aparelho (sem avisar a sala: a escolha vem depois)
+  if (!o) return;
+  TP.salvas = (o.salvas || []).map(v105LimpaSalva).filter(Boolean);
+  if (typeof o.equipada === 'string' && (o.equipada === '' || (tpEhCodigo(o.equipada) && tpLe(o.equipada)))) TP.equipada = o.equipada;
+  TP.v105 = {te:+o.te > 0 ? Math.floor(+o.te) : 0, x:v105LimpaTumbas(o.x)};
+  v105Fotografa();
+  tpSalvaAntes105();                                         // (sem marcar nada como novo: é a junta)
+  try { perfil.skin = tpMinha(); perfilSalvar(); EMB.pop = 1; EMB.leveFeito = false; PFP.feito = false; if (lobby.aberto) lbRender(); } catch (_) {}
+}
+function v105JuntaNoConflito(n){
+  const ch = n && n.dados && n.dados.chaves;
+  if (!ch || typeof ch !== 'object' || V105.juntou.has(ch)) return;
+  V105.juntou.add(ch);
+  try { V105.hashOrig.set(ch, R82.hash(ch)); } catch (_) {}   // (a cópia da conta como veio: o que juntou daqui vai para a conta depois)
+  const conta = v105Lido(ch['racha-tampa-v1']), aqui = v105Agora();
+  if (!conta && !(aqui.salvas || []).length && !aqui.equipada) return;
+  ch['racha-tampa-v1'] = JSON.stringify(v105Junta(conta || {}, aqui));   // O DA CONTA: nos empates, o da conta
+  v105Aplica(v105Junta(aqui, conta || {}));                                  // O DESTE APARELHO: nos empates, o daqui
+}
+function v105JuntaNaPrimeira(conv){                         // LEVAR O PROGRESSO PARA A CONTA: as tampinhas da conta neste aparelho ficam
+  if (!conv || typeof conv !== 'object' || V105.juntou.has(conv)) return;
+  V105.juntou.add(conv);
+  const aqui = v105Agora();
+  if (!(aqui.salvas || []).length && !aqui.equipada) return;
+  conv['racha-tampa-v1'] = JSON.stringify(v105Junta(v105Lido(conv['racha-tampa-v1']) || {}, aqui));
+}
+const c82ConflitoAntes105 = c82Conflito;
+c82Conflito = function(n){ try { v105JuntaNoConflito(n); } catch (e) { console.error('v105 conflito', e); } return c82ConflitoAntes105.apply(this, arguments); };
+const c82PrimeiraAntes105 = c82Primeira;
+c82Primeira = function(conv){ try { v105JuntaNaPrimeira(conv); } catch (e) { console.error('v105 primeira', e); } return c82PrimeiraAntes105.apply(this, arguments); };
+if (R82 && typeof R82.prepara === 'function'){              // (O DA CONTA: a hora da cópia como ela veio — o que juntou daqui fica "a mandar")
+  const preparaAntes105 = R82.prepara;
+  R82.prepara = function(chaves, meta, opc){
+    try {
+      const h = chaves && V105.hashOrig.get(chaves);
+      if (h && opc && opc.hashDaCopia){ meta = Object.assign({}, meta, {hash:h}); opc = Object.assign({}, opc); delete opc.hashDaCopia; }
+    } catch (_) {}
+    return preparaAntes105.call(this, chaves, meta, opc);
+  };
+}
+
+// a tampinha da conta (a coluna "tampa", gravada em cada equipar) que este aparelho nunca viu: entra nas salvas
+function v105Conhecida(c){
+  if (c === TP.equipada || TP.salvas.some(s => s.c === c)) return true;
+  return V105T().x.some(t => t.c === c);
+}
+function v105DaConta(c){
+  try {
+    const cod = c && c.tampa;
+    if (!tpEhCodigo(cod) || cod[0] !== 'T' || !tpLe(cod) || V105.dicas.has(cod)) return;
+    if (!v105Pode() || C82.recarrega || (typeof RQ !== 'undefined' && RQ.on)) return;   // (depois de a cópia da conta chegar, fora da partida)
+    V105.dicas.add(cod);
+    if (v105Conhecida(cod)) return;
+    if (typeof v95EhInicial === 'function' && v95EhInicial(cod)) return;
+    if (typeof v101Esconde === 'function' && v101Esconde(cod)) return;
+    if (typeof sk96CodTemFund === 'function' && sk96CodTemFund(cod) && !(typeof sk96TemFundador === 'function' && sk96TemFundador())) return;
+    TP.livres.add(cod);
+    if (TP.salvas.length < 24) TP.salvas.unshift({c:cod, n:'Da conta', f:false});
+    if (!TP.equipada) tpEquipa(cod); else tpSalva();
+  } catch (e) { console.error('v105 da conta', e); }
+}
+(function v105OuveConta(){
+  const pl = (() => { try { return c82Pl(); } catch (_) { return null; } })();
+  if (pl && typeof pl.ouvir === 'function'){ try { pl.ouvir(ev => { if (ev && ev.tipo === 'conta' && ev.conta) V105.contaNova = ev.conta; }); } catch (_) {} }
+  setInterval(() => { if (V105.contaNova) v105DaConta(V105.contaNova); }, 2000);   // (a conta que chegou do servidor, depois de a cópia chegar)
+})();
+
+/* ================================================================ A CAUSA: as criadas com as peças que entram depois */
+// O tampa_rua.js lê a racha-tampa-v1 antes de as peças da v76, da v96 e da v102 (a BOTÃO) entrarem nas listas: o código de
+// quem usava uma delas não abria (e o "inválido" ficava guardado no TP_LIDOS para a sessão inteira). A leitura de lá agora
+// guarda o que não deu para ler (TP.adiadas: tools/v105/cosmeticos.py); aqui, com todas as peças, lê de novo e devolve — na
+// ordem de antes, com as que entraram por outro caminho no fim — e grava (o aparelho e, depois, a conta).
+function v105Adiadas(){
+  try { for (const [k, v] of [...TP_LIDOS]) if (v === null) TP_LIDOS.delete(k); } catch (_) {}   // (os "inválidos" de antes das peças novas)
+  const A = TP.adiadas; if (!A) return false;
+  delete TP.adiadas;
+  const valida = c => tpEhCodigo(c) && c[0] === 'T' && !!tpLe(c);
+  let mudou = false;
+  if (Array.isArray(A.salvas) && A.salvas.length){
+    const atuais = new Map(TP.salvas.map(s => [v105Chave(s), s])), novas = [];
+    for (const s0 of A.salvas){
+      if (!s0 || !valida(s0.c)) continue;
+      const s = v105LimpaSalva(s0); if (!s) continue;
+      const k = v105Chave(s); if (novas.some(x => v105Chave(x) === k)) continue;
+      novas.push(atuais.get(k) || s); atuais.delete(k);
+    }
+    for (const s of atuais.values()) novas.push(s);
+    if (novas.length !== TP.salvas.length || novas.some((s, i) => s !== TP.salvas[i])){ TP.salvas = novas.slice(0, 24); mudou = true; }
+  }
+  if (A.equipada && valida(A.equipada) && TP.equipada !== A.equipada){ TP.equipada = A.equipada; mudou = true; }
+  if (mudou){
+    V105.recuperou = {equipada:TP.equipada === A.equipada, salvas:TP.salvas.length};
+    tpSalvaAntes105();
+    try { perfil.skin = tpMinha(); perfilSalvar(); } catch (_) {}
+  }
+  return mudou;
+}
+
+/* ================================================================ começo */
+try { v105Adiadas(); } catch (e) { console.error('v105 adiadas', e); }
+try { v105LeHoras(); v105Fotografa(); } catch (e) { console.error('v105 horas', e); }
+try { if (C82.conflitoAberto && R82.conflito) v105JuntaNoConflito(R82.conflito); } catch (_) {}   // (dentro do site: a pergunta já veio no começo)
+try { if (R82.primeira && !C82.primeiraRespondida) v105JuntaNaPrimeira(R82.primeira); } catch (_) {}
+try {                                                         // (o que já foi desenhado com a borda de antes é refeito)
+  if (typeof sk76Refaz === 'function') sk76Refaz(); else TP_SPR.clear();
+  if (typeof CLB_MINI !== 'undefined') CLB_MINI.clear();
+  if (typeof V88C !== 'undefined' && V88C.mini) V88C.mini.clear();
+  if (typeof BRASIL !== 'undefined' && BRASIL.tampas && BRASIL.tampas.clear) BRASIL.tampas.clear();
+  if (typeof V91 !== 'undefined' && V91.moldes) for (const k in V91.moldes) V91.moldes[k].key = '';
+} catch (_) {}
+window.RachaCosmeticos105 = {deFabrica:v105DeFabrica, comBotao:v105ComBotao, norm:v105Norm, mesma:v105Mesma, medidas:v105Medidas, junta:v105Junta,
+  estado:() => ({te:V105T().te, tumbas:V105T().x.slice(), envios:V105.envios, cinza:V105.cinza, desvio:V105.desvio}), empurra:v105EmpurraJa, descarrega:v105Descarrega, V105};
+
+/* ======================================================================= RACHA v105 · o tamanho da borda (tools/v105/borda.js) */
+/* ---------------------------------------------------------------- tools/v105/borda.js */
+/* ======================================================================================================================
+   RACHA v105 · O TAMANHO DA BORDA (e a tampinha SEM BORDA)
+   O pedido (05/11/2026): "crie uma função tamanho da borda, sem borda, na skin".
+   No CRIAR TAMPINHA, na aba BORDA: o TAMANHO DA BORDA, com SEM · FINA · NORMAL · GROSSA (a NORMAL é a de sempre). Vale para
+   toda borda — a BOTÃO, as de dentes, as acesas e com as caras animadas — e é grátis.
+     · FINA e GROSSA: o desenho do meio cresce ou diminui e a borda em volta fica mais fina ou mais grossa (na BOTÃO, o aro
+       branco com 4,5% ou 17% do raio, a normal com 9%; nas de dentes, o meio com 80% ou 66% do raio, o normal com 74%);
+     · SEM BORDA: a tampinha fica só com o desenho, cheio até a beirada (do tamanho da BOTÃO), chapado — sem a saia, os dentes,
+       o aro, o contorno, a luz e a animação do aro aceso (com uma cara animada, a cara ocupa a tampinha inteira).
+   O código da tampinha leva o tamanho no FIM (2 bits, só quando não é a normal: tools/v105/borda.py troca o tpCodigo, o tpLe
+   e o tpCopia): os códigos de sempre não mudam, e o jogo de antes (que para de ler antes do fim) mostra a mesma tampinha com
+   a borda normal. O servidor das salas e a plataforma só olham o começo do código (a peça dos fundadores) e o tamanho (até 44
+   letras) — o código mais comprido, com o tamanho, fica com 39. Só desenho: o tamanho da tampinha, o alcance e a física não
+   mudam.
+   ====================================================================================================================== */
+// (as quatro abaixo são declarações: valem desde o começo do script — o tpTampa e o tpLe as chamam — e não dependem de nada
+//  que é criado depois)
+function tpBordaTam(D){ return D && D.k === 'T' ? (D.bt | 0) & 3 : 0; }   // 0 normal · 1 fina · 2 grossa · 3 sem borda
+function tpSemBorda(D){ return tpBordaTam(D) === 3; }
+function tpMiolo(D){ const k = tpBordaTam(D); return k === 1 ? .8 : k === 2 ? .66 : k === 3 ? .97 : .74; }   // o raio do meio nas bordas de dentes (e nas caras)
+function tpSoDesenho(g, x, y, r, D, semente){                // SEM BORDA: o desenho cheio até a beirada (o raio de fora da BOTÃO)
+  let cara = null;
+  try { const A = typeof sk76Anim === 'function' ? sk76Anim(D) : null; cara = A && A.cara; } catch (_) {}
+  if (cara){ sk76Cara(g, x, y, r, D, cara, cara.t0); return; }
+  const R = r*.97;
+  g.save(); g.beginPath(); g.arc(x, y, R, 0, TP_TAU); g.clip();
+  tpPintaTampo(g, x, y, R, D, semente);
+  g.restore();
+}
+
+// a saia (os dentes, o aro da BOTÃO, o aro aceso) não aparece SEM BORDA — em todo lugar que pinta a saia sozinha (a cara animada
+// e a imagem pronta dela)
+const tpSaiaAntes105b = tpSaia;
+tpSaia = function(g, x, y, r, D){ if (tpSemBorda(D)) return; return tpSaiaAntes105b.apply(this, arguments); };
+// o emoji em cima da tampinha cobre o meio dela (SEM BORDA: a tampinha inteira)
+if (typeof emjRaio === 'function'){
+  const emjRaioAntes105b = emjRaio;
+  emjRaio = function(r, D){
+    if (D && D.k !== 'E'){
+      if (tpSemBorda(D)) return r*.97;
+      if (tpBordaTam(D) && !(v102EhBotao(D) || v105DeFabrica(D))) return r*tpMiolo(D);
+    }
+    return emjRaioAntes105b.apply(this, arguments);
+  };
+}
+
+/* ---------------------------------------------------------------- o editor: TAMANHO DA BORDA, na aba BORDA */
+const V105_BT = [[3, 'SEM', 'Sem borda'], [1, 'FINA', 'Borda fina'], [0, 'NORMAL', 'Borda normal'], [2, 'GROSSA', 'Borda grossa']];
+const V105_BT_NOME = ['', 'borda fina', 'borda grossa', 'sem borda'];
+function v105BtPinta(){                                       // a escolhida acesa e a nota de baixo (sem borda: o que acontece)
+  const E = ED.el; if (!E || !E.btSeg || !ED.D) return;
+  const k = tpBordaTam(ED.D);
+  for (const b of E.btSeg.children){ const on = +b.dataset.bt === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
+  if (E.semGeo && ED.aba === 'b' && ED.modo === 'T' && k === 3) E.semGeo.textContent = 'Sem borda: a tampinha fica só com o desenho. Escolha um tamanho para a borda voltar.';
+}
+const tpeControlesAntes105b = tpeControles;
+tpeControles = function(){
+  const r = tpeControlesAntes105b.apply(this, arguments);
+  try {
+    const E = ED.el; E.btSeg = null;
+    if (ED.aba === 'b' && ED.modo === 'T'){
+      const bl = tpeBloco('tpe-btam', 'TAMANHO DA BORDA'), seg = nodo('div', 'tpe-seg tpe-btam-seg');
+      seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Tamanho da borda');
+      for (const [v, rot, nome] of V105_BT){ const b = novoBotao('tpe-op', nome); b.dataset.bt = String(v); b.textContent = rot; seg.appendChild(b); }
+      bl.appendChild(seg);
+      const cores = E.ctl.querySelector('.tpe-cores');
+      if (cores) cores.insertAdjacentElement('afterend', bl); else E.ctl.prepend(bl);
+      E.btSeg = seg;
+      seg.addEventListener('click', e => {
+        const b = e.target.closest('[data-bt]'); if (!b || !ED.D) return;
+        const v = +b.dataset.bt; if (tpBordaTam(ED.D) === v) return;
+        som.clique();
+        tpeMuda(D => { D.bt = v; });
+        tpeSincroniza(); tpeMinis();                           // (as miniaturas das bordas no tamanho novo)
+      });
+      v105BtPinta();
+    }
+  } catch (e) { console.error('v105 tamanho da borda', e); }
+  return r;
+};
+const tpeSincronizaAntes105b = tpeSincroniza;
+tpeSincroniza = function(){ const r = tpeSincronizaAntes105b.apply(this, arguments); try { v105BtPinta(); } catch (_) {} return r; };
+const tpeDescreveAntes105b = tpeDescreve;                     // (o nome falado da tampinha grande: "… · borda fina")
+tpeDescreve = function(D){ const s = tpeDescreveAntes105b.apply(this, arguments); const k = tpBordaTam(D); return k ? s + ' · ' + V105_BT_NOME[k] : s; };
+window.RachaBorda105 = {tamanho:D => tpBordaTam(D), miolo:D => tpMiolo(D), nomes:V105_BT.map(x => x[1])};
 
 montaAbas();
 if (onbPrecisa()) onbAbre();   // v57: a primeira vez (antes do presente)

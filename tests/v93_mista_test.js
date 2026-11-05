@@ -28,7 +28,7 @@ function cliente(t, nome, v93){
     manda: m => ws.emit('message', JSON.stringify(m)),
     ult: (tipo, f) => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === tipo && (!f || f(ws.caixa[i]))) return ws.caixa[i]; return null; },
     sala: () => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === 'room') return ws.caixa[i].room; return null; }};
-  k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAA' + nome.toLowerCase().padEnd(4, 'x'), flag:'BR'}, v93 ? {v93:1} : {}));
+  k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAA' + nome.toLowerCase().padEnd(4, 'x'), flag:'BR'}, v93 ? {v93:1, v105:1} : {}));
   k.id = k.ult('hello').id;
   return k;
 }

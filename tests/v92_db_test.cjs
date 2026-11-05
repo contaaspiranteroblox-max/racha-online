@@ -39,7 +39,10 @@ confere(V92.dbModo === 0 && N.PERFIL_V91.dbModo === 0, 'o perfil padrão (v92) e
 }
 {
   let n = 0, dif = 0; const ex = [];
-  for (const cen of L.NOMES) for (const perfil of [N.PERFIL_V91, V92]) {
+  // (v105: o padrão com a virada e o corpo de antes — o núcleo de referência não tem a virada na hora nem o jogo de corpo; o
+  //  que se confere aqui é a máquina do DB, igual. A virada na hora com o DB: o laboratório e as regras abaixo, no padrão novo)
+  const V92_104 = Object.assign({}, V92, { viraNaHora: 0, atritoJogJog: 0, direcoes: 32 });
+  for (const cen of L.NOMES) for (const perfil of [N.PERFIL_V91, V92_104]) {
     const t00 = L.CENARIOS[cen](N.resolve(perfil)).t0;
     for (const d of L.DELTAS) for (let fa = 0; fa < 12; fa += 2) for (const dur of [30, 120]) {
       const tP = t00 + (fa + 0.5) * STEP / 12, toques = [{ tipo: 'p', t: tP, dur }, { tipo: 'c', t: tP + d, dur }];

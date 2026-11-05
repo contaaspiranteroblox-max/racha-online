@@ -676,7 +676,7 @@ async function rede(){
     A.manda({type:'snapshot', round:1, data:{tick:3, elapsed:.1, state:'jogo', score:[0, 1], ball:[1, 2, 0, 0, 0], players:[]}});
     A.manda({type:'finish', round:1, score:[0, 1]});
     await espera(400);
-    confira(!B.ult('result') && !B.caixa.some(x => x.type === 'snapshot' && x.data && x.data.tick === 3) && /suspeito/.test(S.log()), 'o quadro e o fim mandados por um aparelho são ignorados (e anotados como suspeitos)', S.log().slice(-240));
+    confira(!B.ult('result') && !B.caixa.some(x => x.type === 'snapshot' && x.data && x.data.tick === 3 && Array.isArray(x.data.ball) && x.data.ball[0] === 1 && x.data.ball[1] === 2) && /suspeito/.test(S.log()), 'o quadro e o fim mandados por um aparelho são ignorados (e anotados como suspeitos)', S.log().slice(-240));
     // reconexão: o Beto cai e volta com o token (mesmo id)
     B.ws.close(); await espera(200);
     const B2 = await socket(S.porta, 'http://localhost:9999');
@@ -690,8 +690,33 @@ async function rede(){
   } finally { S.p.kill('SIGTERM'); }
 }
 
+// v105: a física das salas mudou (o jogo de corpo e a virada na hora): a página do jogo de antes (manda o v93, não o v105) não
+// cria, não entra, não volta para a sala do RACHA e não entra na fila da ranqueada — o aviso diz para atualizar; a página nova
+// (v105) e os clientes que não são a página do jogo (sem o v93, como os destes testes) seguem como sempre
+function velho105(){
+  console.log('\n10) v105: a página de antes não joga nas salas do RACHA');
+  const t = novaTurma();
+  const hello = (k, nome, extra) => { k.manda(Object.assign({type:'hello', name:nome, skin:'T.AAAA' + nome.toLowerCase().padEnd(4, 'x'), flag:'BR'}, extra)); k.id = k.ult('hello').id; return k; };
+  const V = hello(cliente(t, 'Velho'), 'Velho', {v93:1}), N = hello(cliente(t, 'Novo'), 'Novo', {v93:1, v105:1});
+  V.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:3, pub:true});
+  const e1 = V.ult('error');
+  confira(!V.sala() && e1 && e1.codigo === 'jogo_velho' && /atualize o jogo/.test(e1.message || ''), 'a página de antes não cria sala: "atualize o jogo"', e1);
+  N.manda({type:'create', n:1, map:4, jogo:'futebol', tempo:3, pub:true});
+  const sn = N.sala();
+  confira(!!sn, 'a página nova cria a sala', sn && sn.code);
+  V.limpa(); V.manda({type:'join', code:sn.code, slot:1});
+  const e2 = V.ult('error');
+  confira(!V.sala() && e2 && e2.codigo === 'jogo_velho', 'e a de antes não entra nela', e2);
+  V.limpa(); V.manda({type:'fila', n:1, pts:500});
+  const e3 = V.ult('error');
+  confira(e3 && e3.codigo === 'jogo_velho' && !V.ult('fila'), 'nem na fila da ranqueada', e3);
+  const S = hello(cliente(t, 'Sem'), 'Sem', {});
+  S.manda({type:'join', code:sn.code, slot:1});
+  confira(S.sala() && S.sala().code === sn.code, 'quem não é a página do jogo (sem o v93) entra como sempre');
+}
+
 (async () => {
-  try { login(); regras(); ranqueada(); regra80(); await rede(); }
+  try { login(); regras(); ranqueada(); regra80(); velho105(); await rede(); }
   catch (e) { falhou++; console.log('  FALHOU (erro) ' + (e && e.stack || e)); }
   console.log('\nservidor da turma: ' + ok + ' ok, ' + falhou + ' falharam');
   process.exit(falhou ? 1 : 0);

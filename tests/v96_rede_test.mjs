@@ -150,7 +150,10 @@ function partida(o = {}) {
 console.log('\n5) o simulador da rede: o que a tela de quem joga desenha (antes × agora, 4 sementes × 45 s cada)');
 const SEM = [1, 2, 3, 4];
 for (const rede of ['4g', 'br']) {
-  const a = media({ rede, dur: 45000, cliente: 'v95', fila: 'v95' }, SEM), b = media({ rede, dur: 45000, cliente: 'v96', fila: 'v96' }, SEM);
+  // (v105: a comparação v95 × v96 roda com a física da v104 — sem o jogo de corpo e com a virada de antes —, a de quando ela foi
+  //  medida; o online com a física nova é medido no tests/v105_rede_test.mjs)
+  const F104 = Object.assign({}, N.PERFIL_V92, { atritoJogJog: 0, viraNaHora: 0, direcoes: 32 });
+  const a = media({ rede, dur: 45000, cliente: 'v95', fila: 'v95', fisica: F104 }, SEM), b = media({ rede, dur: 45000, cliente: 'v96', fila: 'v96', fisica: F104 }, SEM);
   const nome = rede === 'br' ? 'Brasil → Virgínia (~165 ms, 4G, apagões e engasgos)' : '4G (~90 ms, apagões)';
   console.log('  ' + nome);
   for (const k of ['eu', 'bola', 'outro']) console.log('    ' + k.padEnd(6) + ' antes ' + JSON.stringify(a[k]) + '\n           agora ' + JSON.stringify(b[k]));

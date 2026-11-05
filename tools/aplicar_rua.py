@@ -69,6 +69,17 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
      instalável e o campo até a beirada (as faixas em volta da área do jogo com o próprio campo; o HUD na área segura).
  v104 (tools/v104/v104.py + painel.js + tela_inteira.js + app/public/game/v104.css, por último): a VAGA LIVRE e o árbitro
      segurando e arrastando no painel dos jogadores da partida, e o canvas do jogo cobrindo a tela toda (a moldura da v103 sai).
+ v105 · chat no lobby (tools/v105/chat_lobby.py + chat_lobby.js + app/public/game/v105-chat.css, por último): a barra do chat
+     da partida (a da v81: a etiqueta, NOME: a última mensagem, as não lidas e o ^) de volta à tela inicial com o Chat do Brasil,
+     embaixo, entre a barra de atalhos e o JOGAR (medida só quando o lobby muda de tamanho); tocar abre o painel de sempre.
+ v105 (tools/v105/cosmeticos.py + cosmeticos.js, por último): as tampinhas criadas não somem ao entrar de novo (a leitura
+     do começo recusava as feitas com as peças que entram depois — a BOTÃO, as caras e os aros animados —; agora elas são lidas
+     de novo no fim; e a cópia vai para a conta logo depois de cada mudança e antes do SAIR DA CONTA, e as tampinhas dos dois
+     lados juntam no QUAL PROGRESSO FICA?), a borda BOTÃO para todo mundo (a inicial e a borda de fábrica; os códigos não
+     mudam) e a BOTÃO chapada, como nas imagens enviadas (sem o relevo e sem a sombra por dentro).
+ v105 · tamanho da borda (tools/v105/borda.py + borda.js, por último): no CRIAR TAMPINHA, na aba BORDA, o TAMANHO DA BORDA
+     (SEM · FINA · NORMAL · GROSSA) para toda borda; o tamanho vai no fim do código da tampinha (só quando não é a normal: os
+     códigos de sempre não mudam e o jogo de antes mostra a borda normal).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -113,7 +124,12 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v103/controles',                                                            # v103: o controle e o teclado do jeito de cada um (Ajustes › Controles) e o analógico sem atraso
               'v103/v103',                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, o árbitro, a ranqueada, o perfil pelo chat e os sons do online
               'v103/tela',                                                                 # v103: a tela cheia (Android e iPhone), o app instalável (PWA) e o campo até a beirada                                                                 # v103: o lobby de dia (a imagem enviada), as salas sem bots, a ranqueada, o perfil pelo chat e os sons do online
-              'v104/v104']                                                                 # v104: o correio de verdade, o árbitro arrastando no painel dos jogadores e a tela inteira só com o jogo
+              'v104/v104',                                                                 # v104: o correio de verdade, o árbitro arrastando no painel dos jogadores e a tela inteira só com o jogo
+              'v105/corpo',                                                                # v105: o jogo de corpo (o atrito tampinha × tampinha) e a virada na hora (o analógico sem atraso), também na partida contra os bots
+              'v105/rede',                                                                 # v105: o contato desenhado no online (a bola nunca desenhada dentro de uma tampinha)
+              'v105/chat_lobby',                                                           # v105: o chat na tela do lobby (a barra da partida, embaixo, entre os atalhos e o JOGAR)
+              'v105/cosmeticos',                                                           # v105: as tampinhas criadas ficam na conta (sem sumir ao entrar de novo) e a borda BOTÃO chapada para todo mundo
+              'v105/borda']                                                                # v105: o TAMANHO DA BORDA da tampinha (sem · fina · normal · grossa)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

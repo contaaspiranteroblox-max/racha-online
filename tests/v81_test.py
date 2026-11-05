@@ -2,7 +2,8 @@
 "digitando" com três pontinhos em cima da tampinha e a moderação.
 
 · A BARRA: no lobby (v81: um bloco no vão da fileira de baixo; v90/v91: guardada — o chat abre pelo quadrado de cima — e
-  contando por trás: a tag BRASIL/SALA, o contador e NOME: a mensagem mais recente), como um chip no canto nas telas do menu (perfil, salas, amigos, clube,
+  contando por trás; v105: de volta à tela inicial, embaixo, com a cara da da partida: a tag BRASIL/SALA, o contador e NOME: a
+  mensagem mais recente), como um chip no canto nas telas do menu (perfil, salas, amigos, clube,
   eventos, replays; não nas que têm o rodapé ocupado), na sala (embaixo, entre o CONVIDAR e o INICIAR) e na partida (menor e
   meio transparente, embaixo do campo: não cobre o placar nem os controles); toca para abrir, minimiza de novo; some com a
   chave "Chat na tela" dos Ajustes e com o OCULTAR do painel. No celular (o menu encolhido) a barra é maior em px do palco,
@@ -51,12 +52,17 @@ async def barra_painel(pw, P):
     # de referência, sem vão): no lobby o chat abre pelo quadrado do chat, em cima, e a barra continua viva por trás (as mensagens e o
     # contador). O bloco no vão, o grafite dele e o aviso subindo por cima dele (v81) não existem mais.
     # (v102: o lobby com menos coisa na tela — o chat é o MENU › CHAT, com o número de não lidas no item e no botão do MENU)
+    # v105: o pedido "um chat visível na tela do lobby igual o dentro da partida": a barra volta à tela inicial, com a cara da da
+    # partida, embaixo, entre a barra de atalhos e o JOGAR (o MENU › CHAT continua); o lugar é conferido no v105_chat_lobby_test
     vis = await rt(pg, "(() => { const v102 = LB.raiz.classList.contains('v102'), c = v102 ? document.querySelector('#lb .v102-menu-bt') : document.getElementById('lb-chat'), q = c && c.getBoundingClientRect();"
                        " const it = v102 && [...document.querySelectorAll('#lb .v102-item')].find(b => /CHAT/.test(b.textContent));"
+                       " const d = document.querySelector('#lb .v102-doca'), j = LB.jogar, cx = e => { const x = e.getBoundingClientRect(); return [x.left, x.top, x.right, x.bottom]; };"
                        " return {barra:getComputedStyle(CB.el).display, quadrado:!!c && c.offsetParent !== null && q.width >= 44 && q.height >= 44 && (!v102 || !!it), v102,"
+                       " doca:d ? cx(d) : null, jogar:cx(j), vh:innerHeight,"
                        " n: v102 ? [(it && it.querySelector('.v102-selo') || {}).textContent || '', (c.querySelector('.v102-selo') || {}).textContent || ''] : null}; })()")
-    P.confere(r['onde'] == 'lobby' and vis['barra'] == 'none' and vis['quadrado'], 'no lobby a barra fica guardada (v90/v91: sem vão na fileira de baixo) e o chat abre pelo quadrado de cima (≥ 44 px)', [r['onde'], vis])
-    P.confere(r['tag'] == 'BRASIL' and r['msg'] == 'Jogador: Bora!' and r['n'] == '2', 'a barra continua contando por trás: a tag BRASIL, o contador de não lidas e NOME: a mensagem mais recente', [r['tag'], r['msg'], r['n']])
+    entre = bool(vis['doca']) and r['x'] >= vis['doca'][2] and r['x'] + r['w'] <= vis['jogar'][0] and r['bottom'] <= vis['vh'] and r['y'] > vis['vh']*.6
+    P.confere(r['onde'] == 'lobby' and vis['barra'] != 'none' and entre and vis['quadrado'], 'no lobby a barra está à vista (v105), embaixo, entre a barra de atalhos e o JOGAR; o MENU (o chat no MENU › CHAT) continua (≥ 44 px)', [r['onde'], vis, r['x'], r['y'], r['w']])
+    P.confere(r['tag'] == 'BRASIL' and r['msg'] == 'Jogador: Bora!' and r['n'] == '2', 'a barra mostra a tag BRASIL, o contador de não lidas e NOME: a mensagem mais recente', [r['tag'], r['msg'], r['n']])
     if vis.get('v102'):
         await rt(pg, "(() => { brasilBadge(); lbLayout(); return 1; })()")   # (o brasilBadge é o que a mensagem nova chama: o número do quadrado do chat)
         n2 = await rt(pg, "(() => { const it = [...document.querySelectorAll('#lb .v102-item')].find(b => /CHAT/.test(b.textContent)); return [(it.querySelector('.v102-selo') || {}).textContent || '', (document.querySelector('#lb .v102-menu-bt .v102-selo') || {}).textContent || '']; })()")
@@ -144,7 +150,9 @@ async def celular(pw, P):
     await rt(pg, MSGS); await pg.wait_for_timeout(250)
     r = await rt(pg, BARRA)
     vis = await rt(pg, "(() => { const c = LB.raiz.classList.contains('v102') ? document.querySelector('#lb .v102-menu-bt') : document.getElementById('lb-chat'), q = c && c.getBoundingClientRect(); return {barra:getComputedStyle(CB.el).display, quadrado:!!c && c.offsetParent !== null && q.width >= 28}; })()")
-    P.confere(r['onde'] == 'lobby' and vis['barra'] == 'none' and vis['quadrado'] and r['msg'] == 'Jogador: Bora!', 'no celular também: a barra guardada no lobby (v90/v91) e o quadrado do chat à vista', [r['onde'], vis, r['msg']])
+    # v105: a barra voltou à tela inicial (no celular também), do tamanho de ler e tocar no tamanho real
+    P.confere(r['onde'] == 'lobby' and vis['barra'] != 'none' and r['h'] >= 36 and r['letra'] >= 13 and r['bottom'] <= 390 and vis['quadrado'] and r['msg'] == 'Jogador: Bora!',
+              'no celular também: a barra à vista no lobby (v105: %.0f px, letra %.1f px) e o MENU (o chat no MENU › CHAT) à vista' % (r['h'], r['letra']), [r['onde'], vis, r['h'], r['letra'], r['msg']])
     await rt(pg, "abreTela('amigos'); 1"); await pg.wait_for_timeout(300)
     c = await rt(pg, BARRA)
     P.confere(c['onde'] == 'chip' and c['h'] >= 34 and c['letra'] >= 13 and c['bottom'] <= 390 and c['x'] < 20, 'na tela SALAS o chip do canto também é maior (%.0f px, letra %.1f px)' % (c['h'], c['letra']), [c['onde'], c['h'], c['letra'], c['bottom']])

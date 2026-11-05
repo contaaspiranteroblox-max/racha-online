@@ -120,11 +120,13 @@ async def principal():
             P.confere(o['padrao'] and o['render'] == 'prever', 'o jogo usa o padrão da v92 (desenho "prever", cadência, toque armado, previsão online)', o)
             print('\n2) a física padrão é a da v91')
             n = await rt(pg, "({vel:VEL_JOG/U(1), passe:FORCA_KICK, chute:FORCA_POWER, rj:R_JOG/U(1), rb:R_BOLA/U(1), teto:LIMITE_VEL_BOLA/U(1), fator:FATOR_BOLA, alc:ALCANCE_CHUTE/U(1), mb:MASSA_BOLA, mj:MASSA_JOG, qp:Q_PAREDE, qt:Q_TRAVE, qr:Q_REDE, qjj:V92_QJJ, qjp:V92_QJP, dirs:V92_DIRECOES, cool:COOLDOWN_BOTAO})")
-            esperado = {'vel': 14.1, 'passe': 212.5, 'chute': 360, 'rj': 2, 'rb': 1, 'teto': 46.75, 'fator': .99, 'alc': 3.5, 'mb': 10, 'mj': 1.25, 'qp': .65, 'qt': .6, 'qr': .15, 'qjj': .3, 'qjp': .65, 'dirs': 32, 'cool': .02}
-            P.confere(all(abs(n[k] - v) < 1e-9 for k, v in esperado.items()), 'os números da física do aparelho são os da v91 com o CHUTE da v103 (velocidade 14,1 u/s, PASSE 212,5, CHUTE 360, bola 46,75 u/s, 0,99…)', n)
+            esperado = {'vel': 14.1, 'passe': 212.5, 'chute': 360, 'rj': 2, 'rb': 1, 'teto': 46.75, 'fator': .99, 'alc': 3.5, 'mb': 10, 'mj': 1.25, 'qp': .65, 'qt': .6, 'qr': .15, 'qjj': .3, 'qjp': .65, 'dirs': 64, 'cool': .02}
+            n105 = await rt(pg, "({ajj:V105_AJJ, vira:V105_VIRA})")
+            P.confere(all(abs(n[k] - v) < 1e-9 for k, v in esperado.items()) and n105 == {'ajj': 0.5, 'vira': True}, 'os números da física do aparelho são os da v91 com o CHUTE da v103 (velocidade 14,1 u/s, PASSE 212,5, CHUTE 360, bola 46,75 u/s, 0,99…) e a v105 (o jogo de corpo 0,5, a virada na hora, 64 direções)', [n, n105])
             # (v103: o CHUTE padrão ficou 6% mais forte — o lance roda com o CHUTE de antes, 340: o que se confere aqui é a física
             #  tique a tique, igual à v91 com os mesmos números)
-            tr = await rt(pg, "(() => { const fp = FORCA_POWER; FORCA_POWER = 340; try { return eval(%s); } finally { FORCA_POWER = fp; } })()" % json.dumps(TRAJETO))
+            # (v105: e sem o jogo de corpo, com a virada de sempre e as 32 direções — a física da v91, tique a tique)
+            tr = await rt(pg, "(() => { const fp = FORCA_POWER, a = V105_AJJ, v = V105_VIRA, d = V92_DIRECOES; FORCA_POWER = 340; V105_AJJ = 0; V105_VIRA = false; V92_DIRECOES = 32; try { return eval(%s); } finally { FORCA_POWER = fp; V105_AJJ = a; V105_VIRA = v; V92_DIRECOES = d; } })()" % json.dumps(TRAJETO))
             dif = next((i for i, (a, c) in enumerate(zip(tr, REF)) if a != c), None)
             P.confere(len(tr) == len(REF) and dif is None, 'o mesmo lance de 900 passos (2v2, bots, chutes, gols) dá exatamente as mesmas posições da v91 original (com o CHUTE de antes)', {'dif': dif, 'n': len(tr)})
             await rt(pg, PREPARA)

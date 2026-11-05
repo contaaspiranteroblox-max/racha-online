@@ -39,10 +39,10 @@ function para(t) { for (const r of t.salas.values()) if (r.partida) { r.partida.
 console.log('1) o padrão: o motor de antes (a versão oficial não muda sozinha)');
 {
   const t = nova();
-  const A = entra(t, 'Ana', { v93: 1, v94: 1 });
+  const A = entra(t, 'Ana', { v93: 1, v105: 1, v94: 1 });
   A.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: true, pub: false });
   const r = t.salaDe(A.c);
-  entra(t, 'Beto', { v93: 1, v94: 1 }).manda({ type: 'join', code: r.code, slot: 1 });   // (v103: sem bots, o outro time precisa de alguém)
+  entra(t, 'Beto', { v93: 1, v105: 1, v94: 1 }).manda({ type: 'join', code: r.code, slot: 1 });   // (v103: sem bots, o outro time precisa de alguém)
   confira(t.motorPadrao === 'v93' && t.motorDe(r) === 'v93', 'sem RACHA_MOTOR_JOGO: o motor de antes', [t.motorPadrao]);
   A.manda({ type: 'start' });
   const st = A.ult('start');
@@ -54,7 +54,7 @@ console.log('1) o padrão: o motor de antes (a versão oficial não muda sozinha
 console.log('2) o servidor com o motor próprio (motor: v94): a rodada nele e o perfil resolvido no começo');
 {
   const t = nova({ motor: 'v94' });
-  const A = entra(t, 'Ana', { v93: 1, v94: 1 }), B = entra(t, 'Beto', { v93: 1, v94: 1 });
+  const A = entra(t, 'Ana', { v93: 1, v105: 1, v94: 1 }), B = entra(t, 'Beto', { v93: 1, v105: 1, v94: 1 });
   A.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: false, pub: false });
   const r = t.salaDe(A.c);
   B.manda({ type: 'join', code: r.code });
@@ -75,7 +75,7 @@ console.log('2) o servidor com o motor próprio (motor: v94): a rodada nele e o 
 console.log('3) alguém em campo com o jogo antigo (sem v94 no hello): a rodada inteira vai no motor de antes, e a sala avisa');
 {
   const t = nova({ motor: 'v94' });
-  const A = entra(t, 'Ana', { v93: 1, v94: 1 }), V = entra(t, 'Velho', { v93: 1 });
+  const A = entra(t, 'Ana', { v93: 1, v105: 1, v94: 1 }), V = entra(t, 'Velho', { v93: 1, v105: 1 });
   A.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: false, pub: false });
   const r = t.salaDe(A.c);
   V.manda({ type: 'join', code: r.code }); V.manda({ type: 'seat', slot: 1 });
@@ -91,10 +91,10 @@ console.log('3) alguém em campo com o jogo antigo (sem v94 no hello): a rodada 
 console.log('4) a versão de testes: o admin troca o motor e manda o perfil do motor novo (cortado nas faixas)');
 {
   const t = nova({ motor: 'v94', experimental: true });
-  const A = entra(t, 'Ana', { v93: 1, v94: 1 });
+  const A = entra(t, 'Ana', { v93: 1, v105: 1, v94: 1 });
   A.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: true, pub: false });
   const r = t.salaDe(A.c);
-  entra(t, 'Beto', { v93: 1, v94: 1 }).manda({ type: 'join', code: r.code, slot: 1 });   // (v103: sem bots, o outro time precisa de alguém)
+  entra(t, 'Beto', { v93: 1, v105: 1, v94: 1 }).manda({ type: 'join', code: r.code, slot: 1 });   // (v103: sem bots, o outro time precisa de alguém)
   A.manda({ type: 'config', motor: 'v93' });
   confira(t.motorDe(r) === 'v93', 'o admin pôs o motor de antes');
   A.manda({ type: 'config', motor: 'v94', fisica94: { vMax: 3.2, vChute: 99 } });
@@ -105,7 +105,7 @@ console.log('4) a versão de testes: o admin troca o motor e manda o perfil do m
   confira(r.partida && r.partida.R94 && r.partida.R94.vMax === 3.2, 'a partida usa o perfil do admin');
   para(t);
   const t2 = nova({ motor: 'v94' });                                // (fora da versão de testes, o admin não mexe no motor)
-  const B = entra(t2, 'Bia', { v93: 1, v94: 1 });
+  const B = entra(t2, 'Bia', { v93: 1, v105: 1, v94: 1 });
   B.manda({ type: 'create', n: 1, map: 4, jogo: 'futebol', tempo: 0, bots: true, pub: false });
   const r2 = t2.salaDe(B.c);
   B.manda({ type: 'config', motor: 'v93', fisica94: { vMax: 3.2 } });

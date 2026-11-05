@@ -48,6 +48,7 @@ const {Clubes, Erro} = require('./clubes');
 const {GerenteAuto} = require('./partida/gerente');   // v83: as partidas autoritativas (a física no servidor)
 const {PartidaSala} = require('./partida/sala');      // v83: as salas 100% hospedadas (a física das salas no servidor)
 const NUCLEO = require('./partida/nucleo');
+const AVISO_V105 = 'Tem jogo novo (a física das salas mudou): atualize o jogo — recarregue a página ou feche e abra o app — para jogar online.';
 // v94 · o motor próprio (server/partida/motor.js): só carrega se existir (o mesmo arquivo vai no jogo, para a previsão)
 let M94 = null; try { M94 = require('./partida/motor'); } catch (_) { M94 = null; }           // v92: o núcleo compartilhado da física das salas (o perfil de cada sala)
 const social88 = require('./social88');               // v88: amigos, convites, chats novos, bloqueio e denúncia
@@ -176,6 +177,15 @@ class Turma {
     this.motorPadrao = mp === 'v94' && M94 ? 'v94' : 'v93';
   }
   fisicaDe(r){ return r.fisica || this.fisicaPadrao; }   // v92: o perfil que vale na sala
+  // v105 (a pedido: "tirar todo lag possível das partidas online"): as salas mandam 60 quadros por segundo (eram 30) — no
+  // simulador da rede (tests/v102/sim.mjs) as correções da previsão caem pela metade (a da sua tampinha no 4G ruim: 6,1 → 2,1 px
+  // no p95; o erro da bola: 16 → 11 px), por ~20 KB/s num 2v2. As salas do mapa da Oficina e as do Rachão seguem com 30 (os
+  // motores delas); o painel de testes ainda escolhe; RACHA_QUADROS=30 volta ao de antes.
+  quadrosDe(r){
+    if (r.quadros === 30 || r.quadros === 60) return r.quadros;
+    if (r.custom || r.rachao) return 30;
+    return process.env.RACHA_QUADROS === '30' ? 30 : 60;
+  }
   motorDe(r){ if (this.temChutes(r)) return 'v93'; return r.motor === 'v94' && M94 ? 'v94' : r.motor === 'v93' ? 'v93' : this.motorPadrao; }   // v94 · v99: com os chutes do Rachão, o núcleo
   temChutes(r){ return !!r.chutes && !r.custom && !r.rachao && !r.ranked && (r.jogo || 'futebol') === 'futebol'; }   // v99: a sala joga com os chutes do Rachão
   resolvido94(r){                                        // v94: o perfil do motor novo já resolvido (os aparelhos usam os mesmos números)
@@ -352,6 +362,10 @@ class Turma {
     c.v94 = m.v94 === 1;                                 // v94: o aparelho tem o motor próprio (entende o m94 dos quadros)
     c.rch = m.rch === 1;                                 // v98: o aparelho conhece as salas do Rachão (a página antiga guardada num aparelho, não)
     c.cr99 = m.cr === 1;                                 // v99: o aparelho conhece os chutes do Rachão nas salas (cavadinha, curva e super)
+    // v105: a física das salas mudou (o jogo de corpo e a virada na hora, no núcleo): a página do jogo de antes (a v93 até a
+    // v104 — o app guardado no fundo, a aba esquecida) preveria a sua tampinha com a física velha (trancos a cada virada). Ela
+    // não entra nas salas do RACHA nem na ranqueada: o aviso diz para atualizar. (Quem não manda o v93 não é a página do jogo.)
+    c.velho105 = c.v93 && m.v105 !== 1;
     const velho = this.porId.get(id);
     if (velho && velho !== c){                           // o mesmo jogador abriu de novo (voltou a internet, ou outra aba): a nova fica
       velho.substituido = true;
@@ -373,6 +387,9 @@ class Turma {
       const rch = !!resume.rachao;                       // volta para a sala com os chutes do Rachão (nem para a do Rachão): sai como quem caiu
       this.sai(c, 'caiu');                               // (o lugar fica guardado 90 s para a página nova) e o aviso diz para atualizar
       this.erro(c, rch ? 'Esta é uma sala do Rachão: atualize o jogo (recarregue a página) para entrar.' : 'Esta sala tem os chutes do Rachão: atualize o jogo (recarregue a página) para entrar.', rch ? 'rachao_velho' : 'chutes_velho');
+    } else if (c.sala && resume && !resume.rachao && c.velho105){   // v105: a página de antes não volta para a sala do RACHA
+      this.sai(c, 'caiu');
+      this.erro(c, AVISO_V105, 'jogo_velho');
     }
     if (c.sala){                                         // ficou com a sala da conexão antiga: a tela dela volta
       const r = resume, eu = r.members.find(x => x.id === id);
@@ -397,7 +414,7 @@ class Turma {
     return {code:r.code, name:r.name, host:srv ? 'srv' : r.host, admin:srv && !r.ranked ? r.host : null, servidor:srv, n:r.n, map:r.map, jogo:r.jogo, tempo:r.tempo, bots:r.bots, pub:r.pub, state:r.state, ranked:!!r.ranked,
       round:r.round, roster:r.roster, members:r.members, tournament:r.tournament ? {name:r.tournament.name, rounds:r.tournament.rounds, matches:r.tournament.matches, champion:r.tournament.champion} : null,
       oficial:false, regra:r.regra || '', relogio:r.regra === 'v80' && r.state === 'playing' ? this.relogioDe(r) : null,   // v80: a regra e o relógio do servidor
-      nucleo:NUCLEO.VERSAO, fisica:srv ? this.fisicaDe(r) : null, quadros:r.quadros === 60 ? 60 : 30, experimental:this.experimental,
+      nucleo:NUCLEO.VERSAO, fisica:srv ? this.fisicaDe(r) : null, quadros:this.quadrosDe(r), experimental:this.experimental,
       motor:srv && !r.custom && !r.rachao ? this.motorDe(r) : null, motorRodada:srv && r.partida && !r.custom && !r.rachao ? r.partida.motor : null,   // v94: o motor da sala e o da rodada que está rolando
       motor94:M94 ? M94.VERSAO : null, fisica94:srv && !r.custom && !r.rachao && (this.motorDe(r) === 'v94' || (r.partida && r.partida.motor === 'v94')) ? (r.partida && r.partida.R94 || this.resolvido94(r)) : null,   // v92: o perfil da física (a previsão do aparelho usa os mesmos números)
       E:r.E || 2, mapa:r.custom || null, rankOff:!!(r.custom && r.rankOff),   // v92 · OFICINA: a sala com mapa personalizado (o mapa vai separado, no mapa_sala; a partida é a PartidaMapa) · v95: o RANK OFF
@@ -546,6 +563,7 @@ class Turma {
     if (!this.balde(c, 'criaSala', .2, 3)) return this.erro(c, 'Calma: espere um pouco para criar outra sala.');
     if (this.salas.size >= MAX_SALAS) return this.erro(c, 'O servidor está cheio de salas agora. Tente daqui a pouco.');
     if (m.rachao) return this.criaRachao(c, m);         // v98: a sala do Rachão (o campo e as opções; a partida no motor do Rachão)
+    if (c.velho105) return this.erro(c, AVISO_V105, 'jogo_velho');   // v105: a página de antes (a física das salas mudou)
     let mp = null;                                       // v92 · OFICINA: a sala com um mapa publicado (m.mapa) ou com o rascunho do editor (m.mapaDados)
     if (m.mapa || m.mapaDados){ mp = this.mapaDaSala(c, m); if (mp.erro) return this.erro(c, mp.erro, 'mapa'); }
     const fx = mp && m.fisicaSala ? this.comFisicaSala(mp.mapa, m.fisicaSala) : null;   // (a física da sala, escolhida no CRIAR SALA)
@@ -625,6 +643,7 @@ class Turma {
     if (!r) return this.erro(c, 'Sala não encontrada. Confira o código (ela fecha quando todo mundo sai).');
     if (r.rachao && !c.rch) return this.erro(c, 'Esta é uma sala do Rachão: atualize o jogo (recarregue a página) para entrar.', 'rachao_velho');   // v98
     if (this.temChutes(r) && !c.cr99) return this.erro(c, 'Esta sala tem os chutes do Rachão: atualize o jogo (recarregue a página) para entrar.', 'chutes_velho');   // v99
+    if (!r.rachao && c.velho105) return this.erro(c, AVISO_V105, 'jogo_velho');   // v105: a página de antes (a física das salas mudou)
     const rem = r.removidos.get(c.id);
     if (rem && rem > Date.now()) return this.erro(c, 'Você foi removido desta sala. Espere um pouco para voltar.');
     if (r.ranked && !r.members.some(x => x.id === c.id) && !r.reservas.has(c.id)) return this.erro(c, 'Essa é uma partida ranqueada: entre pela busca do JOGAR.');
@@ -789,7 +808,7 @@ class Turma {
     }
     const p = new PartidaSala({
       n:r.n, jogo:r.jogo, map:r.map, tempo:r.tempo, regra:r.regra, ranked:r.ranked, r80:this.r80, jogadores,
-      fisica:this.fisicaDe(r), fisicaBase:this.fisicaPadrao, quadros:r.quadros === 60 ? 60 : 30,   // v92: o perfil da sala
+      fisica:this.fisicaDe(r), fisicaBase:this.fisicaPadrao, quadros:this.quadrosDe(r),             // v92: o perfil da sala · v105: 60 quadros por segundo
       motor, fisica94:r.fisica94 || null,                                                           // v94: o motor e o perfil dele
       chutes:this.temChutes(r) ? r.chutes : null,                                                   // v99: os chutes do Rachão
       semBots:semBots && motor !== 'v94',                                                           // v103: quem sai deixa a vaga vazia (sem bot no lugar; o motor próprio da v94, de testes, ainda põe o bot)
@@ -1509,6 +1528,7 @@ class Turma {
   fila(c, m){
     if (!this.balde(c, 'fila', .5, 4)) return this.erro(c, 'Calma: espere um pouco para procurar de novo.');
     if (this.salaDe(c)) return this.erro(c, 'Saia da sala em que você está para jogar a ranqueada.', 'fila_sala');
+    if (c.velho105) return this.erro(c, AVISO_V105, 'jogo_velho');   // v105: a página de antes (a física das salas mudou)
     const n = inteiro(m.n, 1, 4, 2), pts = inteiro(m.pts, 0, 99999, 0);
     this.filaEsp.set(c.id, {c, n, pts, t0:this.agora()});
     this.manda(c, {type:'fila', on:true, n, espera:FILA_MAX_MS, mista:FILA_MISTA_MS, online:this.porId.size});

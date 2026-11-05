@@ -43,7 +43,7 @@ function conta(t, p, n, extra){
     ult: (tipo, f) => { for (let i = ws.caixa.length - 1; i >= 0; i--) if (ws.caixa[i].type === tipo && (!f || f(ws.caixa[i]))) return ws.caixa[i]; return null; },
     todas: (tipo, f) => ws.caixa.filter(x => x.type === tipo && (!f || f(x))),
     limpa: () => { ws.caixa.length = 0; }};
-  k.manda({type:'hello', name:n, skin:'T.AAAAxxxx', flag:'BR', v93:1, conta:bilhete(p, n, extra)});
+  k.manda({type:'hello', name:n, skin:'T.AAAAxxxx', flag:'BR', v93:1, v105:1, conta:bilhete(p, n, extra)});
   return k;
 }
 const grupo = k => { const m = k.ult('grupo'); return m ? m.g : undefined; };

@@ -451,7 +451,7 @@ console.log('\n6) as salas sem os chutes são as mesmas da v98 (quadro por quadr
       // (v102: o quadro leva também as direções e o crédito de cada um — Q.ent e Q.cred, para a previsão do aparelho; o resto
       //  tem de ser o da v98, byte a byte · v103: o CHUTE padrão ficou mais forte, 340 → 360 — a comparação com a v98 roda com o
       //  perfil da v98: o que se confere aqui é que os chutes do Rachão desligados não mudam a sala)
-      const o = { n, jogo, map: 0, tempo: 1, jogadores: jog, agora: () => ag, onSnapshot: d => { const { ent, cred, ...q } = d; h.update(JSON.stringify(q)); nq++; }, fisica: Object.assign({}, N.PERFIL_V92, { forcaChute: 340 }) };
+      const o = { n, jogo, map: 0, tempo: 1, jogadores: jog, agora: () => ag, onSnapshot: d => { const { ent, cred, ...q } = d; h.update(JSON.stringify(q)); nq++; }, fisica: Object.assign({}, N.PERFIL_V92, { forcaChute: 340, atritoJogJog: 0, viraNaHora: 0, direcoes: 32 }) };   // (v105: e o corpo, a virada e as direções de antes)
       if (chutes !== undefined) o.chutes = chutes;
       const P = new PartidaSala(o); let sq = 0;
       for (let t = 0; t < 60 * 70 && !P.encerrado; t++) {
@@ -481,7 +481,7 @@ function cliente(nome, extra) {
   c.abre = () => new Promise((res, rej) => {
     c.ws = new WebSocket('ws://127.0.0.1:' + porta + '/');
     c.ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (_) { return; } c.msgs.push(m); if (m.type === 'hello') { c.id = m.id; c.token = m.token; } };
-    c.ws.onopen = () => { c.manda(Object.assign({ type: 'hello', name: nome, token: c.token || undefined, v93: 1 }, extra || {})); res(); };
+    c.ws.onopen = () => { c.manda(Object.assign({ type: 'hello', name: nome, token: c.token || undefined, v93: 1, v105: 1 }, extra || {})); res(); };
     c.ws.onerror = rej;
   });
   c.manda = o => c.ws.send(JSON.stringify(o));

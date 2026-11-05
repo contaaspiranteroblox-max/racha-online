@@ -261,12 +261,12 @@ try {
   console.log('\n4) as salas: o token de quem saiu da conta, a conta banida, o comando antigo');
   const V = await conta('vit');
   const w1 = await socket({ cookie: V.token });
-  w1.manda({ type: 'hello', name: 'Vitima', v93: 1, cr: 1 });
+  w1.manda({ type: 'hello', name: 'Vitima', v93: 1, v105: 1, cr: 1 });
   const h1 = await w1.espera('hello');
   w1.fecha(); await espera(150);
   confere(h1 && /^c\d+$/.test(h1.id), 'a conta entra nas salas com o lugar dela (o id da conta) e recebe o token do aparelho', h1 && h1.id);
   const w2 = await socket();
-  w2.manda({ type: 'hello', name: 'Outro', token: h1.token, v93: 1, cr: 1 });
+  w2.manda({ type: 'hello', name: 'Outro', token: h1.token, v93: 1, v105: 1, cr: 1 });
   const h2 = await w2.espera('hello');
   w2.fecha(); await espera(100);
   confere(h2 && h2.id !== h1.id && !/^c/.test(h2.id) && h2.token !== h1.token, 'quem abre sem a conta com aquele token (o mesmo aparelho, depois de sair) entra como visitante novo — não como a conta', h2 && { id: h2.id });
@@ -277,7 +277,7 @@ try {
   confere(hb && hb.id && !/^c/.test(hb.id), 'e no Chat do Brasil também: aquele token sem a conta não fala como a conta', hb && hb.id);
   const bil = (await m('jogo.bilheteSala', {}, V.token)).bilhete;
   const w3 = await socket();
-  w3.manda({ type: 'hello', name: 'Vitima', conta: bil, v93: 1, cr: 1 });
+  w3.manda({ type: 'hello', name: 'Vitima', conta: bil, v93: 1, v105: 1, cr: 1 });
   const h3 = await w3.espera('hello');
   confere(h3 && h3.id === h1.id, 'com o bilhete da conta, o lugar da conta de novo', h3 && h3.id);
   await m('admin.punir', { termo: V.username, tipo: 'banimento', motivo: 'teste da v100', confirmacao: true }, dono);
@@ -285,7 +285,7 @@ try {
   await w3.fechada();
   confere(err && w3.fechou === 4003, 'banida no RACHA CONTROL: a conexão dela nas salas cai na hora (código 4003)', { err: err && err.message, fechou: w3.fechou });
   const w4 = await socket();
-  w4.manda({ type: 'hello', name: 'Vitima', conta: bil, v93: 1, cr: 1 });
+  w4.manda({ type: 'hello', name: 'Vitima', conta: bil, v93: 1, v105: 1, cr: 1 });
   const e4 = await w4.espera('error', (x) => x.codigo === 'conta_suspensa', 3000);
   await w4.fechada();
   confere(e4 && !w4.caixa.some((x) => x.type === 'hello'), 'e o bilhete de antes (ainda no prazo) não abre outra conexão', e4 && e4.message);
@@ -300,12 +300,12 @@ try {
   const V2 = await m('auth.entrar', { identificador: V.username, senha: 'senha12345' });
   const bil2 = (await m('jogo.bilheteSala', {}, V2.token)).bilhete;
   const w7 = await socket();
-  w7.manda({ type: 'hello', name: 'Vitima', conta: bil2, v93: 1, cr: 1 });
+  w7.manda({ type: 'hello', name: 'Vitima', conta: bil2, v93: 1, v105: 1, cr: 1 });
   const h7 = await w7.espera('hello');
   w7.fecha();
   confere(h7 && h7.id === h1.id, 'o RACHA CONTROL tirou o banimento: com o bilhete novo, a conta volta para as salas na hora (sem reiniciar o servidor)', h7 && h7.id);
   const w5 = await socket();
-  w5.manda({ type: 'hello', name: 'Spam', v93: 1 });
+  w5.manda({ type: 'hello', name: 'Spam', v93: 1, v105: 1 });
   await w5.espera('hello');
   for (let i = 0; i < 400; i++) w5.manda({ type: 'auto_status' });
   await espera(600);
@@ -324,7 +324,7 @@ try {
   S = await sobe({ RACHA_CONEXOES_IP: '5', RACHA_PRAZO_HELLO_MS: '2500', RACHA_COOKIE_SEGURO: '1' });
   BASE = 'http://127.0.0.1:' + S.porta;
   const ws = [];
-  for (let i = 0; i < 6; i++) { const k = await socket(); if (i < 5) k.manda({ type: 'hello', name: 'Gente' + i, v93: 1 }); ws.push(k); }
+  for (let i = 0; i < 6; i++) { const k = await socket(); if (i < 5) k.manda({ type: 'hello', name: 'Gente' + i, v93: 1, v105: 1 }); ws.push(k); }
   const recusada = ws[5];
   await recusada.fechada(); await espera(150);
   const e6 = recusada.caixa.find((x) => x.type === 'error' && x.codigo === 'conexoes');
@@ -335,7 +335,7 @@ try {
   for (const k of ws.concat([nova])) k.fecha();
   await espera(300);
   const muda = await socket(), fala = await socket();
-  fala.manda({ type: 'hello', name: 'Fala', v93: 1 });
+  fala.manda({ type: 'hello', name: 'Fala', v93: 1, v105: 1 });
   await muda.fechada(5000);
   confere(muda.fechou === 4008 && fala.fechou === null, 'a conexão que não se apresenta (sem hello) cai no prazo (RACHA_PRAZO_HELLO_MS) e não fica ocupando lugar; a que se apresentou fica', [muda.fechou, fala.fechou]);
   fala.fecha();

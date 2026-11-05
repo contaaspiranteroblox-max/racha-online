@@ -4,11 +4,12 @@ INICIAR-TESTES-NO-WINDOWS.bat), abre o endereço num "celular" (844 × 390, toqu
   VERSÃO OFICIAL (tools/v92/pacote.py --producao):
     1. o ZIP não tem o INICIAR-TESTES-NO-WINDOWS.bat nem o experimental no config.js;
     2. o jogo abre sem erro, com window.RACHA_V92 = {experimental: false}: sem a aba TESTES v92 nos AJUSTES e o F2 não abre nada;
-    3. a sala do servidor oficial não aceita o perfil da física do admin (mandou 18 u/s e 60 quadros/s: fica o padrão,
-       14,1 u/s, o toque armado de 6 passos e 30 quadros/s);
+    3. a sala do servidor oficial não aceita o perfil da física do admin (mandou 18 u/s e 30 quadros/s: fica o padrão,
+       14,1 u/s, o toque armado de 6 passos e 60 quadros/s — v105: o padrão das salas passou de 30 para 60 quadros/s, então o
+       admin pede 30 para o teste ver a diferença);
   VERSÃO DE TESTES (tools/v92/pacote.py):
     4. o jogo abre com o modo de testes (a aba TESTES v92 é a primeira dos AJUSTES; o F2 abre o painel);
-    5. a sala do servidor de testes aceita o perfil do admin (18 u/s e 60 quadros/s).
+    5. a sala do servidor de testes aceita o perfil do admin (18 u/s e 30 quadros/s).
   NOS DOIS (v98): o servidor tem as salas do Rachão (o motor do Rachão gerado da página: a sala, o COMEÇAR e os quadros);
   NOS DOIS (v99): o servidor tem os chutes do Rachão nas salas do RACHA (a sala com a cavadinha, a curva e o super, os quadros com a bola no alto).
   v100 (segurança), com o 3º ZIP (tools/v92/pacote.py --lancamento): o do lançamento sem o painel, sem o experimental, sem o
@@ -28,7 +29,7 @@ SALA = r"""(async (porta) => {             // o protocolo das salas, cru: hello 
   ws.send(JSON.stringify({type:'create', n:1, pub:false, name:'pacote'}));
   const r0 = await espera(m => m.type === 'room', 5000); if (!r0) return {erro:'sem sala'};
   msgs.length = 0;
-  ws.send(JSON.stringify({type:'config', fisica:{velJog:18}, quadros:60}));
+  ws.send(JSON.stringify({type:'config', fisica:{velJog:18}, quadros:30}));   // (v105: o padrão é 60; o admin pede 30 para a diferença aparecer)
   await new Promise(res => setTimeout(res, 800));
   const r1 = [...msgs].reverse().find(m => m.type === 'room') || r0;
   ws.close();
@@ -136,13 +137,13 @@ async def confere(pw, P, zipp, experimental):
             if experimental:
                 P.confere(o['v92'] == {'versao': 'v92.1', 'experimental': True} and o['aba'] and o['primeira'] == 'ajx-t-v92' and o['f2']['testes'],
                           'a versão de testes abre com o painel (a aba TESTES v92 é a primeira dos AJUSTES; o F2 abre o painel)', o)
-                P.confere(s.get('experimental') is True and s.get('velJog') == 18 and s.get('quadros') == 60,
-                          'o servidor de testes (RACHA_EXPERIMENTAL=1) aceita o perfil do admin: 18 u/s e 60 quadros/s', s)
+                P.confere(s.get('experimental') is True and s.get('velJog') == 18 and s.get('quadros') == 30,
+                          'o servidor de testes (RACHA_EXPERIMENTAL=1) aceita o perfil do admin: 18 u/s e 30 quadros/s', s)
             else:
                 P.confere(o['url'] == '/game/racha.html' and o['v92'] == {'versao': 'v92.1', 'experimental': False} and not o['aba'] and not o['f2']['aberto'],
                           'a versão oficial abre (/game/racha.html) com o modo de testes desligado: sem a aba TESTES v92 e o F2 não abre nada', o)
-                P.confere(s.get('experimental') is False and s.get('velJog') == 14.1 and s.get('bufferToque') == 6 and s.get('jogRede') == 1 and s.get('quadros') == 30 and s.get('nucleo') == 'v92.1',
-                          'o servidor oficial não aceita o perfil do admin (mandou 18 u/s e 60/s): fica o padrão (14,1 u/s, toque armado 6, a rede segura, 30 quadros/s)', s)
+                P.confere(s.get('experimental') is False and s.get('velJog') == 14.1 and s.get('bufferToque') == 6 and s.get('jogRede') == 1 and s.get('quadros') == 60 and s.get('nucleo') == 'v92.1',
+                          'o servidor oficial não aceita o perfil do admin (mandou 18 u/s e 30/s): fica o padrão (14,1 u/s, toque armado 6, a rede segura, 60 quadros/s da v105)', s)
             r = await pg.evaluate(SALA_RCH + '(%d)' % porta)
             P.confere(r.get('campo') == 'fliper' and r.get('nome') == 'Fliperama' and 'Caos' in (r.get('resumo') or '') and r.get('jogadores') == 2 and r.get('bolas', 0) >= 1,
                       'v98: o servidor do ZIP %s tem as salas do Rachão (o Fliperama no Caos 1x1: a sala, o COMEÇAR e os quadros do motor do Rachão)' % nome, r)

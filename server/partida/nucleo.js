@@ -12,7 +12,8 @@
        contador de toques no comando, que não deixa um toque se perder na rede).
    Os números vêm de um PERFIL (em u, as unidades do jogo; 1 u = 19 px). PERFIL_V91 reproduz a v91 exatamente;
    PERFIL_V92 é o padrão novo (os mesmos números de física + o toque armado e a rede do gol segurando a tampinha também
-   no servidor, como no jogo offline; desde a v103, o CHUTE uns 6% mais forte: 360, era 340).
+   no servidor, como no jogo offline; desde a v103, o CHUTE uns 6% mais forte: 360, era 340; desde a v105, o JOGO DE
+   CORPO: as tampinhas encostadas se seguram em vez de escorregar uma em volta da outra — atritoJogJog).
    O painel de testes da versão experimental troca o perfil; a versão oficial usa o
    padrão e o servidor só aceita perfil de fora com RACHA_EXPERIMENTAL=1.
    Determinístico: nada de Math.random aqui (o servidor e a previsão precisam dar o mesmo resultado).
@@ -52,6 +53,8 @@
     quiqueTrave: 0.6,     // bola × trave
     quiqueRede: 0.15,     // bola × rede
     quiqueJogJog: 0.3,    // tampinha × tampinha
+    atritoJogJog: 0,      // v105: o atrito tampinha × tampinha (o jogo de corpo); 0 = escorrega como até a v104
+    viraNaHora: 0,        // v105: 1 = a tampinha vai na hora para onde o analógico aponta (0 = a velocidade aditiva com teto de sempre)
     quiqueJogParede: 0.65,// tampinha × muro da área
     limiarQuique: 1,      // u/s: batida mais lenta que isso não quica
     direcoes: 32,         // setores do analógico (0 = livre)
@@ -80,14 +83,25 @@
   // teto, então o chute sozinho fica um pouco mais perto dele. O PASSE fica em 212,5: ele decide o DB com a bola rolando (a
   // bola não pode sair do alcance antes do CHUTE do passo seguinte) e qualquer aumento derruba o DB — no laboratório
   // (tests/v92_db/lab.cjs, o cenário "normal"), com o PASSE a 213 a chance cai de 76% para 31%; a 220, para 0%.
-  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360 }));
+  // v105 (a pedido: "quando se encostam para disputar a bola eles deslizam muito"): o JOGO DE CORPO — o atrito entre as
+  // tampinhas (0,5) e o contato que já vem encostado segurado antes de andar (contatoJog). Sem ele, duas tampinhas correndo
+  // uma contra a outra com um desvio de 0,1 u passavam uma pela outra em 0,4 s, e quem empurrava de lado escorregava em volta
+  // do outro (mais de 120° por segundo). Agora: de frente, elas se seguram (o empurra-empurra); empurrando quem está parado
+  // até uns 27° da linha dos centros, você leva ele junto; mais de lado que isso, você ainda passa por ele (escorregando mais
+  // devagar contra quem segura). A bola, o chute, o DB e o resto da física: os mesmos números.
+  // v105 (a pedido: "o analógico está com um mini delay"): a VIRADA NA HORA — com a velocidade aditiva com teto (a de sempre:
+  // a direção nova SOMADA à velocidade de antes e cortada no teto), cada virada só chegava na metade do caminho por passo: uma
+  // curva de 30° levava uns 6 passos (100 ms) para valer, a de 90° passava uns 80 ms ainda escorregando para o lado de antes
+  // e a meia-volta parava um passo inteiro (17 ms) antes de voltar. Agora a tampinha vai na hora para onde o analógico aponta
+  // (a velocidade toda, na direção nova), e o analógico tem 64 direções (eram 32: os degraus de 11,25° viram 5,6°).
+  const PERFIL_V92 = Object.freeze(Object.assign({}, PERFIL_V91, { bufferToque: 6, jogRede: 1, forcaChute: 360, atritoJogJog: 0.5, viraNaHora: 1, direcoes: 64 }));
 
   // os limites que o painel e o servidor aceitam (o servidor corta qualquer coisa fora disto)
   const LIMITES = Object.freeze({
     rJog: [1.2, 3.2], raioChute: [1.4, 4.2], massaJog: [0.3, 6], velJog: [7, 24],
     forcaPasse: [80, 500], forcaChute: [120, 700], rBola: [0.5, 1.8], massaBola: [2, 30], limiteBola: [20, 90],
     fatorBola: [0.97, 0.998], amortAngular: [0, 4], atritoBola: [0, 1], atritoJog: [0, 1], atritoTrave: [0, 1],
-    quiqueBola: [0, 0.9], quiqueParede: [0, 1], quiqueTrave: [0, 1], quiqueRede: [0, 0.8], quiqueJogJog: [0, 1],
+    quiqueBola: [0, 0.9], quiqueParede: [0, 1], quiqueTrave: [0, 1], quiqueRede: [0, 0.8], quiqueJogJog: [0, 1], atritoJogJog: [0, 1], viraNaHora: [0, 1],
     quiqueJogParede: [0, 1], limiarQuique: [0, 4], direcoes: [0, 64], bufferToque: [0, 15], jogRede: [0, 1],
     cooldownBotao: [0, 0.1],
     dbModo: [0, 1], dbJanelaParada: [0, 6], dbProtecaoParada: [0, 12], dbJanelaMovel: [0, 6], dbProtecaoMovel: [0, 12],
@@ -95,7 +109,7 @@
     dbAnulaMs: [0, 10], dbJanelaMs: [1, 16],
   });
   const FOLGA_CHUTE = 0.5;                             // v95: o anel do chute passa do corpo pelo menos isto (u)
-  const SIM_NAO = new Set(['jogRede', 'dbModo', 'dbParede', 'dbOrdem', 'dbRelogio']);
+  const SIM_NAO = new Set(['jogRede', 'dbModo', 'dbParede', 'dbOrdem', 'dbRelogio', 'viraNaHora']);
   const INTEIROS = new Set(['bufferToque', 'dbJanelaParada', 'dbProtecaoParada', 'dbJanelaMovel', 'dbProtecaoMovel', 'dbParadaPassos']);
 
   function perfilLimpo(p, base) {                     // um perfil de fora (do painel ou da rede): só os campos conhecidos, cortados
@@ -125,7 +139,7 @@
       ATRITO_JOG_BOLA: Math.sqrt(p.atritoJog * p.atritoBola), ATRITO_TRAVE_BOLA: Math.sqrt(p.atritoTrave * p.atritoBola),
       QUIQUE_BOLA: p.quiqueBola,
       Q_PAREDE: Math.max(p.quiqueBola, p.quiqueParede), Q_TRAVE: Math.max(p.quiqueBola, p.quiqueTrave), Q_REDE: Math.max(p.quiqueBola, p.quiqueRede),
-      Q_JOG_JOG: p.quiqueJogJog, Q_JOG_PAREDE: p.quiqueJogParede,
+      Q_JOG_JOG: p.quiqueJogJog, Q_JOG_PAREDE: p.quiqueJogParede, ATRITO_JOG_JOG: p.atritoJogJog, VIRA_NA_HORA: !!p.viraNaHora,
       LIMIAR_QUIQUE: U(p.limiarQuique),
       DIRECOES: p.direcoes, BUFFER_TOQUE: p.bufferToque, JOG_REDE: !!p.jogRede, COOLDOWN_BOTAO: p.cooldownBotao,
       // o DB por estados (experimental): [janela, proteção] em passos por contexto (0 parada, 1 andando, 2 parede)
@@ -659,7 +673,7 @@
         for (const p of G.POSTS) hitPoint(q, p[0], p[1], G.POST_R, 0.3, 0, lq);
       }
     }
-    for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], C.Q_JOG_JOG, 0);
+    for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) hitBodies(J[i], J[k], C.Q_JOG_JOG, C.ATRITO_JOG_JOG);
     if (M.estado === 'saida') for (const q of J) barreiraUm(M, q);
     for (const s of G.WALL_SEGS) hitSeg(B, s[0], s[1], s[2], s[3], C.Q_PAREDE, C.ATRITO_BOLA, lq);
     hitBox(B, G.GL, G.GT, G.GR, G.GB, C.Q_PAREDE, C.ATRITO_BOLA, lq);
@@ -695,17 +709,57 @@
        cb.toques()              — depois de cada subpasso (autoria);
        cb.gol(lado) → 'para'?   — a bola cruzou a linha num subpasso (devolver 'para' interrompe o passo).
      Tampinha cinemática (a previsão do aparelho para os outros jogadores): não usa entrada nem é empurrada. */
+  /* ---------- v105 · O JOGO DE CORPO: o contato que já vem encostado ----------
+     As batidas acontecem depois de andar: a tampinha encostada em outra anda o primeiro subpasso com a velocidade toda do
+     analógico (inclusive a parte de lado) e só então a batida corrige — com isso ela escorregava em volta da outra mesmo com
+     atrito. Aqui, no começo do passo (as velocidades do analógico já postas, antes de andar), cada par que já está encostado
+     (até FOLGA_CORPO px de folga) perde a parte da velocidade que aperta um contra o outro (sem quique: é o empurra-empurra,
+     não uma trombada) e o atrito (até atritoJogJog × o aperto) segura o deslize de lado. A trombada de quem chega correndo
+     continua sendo a batida de sempre (com o quique tampinha × tampinha). pode(a, b): quem bate em quem (o motor dos mapas
+     tem a regra de colisão entre os times). */
+  const FOLGA_CORPO = 1;
+  // o impulso do passo de uma tampinha: a direção do analógico (d) → a velocidade. v105: com VIRA_NA_HORA, a velocidade toda
+  // na direção nova; sem, a de sempre (somada à de antes e cortada no teto). Sem direção: parada.
+  function anda(q, d, C) {
+    if (d.mx || d.my) {
+      if (C.VIRA_NA_HORA) { q.vx = d.mx * C.VEL_JOG; q.vy = d.my * C.VEL_JOG; return; }
+      q.vx += d.mx * C.VEL_JOG; q.vy += d.my * C.VEL_JOG;
+      const v = Math.hypot(q.vx, q.vy);
+      if (v > C.VEL_JOG) { q.vx *= C.VEL_JOG / v; q.vy *= C.VEL_JOG / v; }
+    } else { q.vx = 0; q.vy = 0; }
+  }
+  function contatoJog(J, C, pode) {
+    const mu = C.ATRITO_JOG_JOG;
+    if (!(mu > 0)) return;
+    for (let i = 0; i < J.length; i++) for (let k = i + 1; k < J.length; k++) {
+      const a = J[i], b = J[k];
+      if (pode && !pode(a, b)) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+      if (d >= a.r + b.r + FOLGA_CORPO || d < 1e-6) continue;
+      const ia = a.cinematico ? 0 : 1 / a.m, ib = b.cinematico ? 0 : 1 / b.m, is = ia + ib;
+      if (is <= 0) continue;
+      const nx = dx / d, ny = dy / d, vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (vn >= 0) continue;
+      const j = -vn / is;
+      a.vx -= j * ia * nx; a.vy -= j * ia * ny;
+      b.vx += j * ib * nx; b.vy += j * ib * ny;
+      const tx = -ny, ty = nx, vt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
+      let jt = -vt / is;
+      const lim = mu * j;
+      if (jt > lim) jt = lim; else if (jt < -lim) jt = -lim;
+      a.vx -= jt * ia * tx; a.vy -= jt * ia * ty;
+      b.vx += jt * ib * tx; b.vy += jt * ib * ty;
+    }
+  }
+
   function passo(M, C, cb) {
     const B = M.B, CR = M.cr ? C.CR : null, J = presentes(M.jog);   // (v103: sem as vagas vazias)
     for (const q of J) {
       if (q.cinematico) continue;
       const d = direcao(q.mx, q.my, C.DIRECOES);
-      if (d.mx || d.my) {
-        q.vx += d.mx * C.VEL_JOG; q.vy += d.my * C.VEL_JOG;
-        const v = Math.hypot(q.vx, q.vy);
-        if (v > C.VEL_JOG) { q.vx *= C.VEL_JOG / v; q.vy *= C.VEL_JOG / v; }
-      } else { q.vx = 0; q.vy = 0; }
+      anda(q, d, C);
     }
+    contatoJog(J, C);                                // v105: o jogo de corpo (só com atrito tampinha × tampinha)
     const fb = CR && (B.z > 0 || B.vz > 0) ? CR.FREIO_AR : C.FATOR_BOLA;   // (v99: no ar a bola freia menos)
     B.vx *= fb; B.vy *= fb;
     B.w *= 1 / (1 + C.AMORT_ANGULAR / TPS);
@@ -739,11 +793,7 @@
      passo de sempre (a velocidade aditiva com teto, 2 subpassos). */
   function passoSolo(M, C, q, c) {
     const G = M.G, lq = C.LIMIAR_QUIQUE, d = direcao(c ? c.x : 0, c ? c.y : 0, C.DIRECOES);
-    if (d.mx || d.my) {
-      q.vx += d.mx * C.VEL_JOG; q.vy += d.my * C.VEL_JOG;
-      const v = Math.hypot(q.vx, q.vy);
-      if (v > C.VEL_JOG) { q.vx *= C.VEL_JOG / v; q.vy *= C.VEL_JOG / v; }
-    } else { q.vx = 0; q.vy = 0; }
+    anda(q, d, C);
     for (let i = 0; i < 2; i++) {
       q.x += q.vx * DT / 2; q.y += q.vy * DT / 2;
       hitBox(q, G.GL, G.GT, G.GR, G.GB, C.Q_JOG_PAREDE, 0, lq);
@@ -766,7 +816,7 @@
     reflect, hitPoint, hitSeg, hitBox, hitBodies, MODOS, MARGEM_X, MARGEM_Y, novoCampo, direcao,
     chute, novoBotao, botaoComando, botaoTick, curvaTick, curvaNoAr, cvSinal, cvMarca, CV_CARGA_S, CV_ARMA_S,
     dbContexto, dbFolga, dbPack, dbUnpack,
-    barreiraUm, colide, golCruzou, passo, passoSolo, novaBola, ajustaCorpos,
+    barreiraUm, colide, golCruzou, passo, passoSolo, novaBola, ajustaCorpos, contatoJog, FOLGA_CORPO, anda,
     // v99 · os chutes do Rachão
     crOpcoes, crLetras, crNovo, crZera, crZeraBola, crComando, crTick, crAlta, crAlcanca, crFator, crDepois, crGiro, crAltura, crPack, crUnpack, crForcaSuper,
   };

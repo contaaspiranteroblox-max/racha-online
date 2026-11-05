@@ -143,7 +143,8 @@ class Aparelho {
     const t = Math.max(0, Math.min(STEP, this.acc));
     const d = N.direcao(this.ultInp.mx, this.ultInp.my, C.DIRECOES), vale = M.estado === 'saida' || M.estado === 'jogo';
     let vx = 0, vy = 0;
-    if (vale && (d.mx || d.my)) { vx = eu.vx + d.mx * C.VEL_JOG; vy = eu.vy + d.my * C.VEL_JOG; const v = Math.hypot(vx, vy); if (v > C.VEL_JOG) { vx *= C.VEL_JOG / v; vy *= C.VEL_JOG / v; } }
+    if (vale && (d.mx || d.my) && C.VIRA_NA_HORA) { vx = d.mx * C.VEL_JOG; vy = d.my * C.VEL_JOG; }   // (v105: a virada na hora, como o jogo)
+    else if (vale && (d.mx || d.my)) { vx = eu.vx + d.mx * C.VEL_JOG; vy = eu.vy + d.my * C.VEL_JOG; const v = Math.hypot(vx, vy); if (v > C.VEL_JOG) { vx *= C.VEL_JOG / v; vy *= C.VEL_JOG / v; } }
     const o5 = this.modo === 'v95';
     let P = [Math.max(G.GL + eu.r, Math.min(G.GR - eu.r, eu.x + vx * t)) + (o5 ? this.ofP[0] : 0), Math.max(G.GT + eu.r, Math.min(G.GB - eu.r, eu.y + vy * t)) + (o5 ? this.ofP[1] : 0)];
     const bp = this.bolaAgora(t);
@@ -232,7 +233,7 @@ export function simula(o = {}) {
   const desce = apar.map((_, i) => new Link(sim, rede, radios[i], rng(seed * 131 + i)));
   const verdade = [];
   const P = new PartidaSala({
-    n: 1, jogo: 'futebol', map: 4, tempo: 0, regra: null, quadros: o.quadros || 30, fila: o.fila || 'v96',
+    n: 1, jogo: 'futebol', map: 4, tempo: 0, regra: null, quadros: o.quadros || 30, fila: o.fila || 'v96', fisica: o.fisica || undefined,   // (v105: o.fisica compara perfis — o jogo de corpo)
     jogadores: [{ netId: 'A', nome: 'Ana' }, { netId: 'B', nome: 'Beto' }], agora: () => sim.agora,
     onSnapshot: d => { const txt = JSON.stringify(d); apar.forEach((ap, i) => desce[i].envia(sim.agora, txt, m => ap.snapshot(JSON.parse(m), sim.agora))); },
     onGol: () => {}, onAviso: () => {}, onFim: () => {},

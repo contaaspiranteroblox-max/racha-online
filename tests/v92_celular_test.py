@@ -163,7 +163,7 @@ def perfil_js(nome):
     if nome == 'v92':
         # (v103: o CHUTE do padrão ficou 6% mais forte, 340 → 360 — este teste compara a v92 com a v91 com a MESMA física, então
         #  a sessão da v92 roda com o CHUTE de antes; a força nova é conferida no v86_chute, no v92_nucleo e no v92_db)
-        return "(() => { if (typeof V92 !== 'undefined'){ const c = v92Limpa(V92_PADRAO); c.fisica = Object.assign({}, c.fisica, {forcaChute: 340}); V92.cfg = c; v92Aplica(); } return 1; })()"
+        return "(() => { if (typeof V92 !== 'undefined'){ const c = v92Limpa(V92_PADRAO); c.fisica = Object.assign({}, c.fisica, {forcaChute: 340, atritoJogJog: 0, viraNaHora: 0, direcoes: 32}); V92.cfg = c; v92Aplica(); } return 1; })()"
     if nome == 'v91 (A ⇄ B)':
         return "(() => { V92.cfg = v92Limpa(V92_V91); v92Aplica(); return 1; })()"
     return "1"

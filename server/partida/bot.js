@@ -251,6 +251,29 @@ function decide(p, q) {                              // (uma vez por passo, para
   q.suBot = false; if (q.botAi) q.botAi.soltar = false;   // v99: o botão do super (só fica segurado enquanto o lance pede)
   decide1(p, q);
   if (q.cr && q.cr.segura && !q.suBot && !q.botAi.soltar) { q.cr.segura = false; q.cr.cT = 0; }   // v99: desistiu do lance: cancela sem chutar
+  desencalha(p, q);
+}
+/* v105 · O BOT NÃO FICA ENCALHADO NO EMPURRA-EMPURRA. Com o jogo de corpo (o atrito tampinha × tampinha do núcleo), duas
+   tampinhas que se empurram de frente se seguram — gente dá a volta; o bot empurrava para sempre (num 3x3 de bots, dois
+   ficaram 10 minutos parados um contra o outro do lado da bola). Agora: andando para alguém e parado (menos de 30% da corrida)
+   encostado em outra tampinha por 12 passos (200 ms), ele desvia 70° por 24 passos (400 ms), sempre para o mesmo lado em volta
+   de quem segura (os dois do empurra-empurra desviam no mesmo sentido: passam um pelo outro) e volta ao plano. Sem o atrito
+   (o perfil da v91) nada disso acontece: ninguém fica parado empurrando. */
+const ENCALHE_PASSOS = 12, DESVIO_PASSOS = 24, DESVIO = 70 * Math.PI / 180, COS_D = Math.cos(DESVIO), SIN_D = Math.sin(DESVIO);
+function desencalha(p, q) {
+  const ai = q.botAi; if (!ai) return;
+  if (!(q.mx || q.my) || p.estado !== 'jogo') { ai.encT = 0; ai.desvioT = 0; return; }
+  if (ai.desvioT > 0) {                              // desviando: a direção do plano girada (o mesmo sentido para todo mundo)
+    ai.desvioT--;
+    const mx = q.mx, my = q.my; q.mx = mx * COS_D - my * SIN_D; q.my = mx * SIN_D + my * COS_D;
+    return;
+  }
+  const C = K(p);
+  if (!(C.ATRITO_JOG_JOG > 0) || Math.hypot(q.vx, q.vy) >= 0.3 * C.VEL_JOG) { ai.encT = 0; return; }
+  let encosta = false;
+  for (const o of p.jog) { if (o !== q && !o.fora && Math.hypot(o.x - q.x, o.y - q.y) < q.r + o.r + 1.5) { encosta = true; break; } }
+  if (!encosta) { ai.encT = 0; return; }
+  if (++ai.encT >= ENCALHE_PASSOS) { ai.encT = 0; ai.desvioT = DESVIO_PASSOS; }
 }
 function decide1(p, q) {
   const ai = q.botAi, nv = NIVEIS[ai.nivel], G = p.G, B = p.B;

@@ -2,7 +2,8 @@
   1) o lobby nos tamanhos de tela (o computador, o celular deitado, o celular pequeno, o tablet 4:3, a tela 21:9): à vista só
      o perfil, as moedas, as gemas, o correio, o MENU, a tampinha, a vaga do grupo, a barra de atalhos (SALAS, TREINO, OFICINA,
      COFRE), o MODO e o JOGAR; o resto escondido (e guardado no MENU); nada sai da tela e nenhum botão fica por cima de outro
-     (v103: e o quadrado TELA CHEIA, antes do MENU, enquanto o jogo não está em tela cheia nem aberto como app);
+     (v103: e o quadrado TELA CHEIA, antes do MENU, enquanto o jogo não está em tela cheia nem aberto como app; v105: e a barra
+     do chat embaixo, entre os atalhos e o JOGAR, quando o jogo tem o Chat do Brasil — conferida com ela à vista em 2 tamanhos);
   2) cada atalho e cada item do MENU abre o mesmo que o botão de sempre; o MENU abre e fecha (o X, o fundo, o Esc); os
      números e os pontos vermelhos dos botões de sempre aparecem no item e no botão do MENU;
   3) a borda BOTÃO: no fim da lista (os códigos de sempre não mudam), grátis, logo depois da Lisa na faixa do editor, a cor
@@ -32,6 +33,7 @@ CAIXAS = """(() => {
   document.querySelectorAll('#lb .v101-vaga').forEach((e, i) => poe('vaga' + i, e));
   document.querySelectorAll('#lb .v102-doca-bt').forEach(e => poe('atalho:' + e.textContent.trim(), e));
   poe('modo', LB.modo); poe('jogar', LB.jogar);
+  poe('chat', CB.el && CB.el.classList.contains('c81-lobby') ? CB.el : null);   // v105: a barra do chat (a da partida), embaixo, quando tem o Chat do Brasil
   some('patente', document.querySelector('#lb .v91-pat')); some('chat', document.getElementById('lb-chat')); some('ajustes', document.getElementById('lb-ajustes'));
   some('sinal', document.querySelector('#lb .v101-sinal')); some('oficina', document.getElementById('ofi-lobby')); some('passe', document.querySelector('#lb .v88-passe'));
   some('missoes', LB.missoes); some('modo101', document.querySelector('#lb .v101-modo'));
@@ -47,11 +49,19 @@ def cruzam(a, b, folga=1):
     return a[0] < b[2] - folga and a[2] > b[0] + folga and a[1] < b[3] - folga and a[3] > b[1] + folga
 
 
-async def lobby_em(pw, P, w, h, nome):
-    b, pg, erros = await abre(pw, w=w, h=h, dsf=1)
+async def lobby_em(pw, P, w, h, nome, chat=False):
+    # chat=True (v105): com o Chat do Brasil (o endereço de um servidor e as mensagens de mentira, como no v81_test) a barra do
+    # chat aparece embaixo — as mesmas conferências, com ela na conta
+    b, pg, erros = await abre(pw, w=w, h=h, dsf=1, config={'modo': 'producao', 'servidor': '127.0.0.1:1'} if chat else None)
     try:
         await pg.wait_for_timeout(500)
+        if chat:
+            await rt(pg, """(() => { onbFim(); const t = Date.now(); BRASIL.estado = 'on'; BRASIL.online = 9; BRASIL.id = 'u1'; BRASIL.ws = {readyState:1, send(){}, close(){}};
+              BRASIL.msgs = [{id:'m1', from:'u2', nome:'CRIA7', skin:'', texto:'Bora 2v2?', t:t}]; cbPinta(); return 1; })()""")
+            await pg.wait_for_timeout(400)
         c = await rt(pg, CAIXAS)
+        if chat:
+            P.confere('chat' in [n for n, _ in c['L']], nome + ': a barra do chat da v105 à vista (com o Chat do Brasil)', [n for n, _ in c['L']])
         P.confere(c['v102'], nome + ': o lobby da v102 (classe v102)', c['v102'])
         nomes = [n for n, _ in c['L']]
         quer = ['perfil', 'grana0', 'grana1', 'correio', 'menu', 'tampinha', 'vaga1', 'atalho:SALAS', 'atalho:TREINO', 'atalho:OFICINA', 'atalho:COFRE', 'modo', 'jogar']
@@ -61,7 +71,12 @@ async def lobby_em(pw, P, w, h, nome):
         # v103: o pedido da tela cheia pôs UM botão a mais na barra de cima (o quadrado TELA CHEIA, antes do MENU). Ele só aparece
         # quando dá para usar e ainda não está em tela cheia: em tela cheia e no app instalado a conta volta para 13
         tela = 1 if 'telacheia' in nomes else 0
-        P.confere(c['toques'] <= 13 + tela, nome + ': no máximo 13 coisas para tocar (eram 26)' + (' + o TELA CHEIA da v103' if tela else ''), c['toques'])
+        # v105: o pedido do chat na tela do lobby põe a barra do chat da partida embaixo (UM botão a mais) quando o jogo tem o
+        # Chat do Brasil (o servidor do jogo). Este teste abre o arquivo, sem servidor: a barra não aparece e a conta continua a
+        # mesma; com ela na tela, conta mais 1 (e entra na conferência de nada fora da tela e nenhum botão por cima de outro).
+        # O tests/v105_chat_lobby_test.py confere a barra à vista em todos os tamanhos.
+        chat = 1 if 'chat' in nomes else 0
+        P.confere(c['toques'] <= 13 + tela + chat, nome + ': no máximo 13 coisas para tocar (eram 26)' + (' + o TELA CHEIA da v103' if tela else '') + (' + a barra do chat da v105' if chat else ''), c['toques'])
         P.confere(c['sub'].startswith('RANQUEADA · '), nome + ': o MODO diz RANQUEADA e o campo', c['sub'])
         fora = [n for n, r in c['L'] if r[0] < -1 or r[1] < -1 or r[2] > c['vw'] + 1 or r[3] > c['vh'] + 1]
         P.confere(not fora, nome + ': nada sai da tela (%d peças)' % len(c['L']), fora)
@@ -113,6 +128,8 @@ async def principal():
         print('1) o lobby nos tamanhos de tela')
         for w, h, nome in TAMANHOS:
             await lobby_em(pw, P, w, h, nome)
+        for w, h, nome in TAMANHOS[:2]:                       # v105: com o Chat do Brasil, a barra do chat embaixo (um botão a mais)
+            await lobby_em(pw, P, w, h, nome + ' com o chat', chat=True)
 
         print('2) os atalhos e o MENU abrem o mesmo que os botões de sempre')
         PARES = [('SALAS', "document.querySelector('#rx .rx-bt.v71-tile[data-rx=\"salas\"]').click()"),

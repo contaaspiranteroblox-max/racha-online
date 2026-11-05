@@ -94,8 +94,8 @@ async def principal():
             sess += [A, Bp]
             f = s0['fisica'] or {}
             P.confere(ok and s0['nucleo'] == 'v92.1', 'a sala manda o núcleo (v92.1) e a partida começa', s0['nucleo'])
-            P.confere(f.get('velJog') == 14.1 and f.get('bufferToque') == 6 and f.get('jogRede') == 1 and s0['quadros'] == 30,
-                      'o perfil da sala é o padrão (14,1 u/s, toque armado de 6 passos, a rede segura) e 30 quadros/s', {k: f.get(k) for k in ('velJog', 'bufferToque', 'jogRede')})
+            P.confere(f.get('velJog') == 14.1 and f.get('bufferToque') == 6 and f.get('jogRede') == 1 and s0['quadros'] == 60,
+                      'o perfil da sala é o padrão (14,1 u/s, toque armado de 6 passos, a rede segura) e 60 quadros/s (a v105; eram 30)', {k: f.get(k) for k in ('velJog', 'bufferToque', 'jogRede')})
             P.confere(not s0['experimental'], 'o servidor oficial não aceita o perfil do admin (mandou 18 u/s e 60/s: ficou o padrão)', s0)
             on = await rt(A, "V92N.on")
             P.confere(on, 'quem joga prevê com o núcleo (V92N ligado)', on)

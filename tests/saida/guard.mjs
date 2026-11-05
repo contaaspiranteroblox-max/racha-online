@@ -82,6 +82,14 @@ var SUSPENSAO_MAX_HORAS = {
 // stub:stub-middleware
 var publicQuery = { use: (fn) => ({ use: (fn2) => fn2, fn }) };
 
+// app/api/racha/erros.ts
+function ehDuplicado(e) {
+  for (let x = e, i = 0; x && typeof x === "object" && i < 6; x = x.cause, i++) {
+    if (x.code === "ER_DUP_ENTRY" || x.errno === 1062 || /duplicate entry|ER_DUP_ENTRY/i.test(String(x.message ?? ""))) return true;
+  }
+  return false;
+}
+
 // app/api/racha/guard.ts
 var SESSAO_DIAS = 30;
 var SESSAO_ADMIN_HORAS = 8;
@@ -148,7 +156,6 @@ async function cargoDo(usuarioId) {
   const conjunto = new Set(ajuste ?? base);
   return { cargo: c.cargo, permissoes: [...conjunto] };
 }
-var ehDuplicado = (e) => /duplicate|ER_DUP_ENTRY|1062/i.test(String(e?.message ?? e));
 var linhas = (r) => Number((Array.isArray(r) ? r[0] : r)?.affectedRows) || 0;
 async function bateLimite(chave, max, janelaMs) {
   const db = getDb();

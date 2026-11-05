@@ -195,8 +195,9 @@ console.log('\n3) o perfil de fora é limpo');
   const iguais = ['R_JOG', 'RAIO_CHUTE', 'MASSA_JOG', 'VEL_JOG', 'FORCA_KICK', 'FORCA_POWER', 'R_BOLA', 'MASSA_BOLA', 'LIMITE_VEL_BOLA', 'FATOR_BOLA', 'AMORT_ANGULAR', 'ATRITO_BOLA', 'ATRITO_JOG_BOLA', 'ATRITO_TRAVE_BOLA', 'QUIQUE_BOLA', 'Q_PAREDE', 'Q_TRAVE', 'Q_REDE', 'ALCANCE_CHUTE'].filter(k => C[k] !== F[k]);
   confere(!iguais.length, 'o PERFIL_V92 (o padrão) resolve exatamente nas constantes da fisica.js (as do jogo)', iguais);
   const d = Object.keys(N.PERFIL_V92).filter(k => N.PERFIL_V92[k] !== N.PERFIL_V91[k]);
-  confere(JSON.stringify(d.sort()) === JSON.stringify(['bufferToque', 'forcaChute', 'jogRede']) && N.PERFIL_V92.forcaChute === 360 && N.PERFIL_V92.forcaPasse === N.PERFIL_V91.forcaPasse,
-    'o PERFIL_V92 só difere do v91 no toque armado, na rede e no CHUTE da v103 (360, era 340; o PASSE e o resto da física são os mesmos)', d);
+  confere(JSON.stringify(d.sort()) === JSON.stringify(['atritoJogJog', 'bufferToque', 'direcoes', 'forcaChute', 'jogRede', 'viraNaHora']) && N.PERFIL_V92.forcaChute === 360 && N.PERFIL_V92.forcaPasse === N.PERFIL_V91.forcaPasse
+    && N.PERFIL_V92.atritoJogJog === 0.5 && N.PERFIL_V91.atritoJogJog === 0 && N.PERFIL_V92.viraNaHora === 1 && N.PERFIL_V91.viraNaHora === 0 && N.PERFIL_V92.direcoes === 64 && N.PERFIL_V91.direcoes === 32,
+    'o PERFIL_V92 só difere do v91 no toque armado, na rede, no CHUTE da v103 (360, era 340) e na v105: o jogo de corpo (o atrito tampinha × tampinha 0,5), a virada na hora e as 64 direções (o PASSE e o resto da física são os mesmos)', d);
 }
 
 console.log('\n4) o relógio do motor das salas');

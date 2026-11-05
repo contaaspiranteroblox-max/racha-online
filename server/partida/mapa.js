@@ -1405,7 +1405,7 @@
     if (!P.previsao) portoesECronos(P);
     for (const q of P.jog) {
       if (q.fora || q.cinematico) { if (q.fora) q.mx = q.my = 0; continue; }
-      if (q.bot) decideBot(P, q); else if (entrada) entrada(q); else q.mx = q.my = 0;
+      if (q.bot) { decideBot(P, q); desencalha(P, q); } else if (entrada) entrada(q); else q.mx = q.my = 0;   // (v105: o bot não encalha no empurra-empurra)
     }
     fisica(P);
     if (!P.previsao) {
@@ -1421,11 +1421,16 @@
     for (const q of J) {
       if (q.fora || q.cinematico) continue;
       const d = N.direcao(q.mx, q.my, C.DIRECOES), vmax = C.VEL_JOG * fatorVelJog(P, q);
-      if (d.mx || d.my) {
+      if ((d.mx || d.my) && C.VIRA_NA_HORA && X.acelJog >= 1) { q.vx = d.mx * vmax; q.vy = d.my * vmax; }   // v105: a virada na hora (o RACHA de sempre; quem embala aos poucos continua embalando)
+      else if (d.mx || d.my) {
         q.vx += d.mx * vmax * X.acelJog; q.vy += d.my * vmax * X.acelJog;
         const v = Math.hypot(q.vx, q.vy); if (v > vmax) { q.vx *= vmax / v; q.vy *= vmax / v; }
       } else if (X.freioJog >= 1) { q.vx = 0; q.vy = 0; }
       else { q.vx *= 1 - X.freioJog; q.vy *= 1 - X.freioJog; if (Math.hypot(q.vx, q.vy) < 2) q.vx = q.vy = 0; }
+    }
+    if (C.ATRITO_JOG_JOG > 0 && N.contatoJog) {      // v105: o jogo de corpo (o contato encostado se segura antes de andar), com a regra de colisão dos times
+      const am = P.regras.colisaoAmigos, ad = P.regras.colisaoAdversarios;
+      N.contatoJog(J, C, (a, b) => !a.fora && !b.fora && (a.time === b.time ? am : ad));
     }
     B.vx *= C.FATOR_BOLA; B.vy *= C.FATOR_BOLA;
     B.w *= 1 / (1 + C.AMORT_ANGULAR / TPS);
@@ -1455,7 +1460,7 @@
           for (let j = i + 1; j < J.length; j++) {
             if (J[j].fora) continue;
             if (J[i].time === J[j].time ? !amigos : !adv) continue;
-            N.hitBodies(J[i], J[j], C.Q_JOG_JOG, 0);
+            N.hitBodies(J[i], J[j], C.Q_JOG_JOG, C.ATRITO_JOG_JOG || 0);   // (v105: o jogo de corpo, o atrito do núcleo)
           }
         }
         if (P.estado === 'saida') for (const q of J) barreira(P, q);
@@ -1573,6 +1578,20 @@
       if (Math.hypot(B.x + ex * t - o.x, B.y + ey * t - o.y) < o.r + B.r + U(1)) return false;
     }
     return true;
+  }
+  // v105 · o bot não fica encalhado no empurra-empurra (o mesmo do server/partida/bot.js): andando para alguém e parado,
+  // encostado em outra tampinha por 12 passos, ele desvia 70° por 24 passos, sempre no mesmo sentido (os dois passam um pelo outro)
+  const ENC_PASSOS = 12, DESVIO_PASSOS = 24, DESVIO_C = Math.cos(70 * Math.PI / 180), DESVIO_S = Math.sin(70 * Math.PI / 180);
+  function desencalha(P, q) {
+    const ai = q.ai; if (!ai) return;
+    if (!(q.mx || q.my) || P.estado !== 'jogo') { ai.encT = 0; ai.desvioT = 0; return; }
+    if (ai.desvioT > 0) { ai.desvioT--; const mx = q.mx, my = q.my; q.mx = mx * DESVIO_C - my * DESVIO_S; q.my = mx * DESVIO_S + my * DESVIO_C; return; }
+    const C = P.C;
+    if (!(C.ATRITO_JOG_JOG > 0) || Math.hypot(q.vx, q.vy) >= 0.3 * C.VEL_JOG) { ai.encT = 0; return; }
+    let enc = false;
+    for (const o of P.jog) { if (o !== q && !o.fora && Math.hypot(o.x - q.x, o.y - q.y) < q.r + o.r + 1.5) { enc = true; break; } }
+    if (!enc) { ai.encT = 0; return; }
+    if (++ai.encT >= ENC_PASSOS) { ai.encT = 0; ai.desvioT = DESVIO_PASSOS; }
   }
   function decideBot(P, q) {
     const ai = q.ai, nv = NIVEIS[ai.nivel], B = P.B, C = P.C, G = P.G, ld = G.lado[lt(P, q.time)] || [1, 0];

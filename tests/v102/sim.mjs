@@ -5,7 +5,8 @@
 // de cada aparelho (os dois sentidos juntos) e as rajadas. Mede o que a tela da Ana desenha com as mesmas contas do
 // tests/v102_rede_medidas.py (o tranco d2, os pulos, os rápidos, as paradas, o erro contra a verdade e as correções).
 // Uso: node tests/v102/sim.mjs [rede] [segundos] [sementes]       (rede: direto, 4g, 4g_ruim)
-//      VARIANTES='cliente=v96;cliente=v102' (o padrão) · as partes do v102: entradas=servidor, credito=1 · guarda=140 (ms: o
+//      VARIANTES='cliente=v96;cliente=v102' (o padrão; cliente=v105: o de hoje, com o contato desenhado e 60 quadros) · contato=0..5
+//      (v105: 4 = o do jogo, só a bola; 1/3/5 = com as tampinhas também, medidos e deixados de fora) · as partes do v102: entradas=servidor, credito=1 · guarda=140 (ms: o
 //      buraco entre dois comandos que tira o crédito por 2 s) · engasgo=0.004 (a chance, por quadro, do aparelho travar
 //      engMin..engMax ms: 60..300) · fila=v95 · quadros=60
 import { createRequire } from 'module';
@@ -17,6 +18,7 @@ const N = require(path.join(RAIZ, 'server/partida/nucleo.js'));
 const { PartidaSala } = require(path.join(RAIZ, 'server/partida/sala.js'));
 const L = require(path.join(RAIZ, 'tools/v96/liso.js'));
 let L2 = null; try { L2 = require(path.join(RAIZ, 'tools/v102/liso.js')); } catch (_) {}
+let K105 = null; try { K105 = require(path.join(RAIZ, 'tools/v105/rede.js')); } catch (_) {}   // (v105: o contato desenhado)
 const STEP = 1 / 60, STEP_MS = 1000 / 60, U = N.U;
 
 /* ---------------- o acaso com semente e a fila de eventos ---------------- */
@@ -158,7 +160,8 @@ class Aparelho {
     const t = Math.max(0, Math.min(STEP, this.acc));
     const d = N.direcao(this.ultInp.mx, this.ultInp.my, C.DIRECOES), vale = M.estado === 'saida' || M.estado === 'jogo';
     let vx = 0, vy = 0;
-    if (vale && (d.mx || d.my)) { vx = eu.vx + d.mx * C.VEL_JOG; vy = eu.vy + d.my * C.VEL_JOG; const v = Math.hypot(vx, vy); if (v > C.VEL_JOG) { vx *= C.VEL_JOG / v; vy *= C.VEL_JOG / v; } }
+    if (vale && (d.mx || d.my) && C.VIRA_NA_HORA) { vx = d.mx * C.VEL_JOG; vy = d.my * C.VEL_JOG; }   // (v105: a virada na hora, como o jogo)
+    else if (vale && (d.mx || d.my)) { vx = eu.vx + d.mx * C.VEL_JOG; vy = eu.vy + d.my * C.VEL_JOG; const v = Math.hypot(vx, vy); if (v > C.VEL_JOG) { vx *= C.VEL_JOG / v; vy *= C.VEL_JOG / v; } }
     let P = [Math.max(G.GL + eu.r, Math.min(G.GR - eu.r, eu.x + vx * t)), Math.max(G.GT + eu.r, Math.min(G.GB - eu.r, eu.y + vy * t))];
     const bp = this.bolaAgora(t);
     let B = [bp.x, bp.y];
@@ -172,7 +175,23 @@ class Aparelho {
     P = poe(P, A.P, this.dP, vJ, this.saltoP, eu.x, eu.y, eu.r, false);
     B = poe(B, A.B, this.dB, vB, this.saltoB, M.B.x, M.B.y, M.B.r, true);
     J = M.jog.map((q, i) => i === this.slot ? P : poe(J[i], A.J && A.J[i], this.dJ[i], vJ, !!this.saltoJ[i], q.x, q.y, q.r, false));
-    this.ant = { P, B, J }; this.saltoP = this.saltoB = false; this.saltoJ = [];
+    // (v105, tools/v105/rede.js) o contato desenhado: as tampinhas dos outros fora da sua e umas das outras, a bola fora de todas;
+    // o empurrão entra no deslize de cada um (contato=1, o do jogo: quem está mais fora do lugar sai mais; contato=3: a bola sai
+    // toda; contato=2: só neste quadro, sem mexer nos deslizes)
+    if (this.o.contato && K105) {
+      const J0 = J.map(a => a.slice()), B0 = B.slice();
+      J = J.map((a, i) => i === this.slot ? P : a.slice()); B = B.slice();
+      const w = this.o.contato >= 3 ? null : { B: Math.hypot(this.dB.x, this.dB.y), J: this.dJ.map(d => d ? Math.hypot(d.x, d.y) : 0) };
+      const capB = this.o.contato === 4 ? Math.max(6, 1100 * Math.max(1 / 240, Math.min(0.05, dt || 1 / 60))) : 0;   // (o do jogo: o teto por quadro da bola)
+      if (K105.separa(J, B, this.slot, C.R_JOG, C.R_BOLA, null, w, this.o.contato === 4, this.o.contato === 5 ? (+process.env.CAPJ || 2.5) : 0, capB) > 0.01) {
+        B = L.varre(N, G, B0[0], B0[1], B[0], B[1], C.R_BOLA, true);
+        if (this.o.contato !== 2) {
+          K105.empurra(this.dB, B[0] - B0[0], B[1] - B0[1]);
+          J.forEach((a, i) => { if (i !== this.slot) K105.empurra(this.dJ[i], a[0] - J0[i][0], a[1] - J0[i][1]); });
+        }
+      }
+    }
+    this.ant = { P: P.slice(), B: B.slice(), J: J.map(a => a.slice()) }; this.saltoP = this.saltoB = false; this.saltoJ = [];
     return { P, B, J, offP: Math.hypot(this.dP.x, this.dP.y) };
   }
   quadro(t, inp) {                                     // v92RemoteFrame + net49Draw
@@ -235,8 +254,8 @@ function roteiroB(r) {                                 // o Beto: vai na bola e 
 export function simula(o = {}) {
   const dur = o.dur || 60000, seed = o.seed || 7, rede = typeof o.rede === 'string' ? REDES[o.rede] : (o.rede || REDES['4g']);
   const sim = { fila: new Fila(), agora: 0 };
-  const v102 = o.cliente === 'v102';
-  const opc = { entradas: o.entradas || (v102 ? "servidor" : "vel"), credito: o.credito != null ? !!o.credito : v102, guarda: o.guarda, reto: o.reto };
+  const v105 = o.cliente === 'v105', v102 = o.cliente === 'v102' || v105;   // (v105: o cliente de hoje — o da v102 + o contato desenhado, com as salas a 60 quadros)
+  const opc = { entradas: o.entradas || (v102 ? "servidor" : "vel"), credito: o.credito != null ? !!o.credito : v102, guarda: o.guarda, reto: o.reto, contato: o.contato != null ? o.contato | 0 : (v105 ? 4 : 0) };
   const apar = [new Aparelho(sim, 'A', 0, opc), new Aparelho(sim, 'B', 1, opc)];
   const radios = apar.map((_, i) => new Radio(rede, rng(seed * 31 + i), dur));
   const sobe = apar.map((_, i) => new Link(sim, rede, radios[i], rng(seed * 97 + i)));
@@ -247,7 +266,7 @@ export function simula(o = {}) {
     // (o servidor da v102 — Q.ent, Q.cred e a sobra do crédito que acaba — só com o cliente que usa; o cliente 'v96' joga
     //  com o servidor de antes, como o "antes" das medidas com RACHA_ENTRADAS=0; o.servidor102 escolhe)
     entradas: o.servidor102 != null ? !!o.servidor102 : (opc.entradas === 'servidor' || opc.credito),
-    n: 1, jogo: 'futebol', map: 4, tempo: 5, regra: null, quadros: o.quadros || 30, fila: o.fila || undefined,
+    n: 1, jogo: 'futebol', map: 4, tempo: 5, regra: null, quadros: o.quadros || (v105 ? 60 : 30), fila: o.fila || undefined, fisica: o.fisica || undefined,   // (v105: o.fisica compara perfis — o jogo de corpo)
     jogadores: [{ netId: 'A', nome: 'Ana' }, { netId: 'B', nome: 'Beto' }], agora: () => sim.agora,
     onSnapshot: d => { const txt = JSON.stringify(d); apar.forEach((ap, i) => desce[i].envia(sim.agora, txt, m => { const tt = Math.max(sim.agora, ocup[i]); if (tt > sim.agora) sim.fila.poe(tt, () => ap.snapshot(JSON.parse(m), sim.agora)); else ap.snapshot(JSON.parse(m), sim.agora); })); },
     onGol: () => {}, onAviso: () => {}, onFim: () => {},
@@ -351,6 +370,14 @@ export function mede(res) {
   Object.assign(out.outro, { correcao_med_px: r2(cJ.reduce((s, x) => s + x, 0) / Math.max(1, cJ.length)), correcao_p95_px: r2(pct(cJ, 0.95)) });
   Object.assign(out.bola, { correcao_med_px: r2(cB.reduce((s, x) => s + x, 0) / Math.max(1, cB.length)), correcao_p95_px: r2(pct(cB, 0.95)) });
   out.verdade = ref;
+  // (v105) a sobreposição na tela da Ana: a bola desenhada dentro de uma tampinha desenhada, e duas tampinhas uma dentro da outra
+  { const C = ap.C, rJ = C.R_JOG, rB = C.R_BOLA, fr = segs.flat(); let nb = 0, nj = 0; const ob = [], oj = [];
+    for (const f of fr) {
+      let mb = 0; for (const q of f.J) mb = Math.max(mb, rJ + rB - Math.hypot(f.B[0] - q[0], f.B[1] - q[1]));
+      let mj = 0; for (let i = 0; i < f.J.length; i++) for (let k = i + 1; k < f.J.length; k++) mj = Math.max(mj, 2 * rJ - Math.hypot(f.J[i][0] - f.J[k][0], f.J[i][1] - f.J[k][1]));
+      if (mb > 3) nb++; if (mj > 3) nj++; ob.push(Math.max(0, mb)); oj.push(Math.max(0, mj));
+    }
+    out.sobre = { bola_dentro_pct: r2(100 * nb / Math.max(1, fr.length), 2), bola_p99_px: r2(pct(ob, 0.99), 1), bola_max_px: r2(Math.max(0, ...ob), 1), jog_dentro_pct: r2(100 * nj / Math.max(1, fr.length), 2), jog_max_px: r2(Math.max(0, ...oj), 1) }; }
   const fj = V.filter(v => v.est === 'jogo').map(v => v.fila[0]);
   let palp = 0; for (let i = 1; i < fj.length; i++) if (fj[i][0] > fj[i][2] && fj[i][0] !== fj[i - 1][0]) palp++;
   out.fila = { tamanho_med: r2(fj.reduce((s, x) => s + x[1], 0) / Math.max(1, fj.length)), vazia_pct: r2(100 * fj.filter(x => x[1] === 0).length / Math.max(1, fj.length), 1), palpites_pct: r2(100 * palp / Math.max(1, fj.length), 1) };

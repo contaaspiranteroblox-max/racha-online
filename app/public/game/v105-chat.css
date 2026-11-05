@@ -1,0 +1,29 @@
+/* =====================================================================================================================
+   RACHA v105 · O CHAT NA TELA DO LOBBY (o JS em tools/v105/chat_lobby.js)
+   A barra da partida (.c81-jogo da v81: o grafite meio transparente, a etiqueta amarela, NOME: a última mensagem, o número
+   das não lidas e o ^) no lobby, embaixo, no vão entre a barra de atalhos e o JOGAR, embaixo da tampinha. O lugar vem do JS
+   (as variáveis no #lb-palco, em px do palco, medidas só quando o lobby muda de tamanho) e a classe .v105-chat só aparece
+   depois de medir: sem ela (sem lugar, em pé, antes da medida) vale a regra da v90, que guarda a barra.
+   --v105-k: o tamanho (1 no computador; no celular deitado o palco encolhe e a barra cresce até 40 px de verdade).
+   ===================================================================================================================== */
+#lb.v90.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby:not([hidden]){ display:block !important; }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby{ --k:var(--v105-k, 1);
+  left:var(--v105-x, 0px); bottom:var(--v105-b, 42px); width:var(--v105-w, 520px); height:calc(56px * var(--k)); transform:none; z-index:4; }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-abrir{ gap:calc(10px * var(--k)); padding:0 calc(12px * var(--k)) 0 calc(8px * var(--k));
+  border-width:calc(2px * var(--k)); border-radius:calc(16px * var(--k));
+  background:rgba(16,18,22,.62); border-color:rgba(255,255,255,.22); box-shadow:none; }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby.aberto .c81-abrir{ border-color:#ffd23f; }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-tag{ height:calc(34px * var(--k)); gap:calc(6px * var(--k)); padding:0 calc(12px * var(--k)) 0 calc(8px * var(--k));
+  border-radius:calc(10px * var(--k)); font-size:calc(16px * var(--k)); letter-spacing:calc(1.4px * var(--k)); }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-tag i{ width:calc(20px * var(--k)); height:calc(20px * var(--k)); }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-msg{ font-size:calc(22px * var(--k)); }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-n{ min-width:calc(26px * var(--k)); height:calc(26px * var(--k)); padding:0 calc(7px * var(--k));
+  border-radius:calc(13px * var(--k)); font-size:calc(15px * var(--k)); }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-seta{ width:calc(30px * var(--k)); height:calc(30px * var(--k)); }
+#lb.v102:not(.retrato) #lb-palco.v105-chat .c81.c81-lobby .c81-seta svg{ width:calc(20px * var(--k)); height:calc(20px * var(--k)); }
+/* estreita (o celular pequeno): a etiqueta fica só com a bandeira (ou a bola da SALA) e a mensagem ganha o lugar do BRASIL */
+#lb.v102:not(.retrato) #lb-palco.v105-chat.v105-curta .c81.c81-lobby .c81-tag{ padding:0 calc(7px * var(--k)); }
+#lb.v102:not(.retrato) #lb-palco.v105-chat.v105-curta .c81.c81-lobby .c81-tag > span{ display:none; }
+/* o aviso de baixo (x49Toast, no meio) sobe para não cobrir a barra quando ela está no meio (a altura vem do JS); com o painel
+   aberto ele já vai lá para cima (v81) */
+body:has(#lb:not([hidden]) #lb-palco.v105-chat.v105-meio #cb.c81-lobby:not([hidden])):not(:has(#cp.c81-pn:not([hidden]))) #x49-toast{ bottom:calc(var(--v105-cb-topo, 18.5vh) + 10px); }

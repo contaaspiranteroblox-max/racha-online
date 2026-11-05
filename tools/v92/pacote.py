@@ -114,6 +114,18 @@ with zipfile.ZipFile(saida) as z:
     # v104: o painel dos jogadores com o árbitro arrastando, a tela inteira só com o jogo e o ranking que abre onde tem gente
     assert {'app/public/game/v104.css', 'tools/v104/v104.py', 'tools/v104/painel.js', 'tools/v104/tela_inteira.js', 'tools/v104/ranking.js'} <= nomes, 'faltam os arquivos da v104 no ZIP'
     assert all(x in jogo for x in (b'window.RachaPainel104', b'window.RachaTelaInteira104', b'window.RachaRanking104')), 'o jogo do ZIP não tem a v104'
+    # v105: o jogo de corpo e a virada na hora (o núcleo e a partida contra os bots) e o contato desenhado no online
+    assert {'tools/v105/corpo.py', 'tools/v105/corpo.js', 'tools/v105/rede.py', 'tools/v105/rede.js'} <= nomes, 'faltam os arquivos da v105 no ZIP'
+    assert all(x in jogo for x in (b'window.RachaCorpo105', b'window.RachaContato105Jogo', b'viraNaHora')), 'o jogo do ZIP não tem a v105'
+    # v105: o chat na tela do lobby (a barra da partida, embaixo, entre os atalhos e o JOGAR)
+    assert {'app/public/game/v105-chat.css', 'tools/v105/chat_lobby.py', 'tools/v105/chat_lobby.js'} <= nomes, 'faltam os arquivos da v105 (o chat no lobby) no ZIP'
+    assert b'window.RachaChatLobby105' in jogo and b'<link rel="stylesheet" href="./v105-chat.css">' in jogo, 'o jogo do ZIP não tem o chat no lobby da v105'
+    # v105: as tampinhas criadas ficam (a leitura do começo não recusa mais as peças que entram depois) e a borda BOTÃO chapada para todo mundo
+    assert {'tools/v105/cosmeticos.py', 'tools/v105/cosmeticos.js', 'tests/v105_cosmeticos_test.py'} <= nomes, 'faltam os arquivos da v105 no ZIP'
+    assert all(x in jogo for x in (b'window.RachaCosmeticos105', b'TP.adiadas = {', b'R84.manterViva === true')), 'o jogo do ZIP não tem a v105'
+    # v105: o TAMANHO DA BORDA da tampinha (sem · fina · normal · grossa; o tamanho no fim do código)
+    assert {'tools/v105/borda.py', 'tools/v105/borda.js', 'tests/v105_borda_test.py'} <= nomes, 'faltam os arquivos da v105 (o tamanho da borda) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaBorda105', b'function tpSoDesenho', b'TAMANHO DA BORDA')), 'o jogo do ZIP não tem o tamanho da borda da v105'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)
