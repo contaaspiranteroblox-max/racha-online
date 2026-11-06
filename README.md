@@ -1,6 +1,6 @@
-# RACHA · Futebol de Rua — v110
+# RACHA · Futebol de Rua — v111
 
-> **Novo · v110 (06/11/2026)** — o **jogo mais leve**: o `racha.html` que vai para o jogador caiu de 7,4 MB para 6,1 MB
+> **Novo · v111 (06/11/2026)** — o **jogo mais leve**: o `racha.html` que vai para o jogador caiu de 7,4 MB para 6,1 MB
 > (com o gzip, de 3,4 MB para 2,8 MB) — as imagens de versões antigas que não aparecem mais viraram um pontinho e o código vai
 > sem os comentários e sem o recuo (o mesmo programa; a física byte a byte igual; os comentários continuam em `tools/`). A
 > pasta do projeto foi de 53 MB para 22 MB (saíram os originais das imagens geradas por IA e os recortes delas, fora do jogo

@@ -27,7 +27,7 @@ export const ehItemMascote = (codigo: string) => ITENS_MASCOTE.includes(codigo);
 
 type Conn = ReturnType<typeof getDb>;
 type Tx = Parameters<Parameters<Conn["transaction"]>[0]>[0];
-// v110: a leitura aceita também a transação (o relacoesDe do v88/comum.ts chama com ela; o "tsc -b" do CI recusava)
+// v111: a leitura aceita também a transação (o relacoesDe do v88/comum.ts chama com ela; o "tsc -b" do CI recusava)
 type Leitura = Conn | Tx;
 const TP_B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 

@@ -132,7 +132,7 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v109 · o silêncio da equipe no jogo (tools/v109/silencio.py + silencio.js, por último; no servidor: server/silencio109.js; na
      plataforma: o RACHA CONTROL com o painel do Dono e o da staff): a staff cala o chat de um jogador por 5 min a 30 dias e o
      jogo mostra o aviso do servidor (quanto falta e o motivo) em todos os chats e nas falas/emojis da partida.
- v110 · o jogo mais leve (tools/v110/enxuga.py, a última etapa, depois da conferência da física): as imagens embutidas de
+ v111 · o jogo mais leve (tools/v111/enxuga.py, a última etapa, depois da conferência da física): as imagens embutidas de
      versões antigas que o jogo não mostra mais viram um pontinho (cada uma com a conferência do porquê) e o racha.html vai
      para o jogador sem os comentários e sem o recuo (o mesmo programa; a cópia completa fica em tests/build/racha_completo.html).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
@@ -438,7 +438,7 @@ V69 = '\n'.join((RAIZ / 'tools' / n).read_text(encoding='utf-8') for n in ('tamp
 V70JS = '\n'.join((RAIZ / 'tools' / 'v70' / n).read_text(encoding='utf-8') for n in ('ajustes.js', 'interface.js', 'economia.js', 'perfil.js', 'tutorial.js', 'online.js', 'comunidade.js', 'polimento.js', 'celular.js', 'enxuto.js') if (RAIZ / 'tools' / 'v70' / n).exists())
 V70JS += '\n' + '\n'.join((RAIZ / 'tools' / 'v71' / n).read_text(encoding='utf-8') for n in ('times.js', 'lobby.js', 'telas.js') if (RAIZ / 'tools' / 'v71' / n).exists())   # v71: preto × branco, o lobby novo · v71.1: as telas de dentro
 V70JS += '\n' + '\n'.join((RAIZ / 'tools' / 'v73' / n).read_text(encoding='utf-8') for n in ('sensor.js',) if (RAIZ / 'tools' / 'v73' / n).exists())   # v73: o sensor (o halo dos jogadores) mais transparente · o TESTE da v72 saiu
-# v110: as imagens que as v74, v75, v76, v77 e v91 recortaram das imagens geradas por IA saíram do projeto. Desde a v95 o build
+# v111: as imagens que as v74, v75, v76, v77 e v91 recortaram das imagens geradas por IA saíram do projeto. Desde a v95 o build
 # embutia cada uma e logo depois trocava pela arte desenhada em código (tools/v95/arte, a troca TROCA_IMAGENS do v95.py);
 # agora a arte da v95 entra direto, nas mesmas medidas e com os mesmos mapas das peças: o jogo gerado é o mesmo, byte a byte.
 ARTE95 = RAIZ / 'tools' / 'v95' / 'arte'
@@ -459,8 +459,8 @@ def _lobby75():                                           # v75: o fundo do lobb
     pasta = RAIZ / 'tools' / 'v75'
     if not (pasta / 'lobby.js').exists(): return ''
     js = (pasta / 'lobby.js').read_text(encoding='utf-8')
-    img = ARTE95 / 'fundo75.webp'                       # (v110: a arte da v95, direto)
-    if img.exists():                                     # (a medida é a do PNG original, 1844 × 853 — v110: o PNG de 3 MB saiu da pasta, a
+    img = ARTE95 / 'fundo75.webp'                       # (v111: a arte da v95, direto)
+    if img.exists():                                     # (a medida é a do PNG original, 1844 × 853 — v111: o PNG de 3 MB saiu da pasta, a
         w, h = 1844, 853                                 #  medida ficou aqui; o original está no histórico do git: o commit 1b2b8c4, a v109)
         assert js.count('/*FUNDO75*/null') == 1
         js = js.replace('/*FUNDO75*/null', '{src:"data:image/webp;base64,' + base64.b64encode(img.read_bytes()).decode('ascii') + '",w:%d,h:%d}' % (w, h), 1)
@@ -471,7 +471,7 @@ def _skins76():                                          # v76: as tampinhas ani
     pasta = RAIZ / 'tools' / 'v76'
     if not (pasta / 'skins.js').exists(): return ''
     js = (pasta / 'skins.js').read_text(encoding='utf-8')
-    kit, mapa = ARTE95 / 'skins_kit.webp', ARTE95 / 'skins_kit.json'   # (v110: as caras da v95 e o mapa delas, direto)
+    kit, mapa = ARTE95 / 'skins_kit.webp', ARTE95 / 'skins_kit.json'   # (v111: as caras da v95 e o mapa delas, direto)
     if kit.exists() and mapa.exists():
         assert js.count('/*KIT76*/null') == 1
         js = js.replace('/*KIT76*/null', '{src:"data:image/webp;base64,' + base64.b64encode(kit.read_bytes()).decode('ascii') + '",p:' + json.dumps(json.loads(mapa.read_text(encoding='utf-8')), separators=(',', ':')) + '}', 1)
@@ -484,7 +484,7 @@ def _v77():                                              # v77: o lobby, o perfi
     if not nomes: return ''
     js = '\n'.join((pasta / n).read_text(encoding='utf-8') for n in nomes)
     info = json.loads((pasta / 'pecas.json').read_text(encoding='utf-8'))
-    uri = lambda arq: 'data:image/webp;base64,' + base64.b64encode((ARTE95 / arq).read_bytes()).decode('ascii')   # (v110: a arte da v95, direto)
+    uri = lambda arq: 'data:image/webp;base64,' + base64.b64encode((ARTE95 / arq).read_bytes()).decode('ascii')   # (v111: a arte da v95, direto)
     for marca, arq, chave in (('/*FUNDO77*/null', 'fundo77.webp', 'fundo'), ('/*LETREIRO77*/null', 'letreiro.webp', 'letreiro'), ('/*BANNER77*/null', 'banner_perfil.webp', 'banner')):
         if marca in js and (ARTE95 / arq).exists():
             assert js.count(marca) == 1
@@ -590,15 +590,15 @@ for nome, subs, sp in V70:
 # ---------------------------------------------------------------- conferência: a física não pode mudar
 assert bloco_fisica(out) == fisica_esperada, 'BLOCO DE FISICA ALTERADO (fora das trocas de regra documentadas)'
 
-# ---------------------------------------------------------------- v110: o jogo mais leve (tools/v110/enxuga.py)
+# ---------------------------------------------------------------- v111: o jogo mais leve (tools/v111/enxuga.py)
 # as imagens de versões antigas que não aparecem mais viram um pontinho (com as conferências do porquê) e o código e o estilo
 # do racha.html vão sem comentários e sem recuo (o programa é o mesmo, token por token; a física fica byte a byte igual).
-# A cópia completa (com os comentários) fica em tests/build/racha_completo.html: o tests/v110_enxuga_test.mjs compara as duas.
-sys.path.insert(0, str(RAIZ / 'tools' / 'v110')); import enxuga as _enxuga110
-_css110 = {n: (SAIDA.parent / n).read_text(encoding='utf-8') for n in ('v90.css', 'v91.css', 'v101.css', 'v102.css')}
+# A cópia completa (com os comentários) fica em tests/build/racha_completo.html: o tests/v111_enxuga_test.mjs compara as duas.
+sys.path.insert(0, str(RAIZ / 'tools' / 'v111')); import enxuga as _enxuga111
+_css111 = {n: (SAIDA.parent / n).read_text(encoding='utf-8') for n in ('v90.css', 'v91.css', 'v101.css', 'v102.css')}
 _tam_antes = len(out.encode('utf-8'))
-completo, out, _saiu110 = _enxuga110.monta(out, _css110)
-assert bloco_fisica(out) == fisica_esperada, 'v110: o enxugamento mexeu no bloco de física'
+completo, out, _saiu111 = _enxuga111.monta(out, _css111)
+assert bloco_fisica(out) == fisica_esperada, 'v111: o enxugamento mexeu no bloco de física'
 COMPLETO = RAIZ / 'tests' / 'build' / 'racha_completo.html'
 COMPLETO.parent.mkdir(parents=True, exist_ok=True)
 COMPLETO.write_text(completo, encoding='utf-8')
@@ -614,5 +614,5 @@ teste = teste.replace('<head>', '<head>\n<base href="../../app/public/game/">', 
 TESTE.write_text(teste, encoding='utf-8')
 print('ok · fisica identica · sha256', hash_antes[:16], '· trocas de regra no bloco:', n_phys, '·', ', '.join(n for n, _, _ in V70))
 print('css bytes', len(css_orig), '->', len(css_novo))
-print('v110 · o jogo mais leve: %.0f KB → %.0f KB (sem comentários nem recuo; imagens aposentadas: %s)' % (
-    _tam_antes / 1024, len(out.encode('utf-8')) / 1024, ', '.join('%s %.0f KB' % (r, b / 1024) for r, b in _saiu110)))
+print('v111 · o jogo mais leve: %.0f KB → %.0f KB (sem comentários nem recuo; imagens aposentadas: %s)' % (
+    _tam_antes / 1024, len(out.encode('utf-8')) / 1024, ', '.join('%s %.0f KB' % (r, b / 1024) for r, b in _saiu111)))

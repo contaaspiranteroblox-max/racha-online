@@ -41,15 +41,15 @@ async def principal():
     velhas = ['tools/v91/fundo.webp', 'tools/v91/fundo_telas.webp', 'tools/v77/fundo_lobby.webp', 'tools/v75/lobby_fundo.webp', 'tools/v77/letreiro.webp',
               'tools/v77/banner_perfil.webp', 'tools/v77/icones.webp', 'tools/v91/banners.webp', 'tools/v77/quadra_kit.webp', 'tools/v74/campo_noite_kit.webp',
               'tools/v76/skins_kit.webp']
-    restam = [v for v in velhas if (RAIZ / v).exists()]           # (v110: saíram também do projeto — nem o arquivo existe mais)
+    restam = [v for v in velhas if (RAIZ / v).exists()]           # (v111: saíram também do projeto — nem o arquivo existe mais)
     fora = [v for v in restam if b64(v)[:4000] in html]
-    P.confere(not fora and not restam, 'as imagens geradas por IA (fundos, letreiro, banners, ícones, kits dos mapas e as caras das tampinhas animadas) saíram do jogo e, desde a v110, do projeto', fora or restam)
+    P.confere(not fora and not restam, 'as imagens geradas por IA (fundos, letreiro, banners, ícones, kits dos mapas e as caras das tampinhas animadas) saíram do jogo e, desde a v111, do projeto', fora or restam)
     novas = ['fundo', 'letreiro', 'icones', 'banners', 'quadra_kit', 'campo_noite_kit', 'skins_kit']
-    aposentadas = ['fundo_telas', 'fundo77', 'fundo75', 'banner_perfil']   # v110: as que não aparecem mais (tools/v110/enxuga.py)
+    aposentadas = ['fundo_telas', 'fundo77', 'fundo75', 'banner_perfil']   # v111: as que não aparecem mais (tools/v111/enxuga.py)
     faltam = [n for n in novas if b64('tools/v95/arte/%s.webp' % n)[:4000] not in html]
     sobram = [n for n in aposentadas if b64('tools/v95/arte/%s.webp' % n)[:4000] in html]
     P.confere(not faltam and not sobram and html.count(PONTINHO) == 5,
-              'no lugar delas, a arte desenhada em código (tools/v95/arte): as 7 que aparecem (as outras 4, desde a v110, o pontinho)', (faltam, sobram))
+              'no lugar delas, a arte desenhada em código (tools/v95/arte): as 7 que aparecem (as outras 4, desde a v111, o pontinho)', (faltam, sobram))
     P.confere('"cria":[0,0,300,300]' in html and '"fe_cruz":[302,604,300,300]' in html, 'o kit das tampinhas animadas novo (as 8 peças, maiores: 300 px)')
 
     async with async_playwright() as pw:

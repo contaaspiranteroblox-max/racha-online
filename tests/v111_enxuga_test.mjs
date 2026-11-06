@@ -1,11 +1,11 @@
-// RACHA v110 · o jogo enxuto é o MESMO programa do completo.
+// RACHA v111 · o jogo enxuto é o MESMO programa do completo.
 //
-// O build (tools/aplicar_rua.py → tools/v110/enxuga.py) grava dois arquivos:
+// O build (tools/aplicar_rua.py → tools/v111/enxuga.py) grava dois arquivos:
 //   app/public/game/racha.html          o que vai para o jogador: sem comentários, sem recuo e com as imagens aposentadas
 //   tests/build/racha_completo.html     o mesmo jogo com os comentários e o recuo (as imagens aposentadas já trocadas)
 // Aqui o esbuild (o mesmo da plataforma) reescreve cada <script> e cada <style> dos dois sem espaços e sem comentários: as
 // duas saídas precisam ser idênticas, letra por letra. O HTML de fora dos blocos precisa ser igual, o bloco da física igual
-// byte a byte, e o enxuto bem menor. Rodar depois do build: node tests/v110_enxuga_test.mjs
+// byte a byte, e o enxuto bem menor. Rodar depois do build: node tests/v111_enxuga_test.mjs
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -25,7 +25,7 @@ let ok = 0; const falhas = [];
 const confere = (cond, oque, detalhe) => { if (cond) { ok++; console.log('  OK      ' + oque); } else { falhas.push(oque); console.log('  FALHOU  ' + oque + (detalhe ? '  ·  ' + detalhe : '')); } };
 const kb = s => Math.round(Buffer.byteLength(s) / 1024);
 
-console.log('v110 · o jogo enxuto × o completo');
+console.log('v111 · o jogo enxuto × o completo');
 const BLOCO = /(<script>|<style>)([\s\S]*?)(<\/script>|<\/style>)/g;
 const blocos = h => [...h.matchAll(BLOCO)].map(m => ({ tipo: m[1], corpo: m[2] }));
 const be = blocos(enx), bc = blocos(comp);
@@ -56,7 +56,7 @@ confere(css > 0 && iguaisCss === css, 'cada <style> do enxuto é o mesmo estilo 
 const fis = h => { const a = h.indexOf('/*PHYS_START*/'), b = h.indexOf('/*PHYS_END*/'); return a > 0 && b > a ? h.slice(a, b) : null; };
 confere(fis(enx) !== null && fis(enx) === fis(comp), 'o bloco da física é o mesmo, byte a byte (com as marcas PHYS_START e PHYS_END)');
 
-// as imagens aposentadas (tools/v110/enxuga.py, APOSENTADAS): o pontinho nos dois, o mesmo número de vezes
+// as imagens aposentadas (tools/v111/enxuga.py, APOSENTADAS): o pontinho nos dois, o mesmo número de vezes
 const PONTINHO = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const n = h => h.split(PONTINHO).length - 1;
 confere(n(enx) === 5 && n(comp) === 5, 'as 5 imagens aposentadas viraram o pontinho transparente nos dois (' + n(enx) + ' e ' + n(comp) + ')');
@@ -70,5 +70,5 @@ const ganho = kb(comp) - kb(enx);
 confere(ganho > 900, 'o enxuto é bem menor: ' + kb(comp) + ' KB → ' + kb(enx) + ' KB (−' + ganho + ' KB)');
 confere(!/<\/script/i.test(be.map(x => x.corpo).join('')), 'nenhum </script> apareceu dentro do código');
 
-console.log('\nv110 · o jogo enxuto: ' + ok + '/' + (ok + falhas.length) + ' verificações ok');
+console.log('\nv111 · o jogo enxuto: ' + ok + '/' + (ok + falhas.length) + ' verificações ok');
 if (falhas.length) { falhas.forEach(f => console.log('  - falhou: ' + f)); process.exit(1); }

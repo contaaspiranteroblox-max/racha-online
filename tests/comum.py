@@ -14,13 +14,13 @@ CHROME = os.environ.get('RACHA_CHROME', '/opt/pw-browsers/chromium')
 # (o abre leva RACHA_CONFIG.skinsProntas: true, o interruptor que as traz de volta)
 SKINS_PRONTAS = False
 HARNESS = (RAIZ / 'tests' / 'harness.js').read_text(encoding='utf-8')
-# v110: o racha.html vai para o jogador sem comentários e sem recuo (tools/v110/enxuga.py: o mesmo programa). Os testes que
+# v111: o racha.html vai para o jogador sem comentários e sem recuo (tools/v111/enxuga.py: o mesmo programa). Os testes que
 # procuram trechos do código como ele está em tools/ (com os comentários e o recuo) leem a cópia completa que o build grava.
 JOGO_COMPLETO = RAIZ / 'tests' / 'build' / 'racha_completo.html'
 def texto_do_jogo():
     """O código do jogo com os comentários (a cópia completa do build); sem ela, o publicado."""
     return (JOGO_COMPLETO if JOGO_COMPLETO.exists() else RAIZ / 'app' / 'public' / 'game' / 'racha.html').read_text(encoding='utf-8')
-# v110: as imagens de versões antigas que não aparecem mais viram este pontinho transparente (tools/v110/enxuga.py, APOSENTADAS)
+# v111: as imagens de versões antigas que não aparecem mais viram este pontinho transparente (tools/v111/enxuga.py, APOSENTADAS)
 PONTINHO = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
 # as fontes do jogo vêm do Google Fonts (sem internet, o jogo usa as do sistema); nos testes não há internet, então estes
 # nomes locais só evitam a espera do carregamento no Chromium de teste (ver app/public/game/fontes/LEIA-ME.txt)

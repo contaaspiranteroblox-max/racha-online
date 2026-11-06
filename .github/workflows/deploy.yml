@@ -59,8 +59,8 @@ jobs:
           npm run check
           npm run build
 
-      - name: O jogo enxuto (sem comentários) é o mesmo programa do completo (v110)
-        run: node tests/v110_enxuga_test.mjs
+      - name: O jogo enxuto (sem comentários) é o mesmo programa do completo (v111)
+        run: node tests/v111_enxuga_test.mjs
 
       - name: Testes do servidor das salas e da partida no servidor
         run: |

@@ -1,5 +1,5 @@
 // Tipos do endereço de quem pede (server/ip.js, sem dependências) para quem o usa em TypeScript (a plataforma:
-// app/api/boot.ts). v110: sem este arquivo o "tsc -b" do CI recusava o import (TS7016) e parava antes dos testes no
+// app/api/boot.ts). v111: sem este arquivo o "tsc -b" do CI recusava o import (TS7016) e parava antes dos testes no
 // navegador e do deploy.
 import type { IncomingMessage } from "http";
 

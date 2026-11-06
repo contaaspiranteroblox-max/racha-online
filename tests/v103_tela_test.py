@@ -184,7 +184,7 @@ def arquivos(P):
     P.confere(ap.size == (180, 180) and ap.mode == 'RGB', 'o ícone do iPhone (apple-touch-icon) 180 × 180, sem transparência', (ap.size, ap.mode))
     opacos = all(Image.open(JOGO / 'icones' / n).convert('RGBA').getextrema()[3][0] == 255 for n in ('racha-maskable-192.png', 'racha-maskable-512.png'))
     P.confere(opacos, 'os maskable cobrem o quadrado todo (a máscara redonda do Android não deixa buraco)')
-    html = texto_do_jogo()   # (v110: a marca do comentário está na cópia completa; o <head> é o mesmo)
+    html = texto_do_jogo()   # (v111: a marca do comentário está na cópia completa; o <head> é o mesmo)
     cab = html[:html.index('<style>')]
     vp = re.findall(r'<meta name="viewport"[^>]*>', html)
     P.confere(vp == ['<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'], 'o viewport igual ao de sempre (viewport-fit=cover; nada de zoom travado a mais)', vp)

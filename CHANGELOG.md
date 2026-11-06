@@ -2,17 +2,17 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
-## v110 — 06/11/2026 · o jogo mais leve (sem o peso das versões antigas) e o CI de volta
+## v111 — 06/11/2026 · o jogo mais leve (sem o peso das versões antigas) e o CI de volta
 
 A pedido: *"tira tudo que pesa o jogo, versões antigas que não precisa mais, só deixe o que precisa, e atualiza lá"*. Nada
 do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`), as telas, os textos, os sons e o que o
-`config.js` liga e desliga são os mesmos. O backup do antes: o commit `1b2b8c4` (a v109; daqui não deu para criar a etiqueta `antes-v110` no GitHub).
+`config.js` liga e desliga são os mesmos. O backup do antes: o commit `1b2b8c4` (a v109; daqui não deu para criar a etiqueta `antes-v111` no GitHub).
 
 - **O QUE PESAVA**: o `racha.html` tinha 7.390 KB (3.372 KB com o gzip do Caddy): 2,5 MB de imagens embutidas, 840 KB de
   comentários, o recuo das linhas e ~4,5 MB do código das versões empilhadas. As 35 pastas de `tools/` são o código-fonte do
   jogo (cada versão é uma camada por cima da outra, e as de hoje chamam as de antes): elas não vão para o jogador — o que vai
   é o `racha.html` montado.
-- **AS IMAGENS DE VERSÕES ANTIGAS QUE NÃO APARECEM MAIS** (`tools/v110/enxuga.py`, a lista APOSENTADAS) viram um pontinho
+- **AS IMAGENS DE VERSÕES ANTIGAS QUE NÃO APARECEM MAIS** (`tools/v111/enxuga.py`, a lista APOSENTADAS) viram um pontinho
   transparente (1×1), com as medidas mantidas (o código de antes continua achando o que procura): o fundo das telas da v91 (a
   v101 troca pelo dela antes de a tela ser pintada), o fundo do lobby da v75 e o da v77 (só eram pintados no `#lb-fundo`,
   escondido desde a v90), o banner do perfil da v77 (o banner da v91 cobre) e a ilustração do cartão da OFICINA da v101 (a
@@ -43,7 +43,7 @@ do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`
   7 partes). Agora esperam o da v94, como o `tests/v94_jogo_test.py`: A = o motor próprio, B = o Padrão v92 com o motor de
   antes, a parte MOTOR e o A ⇄ B trocando o motor; a física do painel é conferida no motor de antes (a memória B). Os dois
   passam (35/35 cada) — com isso a lista inteira do CI passa e o deploy volta a rodar quando a main recebe um envio.
-- **Testes**: `tests/v110_enxuga_test.mjs` (novo, no CI: o esbuild reescreve cada `<script>` e `<style>` do enxuto e do
+- **Testes**: `tests/v111_enxuga_test.mjs` (novo, no CI: o esbuild reescreve cada `<script>` e `<style>` do enxuto e do
   completo e as saídas precisam ser idênticas; o HTML de fora igual; a física byte a byte; as 5 aposentadas e as que ficam).
   Os testes que procuram trechos do código com comentário leem a cópia completa (`texto_do_jogo()` no `tests/comum.py`: o
   `v103_tela` e o `v107_chute`) e os que conferiam as imagens embutidas (`v75`, `v77` e `v95`) conferem as aposentadas. As

@@ -3,7 +3,7 @@
 
 O racha.html é montado em camadas (o jogo-base, as versões v67–v69 e as etapas de tools/v70 … tools/v99, o ajustes e a oficina): muitas funções são declaradas
 uma vez e depois trocadas por uma versão nova que chama a anterior (const xAntes70 = x; x = function(){ ... }).
-Este script lê o jogo gerado (a cópia completa, tests/build/racha_completo.html — v110) e lista, para cada função trocada, quantas vezes ela foi
+Este script lê o jogo gerado (a cópia completa, tests/build/racha_completo.html — v111) e lista, para cada função trocada, quantas vezes ela foi
 definida e de qual arquivo vem a versão ATIVA (a última). Serve para confirmar qual implementação vale antes de mexer
 e para acompanhar a redução das camadas.
 
@@ -13,7 +13,7 @@ import re, pathlib, collections
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 JOGO = RAIZ / 'app' / 'public' / 'game' / 'racha.html'
-# v110: o racha.html vai para o jogador sem comentários e sem recuo (tools/v110/enxuga.py); os trechos que dizem de onde
+# v111: o racha.html vai para o jogador sem comentários e sem recuo (tools/v111/enxuga.py); os trechos que dizem de onde
 # veio cada função batem com a cópia completa que o build grava ao lado (rode o build antes)
 if (RAIZ / 'tests' / 'build' / 'racha_completo.html').exists(): JOGO = RAIZ / 'tests' / 'build' / 'racha_completo.html'
 def _ordem(d):                                         # as etapas do build, da mais nova para a mais velha (como o aplicar_rua.py aplica)

@@ -5,12 +5,12 @@
 - o código em tools/v91/*.js (na ordem de ARQUIVOS), colado no fim do script principal, logo antes da arrumação final
   (montaAbas, a primeira vez, o lobby), depois do da v90;
 - as peças embutidas (nada de arquivo de fora): o fundo da tela inicial, o fundo das telas internas e os banners de perfil
-  (v110: a arte da v95, tools/v95/arte/fundo.webp, fundo_telas.webp e banners.webp — as imagens tiradas da imagem de
+  (v111: a arte da v95, tools/v95/arte/fundo.webp, fundo_telas.webp e banners.webp — as imagens tiradas da imagem de
   referência gerada por IA saíram do projeto), o lugar da tampinha no fundo (fundo.json) e os ícones (tools/v91/icones.svg).
 A física NÃO muda (o build continua conferindo o bloco de física)."""
 import base64, json, pathlib, re
 AQUI = pathlib.Path(__file__).resolve().parent
-ARTE95 = AQUI.parent / 'v95' / 'arte'                   # v110: o fundo, o das telas e os banners entram direto com a arte da v95
+ARTE95 = AQUI.parent / 'v95' / 'arte'                   # v111: o fundo, o das telas e os banners entram direto com a arte da v95
 SUBS = []
 
 # ---- o estilo da v91 depois de todos os outros

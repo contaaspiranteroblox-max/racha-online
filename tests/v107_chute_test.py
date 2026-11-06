@@ -23,7 +23,7 @@ async def principal():
     P = Placar('v107 · o anel do chute bem branco')
     async with async_playwright() as pw:
         b, pg, erros = await abre(pw, 1280, 720)
-        html = texto_do_jogo()   # (v110: os trechos com o comentário estão na cópia completa)
+        html = texto_do_jogo()   # (v111: os trechos com o comentário estão na cópia completa)
 
         # ---------------------------------------------------------------- 1) o branco de volta forte, e opaco
         r = await rt(pg, """(() => { const c = RachaChute107.sprite(40), g = c.getContext('2d'), m = c.width / 2;

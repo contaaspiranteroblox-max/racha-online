@@ -25,7 +25,7 @@ let esgotadoAte = 0;
 
 type Conn = ReturnType<typeof getDb>;
 type Tx = Parameters<Parameters<Conn["transaction"]>[0]>[0];
-// v110: as leituras aceitam também a transação (o relacoesDe do v88/comum.ts chama com ela; o "tsc -b" do CI recusava)
+// v111: as leituras aceitam também a transação (o relacoesDe do v88/comum.ts chama com ela; o "tsc -b" do CI recusava)
 type Leitura = Conn | Tx;
 const linhas = <T>(r: unknown): T[] => (Array.isArray(r) ? (Array.isArray(r[0]) ? (r[0] as T[]) : (r as T[])) : []);
 

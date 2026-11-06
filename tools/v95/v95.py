@@ -67,7 +67,7 @@ SUBS.append(("a padrão é a Listras, metade laranja e metade roxa — no Time A
 #      lobby e o das telas, os fundos antigos do lobby e do perfil, o letreiro, o banner do perfil, a folha de ícones e os
 #      banners de perfil. (Até a v109, cada troca era a imagem inteira: o texto base64 da antiga pelo da nova.)
 ARTE = AQUI / 'arte'
-# (v110: as imagens antigas — tools/v74, v75, v76, v77 e v91 — saíram do projeto. A arte daqui entra direto nas etapas de
+# (v111: as imagens antigas — tools/v74, v75, v76, v77 e v91 — saíram do projeto. A arte daqui entra direto nas etapas de
 #  cada versão (tools/aplicar_rua.py e tools/v91/v91.py), no lugar onde a imagem antiga entrava: não há mais o que trocar.
 #  As caras das tampinhas animadas (SK76_KIT: CRIA, CRISTO, PITBULL, FÉ e DRAGÃO) também: tools/v95/arte/caras.py, com o
 #  mapa das peças tools/v95/arte/skins_kit.json.)

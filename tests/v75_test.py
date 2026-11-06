@@ -67,7 +67,7 @@ async def principal():
     html = (RAIZ / 'app' / 'public' / 'game' / 'racha.html').read_text(encoding='utf-8')
     fonte = (RAIZ / 'tools' / 'v75' / 'lobby.js').read_text(encoding='utf-8')
     P.confere(('const LOBBY75 = {src:"%s",w:1844,h:853}' % PONTINHO) in html and fonte.count('/*FUNDO75*/null') == 1,
-              'a imagem do lobby (1844 × 853) entra pelo build — e, desde a v110, aposentada (o pontinho, com as medidas: o #lb-fundo está escondido desde a v90)')
+              'a imagem do lobby (1844 × 853) entra pelo build — e, desde a v111, aposentada (o pontinho, com as medidas: o #lb-fundo está escondido desde a v90)')
     async with async_playwright() as pw:
         for (w, h, d) in [(1920, 888, 1), (1280, 720, 1), (1024, 768, 1), (844, 390, 3), (667, 375, 2)]:
             b, pg, erros = await abre(pw, w, h, dsf=d)

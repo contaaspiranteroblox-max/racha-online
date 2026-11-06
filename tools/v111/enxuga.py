@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RACHA v110 · o jogo mais leve — a última etapa do build (o tools/aplicar_rua.py chama no fim, depois da conferência da
+"""RACHA v111 · o jogo mais leve — a última etapa do build (o tools/aplicar_rua.py chama no fim, depois da conferência da
 física). O jogo continua o mesmo: a física, as telas, os textos, os sons e o que o config.js liga e desliga. Só sai o peso
 que não serve para quem joga:
 
@@ -14,10 +14,10 @@ que não serve para quem joga:
    byte igual.
 
 O build também grava a cópia completa (tests/build/racha_completo.html: o mesmo jogo, com os comentários e as imagens
-aposentadas já trocadas); o tests/v110_enxuga_test.mjs confere com o esbuild que os dois são o mesmo programa, script por
+aposentadas já trocadas); o tests/v111_enxuga_test.mjs confere com o esbuild que os dois são o mesmo programa, script por
 script e estilo por estilo. O tools/mapa_codigo.py lê a cópia completa (os trechos dela batem com os arquivos de tools/).
 
-Rodar sozinho (só para medir): python3 tools/v110/enxuga.py app/public/game/racha.html
+Rodar sozinho (só para medir): python3 tools/v111/enxuga.py app/public/game/racha.html
 """
 import re, sys
 
@@ -29,11 +29,11 @@ def _confere(codigo, css, onde, trecho, n, motivo):
     """codigo: o jogo SEM os comentários (o que conta é o código: um comentário novo citando a imagem não para o build)."""
     if onde == 'jogo':
         k = codigo.count(trecho)
-        assert k == n, ('v110: %r aparece %d vez(es) no código do jogo (esperava %d). A imagem aposentada pode ter voltado '
-                        'a aparecer (%s) — confira a lista APOSENTADAS do tools/v110/enxuga.py.' % (trecho[:90], k, n, motivo))
+        assert k == n, ('v111: %r aparece %d vez(es) no código do jogo (esperava %d). A imagem aposentada pode ter voltado '
+                        'a aparecer (%s) — confira a lista APOSENTADAS do tools/v111/enxuga.py.' % (trecho[:90], k, n, motivo))
     else:
-        assert trecho in css.get(onde, ''), ('v110: não achei no %s: %r. A imagem aposentada pode ter voltado a aparecer (%s) '
-                                             '— confira a lista APOSENTADAS do tools/v110/enxuga.py.' % (onde, trecho[:90], motivo))
+        assert trecho in css.get(onde, ''), ('v111: não achei no %s: %r. A imagem aposentada pode ter voltado a aparecer (%s) '
+                                             '— confira a lista APOSENTADAS do tools/v111/enxuga.py.' % (onde, trecho[:90], motivo))
 
 
 # (a constante, o caminho até o texto da imagem, o porquê, e o que garante que ela não aparece: (onde, trecho, quantas vezes
@@ -79,10 +79,10 @@ APOSENTADAS = [
 def _acha_texto(html, nome, caminho):
     """O começo e o fim (sem as aspas) do texto data:… da imagem dentro da constante."""
     marca = '\nconst %s = ' % nome
-    assert html.count(marca) == 1, ('v110: a constante %s não está no jogo (ou está mais de uma vez)' % nome)
+    assert html.count(marca) == 1, ('v111: a constante %s não está no jogo (ou está mais de uma vez)' % nome)
     i = html.index(marca) + len(marca)
     if caminho is None:
-        assert html.startswith('"data:image/', i), ('v110: %s não é mais o texto de uma imagem' % nome)
+        assert html.startswith('"data:image/', i), ('v111: %s não é mais o texto de uma imagem' % nome)
         a = i + 1
     else:
         fim_linha = html.index('\n', i)
@@ -90,10 +90,10 @@ def _acha_texto(html, nome, caminho):
         for k, chave in enumerate(caminho):
             ultimo = k == len(caminho) - 1
             achou = re.compile(r'[{,]\s*"?%s"?\s*:\s*%s' % (re.escape(chave), r'"' if ultimo else r'\{')).search(html, max(i, p - 1), fim_linha)
-            assert achou, ('v110: não achei %s.%s no jogo' % (nome, '.'.join(caminho)))
+            assert achou, ('v111: não achei %s.%s no jogo' % (nome, '.'.join(caminho)))
             p = achou.end()
         a = p
-        assert html.startswith('data:image/', a), ('v110: %s.%s não é mais uma imagem embutida' % (nome, '.'.join(caminho)))
+        assert html.startswith('data:image/', a), ('v111: %s.%s não é mais uma imagem embutida' % (nome, '.'.join(caminho)))
     b = html.index('"', a)
     return a, b
 
@@ -295,7 +295,7 @@ def enxuga_js(src):
 
 def assinatura_js(src):
     """Os pedaços que contam (sem espaços e comentários) e onde havia quebra de linha entre eles: o enxuto precisa dar o
-    mesmo que o completo (a conferência do próprio build; a do esbuild fica no tests/v110_enxuga_test.mjs)."""
+    mesmo que o completo (a conferência do próprio build; a do esbuild fica no tests/v111_enxuga_test.mjs)."""
     sai, quebra = [], False
     for tipo, a, b in _pedacos(src):
         if tipo == 'esp' or tipo == 'com':
@@ -392,11 +392,11 @@ def enxuga_html(html):
             if FIS_A in corpo:
                 a, b = corpo.index(FIS_A), corpo.index(FIS_B) + len(FIS_B)
                 na, nb = novo.index(FIS_A), novo.index(FIS_B) + len(FIS_B)
-                assert corpo[a:b] == novo[na:nb], 'v110: o bloco da física mudou'
+                assert corpo[a:b] == novo[na:nb], 'v111: o bloco da física mudou'
                 assert assinatura_js(corpo[:a]) == assinatura_js(novo[:na]) and assinatura_js(corpo[b:]) == assinatura_js(novo[nb:]), \
-                    'v110: o código enxuto não bate com o completo'
+                    'v111: o código enxuto não bate com o completo'
             else:
-                assert assinatura_js(corpo) == assinatura_js(novo), 'v110: o código enxuto não bate com o completo'
+                assert assinatura_js(corpo) == assinatura_js(novo), 'v111: o código enxuto não bate com o completo'
         else:
             novo = enxuga_css(corpo)
         return abre + novo + fecha

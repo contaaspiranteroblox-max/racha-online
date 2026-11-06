@@ -489,7 +489,7 @@ async def principal(v91_original=None):
                 g = await rt(pg, GEO)
                 ab = await cena_pausa_ab(pg, d, g)
                 t = ab['trocas']
-                # (v110: desde a v94 as memórias são B = o Padrão v92 com o motor de antes e A = o motor próprio — era v91 e v92)
+                # (v111: desde a v94 as memórias são B = o Padrão v92 com o motor de antes e A = o motor próprio — era v91 e v92)
                 P.confere(ab['pausa_abriu'] and len(t) == 2 and t[0] and t[0]['slot'] == 'B' and t[0]['perfil'] == 'v92' and t[0]['motor'] == 'v93'
                           and t[1] and t[1]['slot'] == 'A' and t[1]['perfil'] == 'v94' and t[1]['motor'] == 'v94'
                           and t[0]['render'] == t[1]['render'] == 'prever' and t[0]['armado'] == t[1]['armado'] == 6 and ab['continuou'],
