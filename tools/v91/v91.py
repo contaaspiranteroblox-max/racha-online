@@ -4,12 +4,13 @@
   painéis, as patentes e os banners novos;
 - o código em tools/v91/*.js (na ordem de ARQUIVOS), colado no fim do script principal, logo antes da arrumação final
   (montaAbas, a primeira vez, o lobby), depois do da v90;
-- as peças embutidas (nada de arquivo de fora): o fundo da tela inicial (tools/v91/fundo.webp, tirado da imagem de
-  referência por tools/v91/fundo.py), o fundo das telas internas (fundo_telas.webp), o lugar da tampinha nele
-  (fundo.json) e os ícones (tools/v91/icones.svg).
+- as peças embutidas (nada de arquivo de fora): o fundo da tela inicial, o fundo das telas internas e os banners de perfil
+  (v110: a arte da v95, tools/v95/arte/fundo.webp, fundo_telas.webp e banners.webp — as imagens tiradas da imagem de
+  referência gerada por IA saíram do projeto), o lugar da tampinha no fundo (fundo.json) e os ícones (tools/v91/icones.svg).
 A física NÃO muda (o build continua conferindo o bloco de física)."""
 import base64, json, pathlib, re
 AQUI = pathlib.Path(__file__).resolve().parent
+ARTE95 = AQUI.parent / 'v95' / 'arte'                   # v110: o fundo, o das telas e os banners entram direto com a arte da v95
 SUBS = []
 
 # ---- o estilo da v91 depois de todos os outros
@@ -20,20 +21,20 @@ CODIGO = '\n'.join((AQUI / n).read_text(encoding='utf-8') for n in ARQUIVOS)
 
 
 def _uri(nome, tipo='image/webp'):
-    return 'data:%s;base64,%s' % (tipo, base64.b64encode((AQUI / nome).read_bytes()).decode('ascii'))
+    return 'data:%s;base64,%s' % (tipo, base64.b64encode((ARTE95 / nome).read_bytes()).decode('ascii'))
 
 
 if CODIGO.strip():
     pre = []
-    if (AQUI / 'fundo.webp').exists() and (AQUI / 'fundo.json').exists():
+    if (ARTE95 / 'fundo.webp').exists() and (AQUI / 'fundo.json').exists():
         info = json.loads((AQUI / 'fundo.json').read_text(encoding='utf-8'))
         pre.append('const V91_FUNDO = {src:"%s", telas:%s, info:%s};' % (
             _uri('fundo.webp'),
-            json.dumps(_uri('fundo_telas.webp')) if (AQUI / 'fundo_telas.webp').exists() else 'null',
+            json.dumps(_uri('fundo_telas.webp')) if (ARTE95 / 'fundo_telas.webp').exists() else 'null',
             json.dumps(info, separators=(',', ':'))))
     else:
         pre.append('const V91_FUNDO = null;')
-    if (AQUI / 'banners.webp').exists() and (AQUI / 'banners.json').exists():
+    if (ARTE95 / 'banners.webp').exists() and (AQUI / 'banners.json').exists():
         bj = json.loads((AQUI / 'banners.json').read_text(encoding='utf-8'))
         pre.append('const V91_BANNERS = {src:"%s", w:%d, h:%d, cenas:%s};' % (_uri('banners.webp'), bj['w'], bj['h'], json.dumps(bj['cenas'])))
     else:

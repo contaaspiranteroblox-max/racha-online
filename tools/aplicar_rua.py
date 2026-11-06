@@ -438,13 +438,17 @@ V69 = '\n'.join((RAIZ / 'tools' / n).read_text(encoding='utf-8') for n in ('tamp
 V70JS = '\n'.join((RAIZ / 'tools' / 'v70' / n).read_text(encoding='utf-8') for n in ('ajustes.js', 'interface.js', 'economia.js', 'perfil.js', 'tutorial.js', 'online.js', 'comunidade.js', 'polimento.js', 'celular.js', 'enxuto.js') if (RAIZ / 'tools' / 'v70' / n).exists())
 V70JS += '\n' + '\n'.join((RAIZ / 'tools' / 'v71' / n).read_text(encoding='utf-8') for n in ('times.js', 'lobby.js', 'telas.js') if (RAIZ / 'tools' / 'v71' / n).exists())   # v71: preto × branco, o lobby novo · v71.1: as telas de dentro
 V70JS += '\n' + '\n'.join((RAIZ / 'tools' / 'v73' / n).read_text(encoding='utf-8') for n in ('sensor.js',) if (RAIZ / 'tools' / 'v73' / n).exists())   # v73: o sensor (o halo dos jogadores) mais transparente · o TESTE da v72 saiu
+# v110: as imagens que as v74, v75, v76, v77 e v91 recortaram das imagens geradas por IA saíram do projeto. Desde a v95 o build
+# embutia cada uma e logo depois trocava pela arte desenhada em código (tools/v95/arte, a troca TROCA_IMAGENS do v95.py);
+# agora a arte da v95 entra direto, nas mesmas medidas e com os mesmos mapas das peças: o jogo gerado é o mesmo, byte a byte.
+ARTE95 = RAIZ / 'tools' / 'v95' / 'arte'
 def _campo74():                                           # v74: o ESTÁDIO virou o society da imagem enviada (tools/v74/campo.js), com o kit embutido
     import base64, json
     pasta = RAIZ / 'tools' / 'v74'
     if not (pasta / 'campo.js').exists(): return ''
     js = (pasta / 'campo.js').read_text(encoding='utf-8')
-    kit, mapa = pasta / 'campo_noite_kit.webp', pasta / 'campo_noite_kit.json'
-    if kit.exists() and mapa.exists():                   # (os carros, as árvores e as casas, recortados da imagem por tools/v74/campo_kit.py)
+    kit, mapa = ARTE95 / 'campo_noite_kit.webp', pasta / 'campo_noite_kit.json'
+    if kit.exists() and mapa.exists():                   # (os carros, as árvores e as casas da v95, nos lugares do campo_noite_kit.json)
         assert js.count('/*KIT74*/null') == 1
         dado = '{src:"data:image/webp;base64,' + base64.b64encode(kit.read_bytes()).decode('ascii') + '",p:' + json.dumps(json.loads(mapa.read_text(encoding='utf-8')), separators=(',', ':')) + '}'
         js = js.replace('/*KIT74*/null', dado, 1)
@@ -455,7 +459,7 @@ def _lobby75():                                           # v75: o fundo do lobb
     pasta = RAIZ / 'tools' / 'v75'
     if not (pasta / 'lobby.js').exists(): return ''
     js = (pasta / 'lobby.js').read_text(encoding='utf-8')
-    img = pasta / 'lobby_fundo.webp'
+    img = ARTE95 / 'fundo75.webp'                       # (v110: a arte da v95, direto)
     if img.exists():                                     # (a medida é a do PNG original, 1844 × 853 — v110: o PNG de 3 MB saiu da pasta, a
         w, h = 1844, 853                                 #  medida ficou aqui; o original está no histórico do git: o commit 1b2b8c4, a v109)
         assert js.count('/*FUNDO75*/null') == 1
@@ -467,7 +471,7 @@ def _skins76():                                          # v76: as tampinhas ani
     pasta = RAIZ / 'tools' / 'v76'
     if not (pasta / 'skins.js').exists(): return ''
     js = (pasta / 'skins.js').read_text(encoding='utf-8')
-    kit, mapa = pasta / 'skins_kit.webp', pasta / 'skins_kit.json'
+    kit, mapa = ARTE95 / 'skins_kit.webp', ARTE95 / 'skins_kit.json'   # (v110: as caras da v95 e o mapa delas, direto)
     if kit.exists() and mapa.exists():
         assert js.count('/*KIT76*/null') == 1
         js = js.replace('/*KIT76*/null', '{src:"data:image/webp;base64,' + base64.b64encode(kit.read_bytes()).decode('ascii') + '",p:' + json.dumps(json.loads(mapa.read_text(encoding='utf-8')), separators=(',', ':')) + '}', 1)
@@ -480,17 +484,17 @@ def _v77():                                              # v77: o lobby, o perfi
     if not nomes: return ''
     js = '\n'.join((pasta / n).read_text(encoding='utf-8') for n in nomes)
     info = json.loads((pasta / 'pecas.json').read_text(encoding='utf-8'))
-    uri = lambda arq: 'data:image/webp;base64,' + base64.b64encode((pasta / arq).read_bytes()).decode('ascii')
-    for marca, arq, chave in (('/*FUNDO77*/null', 'fundo_lobby.webp', 'fundo'), ('/*LETREIRO77*/null', 'letreiro.webp', 'letreiro'), ('/*BANNER77*/null', 'banner_perfil.webp', 'banner')):
-        if marca in js and (pasta / arq).exists():
+    uri = lambda arq: 'data:image/webp;base64,' + base64.b64encode((ARTE95 / arq).read_bytes()).decode('ascii')   # (v110: a arte da v95, direto)
+    for marca, arq, chave in (('/*FUNDO77*/null', 'fundo77.webp', 'fundo'), ('/*LETREIRO77*/null', 'letreiro.webp', 'letreiro'), ('/*BANNER77*/null', 'banner_perfil.webp', 'banner')):
+        if marca in js and (ARTE95 / arq).exists():
             assert js.count(marca) == 1
             w, h = info['tam'][chave]
             js = js.replace(marca, '{src:"%s",w:%d,h:%d}' % (uri(arq), w, h), 1)
-    if '/*ICONES77*/null' in js and (pasta / 'icones.webp').exists():
+    if '/*ICONES77*/null' in js and (ARTE95 / 'icones.webp').exists():
         assert js.count('/*ICONES77*/null') == 1
         w, h = info['tam']['icones']; mapa = json.loads((pasta / 'icones.json').read_text(encoding='utf-8'))
         js = js.replace('/*ICONES77*/null', '{src:"%s",w:%d,h:%d,p:%s}' % (uri('icones.webp'), w, h, json.dumps(mapa, separators=(',', ':'))), 1)
-    if '/*KIT77*/null' in js and (pasta / 'quadra_kit.webp').exists():
+    if '/*KIT77*/null' in js and (ARTE95 / 'quadra_kit.webp').exists():
         assert js.count('/*KIT77*/null') == 1
         mapa = json.loads((pasta / 'quadra_kit.json').read_text(encoding='utf-8'))
         js = js.replace('/*KIT77*/null', '{src:"%s",p:%s}' % (uri('quadra_kit.webp'), json.dumps(mapa, separators=(',', ':'))), 1)

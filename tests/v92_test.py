@@ -14,10 +14,13 @@ OFFLINE (o relógio dos quadros de mentira, como no v92_medidas):
   1b. num celular que já usou a versão de testes, a versão oficial ignora o ajuste guardado (o padrão da v92 vale), e não
      tem a aba TESTES v92, o medidor, o A ⇄ B da pausa nem o F2;
 VERSÃO DE TESTES (experimental: true):
-  7. o painel mora nos AJUSTES (a primeira aba), com as 7 partes, e cabe no celular deitado; as memórias já vêm prontas
-     (A = Padrão v92, B = v91) e o A ⇄ B da pausa troca as duas com um toque;
-  8. mexer na física pelo painel muda o jogo na hora (velocidade, tamanho da bola e da tampinha, o aro acompanha o alcance),
-     o Restaurar v91 volta tudo, as memórias A e B trocam, exportar → importar devolve o mesmo;
+  7. o painel mora nos AJUSTES (a primeira aba), com as 7 partes da v92 (e, desde a v94, a parte MOTOR), e cabe no celular
+     deitado; as memórias já vêm prontas (desde a v94: A = o motor próprio, B = o Padrão v92 com o motor de antes — era
+     A = Padrão v92, B = v91) e o A ⇄ B da pausa troca as duas com um toque;
+  8. mexer na física pelo painel muda o jogo na hora (no motor de antes: velocidade, tamanho da bola e da tampinha, o aro
+     acompanha o alcance), o Restaurar v91 volta tudo, as memórias A e B trocam, exportar → importar devolve o mesmo;
+  (v110: o 7 e o 8 estavam com o painel de antes da v94 — o motor próprio mudou as memórias prontas e ganhou a parte MOTOR —
+   e falhavam assim desde a v94; o tests/v94_jogo_test.py confere o painel do motor próprio.)
   9. nenhum erro de JavaScript.
 Uso: python3 tests/v92_test.py   (o online da v92 fica no tests/v92_online_test.py)"""
 import asyncio, json, pathlib
@@ -226,8 +229,10 @@ async def principal():
             o = await rt(pg, "({exp:V92.exp, primeira:document.querySelector('#pop-ajustes .ajx-abas').firstElementChild.id, partes:Object.keys(V92P.partes)})")
             P.confere(o['exp'] and o['primeira'] == 'ajx-t-v92', 'com experimental: true a aba TESTES v92 é a primeira dos AJUSTES', o)
             ini = await rt(pg, "({A:V92.slots.A && v92Curto(V92.slots.A), B:V92.slots.B && v92Curto(V92.slots.B), slot:V92.slot, agora:v92Curto(V92.cfg)})")
-            P.confere(ini == {'A': 'v92', 'B': 'v91', 'slot': 'A', 'agora': 'v92'}, 'num aparelho novo as memórias já vêm prontas: A = o Padrão v92 (valendo) e B = a v91 (tudo como era)', ini)
-            P.confere(o['partes'] == ['perfis', 'fisica', 'controles', 'tela', 'online', 'medidas', 'db'], 'as 7 partes: perfis, física, controles, tela, online, medidas e DB', o['partes'])
+            P.confere(ini == {'A': 'v94', 'B': 'v92', 'slot': 'A', 'agora': 'v92'},
+                      'num aparelho novo as memórias já vêm prontas (v94): A = o motor próprio e B = o Padrão v92 com o motor de antes, que é o que vale', ini)
+            P.confere(o['partes'] == ['perfis', 'fisica', 'controles', 'tela', 'online', 'medidas', 'db', 'motor'],
+                      'as 7 partes da v92 (perfis, física, controles, tela, online, medidas e DB) e a MOTOR da v94', o['partes'])
             await rt(pg, "ajxAbre('v92')")
             await pg.wait_for_timeout(300)
             cabe = []
@@ -248,14 +253,18 @@ async def principal():
             await pg.wait_for_timeout(500)                     # (a pausa engole o clique dos primeiros 400 ms: o "clique fantasma" do toque que a abriu)
             pb = await rt(pg, r"""(() => {
               const b = document.getElementById('pa-v92ab'), r = {vis:!!b && !b.hidden, t0:b && b.textContent};
-              b.click(); r.t1 = b.textContent; r.c1 = {render:V92.cfg.render, buf:V92_FIS.BUFFER_TOQUE, zona:V92.cfg.zonaLiga, prev:V92.cfg.previsao, med:V92.cfg.medidor};
-              b.click(); r.t2 = b.textContent; r.c2 = {render:V92.cfg.render, buf:V92_FIS.BUFFER_TOQUE, zona:V92.cfg.zonaLiga, prev:V92.cfg.previsao, med:V92.cfg.medidor};
+              b.click(); r.t1 = b.textContent; r.c1 = {render:V92.cfg.render, buf:V92_FIS.BUFFER_TOQUE, zona:V92.cfg.zonaLiga, prev:V92.cfg.previsao, med:V92.cfg.medidor, motor:V94.motor};
+              b.click(); r.t2 = b.textContent; r.c2 = {render:V92.cfg.render, buf:V92_FIS.BUFFER_TOQUE, zona:V92.cfg.zonaLiga, prev:V92.cfg.previsao, med:V92.cfg.medidor, motor:V94.motor};
               pausaFecha(); V92.cfg.medidor = false; return r; })()""")
-            P.confere(pb['vis'] and pb['t0'] == 'A ⇄ B · agora A (v92)' and pb['t1'] == 'A ⇄ B · agora B (v91)' and pb['t2'] == 'A ⇄ B · agora A (v92)',
-                      'na pausa da partida o A ⇄ B já está lá (sem guardar nada) e diz qual está valendo: v92 → v91 → v92', pb)
-            P.confere(pb['c1'] == {'render': 'v91', 'buf': 0, 'zona': .2, 'prev': 'v91', 'med': True} and pb['c2'] == {'render': 'prever', 'buf': 6, 'zona': .15, 'prev': 'v92', 'med': True},
-                      'o A ⇄ B troca o jogo inteiro (desenho, toque armado, analógico, previsão online) e o medidor da tela fica como estava', pb)
+            # (v110: desde a v94 as memórias são A = o motor próprio e B = o Padrão v92 com o motor de antes — o mesmo desenho, o
+            #  mesmo toque armado e o mesmo analógico; o que o A ⇄ B troca é o motor da partida)
+            P.confere(pb['vis'] and pb['t0'] == 'A ⇄ B · agora A (v92)' and pb['t1'] == 'A ⇄ B · agora B (v92)' and pb['t2'] == 'A ⇄ B · agora A (v94)',
+                      'na pausa da partida o A ⇄ B já está lá (sem guardar nada) e diz qual está valendo: o padrão → B (o motor de antes) → A (o motor próprio)', pb)
+            igual = {'render': 'prever', 'buf': 6, 'zona': .06, 'prev': 'v92', 'med': True}
+            P.confere(pb['c1'] == dict(igual, motor='v93') and pb['c2'] == dict(igual, motor='v94'),
+                      'o A ⇄ B troca o motor da partida (o de antes ⇄ o próprio) e o medidor da tela fica como estava', pb)
             r = await rt(pg, r"""(() => {
+              v92Usa(V92.slots.B, 'B');                          // (v110: a física da v92 mexe no motor de antes: a memória B)
               const antes = {vel:VEL_JOG, rb:B.r, rj:P.r, aro:AROV.ate, bot:RQ.jog.find(q => q !== P).r};
               v92MudaFis('velJog', 18); v92MudaFis('rBola', 1.4); v92MudaFis('rJog', 2.5); v92MudaFis('margem', .9);
               const depois = {vel:VEL_JOG/U(1), rb:B.r/U(1), rj:P.r/U(1), alc:ALCANCE_CHUTE/U(1), aro:AROV.ate, bot:RQ.jog.find(q => q !== P).r/U(1)};

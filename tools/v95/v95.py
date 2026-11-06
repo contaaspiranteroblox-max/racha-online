@@ -65,27 +65,12 @@ SUBS.append(("a padrão é a Listras, metade laranja e metade roxa — no Time A
 # ---- a ARTE desenhada aqui (tools/v95/arte/arte.py: SVG desenhado em código, sem imagem gerada por IA) no lugar das imagens
 #      da v75, v77 e v91 (as que vinham de imagens geradas por IA — ver PROVENIENCIA.md), com as mesmas medidas: o fundo do
 #      lobby e o das telas, os fundos antigos do lobby e do perfil, o letreiro, o banner do perfil, a folha de ícones e os
-#      banners de perfil. Cada troca é a imagem inteira (o texto base64 dela, que aparece uma vez só no jogo).
+#      banners de perfil. (Até a v109, cada troca era a imagem inteira: o texto base64 da antiga pelo da nova.)
 ARTE = AQUI / 'arte'
-TROCA_IMAGENS = [('tools/v91/fundo.webp', 'fundo.webp'), ('tools/v91/fundo_telas.webp', 'fundo_telas.webp'),
-                 ('tools/v77/fundo_lobby.webp', 'fundo77.webp'), ('tools/v75/lobby_fundo.webp', 'fundo75.webp'),
-                 ('tools/v77/letreiro.webp', 'letreiro.webp'), ('tools/v77/banner_perfil.webp', 'banner_perfil.webp'),
-                 ('tools/v77/icones.webp', 'icones.webp'), ('tools/v91/banners.webp', 'banners.webp'),
-                 ('tools/v77/quadra_kit.webp', 'quadra_kit.webp'), ('tools/v74/campo_noite_kit.webp', 'campo_noite_kit.webp')]
-for velho, novo in TROCA_IMAGENS:
-    if (ARTE / novo).exists():
-        SUBS.append(('data:image/webp;base64,' + base64.b64encode((RAIZ / velho).read_bytes()).decode('ascii') + '"',
-                     'data:image/webp;base64,' + base64.b64encode((ARTE / novo).read_bytes()).decode('ascii') + '"'))
-
-# ---- as caras das tampinhas animadas (SK76_KIT: CRIA, CRISTO, PITBULL, FÉ e DRAGÃO, que vinham recortadas de uma folha de
-#      ilustrações geradas por IA) desenhadas em código (tools/v95/arte/caras.py): as mesmas 8 peças, maiores (o mapa das peças
-#      troca junto: tools/v95/arte/skins_kit.json)
-def _kit76(img, mapa):
-    return ('data:image/webp;base64,' + base64.b64encode(img.read_bytes()).decode('ascii') + '",p:'
-            + json.dumps(json.loads(mapa.read_text(encoding='utf-8')), separators=(',', ':')) + '}')
-if (ARTE / 'skins_kit.webp').exists() and (ARTE / 'skins_kit.json').exists():
-    SUBS.append((_kit76(RAIZ / 'tools' / 'v76' / 'skins_kit.webp', RAIZ / 'tools' / 'v76' / 'skins_kit.json'),
-                 _kit76(ARTE / 'skins_kit.webp', ARTE / 'skins_kit.json')))
+# (v110: as imagens antigas — tools/v74, v75, v76, v77 e v91 — saíram do projeto. A arte daqui entra direto nas etapas de
+#  cada versão (tools/aplicar_rua.py e tools/v91/v91.py), no lugar onde a imagem antiga entrava: não há mais o que trocar.
+#  As caras das tampinhas animadas (SK76_KIT: CRIA, CRISTO, PITBULL, FÉ e DRAGÃO) também: tools/v95/arte/caras.py, com o
+#  mapa das peças tools/v95/arte/skins_kit.json.)
 
 # (os banners desenhados em 1,5×: as medidas do atlas acompanham — o recorte de cada cena é em pixels da imagem)
 def _webp_tamanho(p):                                  # (v101: o tamanho lido do cabeçalho do WebP — o build só usa a biblioteca padrão;

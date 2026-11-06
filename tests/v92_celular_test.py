@@ -16,7 +16,8 @@ versão — a v92 (o padrão), a v91 pelo A ⇄ B (o perfil "v91" dentro da v92)
   8. a fluidez com o dedo no analógico (60 Hz com o relógio oscilando, 90 Hz e 120 Hz): os quadros com 0 ou 2 passos, o
      ritmo dos desenhos e o tremido da tampinha na tela (onde ela aparece em cada desenho × a corrida lisa);
   9. o iPhone: a vibração do toque armado sai no toque (na v91 só vibrava com a bola já no alcance);
- 10. a versão de testes: tocar na pausa e no A ⇄ B troca v92 ⇄ v91 e o CONTINUAR volta ao jogo.
+ 10. a versão de testes: tocar na pausa e no A ⇄ B troca as memórias (desde a v94: B = o motor de antes, A = o próprio) e o
+     CONTINUAR volta ao jogo.
 Isto é o navegador de teste fazendo de conta: não substitui o teste nos celulares de verdade (Safari no iPhone e Chrome no
 Android), que confere a sensação, o toque do vidro, a vibração e o desempenho.
 Uso: python3 tests/v92_celular_test.py [<racha_teste.html da v91 original>]"""
@@ -322,7 +323,7 @@ async def cena_pausa_ab(pg, d, g):
             out['trocas'].append(None); break
         await d.poe(6, r[0], r[1]); await d.tira(6)
         await pg.wait_for_timeout(80); await quadros(pg, 1)
-        out['trocas'].append(await rt(pg, "({slot:V92.slot, perfil:v92Curto(V92.cfg), botao:document.getElementById('pa-v92ab').textContent, render:V92.cfg.render, armado:V92_FIS.BUFFER_TOQUE})"))
+        out['trocas'].append(await rt(pg, "({slot:V92.slot, perfil:v92Curto(V92.cfg), botao:document.getElementById('pa-v92ab').textContent, render:V92.cfg.render, armado:V92_FIS.BUFFER_TOQUE, motor:V94.motor})"))
         out['alvo_px'] = [round(r[2], 1), round(r[3], 1)]
     r = await pg.evaluate("(() => { const q = document.getElementById('pa-continuar').getBoundingClientRect(); return [q.left + q.width/2, q.top + q.height/2]; })()")
     await d.poe(6, r[0], r[1]); await d.tira(6); await pg.wait_for_timeout(80); await quadros(pg, 3)
@@ -488,9 +489,11 @@ async def principal(v91_original=None):
                 g = await rt(pg, GEO)
                 ab = await cena_pausa_ab(pg, d, g)
                 t = ab['trocas']
-                P.confere(ab['pausa_abriu'] and len(t) == 2 and t[0] and t[0]['perfil'] == 'v91' and t[0]['render'] == 'v91' and t[0]['armado'] == 0
-                          and t[1] and t[1]['perfil'] == 'v92' and t[1]['render'] == 'prever' and t[1]['armado'] == 6 and ab['continuou'],
-                          '%s: o toque na pausa abre; o toque no A ⇄ B troca para a v91 e de volta para a v92 ("%s"); o CONTINUAR volta ao jogo'
+                # (v110: desde a v94 as memórias são B = o Padrão v92 com o motor de antes e A = o motor próprio — era v91 e v92)
+                P.confere(ab['pausa_abriu'] and len(t) == 2 and t[0] and t[0]['slot'] == 'B' and t[0]['perfil'] == 'v92' and t[0]['motor'] == 'v93'
+                          and t[1] and t[1]['slot'] == 'A' and t[1]['perfil'] == 'v94' and t[1]['motor'] == 'v94'
+                          and t[0]['render'] == t[1]['render'] == 'prever' and t[0]['armado'] == t[1]['armado'] == 6 and ab['continuou'],
+                          '%s: o toque na pausa abre; o toque no A ⇄ B troca para o motor de antes (B) e de volta para o próprio (A: "%s"); o CONTINUAR volta ao jogo'
                           % (cel, t[1]['botao'] if len(t) == 2 and t[1] else '?'), ab)
                 P.confere(not [e for e in erros if 'Failed to load resource' not in e], 'nenhum erro de JavaScript (%s, versão de testes)' % cel, erros[:3])
             finally:

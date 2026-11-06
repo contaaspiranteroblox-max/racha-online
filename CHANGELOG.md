@@ -28,21 +28,32 @@ do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`
   celular também deixa de abrir as 5 imagens no começo.
 - **A PASTA DO PROJETO**: as imagens originais geradas por IA (os PNG de `tools/v74` a `tools/v77`, de `tools/v91` e a
   referência da v101, ~27 MB) e os scripts que recortavam as peças delas (`*_kit.py`, `pecas.py`, `tools/v75/lobby_fundo.py`,
-  `tools/v91/fundo.py` e `tools/v91/banners.py`) saíram: não entravam no jogo desde a v95 (a arte desenhada em código). A
-  pasta foi de 53 MB para 24 MB; os originais continuam no histórico (o commit `1b2b8c4`). A medida do fundo da v75 (1844 × 853), que
-  o build lia do PNG, ficou escrita no `tools/aplicar_rua.py`.
+  `tools/v91/fundo.py` e `tools/v91/banners.py`) saíram: não entravam no jogo desde a v95 (a arte desenhada em código). Saíram
+  também os recortes em WebP delas (os 11 de `tools/v74` a `tools/v77` e de `tools/v91`, ~1,3 MB): o build embutia cada um e
+  logo depois trocava pela arte da v95 — agora a arte da v95 entra direto no lugar (`tools/aplicar_rua.py` e
+  `tools/v91/v91.py`; a troca do `tools/v95/v95.py` saiu) e o jogo gerado ficou o mesmo, byte a byte (conferido: o
+  `racha.html`, a cópia completa e a de teste). E os 7 originais da plataforma da v69 guardados em `backup/`, que nada usava.
+  A pasta foi de 53 MB para 22 MB; tudo continua no histórico (o commit `1b2b8c4`). A medida do fundo da v75 (1844 × 853),
+  que o build lia do PNG, ficou escrita no `tools/aplicar_rua.py`.
 - **O CI DE VOLTA**: o *Testar e publicar* do GitHub falhava desde a v101 na conferência de tipos da plataforma (o `tsc -b`),
   então os testes no navegador e o deploy na VPS nunca chegaram a rodar. Os dois erros: o `server/ip.js` sem tipos (agora o
   `server/ip.d.ts`, como o `turma.d.ts` e o `ws.d.ts`) e o fundador e as mascotes lidos de dentro de uma transação (as
-  leituras deles aceitam a transação: só o tipo muda).
+  leituras deles aceitam a transação: só o tipo muda). E os testes no navegador do CI paravam no `v92` e no `v92_celular`
+  (falhavam igual na v109: eles ainda esperavam o painel da versão de testes de antes da v94 — as memórias A = v92 e B = v91,
+  7 partes). Agora esperam o da v94, como o `tests/v94_jogo_test.py`: A = o motor próprio, B = o Padrão v92 com o motor de
+  antes, a parte MOTOR e o A ⇄ B trocando o motor; a física do painel é conferida no motor de antes (a memória B). Os dois
+  passam (35/35 cada) — com isso a lista inteira do CI passa e o deploy volta a rodar quando a main recebe um envio.
 - **Testes**: `tests/v110_enxuga_test.mjs` (novo, no CI: o esbuild reescreve cada `<script>` e `<style>` do enxuto e do
   completo e as saídas precisam ser idênticas; o HTML de fora igual; a física byte a byte; as 5 aposentadas e as que ficam).
   Os testes que procuram trechos do código com comentário leem a cópia completa (`texto_do_jogo()` no `tests/comum.py`: o
   `v103_tela` e o `v107_chute`) e os que conferiam as imagens embutidas (`v75`, `v77` e `v95`) conferem as aposentadas. As
   telas comparadas antes e depois (a entrada, o lobby, as 19 telas, a Oficina e uma partida em cada campo, no computador e no
   celular deitado): iguais, fora o que muda de uma abertura para outra (a tampinha que balança, o ID e os bots sorteados). Os
-  testes do CI que rodam aqui passam como antes; continuam como estavam o `v92` e o `v92_celular` (o painel da versão de
-  testes: o A ⇄ B mudou na v94), que estão na lista do CI.
+  testes do CI que rodam aqui (sem o `npm ci`) passam todos, o `v92` e o `v92_celular` também (acertados, acima). Com o
+  relógio da página parado, os prints da tela de ENTRAR, do lobby, de 10 telas, das duas partidas, do MENU e da Oficina, no
+  computador e no celular deitado, saem iguais aos da v109 pixel a pixel. Fora da lista do CI, falham do mesmo jeito que na
+  v109 (nada aqui mexeu neles): o `v73`, o `v75`, o `v76`, o `v77` e o `v96_skins` (conferem coisas das versões antigas que
+  as de depois mudaram) e o `v92_pacote` (as salas do Rachão no servidor do ZIP).
 
 ## v109 — 06/11/2026 · os dois painéis do RACHA CONTROL (o do Dono e o da staff) e o 2FA consertado
 
