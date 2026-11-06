@@ -120,6 +120,8 @@ Em Settings › Actions › Runners ele aparece como **racha-vps** (Idle), com o
 - **Voltar o banco** (raro: só se uma migração estragou dados): `sudo racha-restaura-banco` (lista) e
   `sudo racha-restaura-banco /var/backups/racha/<arquivo>.sql.gz` (pede para digitar RESTAURAR e faz um backup antes).
 - **Ver o que aconteceu**: `sudo tail -100 /var/log/racha-deploy.log` e `journalctl -u racha -n 100`.
+- **Perdeu o app autenticador (o 2FA do painel)**: o Dono reseta o 2FA de alguém da staff no painel do Dono (aba 🛡 Staff); o
+  do próprio Dono, sem entrar no painel: `sudo racha-2fa <usuario>` (no próximo login do painel aparece um QR code novo).
 - **Migração nova** (para quem programa): o arquivo em `app/db/migrations/` + uma linha no `deploy/migracoes.conf`
   (o arquivo e uma tabela que só existe depois dele). Prefira `CREATE TABLE IF NOT EXISTS` e colunas novas — nunca apagar.
 
@@ -154,6 +156,7 @@ Em Settings › Actions › Runners ele aparece como **racha-vps** (Idle), com o
 | `deploy/bin/racha-rollback` | volta uma versão |
 | `deploy/bin/racha-restaura-banco` | volta o banco para um backup |
 | `deploy/bin/racha-inicia` | como o serviço sobe (plataforma ou salas) |
+| `deploy/bin/racha-2fa` | zera o 2FA do painel de uma conta da equipe (v109) |
 | `deploy/bin/verifica_salas.mjs` | a conexão de teste nas salas (WebSocket) |
 
 **Atualizar os comandos da VPS** (raro: só quando os arquivos de `deploy/bin` mudarem): na VPS,

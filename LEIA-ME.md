@@ -182,9 +182,12 @@ migração (o cadastro, o contador e a hora do zerar ficam na tabela `contadores
 1. Defina `RACHA_OWNER_PASSWORD` (a senha do Dono, 8 a 100 caracteres) nas variáveis do servidor e reinicie. O usuário é
    `dono` — a conta **000001**. A cada início a plataforma confere a conta do Dono: a senha passa a ser a da variável (se
    mudou, as sessões antigas do Dono caem e o 2FA do painel é zerado); sem a conta 000001 no banco, ela é criada.
-2. Entre em `/admin` (no jogo: Perfil › o selo da conta, ao lado do ID — a janela SUA CONTA › RACHA CONTROL; até a v95 era Ajustes › Conta) com `dono` e a senha. Na primeira vez, o painel mostra a
-   chave do 2FA em grupos de 4: no app autenticador, **+** › **Inserir chave de configuração** › nome `RACHA` › a chave ›
-   **Baseada no horário**, e digite o código de 6 números.
+2. Entre em `/admin` (no jogo: Perfil › o selo da conta, ao lado do ID — a janela SUA CONTA › RACHA CONTROL; até a v95 era Ajustes › Conta) com `dono` e a senha. Na primeira vez, o painel mostra o
+   **QR code** e a chave do 2FA (32 letras e números, em 8 grupos de 4): no app autenticador, **+** › **Ler código QR**
+   (ou **Inserir chave de configuração** › nome `RACHA` › a chave › **Baseada no horário**), e digite o código de 6
+   números. Se o código for da chave certa mas de outro horário, o painel avisa que o relógio do celular está adiantado ou
+   atrasado (deixe a hora automática). Perdeu o app: o Dono zera o 2FA de alguém da staff na aba 🛡 Staff; o do próprio
+   Dono, `sudo racha-2fa dono` na VPS (v109).
 3. Aba **👤 Contas** (só a conta do Dono, a 000001, vê — nem um segundo "Dono" dado pelo painel): o resumo (contas, o número da próxima, o cadastro), **CRIAR CONTA** (usuário,
    nome no jogo, e-mail opcional, senha opcional — em branco, o servidor gera uma fácil de ditar; o usuário, a senha e o
    código de recuperação aparecem **uma vez**, com COPIAR PARA MANDAR), a lista com busca e **SENHA NOVA** (troca também o código de recuperação), **ABRIR / FECHAR

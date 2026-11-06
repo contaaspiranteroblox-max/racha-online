@@ -296,6 +296,18 @@ for t in v108_rede v108_servidor; do
   printf '%-12s ' "$t"
   if out=$(node "tests/${t}_test.mjs" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 done
+# v109: OS DOIS PAINÉIS DO RACHA CONTROL (o do Dono e o da staff) E O 2FA CONSERTADO. O v109_painel_servidor (Node; a
+# plataforma de teste com o servidor das salas e WebSockets de verdade) a chave nova do 2FA (32 letras, fecha em bytes), a de
+# antes trocada ou mantida, o código errado, o de outro horário (o relógio adiantado/atrasado), o código usado duas vezes e o
+# limite; quem cai em qual painel; a staff sem selo, presente, item, moeda, eventos, equipe e registros dos outros (cada
+# tentativa na auditoria); o silêncio do chat com os tetos (1 hora, 10 dias, 30 dias) e a hierarquia, valendo na hora nas salas
+# e no bilhete; banir, advertir, tirar da sala, trocar o nome, notas, tirar punição, punidos; e o Dono (carteira, verificado,
+# registros com filtro, resumo, equipe, 2FA, sessões, permissões); ~5 s. O v109_silencio_salas (Node, na memória) o silêncio em
+# cada chat das salas (Brasil, sala, equipe, amigos, clube, falas, emojis), o bilhete de antes/depois, a sessão e a expulsão; < 1 s.
+printf '%-12s ' "v109_servidor"
+if out=$(node tests/v109_painel_servidor_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+printf '%-12s ' "v109_salas"
+if out=$(node tests/v109_silencio_salas_test.js 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 # v105: O CHAT NA TELA DO LOBBY. O v105_chat_lobby (Python; a plataforma de teste e dois navegadores na parte 6) a barra do chat
 # da partida de volta à tela inicial: o lugar em 10 tamanhos sem encostar em nenhum botão, tocar abre e minimizar volta, sem
 # servidor/desligada/fora do ar, na partida, nada por quadro e o Chat do Brasil de verdade entre duas contas (o VER PERFIL por cima).
@@ -342,7 +354,10 @@ done
 # v107; ou RACHA_ANTES=<pasta> com outra cópia montada) e agora: antes a câmera lenta (a mola sumindo no teto da v96, o atraso
 # acumulado de 70 px·s ou mais) e os comandos recusados; agora a correção some sozinha (até 1,3 s e 65 px·s), nada recusado e o
 # jogo normal igual; ~3 min.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento; do
+# v109: OS DOIS PAINÉIS NO NAVEGADOR (tests/v109_painel_test.py; as páginas de verdade do RACHA CONTROL com a plataforma de
+# teste): o 2FA pelo QR code (lido pelo OpenCV), o Dono e o Moderador em cada painel, silenciar pelo painel, os registros e a
+# visão geral do Dono, dar o verificado e moedas, resetar o 2FA, o aviso do silêncio no jogo e o painel no celular; ~20 s.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

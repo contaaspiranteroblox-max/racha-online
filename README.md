@@ -135,8 +135,11 @@ suba a plataforma ([`app/DEPLOY.md`](app/DEPLOY.md)) ou teste no seu computador 
 
 1. Nas variáveis de ambiente do servidor da plataforma, defina **`RACHA_OWNER_PASSWORD`** com a sua senha e reinicie
    (`npm start`). O usuário do Dono é **`dono`** (a conta **000001**). A senha antiga do manual (`Racha@Dono1`) não entra mais.
-2. Abra **`/admin`** (o RACHA CONTROL), entre com `dono` e a senha e configure o 2FA (a chave aparece em grupos de 4: no
-   Google Authenticator ou no Authy, **+** › **Inserir chave de configuração**).
+2. Abra **`/admin`** (o RACHA CONTROL), entre com `dono` e a senha e configure o 2FA: no Google Authenticator ou no
+   Authy, **+** › **Ler código QR** e aponte para o QR code da tela (ou **Inserir chave de configuração** com a chave de 8
+   grupos de 4, **Baseada no horário**) e digite o código de 6 números. Perdeu o app? Na VPS, `sudo racha-2fa dono` (v109).
+   Desde a v109 são dois painéis: o do Dono (tudo, inclusive selos, moedas, presentes e os registros da staff) e o da staff
+   (banir, silenciar no chat, advertir, expulsar da sala, denúncias), com os níveis administrador, moderador e ajudante.
 3. Aba **👤 Contas**: **CRIAR CONTA** para cada jogador (o usuário e a senha aparecem uma vez, com COPIAR PARA MANDAR),
    **SENHA NOVA**, **ABRIR/FECHAR O CADASTRO** (fechado é o padrão: no jogo, o CRIAR CONTA some) e **ZERAR CONTAS** (faça
    um backup do banco antes: apaga todas as outras contas e a próxima volta a ser a 000002).

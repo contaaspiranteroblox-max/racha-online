@@ -333,6 +333,8 @@ function aplica(Turma){
     if (!para || para === c.conta.idPublico || !c.rel.amigos.has(para) || c.rel.bloq.has(para)) return erro('amigo');
     const f = this.v88Conexao(para);
     if (f && (!this.v88Amigos(c, f) || this.v88Bloqueado(c, f))) return erro('amigo');
+    const calado109 = typeof this.v109Calado === 'function' ? this.v109Calado(c) : '';   // v109: o silêncio da equipe (RACHA CONTROL)
+    if (calado109) return this.manda(c, {type:'dm_erro', reason:'silenciado', texto:calado109, para:para || ''});
     const t = this.v88Texto(c, m.texto, 'dm:' + para);
     if (t.erro) return erro(t.erro);
     const k = parDm(c.conta.idPublico, para), d = this.b.d.dms, agora = Date.now();
@@ -362,6 +364,8 @@ function aplica(Turma){
   P.clube_say = function(c, m){
     const erro = reason => this.manda(c, {type:'clube_erro', reason});
     const k = this.v88Clube(c); if (!k) return erro('sem_clube');
+    const calado109 = typeof this.v109Calado === 'function' ? this.v109Calado(c) : '';   // v109: o silêncio da equipe (RACHA CONTROL)
+    if (calado109) return this.manda(c, {type:'clube_erro', reason:'silenciado', texto:calado109});
     const t = this.v88Texto(c, m.texto, 'clube'); if (t.erro) return erro(t.erro);
     const agora = Date.now();
     const msg = {mid:'k' + agora.toString(36) + (++this.v88.seqClube), de:c.conta ? c.conta.idPublico : c.id, nome:c.nome, selo:c.selo || '', texto:t.texto, t:agora};

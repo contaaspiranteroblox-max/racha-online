@@ -34,6 +34,7 @@ function aplica(Turma){
     const e = m && typeof m.e === 'string' ? m.e : ''; if (!EMOTES_SET.has(e)) return;
     const agora = typeof this.agora === 'function' ? this.agora() : Date.now();
     if ((r.silencio && r.silencio.get(c.id) || 0) > Date.now()) return;               // (silenciado nesta sala por denúncias)
+    if (typeof this.v109Calado === 'function'){ const cal = this.v109Calado(c); if (cal) return this.erro(c, cal, 'silenciado_staff'); }   // v109: o silêncio da equipe
     const rm = r.emotes106 || (r.emotes106 = new Map());
     let lista = rm.get(c.id); if (!lista) rm.set(c.id, lista = []);
     if (!ritmoOk(lista, agora)) return;

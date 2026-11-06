@@ -153,29 +153,93 @@ var PERMISSOES = [
   "distribuir_global",
   "advertir",
   "suspender",
-  "ver_denuncias_atribuidas"
+  "ver_denuncias_atribuidas",
+  // v109: o painel da staff (moderação) e o do Dono
+  "silenciar",
+  // calar o chat do jogador por um tempo (5 min a 30 dias, com o teto do cargo)
+  "expulsar",
+  // tirar o jogador da sala/partida em que ele está agora
+  "trocar_nome",
+  // trocar o nome (e a frase do perfil) impróprios
+  "anotar",
+  // as notas da equipe na ficha do jogador
+  "dar_moedas",
+  // dar e tirar moedas e gemas (só o Dono)
+  "ver_todos_registros"
+  // os registros de TODA a equipe (só o Dono); a staff vê só o que ela mesma fez
+];
+var PERMISSOES_SO_DONO = [
+  "gerenciar_equipe",
+  "definir_permissoes",
+  "gerenciar_selos",
+  "enviar_itens",
+  "distribuir_global",
+  "gerenciar_eventos",
+  "dar_moedas",
+  "ver_todos_registros"
 ];
 var PERMISSOES_PADRAO = {
   dono: [...PERMISSOES],
   administrador: [
-    "gerenciar_eventos",
-    "analisar_denuncias",
-    "aplicar_punicoes",
-    "enviar_itens",
     "consultar_jogadores",
-    "consultar_registros",
+    "analisar_denuncias",
     "advertir",
-    "suspender"
+    "silenciar",
+    "suspender",
+    "aplicar_punicoes",
+    // banir para sempre, tirar punições, zerar a patente de quem trapaceou
+    "expulsar",
+    "trocar_nome",
+    "anotar",
+    "consultar_registros"
+    // (só os dele)
   ],
   moderador: [
     "consultar_jogadores",
     "analisar_denuncias",
     "advertir",
+    "silenciar",
     "suspender",
+    "expulsar",
+    "trocar_nome",
+    "anotar",
     "consultar_registros"
   ],
-  ajudante: ["ver_denuncias_atribuidas", "analisar_denuncias"]
+  ajudante: [
+    "consultar_jogadores",
+    "ver_denuncias_atribuidas",
+    "analisar_denuncias",
+    "advertir",
+    "silenciar",
+    "expulsar",
+    "anotar",
+    "consultar_registros"
+  ]
 };
+var SILENCIO_OPCOES = [
+  { min: 5, rotulo: "5 min" },
+  { min: 10, rotulo: "10 min" },
+  { min: 60, rotulo: "1 hora" },
+  { min: 24 * 60, rotulo: "1 dia" },
+  { min: 5 * 24 * 60, rotulo: "5 dias" },
+  { min: 10 * 24 * 60, rotulo: "10 dias" },
+  { min: 30 * 24 * 60, rotulo: "30 dias" }
+];
+var SILENCIO_MAX_MIN = {
+  dono: 30 * 24 * 60,
+  administrador: 30 * 24 * 60,
+  moderador: 10 * 24 * 60,
+  ajudante: 60
+};
+var BANIMENTO_OPCOES = [
+  { horas: 24, rotulo: "1 dia" },
+  { horas: 3 * 24, rotulo: "3 dias" },
+  { horas: 7 * 24, rotulo: "7 dias" },
+  { horas: 30 * 24, rotulo: "30 dias" },
+  { horas: 90 * 24, rotulo: "90 dias" },
+  { horas: 0, rotulo: "Para sempre" }
+];
+var NOME_CARGO = { dono: "Dono", administrador: "Administrador", moderador: "Moderador", ajudante: "Ajudante" };
 function formatarIdPublico(id) {
   return String(id).padStart(6, "0");
 }
@@ -186,6 +250,7 @@ var SUSPENSAO_MAX_HORAS = {
   ajudante: 0
 };
 export {
+  BANIMENTO_OPCOES,
   CARGOS,
   CARGO_PESO,
   CATALOGO_CONQUISTAS,
@@ -193,11 +258,15 @@ export {
   FAIXAS_TITULO,
   MOLDURAS_NIVEL,
   NIVEL_MAX,
+  NOME_CARGO,
   PERMISSOES,
   PERMISSOES_PADRAO,
+  PERMISSOES_SO_DONO,
   RECOMPENSAS_MARCO,
   SELOS,
   SELO_INFO,
+  SILENCIO_MAX_MIN,
+  SILENCIO_OPCOES,
   SUSPENSAO_MAX_HORAS,
   XP,
   formatarIdPublico,

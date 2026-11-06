@@ -349,7 +349,7 @@ export const punicoes = mysqlTable(
   {
     id: serial("id").primaryKey(),
     usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(),
-    tipo: mysqlEnum("tipo", ["advertencia", "suspensao", "banimento"]).notNull(),
+    tipo: mysqlEnum("tipo", ["advertencia", "suspensao", "banimento", "silencio"]).notNull(), // v109: + silencio (o chat calado por um tempo)
     motivo: varchar("motivo", { length: 300 }).notNull(),
     aplicadaPor: bigint("aplicada_por", { mode: "number", unsigned: true }).notNull(),
     expiraEm: timestamp("expira_em"),
@@ -357,6 +357,19 @@ export const punicoes = mysqlTable(
     criadaEm: timestamp("criada_em").notNull().defaultNow(),
   },
   (t) => [index("idx_punicoes_usuario").on(t.usuarioId)],
+);
+
+// ---------- v109: as notas da equipe na ficha do jogador (só a equipe vê; o Dono vê todas) ----------
+export const notasStaff = mysqlTable(
+  "notas_staff",
+  {
+    id: serial("id").primaryKey(),
+    usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull(), // o jogador
+    autorId: bigint("autor_id", { mode: "number", unsigned: true }).notNull(), // quem da equipe escreveu
+    texto: varchar("texto", { length: 500 }).notNull(),
+    criadaEm: timestamp("criada_em").notNull().defaultNow(),
+  },
+  (t) => [index("idx_notas_staff_usuario").on(t.usuarioId, t.criadaEm)],
 );
 
 // ---------- 12. DISTRIBUIÇÃO DE RECOMPENSAS ----------
@@ -414,7 +427,7 @@ export const auditoria = mysqlTable(
     ip: varchar("ip", { length: 60 }),
     criadoEm: timestamp("criado_em").notNull().defaultNow(),
   },
-  (t) => [index("idx_auditoria_op").on(t.operadorId, t.criadoEm)],
+  (t) => [index("idx_auditoria_op").on(t.operadorId, t.criadoEm), index("idx_auditoria_alvo").on(t.alvoId, t.criadoEm)], // v109: + o alvo (a ficha do jogador e o filtro do Dono)
 );
 
 // ---------- Rate limiting persistente leve (buscas, auth) ----------

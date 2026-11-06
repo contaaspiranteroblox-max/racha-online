@@ -19,9 +19,20 @@ def porta_livre():
     s = socket.socket(); s.bind(('127.0.0.1', 0)); p = s.getsockname()[1]; s.close(); return p
 
 
+USADOS_2FA = set()
+
+
 def totp(segredo, t=None):                                  # (o mesmo TOTP do app/api/racha/security.ts)
     chave = base64.b32decode(segredo.replace(' ', '').upper() + '=' * (-len(segredo.replace(' ', '')) % 8))
     passo = int((t or time.time()) // 30)
+    if t is None:                                           # v109: o servidor não aceita o mesmo código duas vezes — um passo livre
+        limpo = segredo.replace(' ', '').upper()             # por login (o de agora, o seguinte ou o anterior: ±30 s)
+        for d in (0, 1, -1):
+            if (limpo, passo + d) not in USADOS_2FA:
+                passo += d; break
+        else:
+            time.sleep(30 - time.time() % 30 + .1); return totp(segredo)
+        USADOS_2FA.add((limpo, passo))
     h = hmac.new(chave, struct.pack('>Q', passo), hashlib.sha1).digest()
     o = h[-1] & 15
     return '%06d' % ((struct.unpack('>I', h[o:o + 4])[0] & 0x7fffffff) % 1000000)
@@ -151,7 +162,7 @@ async def principal():
             _, err = await login_painel(pg, PL.base, 'dono', 'Racha@Dono1')
             P.confere(err is not None and ('Credenciais' in err or 'manual' in err), 'a senha do manual não entra no painel', err)
             chave, err = await login_painel(pg, PL.base, 'dono', SENHA)
-            P.confere(chave and re.fullmatch(r'([A-Z2-7]{4} ){4}[A-Z2-7]{4}', chave), 'a chave do 2FA aparece em grupos de 4 (fácil de digitar no app autenticador)', chave)
+            P.confere(chave and re.fullmatch(r'([A-Z2-7]{4} ){7}[A-Z2-7]{4}', chave), 'a chave do 2FA aparece em grupos de 4 (fácil de digitar no app autenticador; v109: 32 letras, a chave de 20 bytes)', chave)
             P.confere(await pg.get_by_role('button', name='👤 Contas').count() == 1, 'o painel abre depois do 2FA, com a aba 👤 Contas (o Dono)')
             await pg.reload()
             await pg.wait_for_selector('text=SAIR DO PAINEL', timeout=8000)
@@ -211,7 +222,7 @@ async def principal():
             pg2 = await ctx2.new_page()
             await login_painel(pg2, PL.base, 'kauazin7', nova, lambda: PL.sql('SELECT segredo FROM totp WHERE usuario_id = ?', [uid])[0]['segredo'])
             abas2 = [x.strip() for x in await pg2.locator('div.overflow-x-auto button').all_inner_texts()]
-            P.confere(abas2 and '👤 Contas' not in abas2 and '🛡 Equipe' in abas2, 'nem um segundo Dono (o cargo dado pelo painel): a aba Contas é só da conta 000001', abas2)
+            P.confere(abas2 and '👤 Contas' not in abas2 and '🛡 Staff' in abas2, 'nem um segundo Dono (o cargo dado pelo painel): a aba Contas é só da conta 000001', abas2)
             await ctx2.close()
             PL.sql('DELETE FROM cargos WHERE usuario_id = ?', [uid])
 

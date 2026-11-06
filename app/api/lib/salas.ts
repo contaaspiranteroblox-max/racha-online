@@ -30,10 +30,12 @@ function cabecalhos(req: IncomingMessage): Headers {
 // assinado no bilhete e guarda as denúncias só na memória.
 export type RelacoesConta = { amigos: string[]; bloqueios: string[]; mostraOnline: boolean; aceitaConvites: boolean; clube: string | null; cos: Record<string, string>; mascotes?: string[] };   // v106: + as mascotes compradas (server/mascotes106.js)
 export type DenunciaChat = { autor: string; alvo: string; motivo: string; texto: string; canal: string; mid?: string; sala?: string };
+export type Silencio = { ate: number; motivo: string };
 export type OpcoesSalas = {
   selosDe?: (usuarioId: number) => Promise<string[]>;
   relacoesDe?: (idPublico: string) => Promise<RelacoesConta | null>;
   denuncia?: (d: DenunciaChat) => Promise<void>;
+  silencioDe?: (usuarioId: number) => Promise<Silencio | null>; // v109: o chat calado pela equipe (até quando e o motivo)
 };
 // v88: a turma montada aqui (a plataforma avisa na hora: pedido de amizade, convite de clube, carta nova, amizade desfeita…)
 let turmaAtual: Turma | null = null;
@@ -55,6 +57,15 @@ export function relacoesMudaram(idPublico: number | string, r: RelacoesConta | n
 // antes não abre outra (Infinity = até o servidor reiniciar: aí o bilhete já venceu e a plataforma não dá outro)
 export function contaPunida(idPublico: number | string, ate: number, motivo?: string): number {
   try { return (turmaAtual as (Turma & { derrubaConta?: (p: string, a: number, m?: string) => number }) | null)?.derrubaConta?.(String(idPublico), ate, motivo) ?? 0; } catch (_) { return 0; }
+}
+// v109: a equipe calou o chat da conta até `ate` (0 = tirou o silêncio): vale na hora em todos os chats das salas (Chat do
+// Brasil, sala, equipe, amigos, clube e as falas da partida) e a conta recebe o aviso
+export function contaSilenciada(idPublico: number | string, ate: number, motivo = ""): number {
+  try { return (turmaAtual as (Turma & { silenciaConta?: (p: string, a: number, m: string) => number }) | null)?.silenciaConta?.(String(idPublico), ate, motivo) ?? 0; } catch (_) { return 0; }
+}
+// v109: a equipe tirou a conta da sala/partida em que ela está (a conta continua podendo jogar; só não volta para ESSA sala por 10 min)
+export function expulsaConta(idPublico: number | string, motivo = ""): number {
+  try { return (turmaAtual as (Turma & { expulsaConta?: (p: string, m: string) => number }) | null)?.expulsaConta?.(String(idPublico), motivo) ?? 0; } catch (_) { return 0; }
 }
 export function contasZeradas(manter: string[], em: number): number {
   try { return (turmaAtual as TurmaV88 | null)?.v88ZeraContas?.(manter, em)?.caiu ?? 0; } catch (_) { return 0; }
@@ -103,10 +114,12 @@ export function ligaSalas(servidor: Server, opcoes: OpcoesSalas = {}): Turma {
         const lista = usuario && typeof usuario.id === "number" && opcoes.selosDe ? await opcoes.selosDe(usuario.id).catch(() => []) : [];
         // v88: os amigos, os bloqueios e a privacidade da conta já vão junto (o servidor das salas não precisa perguntar depois)
         const rel = usuario && opcoes.relacoesDe ? await opcoes.relacoesDe(String(usuario.idPublico).padStart(6, "0")).catch(() => null) : null;
+        // v109: o silêncio da equipe (do banco, na hora): o servidor das salas fica sabendo já na conexão
+        const silencio = usuario && typeof usuario.id === "number" && opcoes.silencioDe ? await opcoes.silencioDe(usuario.id).catch(() => null) : null;
         const ws = aceita(req, sock, cabeca);
         if (!ws) return;
-        const r = req as IncomingMessage & { racha?: { idPublico: number; nome: string; selos: string[]; rel: RelacoesConta | null } | null };
-        r.racha = usuario ? { idPublico: usuario.idPublico, nome: usuario.nomeExibicao, selos: lista, rel } : null;
+        const r = req as IncomingMessage & { racha?: { idPublico: number; nome: string; selos: string[]; rel: RelacoesConta | null; silencio?: Silencio | null } | null };
+        r.racha = usuario ? { idPublico: usuario.idPublico, nome: usuario.nomeExibicao, selos: lista, rel, silencio } : null;
         turma.conecta(ws, r);
       });
   });

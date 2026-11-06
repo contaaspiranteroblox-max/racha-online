@@ -17,7 +17,8 @@
 #     sudo nenhum além dos 3 comandos do deploy);
 #   · cria as pastas: /opt/racha (as versões e os comandos), /etc/racha (a configuração e os segredos: só root e o serviço
 #     leem), /var/lib/racha (os dados das salas), /var/backups/racha (os backups do banco: só root);
-#   · instala os comandos racha-deploy, racha-migra, racha-verifica, racha-rollback, racha-restaura-banco e o racha.service;
+#   · instala os comandos racha-deploy, racha-migra, racha-verifica, racha-rollback, racha-restaura-banco, racha-2fa (v109: zerar o
+#     2FA do painel) e o racha.service; acerta o relógio da VPS (o código do 2FA depende da hora);
 #   · deixa o github-runner chamar SÓ racha-deploy, racha-rollback e racha-verifica com sudo (/etc/sudoers.d/racha-deploy).
 # NÃO liga o serviço novo: o fim mostra os comandos para trocar o processo de agora pelo serviço racha, com calma.
 set -Eeuo pipefail
@@ -60,9 +61,11 @@ install -d -o root -g root -m 700 /var/backups/racha
 touch /var/log/racha-deploy.log; chmod 640 /var/log/racha-deploy.log
 
 p "comandos do deploy"
-for c in racha-deploy racha-migra racha-verifica racha-rollback racha-restaura-banco racha-inicia; do install -o root -g root -m 755 "$AQUI/bin/$c" /opt/racha/bin/$c; done
+for c in racha-deploy racha-migra racha-verifica racha-rollback racha-restaura-banco racha-inicia racha-2fa; do install -o root -g root -m 755 "$AQUI/bin/$c" /opt/racha/bin/$c; done   # v109: + racha-2fa (zerar o 2FA do painel)
 install -o root -g root -m 644 "$AQUI/bin/verifica_salas.mjs" /opt/racha/bin/verifica_salas.mjs
-for c in racha-deploy racha-rollback racha-verifica racha-restaura-banco; do ln -sf /opt/racha/bin/$c /usr/local/sbin/$c; done
+for c in racha-deploy racha-rollback racha-verifica racha-restaura-banco racha-2fa; do ln -sf /opt/racha/bin/$c /usr/local/sbin/$c; done
+# v109: o relógio da VPS certo (o código do 2FA do painel depende da hora: com o relógio errado, todo código parece "errado")
+timedatectl set-ntp true >/dev/null 2>&1 || true
 
 p "configuração (/etc/racha)"
 cat > /etc/racha/deploy.conf <<EOF

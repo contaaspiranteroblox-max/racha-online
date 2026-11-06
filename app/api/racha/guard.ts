@@ -234,6 +234,8 @@ export type CtxAdmin = TrpcContext & { usuario: UsuarioSessao; sessao: Sessao; p
 // Exige uma permissão específica dentro de um handler admin
 export function exigePermissao(ctx: CtxAdmin, perm: Permissao) {
   if (!ctx.papel.permissoes.includes(perm)) {
+    // v109: a tentativa sem permissão também vai para a auditoria (o Dono vê o que a staff tentou e não pôde)
+    void auditar({ operadorId: ctx.usuario.id, cargo: ctx.papel.cargo, acao: "sem_permissao", detalhes: { permissao: perm }, resultado: "negado", ip: ipDaRequisicao(ctx.req) });
     throw new TRPCError({ code: "FORBIDDEN", message: "Seu cargo não tem essa permissão." });
   }
 }

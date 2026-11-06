@@ -7,6 +7,7 @@ export { createContext } from "../../app/api/context";
 export { ligaSalas, marcaContasZeradas } from "../../app/api/lib/salas";
 export { garanteDono, contasZeradasEm } from "../../app/api/racha/contas";   // v88.1: a conta do Dono no boot e o ZERAR CONTAS
 export { relacoesPorPub, denunciaDoChat } from "../../app/api/racha/v88/comum";
+export { silencioAtivo } from "../../app/api/racha/v109/comum109"; // v109: o silêncio do chat (o mesmo que o boot passa para o servidor das salas)
 export { getDb } from "../../app/api/queries/connection";
 export * as schema from "../../app/db/schema";
 export { hashSenha } from "../../app/api/racha/security";

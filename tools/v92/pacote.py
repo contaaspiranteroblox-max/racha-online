@@ -161,6 +161,13 @@ with zipfile.ZipFile(saida) as z:
     assert all(x in jogo for x in (b'window.RachaLento108', b'function v108Anda', b'function v108Cabe', b"MODS['./ritmo108']")), 'o jogo do ZIP não tem o online sem câmera lenta da v108'
     sala = z.read('server/partida/sala.js')
     assert all(x in sala for x in (b"require('./ritmo108')", b'R108.passa(q.ritmo, ag)', b'const MOTOR_ALCANCA =')) and b'MAX_CMD_S' not in sala, 'o servidor do ZIP não tem o ritmo dos comandos e o motor da v108'
+    # v109: os dois painéis do RACHA CONTROL (o do Dono e o da staff), o 2FA com QR code e o silêncio do chat nas salas
+    assert {'tools/v109/silencio.py', 'tools/v109/silencio.js', 'server/silencio109.js', 'app/api/racha/v109/staff.ts', 'app/api/racha/v109/dono.ts',
+            'app/api/racha/v109/comum109.ts', 'app/src/pages/PainelDono.tsx', 'app/src/pages/PainelStaff.tsx', 'app/src/pages/PainelComum.tsx',
+            'app/src/lib/qr109.ts', 'app/db/migrations/v109_painel.sql', 'deploy/bin/racha-2fa', 'tests/v109_painel_test.py',
+            'tests/v109_painel_servidor_test.mjs', 'tests/v109_silencio_salas_test.js'} <= nomes, 'faltam os arquivos da v109 (os dois painéis) no ZIP'
+    assert b'window.RachaSilencio109' in jogo, 'o jogo do ZIP não tem o aviso do silêncio da v109'
+    assert b'silencio109.aplica(Turma)' in z.read('server/turma.js'), 'o servidor do ZIP não tem o silêncio da equipe da v109'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)

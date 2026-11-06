@@ -229,31 +229,88 @@ export const PERMISSOES = [
   "advertir",
   "suspender",
   "ver_denuncias_atribuidas",
+  // v109: o painel da staff (moderação) e o do Dono
+  "silenciar",            // calar o chat do jogador por um tempo (5 min a 30 dias, com o teto do cargo)
+  "expulsar",             // tirar o jogador da sala/partida em que ele está agora
+  "trocar_nome",          // trocar o nome (e a frase do perfil) impróprios
+  "anotar",               // as notas da equipe na ficha do jogador
+  "dar_moedas",           // dar e tirar moedas e gemas (só o Dono)
+  "ver_todos_registros",  // os registros de TODA a equipe (só o Dono); a staff vê só o que ela mesma fez
 ] as const;
 export type Permissao = (typeof PERMISSOES)[number];
 
-// Permissões padrão por cargo (o Dono pode ajustar administrador/moderador dentro dos limites)
+// v109: o que é SÓ do Dono — o painel do Dono. A staff (administrador, moderador, ajudante) só modera: nunca dá selo
+// (verificado), presente, item, moeda, gema nem XP, não mexe em eventos/avisos/contas/equipe e não vê os registros dos outros.
+// O ajuste fino do Dono (definirPermissoes) só TIRA permissões do padrão do cargo: nada daqui chega na staff por ele.
+export const PERMISSOES_SO_DONO: Permissao[] = [
+  "gerenciar_equipe", "definir_permissoes", "gerenciar_selos", "enviar_itens", "distribuir_global", "gerenciar_eventos",
+  "dar_moedas", "ver_todos_registros",
+];
+
+// Permissões padrão por cargo (o Dono pode TIRAR permissões de cada membro, nunca dar além do padrão do cargo)
 export const PERMISSOES_PADRAO: Record<Cargo, Permissao[]> = {
   dono: [...PERMISSOES],
   administrador: [
-    "gerenciar_eventos",
-    "analisar_denuncias",
-    "aplicar_punicoes",
-    "enviar_itens",
     "consultar_jogadores",
-    "consultar_registros",
+    "analisar_denuncias",
     "advertir",
+    "silenciar",
     "suspender",
+    "aplicar_punicoes", // banir para sempre, tirar punições, zerar a patente de quem trapaceou
+    "expulsar",
+    "trocar_nome",
+    "anotar",
+    "consultar_registros", // (só os dele)
   ],
   moderador: [
     "consultar_jogadores",
     "analisar_denuncias",
     "advertir",
+    "silenciar",
     "suspender",
+    "expulsar",
+    "trocar_nome",
+    "anotar",
     "consultar_registros",
   ],
-  ajudante: ["ver_denuncias_atribuidas", "analisar_denuncias"],
+  ajudante: [
+    "consultar_jogadores",
+    "ver_denuncias_atribuidas",
+    "analisar_denuncias",
+    "advertir",
+    "silenciar",
+    "expulsar",
+    "anotar",
+    "consultar_registros",
+  ],
 };
+
+// v109: o silêncio do chat (a "multa" da staff): os tempos do painel e o teto de cada cargo, em minutos
+export const SILENCIO_OPCOES: { min: number; rotulo: string }[] = [
+  { min: 5, rotulo: "5 min" },
+  { min: 10, rotulo: "10 min" },
+  { min: 60, rotulo: "1 hora" },
+  { min: 24 * 60, rotulo: "1 dia" },
+  { min: 5 * 24 * 60, rotulo: "5 dias" },
+  { min: 10 * 24 * 60, rotulo: "10 dias" },
+  { min: 30 * 24 * 60, rotulo: "30 dias" },
+];
+export const SILENCIO_MAX_MIN: Record<Cargo, number> = {
+  dono: 30 * 24 * 60,
+  administrador: 30 * 24 * 60,
+  moderador: 10 * 24 * 60,
+  ajudante: 60,
+};
+// v109: o banimento do painel: por um tempo (horas, a suspensão de antes) ou para sempre (0 = para sempre: só administrador e Dono)
+export const BANIMENTO_OPCOES: { horas: number; rotulo: string }[] = [
+  { horas: 24, rotulo: "1 dia" },
+  { horas: 3 * 24, rotulo: "3 dias" },
+  { horas: 7 * 24, rotulo: "7 dias" },
+  { horas: 30 * 24, rotulo: "30 dias" },
+  { horas: 90 * 24, rotulo: "90 dias" },
+  { horas: 0, rotulo: "Para sempre" },
+];
+export const NOME_CARGO: Record<Cargo, string> = { dono: "Dono", administrador: "Administrador", moderador: "Moderador", ajudante: "Ajudante" };
 
 // ---------- Formatação do ID público ----------
 export function formatarIdPublico(id: number): string {

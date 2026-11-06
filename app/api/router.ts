@@ -18,6 +18,8 @@ import { contaRouter } from "./racha/v88/conta";
 import { admin88Router } from "./racha/v88/admin88";
 import { donoContasRouter } from "./racha/v88/donoContas";
 import { rankingRouter } from "./racha/v90/ranking";
+import { staffRouter } from "./racha/v109/staff";
+import { donoRouter } from "./racha/v109/dono";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -42,6 +44,8 @@ export const appRouter = createRouter({
   admin88: admin88Router, // RACHA CONTROL: eventos, correio e avisos
   ranking: rankingRouter, // v90: o ranking da temporada (gols, assistências, pontos ranqueados, Craque do Jogo) e as temporadas
   donoContas: donoContasRouter, // v88.1: RACHA CONTROL › Contas (só o Dono): criar contas, senha nova, o cadastro e o ZERAR CONTAS
+  staff109: staffRouter, // v109: RACHA CONTROL › o painel da staff (silenciar o chat, banir, advertir, tirar da sala, trocar o nome, as notas, os punidos, as denúncias)
+  dono109: donoRouter, // v109: RACHA CONTROL › o painel do Dono (a carteira, a equipe, o 2FA da staff, os registros de tudo e o resumo da staff)
 });
 
 export type AppRouter = typeof appRouter;

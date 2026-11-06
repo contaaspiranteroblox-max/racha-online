@@ -38,6 +38,7 @@ import { relacoesDe } from "./v88/comum";
 import { registraPartidaRanking } from "./v90/ranking";
 import { recompensaPartida, premiosDeNivel } from "./v88/partida";
 import { garanteCarteira } from "./economia";
+import { silencioAtivo } from "./v109/comum109"; // v109: o silêncio do chat no bilhete das salas
 
 const MODOS = ["futebol", "curva", "ginga", "volei", "americano", "basquete"];
 const NIVEIS_BOT = ["facil", "medio", "dificil", "lenda"];
@@ -101,7 +102,9 @@ export const jogoRouter = createRouter({
     await exigeLimite(`bilhete:${c.usuario.id}`, 30, 60 * 60 * 1000, "Muitos pedidos seguidos.");
     const meus = await getDb().query.selos.findMany({ where: eq(selos.usuarioId, c.usuario.id) });   // v79: os selos vão assinados no bilhete
     const r = await relacoesDe(c.usuario.id);                // v88: os amigos, os bloqueios, a privacidade, o clube e os cosméticos
-    return { bilhete: bilheteDaConta(Number(c.usuario.idPublico), c.usuario.nomeExibicao, meus.map((x) => x.selo), r ? { a: r.amigos, b: r.bloqueios, o: r.mostraOnline ? 1 : 0, c: r.aceitaConvites ? 1 : 0, k: r.clube, q: r.cos, m: r.mascotes ?? [] } : {}) };   // v106: + m (as mascotes compradas)
+    const sil = await silencioAtivo(c.usuario.id);           // v109: o silêncio do chat (o servidor das salas separado também cala)
+    const z = sil ? { z: sil.ate, zm: sil.motivo } : {};
+    return { bilhete: bilheteDaConta(Number(c.usuario.idPublico), c.usuario.nomeExibicao, meus.map((x) => x.selo), r ? { a: r.amigos, b: r.bloqueios, o: r.mostraOnline ? 1 : 0, c: r.aceitaConvites ? 1 : 0, k: r.clube, q: r.cos, m: r.mascotes ?? [], ...z } : z) };   // v106: + m (as mascotes compradas) · v109: + z/zm
   }),
 
   // ---------- Início de partida: emite token de uso único (válido 30 min) ----------

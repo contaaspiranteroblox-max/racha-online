@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# RACHA · v109: ZERA O 2FA DO PAINEL (RACHA CONTROL) de uma conta da equipe — para quem perdeu o celular ou apagou a RACHA do
+# app autenticador (o Dono também: o painel do Dono reseta o 2FA da staff, mas o do próprio Dono, sem entrar no painel, é por
+# aqui). No próximo login no painel aparece um QR code novo. As sessões do painel da conta caem e fica na auditoria.
+#   sudo racha-2fa <usuario>        (o usuário do login do painel: letras minúsculas, números, _ ou .)
+# A senha do banco vem do DATABASE_URL de /etc/racha/racha.env e vai para um arquivo temporário só do root.
+set -Eeuo pipefail
+umask 077
+[ "$(id -u)" = 0 ] || { echo "rode como root (sudo racha-2fa <usuario>)"; exit 1; }
+U=${1:-}
+[[ "$U" =~ ^[a-z0-9_.]{3,24}$ ]] || { echo "uso: racha-2fa <usuario do painel>  (letras minúsculas, números, _ ou .)"; exit 2; }
+ENV=/etc/racha/racha.env
+URL=$(grep -E '^DATABASE_URL=' "$ENV" 2>/dev/null | head -1 | cut -d= -f2- | sed -e 's/^["'\'']//' -e 's/["'\'']$//')
+[[ "$URL" =~ ^mysql://([^:@/]+)(:([^@]*))?@([^:/]+)(:([0-9]+))?/([^?]+) ]] || { echo "DATABASE_URL (mysql://usuario:senha@host:porta/banco) não encontrado em $ENV"; exit 5; }
+DBU=${BASH_REMATCH[1]}; S=${BASH_REMATCH[3]}; H=${BASH_REMATCH[4]}; P=${BASH_REMATCH[6]:-3306}; DB=${BASH_REMATCH[7]}
+S=$(printf '%b' "${S//%/\\x}")
+CNF=$(mktemp); trap 'rm -f "$CNF"' EXIT
+q(){ local v=${1//\\/\\\\}; printf '"%s"' "${v//\"/\\\"}"; }
+printf '[client]\nuser=%s\npassword=%s\nhost=%s\nport=%s\n' "$(q "$DBU")" "$(q "$S")" "$H" "$P" > "$CNF"
+sq(){ mysql --defaults-extra-file="$CNF" --batch --skip-column-names "$DB" -e "$1"; }
+ID=$(sq "SELECT id FROM usuarios WHERE username='$U' LIMIT 1")
+[ -n "$ID" ] || { echo "✖ não achei a conta $U"; exit 3; }
+CARGO=$(sq "SELECT cargo FROM cargos WHERE usuario_id=$ID LIMIT 1")
+[ -n "$CARGO" ] || { echo "✖ a conta $U não é da equipe (não tem cargo no RACHA CONTROL)"; exit 4; }
+sq "DELETE FROM totp WHERE usuario_id=$ID; UPDATE sessoes SET revogada_em=NOW() WHERE usuario_id=$ID AND painel_admin=1 AND revogada_em IS NULL; INSERT INTO auditoria (operador_id, cargo_operador, acao, alvo_id, detalhes, resultado, ip) VALUES ($ID, '$CARGO', 'resetar_2fa', $ID, JSON_OBJECT('via', 'racha-2fa no servidor'), 'ok', 'servidor')"
+echo "✔ o 2FA de $U ($CARGO) foi zerado: no próximo login do painel aparece um QR code novo para ler no app autenticador."

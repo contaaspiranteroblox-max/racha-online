@@ -67,6 +67,7 @@ let RCH = null; try { RCH = require('./partida/rachao'); } catch (e) { RCH = nul
 const grupo93 = require('./grupo93');                 // v93 · Fase 4: o grupo com líder (jogar junto com os amigos na ranqueada)
 const fila95 = require('./fila95');                   // v95: a ranqueada ao vivo (quantos online, jogando e procurando em cada tamanho)
 const emotes106 = require('./emotes106');             // v106: os emojis da partida (emote {e}: o balão em cima da tampinha para todos da sala)
+const silencio109 = require('./silencio109');         // v109: o silêncio da equipe (RACHA CONTROL) em todos os chats e a expulsão da sala
 
 const MODOS = ['futebol', 'curva', 'ginga', 'volei', 'americano', 'basquete'];   // (todos os que o jogo sabe conferir)
 const MODOS_SALA = ['futebol', 'curva'];             // v70.2: as salas só abrem FUTEBOL e COM CURVA (os outros modos ficaram guardados no jogo)
@@ -210,6 +211,7 @@ class Turma {
     if (ip) this.porIp.set(ip, nIp + 1);
     const r = req && req.racha;                          // (montado na plataforma: a conta da sessão do site, conferida antes do aperto de mão)
     const contaSessao = r && /^\d{1,9}$/.test(String(r.idPublico)) ? {idPublico:String(Number(r.idPublico)).padStart(6, '0'), nome:limpa(r.nome, 20) || 'Jogador', selo:seloDe(r.selos), rel:r.rel || null} : null;   // v88: + as relações da conta (amigos, bloqueios, privacidade), do banco
+    if (contaSessao) this.v109DaSessao(contaSessao.idPublico, r.silencio);   // v109: o silêncio da equipe, do banco (a sessão é a palavra final)
     const c = {ws, id:null, brasil:false, brasilId:null, nome:'Jogador', skin:'', flag:'BR', avatar:null, conta:null, contaSessao, selo:'', sala:null, p2p:false,
       ip, baldes:{}, substituido:false, ultBrasil:0, ultTextoBrasil:'', clubeAnunciado:null};
     ws.vivo = true;
@@ -321,7 +323,7 @@ class Turma {
   bilhete(txt){                                          // o bilhete da conta do RACHA (assinado pela plataforma)
     const o = confere(this.segredo, txt);
     if (!o || !/^\d{1,9}$/.test(String(o.p)) || typeof o.n !== 'string') return null;
-    return {idPublico:String(Number(o.p)).padStart(6, '0'), nome:limpa(o.n, 20) || 'Jogador', selo:seloDe(o.s), rel:social88.relDoBilhete(o), t:Number(o.t) || 0};   // v100: + quando foi assinado (t)   // v79: o selo vem assinado (s: a lista da conta) · v88: e as relações (a, b, o, c, k, q)
+    return {idPublico:String(Number(o.p)).padStart(6, '0'), nome:limpa(o.n, 20) || 'Jogador', selo:seloDe(o.s), rel:social88.relDoBilhete(o), t:Number(o.t) || 0, silencio:silencio109.silencioDoBilhete(o)};   // v109: + o silêncio da equipe (z, zm)   // v100: + quando foi assinado (t)   // v79: o selo vem assinado (s: a lista da conta) · v88: e as relações (a, b, o, c, k, q)
   }
   gente(id){
     let g = this.b.d.gente[id];
@@ -340,6 +342,7 @@ class Turma {
       try { c.ws.close(4003, 'conta suspensa'); } catch (_) {}
       return;
     }
+    if (conta && conta !== c.contaSessao) this.v109DoBilhete(conta);   // v109: o silêncio da equipe que veio no bilhete
     // v84: login obrigatório — sem conta válida (sessão da plataforma ou bilhete assinado) a conexão é recusada.
     if (this.exigeConta && !conta){
       this.erro(c, 'Para jogar online você precisa entrar na sua conta do RACHA.', 'sem_conta');
@@ -1154,6 +1157,7 @@ class Turma {
     const r = this.salaDe(c); if (!r || r.state !== 'playing') return;
     const eu = r.members.find(x => x.id === c.id); if (!eu || eu.slot < 0) return;   // (quem assiste não fala no campo)
     if ((r.silencio && r.silencio.get(c.id) || 0) > Date.now()) return;   // (silenciado nesta sala por denúncias: os balões também esperam)
+    { const calado109 = this.v109Calado(c); if (calado109) return this.erro(c, calado109, 'silenciado_staff'); }   // v109: o silêncio da equipe também cala as falas
     const i = m && Number.isInteger(m.i) ? m.i : -1; if (i < 0 || i >= FALAS93) return;
     const rf = r.v93Falas || (r.v93Falas = new Map()); let fr = rf.get(c.id); if (!fr) rf.set(c.id, fr = {baldes:{}});
     if (!this.balde(fr, 'fala93', .66, 3)) return;   // (o ritmo é da pessoa na sala, não da conexão: reconectar não zera)
@@ -1209,6 +1213,8 @@ class Turma {
     } else {
       if (!this.balde(c, 'fala', 1, 4)) return this.erro(c, 'Calma: uma mensagem por segundo.');
       const agora = Date.now();
+      const calado109 = this.v109Calado(c);             // v109: o silêncio da equipe vale na sala e no chat da equipe
+      if (calado109) return this.erro(c, calado109, 'silenciado_staff');
       if ((r.silencio && r.silencio.get(c.id) || 0) > agora) return this.erro(c, 'Você está silenciado nesta sala por denúncias. Daqui a pouco você volta.', 'silenciado');   // v81
       if (c.ultTextoSala === t.toLowerCase() && agora - (c.ultSala || 0) < 30000) return this.erro(c, 'Essa mensagem é igual à anterior.', 'repetida');   // v81: spam
       if (filtrado(t)) return this.erro(c, 'O filtro do chat bloqueou essa mensagem.', 'filtro');
@@ -1663,6 +1669,7 @@ class Turma {
         try { c.ws.close(4003, 'conta suspensa'); } catch (_) {}
         return;
       }
+      if (conta && conta !== c.contaSessao) this.v109DoBilhete(conta);   // v109: o silêncio da equipe que veio no bilhete
       let id = conta ? 'c' + Number(conta.idPublico) : null;
       if (!id && typeof m.token === 'string' && m.token.length <= 80) id = this.b.d.tokens[sha(m.token)] || null;
       if (!conta && id && id[0] === 'c') id = null;      // v100: como no hello — o lugar da conta só com a conta (o token do aparelho, não)
@@ -1681,6 +1688,8 @@ class Turma {
       const agora = Date.now(), erro = reason => this.manda(c, {type:'brasil_error', reason});
       if (Array.from(t).length > 120) return erro('longa');
       if ((this.chat.silencio.get(c.brasilId) || 0) > agora) return erro('silenciado');
+      const calado109 = this.v109Calado(c);             // v109: o silêncio da equipe (o aviso com quanto falta e o motivo)
+      if (calado109) return this.manda(c, {type:'brasil_error', reason:'silenciado', texto:calado109});
       if (agora - c.ultBrasil < 2800) return erro('ritmo');
       if (t.toLowerCase() === c.ultTextoBrasil) return erro('repetida');
       if (filtrado(t)) return erro('filtro');
@@ -1743,6 +1752,7 @@ grupo93.configura({filaMax:FILA_MAX_MS, filaMista:FILA_MISTA_MS});
 fila95.aplica(Turma);                                  // v95 (depois do grupo: a volta da fila é a dele)
 emotes106.aplica(Turma);                               // v106: os emojis da partida (server/emotes106.js)
 require('./convite107').aplica(Turma, {maxGente:MAX_GENTE, maxGenteMapa:MAX_GENTE_MAPA});   // v107: o convite pelo chat, para quem não é amigo também (server/convite107.js)
+silencio109.aplica(Turma);                             // v109: o silêncio da equipe nos chats e a expulsão da sala (server/silencio109.js)
 
 /* a página que abriu o jogo pode falar com o servidor? Mesmo endereço do servidor e o próprio computador (localhost) sempre;
    outras só se estiverem na lista (RACHA_ORIGENS / --origens). Sem cabeçalho Origin (programa, não navegador): pode. */

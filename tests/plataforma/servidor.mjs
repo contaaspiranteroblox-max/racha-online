@@ -135,7 +135,7 @@ const servidor = http.createServer((r, res) => {
 });
 // o servidor das salas montado na plataforma, como no app/api/boot.ts (com os selos da conta vindo do banco)
 const { eq } = P;
-const turma = P.ligaSalas(servidor, { selosDe: async (usuarioId) => (await db.query.selos.findMany({ where: eq(S.selos.usuarioId, usuarioId) })).map((x) => x.selo), relacoesDe: P.relacoesPorPub, denuncia: P.denunciaDoChat });
+const turma = P.ligaSalas(servidor, { selosDe: async (usuarioId) => (await db.query.selos.findMany({ where: eq(S.selos.usuarioId, usuarioId) })).map((x) => x.selo), relacoesDe: P.relacoesPorPub, denuncia: P.denunciaDoChat, silencioDe: P.silencioAtivo });   // v109: + o silêncio do chat (como o boot)
 if (TESTE) req('../ganchos_teste.cjs').liga(turma);   // (só nos testes: o gol pedido ao motor)
 P.marcaContasZeradas(await P.contasZeradasEm());          // v88.1: o bilhete de antes do ZERAR CONTAS não vale (nem depois de reiniciar)
 globalThis.__turma = turma;

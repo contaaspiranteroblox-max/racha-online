@@ -2,6 +2,76 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v109 — 06/11/2026 · os dois painéis do RACHA CONTROL (o do Dono e o da staff) e o 2FA consertado
+
+A pedido: *"o 2 etapas está bugado, e quero que tenha 2 painéis: um meu, do dono, com várias funções — dar verificado, dar
+moedas etc. — e um painel para os caras que forem staff cuidarem do jogo: banir player, multar, essas coisas. Faça bastante
+funções, porém o painel dos staff não consegue dar verificado nem enviar presentes; tudo o que os staff fazem aparece para
+mim"*. O 2FA: *"lá no app aparece que o código está errado no autenticador"*. A multa: *"o chat não pode mais mandar mensagem
+por 5 min, 10 min, 1 hora, 1 dia, 5 dias, 10 dias, 30 dias"*. A staff com níveis (Administrador, Moderador e Ajudante). A
+física não muda (o build confere: `sha256 ad9f1d2216409b0e`). O backup do antes: a etiqueta git `antes-v109` (a v108).
+
+- **O QUE ERA O "CÓDIGO ERRADO" DO 2FA**: a chave tinha 20 letras sorteadas (cada byte aleatório virando UMA letra): 100 bits,
+  que não fecham em bytes — os 4 bits do fim sobravam. Um app autenticador mais rígido recusa essa chave ("chave inválida") ou
+  chega num código diferente do servidor. E não tinha QR code: eram 20 letras para digitar no celular (o 0 no lugar do O ou o 1
+  no lugar do I dão chave inválida ou código errado). Por cima: o limite contava também os logins CERTOS (o 9º login em 10 min
+  travava), o mesmo código valia duas vezes e um relógio errado (do celular ou do servidor) aparecia como "código errado".
+- **O 2FA AGORA** (`app/api/racha/security.ts`, `adminRouter.ts`, `app/src/lib/qr109.ts`): a chave é base32 de verdade (20
+  bytes, 32 letras, fecha sem sobra); a de 20 letras que nunca foi confirmada vira a nova no próximo login (a que já
+  funcionava continua valendo); a tela mostra o QR CODE (o app lê com a câmera — o gerador é daqui, sem dependência, conferido
+  com o leitor de QR do OpenCV das versões 1 a 23), o botão que abre o app no celular e a chave em grupos de 4 (com "copiar");
+  o código de outro horário mostra *"o relógio do celular está uns X min adiantado/atrasado"* no lugar de "código errado"; o
+  mesmo código não vale duas vezes; o limite só conta os errados; e a VPS acerta o relógio sozinha (`timedatectl set-ntp true`
+  no `deploy/prepara-vps.sh`). Perdeu o celular: o Dono reseta o 2FA de alguém da staff no painel (o próprio, com a senha) e,
+  sem entrar no painel, `sudo racha-2fa <usuario>` no servidor (`deploy/bin/racha-2fa`) — no próximo login aparece um QR novo.
+- **OS DOIS PAINÉIS** (`app/src/pages/PainelDono.tsx`, `PainelStaff.tsx` e `PainelComum.tsx`; o login de sempre em
+  `AdminPage.tsx`): o servidor diz quem é quem (`estadoPainel.painel`) e o Dono cai no **PAINEL DO DONO** (dourado), a staff
+  no **PAINEL DA STAFF** (azul). O do Dono: a VISÃO GERAL (o que cada um da staff fez nos últimos 7 dias e as últimas ações),
+  JOGADORES (a ficha com a moderação e o que só o Dono faz: dar e tirar o verificado e os outros selos, moedas e gemas, itens e
+  a patente), STAFF (colocar e tirar, mudar o cargo, as permissões, resetar o 2FA, encerrar as sessões do painel, "o que fez"),
+  REGISTROS (tudo, com filtro: quem fez, em quem, a ação, feitas ou negadas, o período, e páginas), DENÚNCIAS, PUNIDOS,
+  PRESENTES (itens e o correio), EVENTOS e CONTAS. O da staff: JOGADORES (a ficha de moderação), DENÚNCIAS (com o que foi dito e
+  as ações direto dela), PUNIDOS e MEUS REGISTROS, com o aviso do que o cargo pode e de que tudo fica registrado para o Dono.
+- **O QUE A STAFF FAZ** (`app/api/racha/v109/staff.ts`): SILENCIAR o chat (5 min, 10 min, 1 hora, 1 dia, 5, 10 ou 30 dias — o
+  Ajudante até 1 hora, o Moderador até 10 dias, o Administrador até 30); BANIR por um tempo (1, 3, 7, 30 ou 90 dias — o
+  Moderador até 7) ou para sempre (só o Administrador): a conta cai das salas na hora; ADVERTIR (a advertência chega na central
+  de mensagens do jogador); TIRAR DA SALA (sai da partida na hora, o bot assume, e não volta para a mesma sala por 10 min);
+  TROCAR O NOME (e a frase do perfil) impróprios (vira `Jogador000123` e ele escolhe outro); as NOTAS da equipe na ficha; TIRAR
+  uma punição (o silêncio, quem silencia; o banimento e a advertência, o Administrador; nunca a de quem tem um cargo acima do
+  seu); e ZERAR a patente de quem trapaceou (a staff só tira pontos). Sempre com motivo (o jogador vê), a confirmação e a
+  hierarquia: ninguém mexe no Dono nem num cargo igual ou maior, nem em si mesmo. A ação direto da denúncia deixa ela resolvida.
+- **O QUE A STAFF NÃO FAZ** (`app/contracts/racha.ts`): dar selo (verificado), presente, item, moeda, gema ou XP; mexer em
+  eventos, avisos, contas e equipe; dar pontos de patente; ver os registros dos outros (só os dela). O Administrador perdeu o
+  "enviar itens" e os "eventos" que tinha. O ajuste de permissões do Dono só TIRA poderes do padrão do cargo (pedir uma do Dono
+  não entra). Cada tentativa negada vai para a auditoria: o Dono vê *"tentou sem permissão"* com a permissão que faltou.
+- **TUDO APARECE PARA O DONO** (`app/api/racha/v109/dono.ts`): os registros de tudo o que a staff faz — cada tentativa negada
+  e o "olhou a ficha" (uma linha a cada 10 min por jogador; o filtro esconde por padrão) —, o resumo por pessoa (silenciou,
+  baniu, advertiu, tirou da sala, trocou nome, cuidou de denúncia, negadas, a última ação) e a equipe (o cargo, o 2FA ligado ou
+  esperando o 1º login, o último login, as sessões abertas, as ações e as negadas em 7 dias). E a CARTEIRA: dar e tirar moedas
+  e gemas com motivo (o jogador recebe o aviso do presente; tirar mais do que ele tem é recusado; o histórico da carteira
+  guarda quem, quanto e por quê).
+- **O SILÊNCIO NO JOGO** (`server/silencio109.js`, as trocas em `server/turma.js`, `social88.js` e `emotes106.js`;
+  `tools/v109/silencio.py` + `silencio.js`, a última etapa do build): a conta calada não manda nada no Chat do Brasil, no chat
+  da sala, no da equipe, no dos amigos, no do clube, nas falas e nos emojis da partida; ela recebe o aviso com quanto falta e o
+  motivo (o jogo mostra esse aviso no lugar do de antes, "silenciado por denúncias"), o aviso ao vivo quando é calada ou
+  liberada (uma vez só: no lobby, o balão de cima do lobby; na partida, o aviso de baixo), e continua lendo e jogando. Vale na hora (a plataforma avisa o servidor das salas montado nela), já na conexão (a
+  sessão traz o silêncio do banco) e no servidor das salas separado (o bilhete assinado leva o silêncio: `z` e `zm`; um bilhete
+  assinado antes do silêncio não o tira). O silêncio vence sozinho.
+- **O BANCO** (`app/db/migrations/v109_painel.sql`, que o deploy aplica uma vez com o backup antes): o tipo "silencio" nas
+  punições, um índice na auditoria (o filtro do Dono por jogador) e a tabela das notas da equipe (`notas_staff`). Só acrescenta:
+  a v108 continua funcionando com o banco assim (o rollback não precisa desfazer nada).
+- **Testes**: `tests/v109_painel_servidor_test.mjs` (Node: a plataforma de teste com o servidor das salas e WebSockets de
+  verdade — o 2FA com um decodificador base32 rígido, o código de outro horário, o código usado duas vezes, o limite; quem cai
+  em qual painel; a staff sem selo/presente/item/moeda/eventos/equipe/registros, com cada tentativa na auditoria; o silêncio
+  com os tetos e a hierarquia valendo na hora nas salas e no bilhete; banir, advertir, tirar da sala, trocar o nome, notas,
+  tirar punição, punidos; o Dono: carteira, verificado, registros com filtro e página, resumo, equipe, 2FA, sessões,
+  permissões), `tests/v109_silencio_salas_test.js` (o silêncio em cada chat das salas, o bilhete de antes e o de depois, a
+  sessão e a expulsão) e `tests/v109_painel_test.py` (os dois painéis no navegador: o 2FA pelo QR code lido pelo OpenCV, o Dono
+  colocando um Moderador, o Moderador silenciando pelo painel, os registros e a visão geral do Dono, o verificado e as moedas,
+  resetar o 2FA, o aviso do silêncio no jogo e o painel no celular). O `v881_painel`, o `v881_contas` e o `v100_seguranca`
+  pegam um passo livre do 2FA por login (o mesmo código não vale mais duas vezes) e a chave de 32 letras; o `v92_pacote`
+  confere os arquivos e as marcas da v109.
+
 ## v108 — 05/11/2026 · o online sem câmera lenta e o chute logo depois da volta da internet
 
 A pedido: *"às vezes o personagem fica lento do nada por uns segundos até clicar no pausar, aí sai o lag; e a bola, muito raro,

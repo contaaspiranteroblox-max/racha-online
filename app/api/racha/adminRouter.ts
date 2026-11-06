@@ -38,11 +38,14 @@ import {
   devolveTentativa,
   parteDaChave,
   enderecoConhecido,
+  consomeUmaVez,
 } from "./guard";
-import { verificarSenha, novoToken, sha256, gerarSegredoTotp, verificarTotp, urlTotp } from "./security";
+import { verificarSenha, novoToken, sha256, gerarSegredoTotp, urlTotp, segredoTotpAtual, desvioTotp, passoTotp } from "./security";
 import { ajustaPatente, estadoRanqueada, infoPatente } from "./ranqueada"; // v82: a patente na conta
 import { ehSenhaDoManual, AVISO_SENHA_DO_MANUAL } from "./contas"; // v88.1: a senha do manual não abre o painel
-import { contaPunida } from "../lib/salas"; // v100: a conta suspensa/banida cai das salas na hora
+import { contaPunida, contaSilenciada } from "../lib/salas"; // v100: a conta suspensa/banida cai das salas na hora · v109: o silêncio do chat
+import { silencioAtivo } from "./v109/comum109"; // v109
+import { podeTirar } from "./v109/staff"; // v109: quem pode tirar uma punição (a hierarquia de quem deu)
 import {
   PERMISSOES_PADRAO,
   CARGO_PESO,
@@ -167,6 +170,10 @@ export const adminRouter = createRouter({
         const segredo = gerarSegredoTotp();
         await db.insert(totp).values({ usuarioId: u.id, segredo, ativo: false });
         t = await db.query.totp.findFirst({ where: eq(totp.usuarioId, u.id) });
+      } else if (!t.ativo && !segredoTotpAtual(t.segredo)) {
+        // v109: a chave de antes (20 letras, que alguns apps recusavam) e que nunca foi confirmada: troca pela de agora
+        await db.update(totp).set({ segredo: gerarSegredoTotp() }).where(eq(totp.usuarioId, u.id));
+        t = await db.query.totp.findFirst({ where: eq(totp.usuarioId, u.id) });
       }
       await auditar({ operadorId: u.id, cargo: papel.cargo, acao: "login_painel", resultado: "ok", ip });
       return {
@@ -175,6 +182,8 @@ export const adminRouter = createRouter({
         precisa2fa: true as const,
         configurar2fa: !t!.ativo,
         url2fa: !t!.ativo ? urlTotp(t!.segredo, u.username) : null,
+        // v109: a hora do servidor (o painel compara com a deste aparelho e avisa quando os relógios estão diferentes)
+        agora: Date.now(),
       };
     }),
 
@@ -194,11 +203,38 @@ export const adminRouter = createRouter({
       if (!s || s.revogadaEm || s.expiraEm.getTime() < Date.now()) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão do painel inválida ou expirada." });
       }
-      await exigeLimite(`totp:${s.usuarioId}`, 8, 10 * 60 * 1000, "Muitos códigos errados. Faça login de novo.");
-      const t = await db.query.totp.findFirst({ where: eq(totp.usuarioId, s.usuarioId) });
-      if (!t || !verificarTotp(t.segredo, input.codigo)) {
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Código 2FA incorreto." });
+      // v109: o limite conta só os códigos ERRADOS (reservado antes de conferir, devolvido quando o código estava certo) — antes
+      // os logins certos também contavam e o 9º login em 10 minutos travava
+      const chaveLimite = `totp:${s.usuarioId}`;
+      if (await bateLimite(chaveLimite, 8, 10 * 60 * 1000)) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Muitos códigos errados. Espere 10 minutos e faça login de novo." });
       }
+      const t = await db.query.totp.findFirst({ where: eq(totp.usuarioId, s.usuarioId) });
+      // v109: o código vale no passo de agora e no vizinho (±30 s); até 15 min para os lados ele é conferido só para avisar que o
+      // relógio do celular (ou o do servidor) está errado — o "código errado" que não era erro de digitação
+      const desvio = t ? desvioTotp(t.segredo, input.codigo, 30) : null;
+      if (desvio === null || Math.abs(desvio) > 1) {
+        const papelErro = await cargoDo(s.usuarioId);
+        await auditar({ operadorId: s.usuarioId, cargo: papelErro?.cargo ?? "?", acao: "2fa_errado", resultado: "negado", detalhes: { desvioPassos: desvio }, ip });
+        if (desvio !== null) {
+          const min = Math.max(1, Math.round(Math.abs(desvio) / 2));
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: `O código é da chave certa, mas de outro horário: o relógio do celular está uns ${min} min ${desvio > 0 ? "adiantado" : "atrasado"} em relação ao do servidor. Ligue "Data e hora automáticas" no celular e use o código novo. (Se o celular já está no automático, o relógio errado é o do servidor: rode o instalador de novo, ele acerta a hora.)`,
+          });
+        }
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: t?.ativo
+            ? "Código 2FA incorreto. Use o código da RACHA no app autenticador (ele muda a cada 30 s). Perdeu o app? O Dono reseta o seu 2FA no painel (o do Dono, o comando racha-2fa no servidor)."
+            : "Código 2FA incorreto. Leia o QR code desta tela com o app autenticador (ou digite a chave desta tela) e use o código de 6 números que aparecer.",
+        });
+      }
+      // v109: o mesmo código não vale duas vezes (quem viu o código por cima do ombro não entra com ele depois)
+      if (!(await consomeUmaVez(`totp-uso:${s.usuarioId}:${passoTotp() + desvio}`))) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Esse código já foi usado. Espere o próximo (ele muda a cada 30 s)." });
+      }
+      await devolveTentativa(chaveLimite);
       await db.update(totp).set({ ativo: true }).where(eq(totp.usuarioId, s.usuarioId));
       await db.update(sessoes).set({ totpVerificado: true }).where(eq(sessoes.id, s.id));
       const papel = await cargoDo(s.usuarioId);
@@ -222,6 +258,7 @@ export const adminRouter = createRouter({
       usuario: { nome: s.usuario.nomeExibicao, username: s.usuario.username, avatarEmoji: s.usuario.avatarEmoji, idPublico: formatarIdPublico(Number(s.usuario.idPublico)) }, // v88.1: + o ID (a aba Contas é só da 000001)
       cargo: papel.cargo,
       permissoes: papel.permissoes,
+      painel: (papel.cargo === "dono" ? "dono" : "staff") as "dono" | "staff", // v109: o Dono cai no painel do Dono; a staff, no da staff
     };
   }),
 
@@ -522,6 +559,11 @@ export const adminRouter = createRouter({
       if (!alvo) throw new TRPCError({ code: "NOT_FOUND", message: "Jogador não encontrado." });
       await exigeAlvoPermitido(c, alvo.id, "ajustar_patente");
       const antes = await estadoRanqueada(alvo.id);
+      // v109: a staff só TIRA pontos (zerar quem trapaceou); dar pontos é presente — só o Dono
+      if (c.papel.cargo !== "dono" && input.pts > antes.pts) {
+        await auditar({ operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "ajustar_patente", alvoId: alvo.id, resultado: "negado", detalhes: { motivo: "a staff só tira pontos", pts: input.pts, antes: antes.pts }, ip: ipDaRequisicao(c.req) });
+        throw new TRPCError({ code: "FORBIDDEN", message: "A staff só tira pontos da patente (zerar quem trapaceou). Dar pontos é só com o Dono." });
+      }
       const depois = await ajustaPatente(alvo.id, input.pts, c.usuario.id);
       await auditar({
         operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "ajustar_patente", alvoId: alvo.id,
@@ -534,13 +576,22 @@ export const adminRouter = createRouter({
     .input(z.object({ punicaoId: z.number().int(), confirmacao: z.literal(true) }))
     .mutation(async ({ ctx, input }) => {
       const c = ctx as unknown as CtxAdmin;
-      exigePermissao(c, "aplicar_punicoes");
       const db = getDb();
       const p = await db.query.punicoes.findFirst({ where: and(eq(punicoes.id, input.punicaoId), eq(punicoes.ativa, true)) });
       if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "Punição não encontrada." });
+      exigePermissao(c, p.tipo === "silencio" ? "silenciar" : "aplicar_punicoes"); // v109: o silêncio do chat, quem silencia tira
       await exigeAlvoPermitido(c, p.usuarioId, "revogar_punicao");
+      // v109: a punição de quem tem um cargo acima do seu, só ele (ou o Dono) tira
+      if (!podeTirar(c, p, (await cargoDo(p.aplicadaPor))?.cargo)) {
+        await auditar({ operadorId: c.usuario.id, cargo: c.papel.cargo, acao: "revogar_punicao", alvoId: p.usuarioId, resultado: "negado", detalhes: { punicao: p.id, motivo: "cargo de quem deu" }, ip: ipDaRequisicao(c.req) });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Quem deu essa punição tem um cargo acima do seu: só ele (ou o Dono) tira." });
+      }
       await db.update(punicoes).set({ ativa: false }).where(eq(punicoes.id, p.id));
-      if (p.tipo !== "advertencia") {
+      if (p.tipo === "silencio") {
+        const alvoS = await db.query.usuarios.findFirst({ where: eq(usuarios.id, p.usuarioId) });
+        const outro = await silencioAtivo(p.usuarioId);
+        if (alvoS) contaSilenciada(Number(alvoS.idPublico), outro ? outro.ate : 0, outro ? outro.motivo : "");
+      } else if (p.tipo !== "advertencia") {
         await db.update(usuarios).set({ estado: "ativo", suspensoAte: null }).where(eq(usuarios.id, p.usuarioId));
       }
       await auditar({
@@ -808,7 +859,9 @@ export const adminRouter = createRouter({
       const c = ctx as unknown as CtxAdmin;
       exigePermissao(c, "consultar_registros");
       const db = getDb();
-      const lista = await db.query.auditoria.findMany({ orderBy: [desc(auditoria.criadoEm)], limit: input.limite });
+      // v109: os registros da equipe inteira são só do Dono; a staff vê só o que ela mesma fez
+      const todos = c.papel.permissoes.includes("ver_todos_registros");
+      const lista = await db.query.auditoria.findMany({ where: todos ? undefined : eq(auditoria.operadorId, c.usuario.id), orderBy: [desc(auditoria.criadoEm)], limit: input.limite });
       return Promise.all(
         lista.map(async (a) => {
           const [op, alvo] = await Promise.all([
@@ -833,7 +886,7 @@ export const adminRouter = createRouter({
     .input(z.object({ limite: z.number().int().min(1).max(100).default(20) }))
     .query(async ({ ctx, input }) => {
       const c = ctx as unknown as CtxAdmin;
-      exigePermissao(c, "consultar_registros");
+      exigePermissao(c, "enviar_itens"); // v109: o histórico dos presentes é do Dono (era consultar_registros)
       const db = getDb();
       const lista = await db.query.distribuicoes.findMany({ orderBy: [desc(distribuicoes.criadaEm)], limit: input.limite });
       return lista.map((d) => ({

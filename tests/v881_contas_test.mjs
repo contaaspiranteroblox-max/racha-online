@@ -65,11 +65,21 @@ function totp(segredoB32, t = Date.now()) {               // (o mesmo TOTP do ap
   const h = crypto.createHmac('sha1', chave).update(cont).digest(); const o = h[h.length - 1] & 15;
   return String(((h.readUInt32BE(o) & 0x7fffffff) % 1000000)).padStart(6, '0');
 }
+// v109: o mesmo código do 2FA não vale duas vezes no servidor (o passo usado fica guardado): cada login usa um passo ainda
+// livre — o de agora, o seguinte ou o anterior (o servidor aceita ±30 s) — e, com os três usados, espera o próximo
+const USADOS_2FA = new Set();
+async function totpLivre(seg) {
+  for (;;) {
+    const p = Math.floor(Date.now() / 30000);
+    for (const d of [0, 1, -1]) { const k = seg + ':' + (p + d); if (!USADOS_2FA.has(k)) { USADOS_2FA.add(k); return totp(seg, (p + d) * 30000 + 1000); } }
+    await new Promise((r) => setTimeout(r, 30000 - (Date.now() % 30000) + 50));
+  }
+}
 async function painel(username, senha) {                  // o login do RACHA CONTROL com o 2FA (o segredo lido do banco)
   const lp = await m('admin.loginPainel', { username, senha });
   const u = (await sqlT('SELECT id FROM usuarios WHERE username = ?', [username]))[0];
   const seg = (await sqlT('SELECT segredo FROM totp WHERE usuario_id = ?', [u.id]))[0].segredo;
-  await m('admin.verificar2fa', { token: lp.token, codigo: totp(seg) });
+  await m('admin.verificar2fa', { token: lp.token, codigo: await totpLivre(seg) });
   return { token: lp.token, configurou: lp.configurar2fa };
 }
 const entra = (identificador, senha) => m('auth.entrar', { identificador, senha });

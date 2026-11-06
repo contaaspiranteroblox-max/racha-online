@@ -90,6 +90,8 @@ if (env.isProduction) {
       // v88: os amigos/bloqueios/privacidade da conta (status online, convites, chat dos amigos e do clube) e as denúncias do chat
       relacoesDe: relacoesPorPub,
       denuncia: denunciaDoChat,
+      // v109: o silêncio do chat que a staff deu (até quando e o motivo), do banco, já na conexão
+      silencioDe: async (usuarioId) => (await import("./racha/v109/comum109")).silencioAtivo(usuarioId),
     });
     console.log("Servidor da turma (salas online) no mesmo endereço: ws(s)://<este endereço>/");
     // v88.1: se as contas já foram zeradas, o bilhete assinado antes disso continua sem valer (mesmo depois de reiniciar)
