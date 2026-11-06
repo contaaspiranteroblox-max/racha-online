@@ -187,7 +187,8 @@
 #lb.v71.v77 #lb-camada .v77-pf-pais .sl-flag-e{ font-size:36px; line-height:1; }
 #lb.v71.v77 #lb-camada .v77-pf-idl{ display:flex; align-items:center; gap:10px; min-width:0; height:40px; font:700 23px/1 var(--k-txt, system-ui); color:#c8ccd2; }
 #lb.v71.v77 #lb-camada .v77-pf-idl b{ font:700 24px/1 var(--k-txt, system-ui); color:#c8ccd2; letter-spacing:.5px; }
-#lb.v71.v77 #lb-camada .v77-pf-copia{ display:grid; place-items:center; width:max(44px, calc(46px / var(--s, 1))); height:max(44px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:12px; background:var(--v77-face); color:#fff; box-shadow:var(--v77-relevo), 0 3px 0 var(--v77-k); }
+/* v111: flex:none — o botão de copiar o ID não encolhe abaixo de 44 px quando o ID fica largo (a fonte do sistema antes de a Barlow carregar) */
+#lb.v71.v77 #lb-camada .v77-pf-copia{ flex:none; display:grid; place-items:center; width:max(44px, calc(46px / var(--s, 1))); height:max(44px, calc(46px / var(--s, 1))); border:3px solid var(--v77-k); border-radius:12px; background:var(--v77-face); color:#fff; box-shadow:var(--v77-relevo), 0 3px 0 var(--v77-k); }
 #lb.v71.v77 #lb-camada .v77-pf-copia svg{ width:24px; height:24px; }
 #lb.v71.v77 #lb-camada .v77-pf-copia.ok{ color:#5fe07a; }
 #lb.v71.v77 #lb-camada .v77-pf-idl .pf-ident{ flex:none; padding:5px 9px 4px; border:2px solid #3a3c41; border-radius:9px; font:800 15px/1 var(--v77-num); letter-spacing:1.2px; color:#aab0b8; white-space:nowrap; }

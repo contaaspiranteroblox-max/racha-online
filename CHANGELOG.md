@@ -43,6 +43,10 @@ do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`
   7 partes). Agora esperam o da v94, como o `tests/v94_jogo_test.py`: A = o motor próprio, B = o Padrão v92 com o motor de
   antes, a parte MOTOR e o A ⇄ B trocando o motor; a física do painel é conferida no motor de antes (a memória B). Os dois
   passam (35/35 cada) — com isso a lista inteira do CI passa e o deploy volta a rodar quando a main recebe um envio.
+  No GitHub, o primeiro envio para a main pegou ainda um teste que muda com a fonte: no `interface`, o botão de copiar o ID
+  do PERFIL ficou com 42 px (menos que os 44 px de toque) — quando o ID aparece com a fonte do sistema, mais larga, antes de
+  a Barlow carregar, a linha do ID aperta e o botão encolhia. Agora ele não encolhe (`flex:none` no `v77.css`): fica com os
+  46 px de sempre; com a Barlow carregada nada muda na tela (os prints antes e depois são iguais).
 - **Testes**: `tests/v111_enxuga_test.mjs` (novo, no CI: o esbuild reescreve cada `<script>` e `<style>` do enxuto e do
   completo e as saídas precisam ser idênticas; o HTML de fora igual; a física byte a byte; as 5 aposentadas e as que ficam).
   Os testes que procuram trechos do código com comentário leem a cópia completa (`texto_do_jogo()` no `tests/comum.py`: o
