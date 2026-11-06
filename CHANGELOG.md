@@ -2,6 +2,63 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v108 — 05/11/2026 · o online sem câmera lenta e o chute logo depois da volta da internet
+
+A pedido: *"às vezes o personagem fica lento do nada por uns segundos até clicar no pausar, aí sai o lag; e a bola, muito raro,
+mas chuta e o chute falha: parece que vai, mas não vai"* — no online, no celular e no PC: *"o jogo fica lento, tudo em câmera
+lenta por uns segundos"*. Tudo foi medido antes de mexer, com o jogo de verdade, o servidor das salas e o 4G de mentira
+(`tests/v92_proxy.cjs`). A física não muda (o build confere: `sha256 ad9f1d2216409b0e`). O backup do antes: a etiqueta git
+`antes-v108` (a v107).
+
+- **O QUE ERA A CÂMERA LENTA**: a volta de um apagão da internet de 1 s ou mais (comum no 4G). Durante o apagão o servidor
+  para a sua tampinha (350 ms sem comando, a regra de sempre) e o aparelho continua prevendo; quando os quadros voltam, a
+  diferença é de 150 a 500 px. A v96 somava essa correção no deslize (a mola), que some no máximo a ~110 px/s: a sua tampinha
+  desenhada ficava atrás da prevista e corria a 60–75% (159 a 205 px/s no lugar de 268) por 0,9 a 3 s num 1v1 e por 2,6 a 6 s
+  num 4v4 com a CPU 5× mais lenta (o celular) — e as dos outros até 1.438 px atrás. Por cima, o servidor recusava os comandos
+  do segundo seguinte à volta (a janela de 1 s com 120 enchia com a rajada do apagão, e os recusados também contavam: de 40 a
+  62 recusados por apagão, a tampinha parada lá 51 de 60 passos) e o celular travava de 0,4 a 0,6 s refazendo os ~150 quadros
+  que chegavam juntos, cada um com o seu replay. A pausa não curava nada: só deixava o tempo passar (uma pausa curta não muda
+  nada; com o menu aberto uns segundos, quando ele fecha o deslize já acabou).
+- **A CORREÇÃO QUE SOME SOZINHA** (`tools/v108/lento.py` e `lento.js`, a última etapa do build): o deslize grande, ou o que
+  fica grande por tempo demais, acaba em ~0,12 s (a mola continua crítica: sem tranco); o limite do pulo da v96 vale também
+  para o deslize somado (vários quadros abaixo do limite somavam centenas de px); e o rollback + replay roda uma vez por quadro
+  da tela, com o quadro do servidor mais novo (o placar, os gols e os sons continuam quadro a quadro). As tampinhas dos outros
+  ficam com a guarda de sempre na tela (1,5 × a corrida) fora a volta de um apagão, e a bola com a dela. No jogo normal nada
+  muda (o prazo só entra em até 0,09% dos quadros da sua tampinha). Medido com 2 s de apagão: no 1v1 a sua tampinha alcança
+  em 0,3 a 1,1 s (era 0,9 a 3 s) e volta a correr a 252–268 px/s; no 4v4 com a CPU 5× mais lenta, em no máximo 1 s (as dos
+  outros em 0,75 s), e o replay da volta leva de 7 a 41 ms (eram 400 a 573). `RACHA_CONFIG.lento108 = false` desliga, para
+  comparar.
+- **O SERVIDOR ACEITANDO A RAJADA DA VOLTA** (`server/partida/ritmo108.js`, nas salas do RACHA, do mapa e do Rachão): o teto
+  de comandos de cada jogador virou um balde de fichas — enche 75 por segundo, até 150 (o jogo manda 60 por segundo e o
+  aparelho para de mandar depois de 2 s sem notícia do servidor: a rajada de um apagão inteiro cabe). Nenhum comando recusado
+  na volta; quem manda mais que 75 por segundo sem parar continua recusado (e anotado como suspeito, no máximo uma linha por
+  segundo — antes era uma por comando). Mandar mais não anda mais: o servidor usa um comando por passo, como sempre.
+- **A PARTIDA INTEIRA NO RELÓGIO CERTO** (`server/partida/sala.js`): depois de um engasgo do processo, o motor das salas
+  alcança até 12 passos (200 ms) de uma vez — eram 5 (83 ms). Num servidor com a CPU dividida, as paradas de 90 a 200 ms
+  jogavam passos fora e a partida ficava em câmera lenta para todo mundo (medido com o processo travando 150 ms a cada 200 ms:
+  42 passos por segundo com 5, 60 com 12). `RACHA_MOTOR_ALCANCA=5` e `RACHA_RITMO=v107` voltam ao de antes, para comparar.
+- **O CHUTE QUE "PARECE QUE VAI, MAS NÃO VAI"**: medido (o aparelho mostrou o chute e o servidor não chutou) em partidas de
+  1 min pela rede: 0 de 31 sem atraso, 3,9% no 4G, 4,5% no 4G ruim e 24% no 4G péssimo. Dos 40 falhos: 23 com a sua tampinha
+  atrás no servidor (quando os seus comandos atrasam, o servidor continua o seu último movimento por até 4 passos e espera;
+  quando os de verdade chegam, o movimento desses passos fica perdido e, depois de uma virada, a tampinha de lá fica de 12 a
+  19 px fora e o toque armado acaba antes de a bola chegar), 9 com a bola em outro lugar (outro tocou, ou a bola prevista
+  errada) e uns 8 com o toque chegando muito depois (os soluços longos). O que muda: o toque logo depois da volta de um apagão
+  não se perde mais (era recusado junto com o segundo seguinte). O que ficou de fora: o toque atrasado (o servidor olhando a
+  bola até 100 ms antes) não salvou nenhum dos 40 falhos medidos — uma regra a mais no servidor sem ganho medido, então não
+  entrou (o ramo `v108-toque-atrasado-medido` guarda a tentativa). O resto (2 a 4% dos chutes no 4G ruim) precisa de uma
+  mudança no servidor junto com a previsão do aparelho.
+- **Testes**: `tests/v108_servidor_test.mjs` (o balde: a rajada passa, o recusado não gasta ficha, o jogo nunca é recusado nem
+  chegando em bolos, o excesso recusado com uma linha por segundo nas três salas; a tampinha e o chute logo depois de um
+  apagão de 2 s, na v107 e agora; o motor alcançando 12 passos com o processo travando), `tests/v108_rede_test.mjs` (o núcleo
+  do deslize com prazo e, no simulador da rede, os apagões de 1 e 2 s e o jogo normal igual ao da v105) e
+  `tests/v108_lento_test.py` (no navegador, com o servidor das salas e o 4G de mentira: a internet sumindo por 2 s num 1v1 e
+  num 4v4 contra bots com a CPU 5× mais lenta, antes e agora; a correção da volta é o trecho que começa nela, e as de depois —
+  no 4v4, os bots trombando na Ana — ficam medidas à parte, cada uma curta). O `v98_rachao_servidor` confere a rajada (200 de
+  uma vez: o excesso ignorado e uma linha só); o `v96_online` conta à parte os quadros da volta rápida da v108 (a guarda da
+  sua tampinha sobe de propósito enquanto a correção grande acaba) e confere que são poucos — fora deles, a regra da v96 é a
+  mesma; o simulador da v102 ganhou o cliente `v108` (o padrão não muda); o `v92_pacote` confere os arquivos e as marcas da
+  v108.
+
 ## v107 — 05/11/2026 · os emojis e as falas arrastando, o árbitro arrastando na sala e na partida, o perfil pelo nome e o anel do chute bem branco
 
 A pedido, com dois vídeos e uma foto de outro jogo: *"mostrei como funcionam os emojis e as msg rápidas: não precisa clicar, é

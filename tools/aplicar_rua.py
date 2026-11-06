@@ -119,6 +119,16 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v107 · o anel do chute (tools/v107/chute.py + chute.js, por último): "quando o jogador chuta, o arco ao redor deve ficar bem
      branco" — o V95S.luz volta a 1 (a v96 tinha deixado em 0,3) e o anel aceso fica com o branco opaco, na partida, no replay
      e na Oficina (a troca no desenho de lá).
+ v108 · o online sem câmera lenta (tools/v108/lento.py + lento.js, por último; no servidor: server/partida/ritmo108.js e o
+     motor das salas em server/partida/sala.js): "às vezes o personagem fica lento do nada por uns segundos até clicar no
+     pausar" — depois de um apagão da internet a correção da previsão (centenas de px) ia para o deslize da v96, que tem teto
+     de velocidade (110 px/s nas tampinhas): a tampinha e os outros desenhados ficavam atrás e andavam a ~60% por 2 a 5 s.
+     Agora o deslize grande (ou que demora) acaba em ~0,12 s (a mola e a guarda), o limite do pulo vale para o deslize somado
+     e o rollback + replay roda uma vez por quadro da tela (com o quadro do servidor mais novo); no jogo normal nada muda. No
+     servidor, o teto de comandos virou um balde de fichas (a rajada da volta de um apagão passa: antes o segundo seguinte era
+     recusado inteiro — a tampinha parada no servidor e o toque no PASSE/CHUTE perdido, o chute que "parece que vai, mas não
+     vai") e o motor alcança 12 passos depois de um engasgo do processo (eram 5: o servidor com a CPU dividida jogava passos
+     fora e a partida inteira ficava em câmera lenta).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -175,7 +185,8 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v107/perfil',                                                               # v107: o perfil pelo nome (a janelinha PERFIL · CONVIDAR · DENUNCIAR no chat, o cartão da sala e o painel da partida)
               'v107/painel',                                                               # v107: o árbitro arrastando os jogadores na sala (o cartão) e na partida (sem segurar), e a faixa de quem foi movido
               'v107/gestos',                                                               # v107: segurar e arrastar no botão do emoji e no das falas (a cruz no meio da tela, o aro e o X; a cruz das frases no COFRE)
-              'v107/chute']                                                                # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
+              'v107/chute',                                                                # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
+              'v108/lento']                                                                # v108: o online sem câmera lenta (o deslize com prazo, o pulo pelo somado e o replay uma vez por quadro da tela)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

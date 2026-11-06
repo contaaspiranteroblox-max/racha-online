@@ -154,6 +154,13 @@ with zipfile.ZipFile(saida) as z:
     # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
     assert {'tools/v107/chute.py', 'tools/v107/chute.js', 'tests/v107_chute_test.py'} <= nomes, 'faltam os arquivos da v107 (o anel do chute) no ZIP'
     assert all(x in jogo for x in (b'window.RachaChute107', b'function v107SpriteBranco', b'(v107: o branco opaco)')), 'o jogo do ZIP não tem o anel do chute bem branco da v107'
+    # v108: o online sem câmera lenta (o deslize com prazo, o pulo pelo somado e o replay uma vez por quadro da tela) e, no
+    # servidor das salas, o ritmo dos comandos num balde e o motor que alcança 12 passos
+    assert {'tools/v108/lento.py', 'tools/v108/lento.js', 'server/partida/ritmo108.js', 'tests/v108_lento_test.py', 'tests/v108_rede_test.mjs',
+            'tests/v108_servidor_test.mjs'} <= nomes, 'faltam os arquivos da v108 (o online sem câmera lenta) no ZIP'
+    assert all(x in jogo for x in (b'window.RachaLento108', b'function v108Anda', b'function v108Cabe', b"MODS['./ritmo108']")), 'o jogo do ZIP não tem o online sem câmera lenta da v108'
+    sala = z.read('server/partida/sala.js')
+    assert all(x in sala for x in (b"require('./ritmo108')", b'R108.passa(q.ritmo, ag)', b'const MOTOR_ALCANCA =')) and b'MAX_CMD_S' not in sala, 'o servidor do ZIP não tem o ritmo dos comandos e o motor da v108'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)

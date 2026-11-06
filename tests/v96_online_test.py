@@ -7,6 +7,8 @@ bola, dribla e chuta. A cada quadro da tela da Ana grava onde a tampinha dela, a
   · e o que o jogo conta (window.RachaRede96: os recomeços, os pulos que sobraram, a guarda e a batida).
 Roda duas vezes: ANTES (a fila de comandos da v95 no servidor — RACHA_FILA=v95 — e as correções da v92 no aparelho —
 RACHA_CONFIG.rede96 = false) e AGORA (a v96). Confere que agora não há pulo nem desenho dentro da trave e que ficou melhor.
+(v108: com o prazo da v108 ligado — a correção grande da sua tampinha acabando em ~0,12 s, a volta de um apagão — a guarda
+dela sobe de propósito: esses quadros contam à parte e têm que ser poucos; os outros continuam com a regra da v96.)
 Rodar: python3 tests/v96_online_test.py [--segundos 40]"""
 import asyncio, json, math, os, subprocess, sys, time, pathlib, random
 from comum import Placar, rt, async_playwright, FONTES, HARNESS, CHROME
@@ -22,7 +24,9 @@ GRAVA = r"""(() => {                       // a cada quadro da tela: o desenho d
   const loop = (ts) => {
     if (window.__grOn){
       const o = RQ.jog[1 - NET49.localSlot] || null;
-      window.__gr.push([ts, VIS.px, VIS.py, VIS.bx, VIS.by, o ? o.x : null, o ? o.y : null, RQ.estado, NET49.lastTick]);
+      // (v108: e se o deslize da sua tampinha estava com o prazo — a correção grande acabando em ~0,12 s, de propósito)
+      const v108 = typeof V96R === 'object' && V96R.P && V96R.P.acel108 ? 1 : 0;
+      window.__gr.push([ts, VIS.px, VIS.py, VIS.bx, VIS.by, o ? o.x : null, o ? o.y : null, RQ.estado, NET49.lastTick, v108]);
     }
     requestAnimationFrame(loop);
   };
@@ -121,7 +125,7 @@ def medidas(gr, geo):
             for s in geo['linhas']:
                 pior = max(pior, r - seg(x, y, s))
         return pior
-    m = {'quadros': 0, 'pulos_eu': 0, 'pulos_bola': 0, 'pulos_outro': 0, 'rapidos_eu': 0, 'rapidos_outro': 0,
+    m = {'quadros': 0, 'pulos_eu': 0, 'pulos_bola': 0, 'pulos_outro': 0, 'rapidos_eu': 0, 'rapidos_eu_v108': 0, 'rapidos_outro': 0,
          'dentro_eu': 0, 'dentro_outro': 0, 'dentro_bola': 0, 'dentro_max_eu': 0.0, 'pulo_max_eu': 0.0, 'pulo_max_bola': 0.0, 'pulo_max_outro': 0.0}
     for i in range(1, len(gr)):
         a, b = gr[i - 1], gr[i]
@@ -135,7 +139,9 @@ def medidas(gr, geo):
         if de > U * 1.2 * k: m['pulos_eu'] += 1
         if db > U * 1.3 * k: m['pulos_bola'] += 1
         if do > U * 1.2 * k: m['pulos_outro'] += 1
-        if de > vJ * dt * 1.5 + 0.5: m['rapidos_eu'] += 1
+        if de > vJ * dt * 1.5 + 0.5:                  # (v108: com o prazo ligado — a volta de um apagão — a guarda da sua tampinha
+            if len(b) > 9 and (a[9] or b[9]): m['rapidos_eu_v108'] += 1   # sobe de propósito: contado à parte)
+            else: m['rapidos_eu'] += 1
         if do > vJ * dt * 1.5 + 0.5: m['rapidos_outro'] += 1
         fe = dentro(b[1], b[2], rJ); fo = dentro(b[5], b[6], rJ); fb = dentro(b[3], b[4], rB, True)
         m['dentro_max_eu'] = max(m['dentro_max_eu'], fe)
@@ -223,9 +229,13 @@ async def principal():
     P.confere(m['pulos_bola'] == 0, 'a bola nunca pula (era %d)' % m0['pulos_bola'], m)
     P.confere(m['pulos_outro'] == 0, 'o outro jogador nunca pula (era %d)' % m0['pulos_outro'], m)
     P.confere(m['rapidos_eu'] <= 2 and m['rapidos_outro'] <= max(3, m0['rapidos_outro'] // 10), 'nem desliza rápido demais (a sua: %d, era %d; a do outro: %d, era %d)' % (m['rapidos_eu'], m0['rapidos_eu'], m['rapidos_outro'], m0['rapidos_outro']), m)
+    # v108: a correção grande da sua tampinha (a volta de um apagão) acaba em ~0,12 s — a guarda sobe enquanto isso, de propósito
+    # (o "tudo em câmera lenta por uns segundos" era essa correção sumindo a 110 px/s). Aqui os apagões são curtos: quase nunca
+    # liga; quando liga, é curto e sem pulo (o "nunca pula" acima vale para todos os quadros)
+    P.confere(m['rapidos_eu_v108'] <= max(3, m['quadros'] // 100), 'a volta rápida da v108 (o prazo da correção grande) é curta: %d quadros da sua tampinha acima da guarda de propósito, em %d' % (m['rapidos_eu_v108'], m['quadros']), m)
     P.confere(m['dentro_eu'] == 0 and m['dentro_outro'] == 0 and m['dentro_bola'] == 0, 'nada desenhado dentro da trave, do outro lado da rede ou fora das linhas (a sua tampinha: era %d quadros, até %.1f px)' % (m0['dentro_eu'], m0['dentro_max_eu']), m)
     tot0 = m0['pulos_eu'] + m0['pulos_bola'] + m0['pulos_outro'] + m0['rapidos_eu'] + m0['rapidos_outro']
-    tot = m['pulos_eu'] + m['pulos_bola'] + m['pulos_outro'] + m['rapidos_eu'] + m['rapidos_outro']
+    tot = m['pulos_eu'] + m['pulos_bola'] + m['pulos_outro'] + m['rapidos_eu'] + m['rapidos_eu_v108'] + m['rapidos_outro']
     P.confere(tot < tot0 or tot0 == 0, 'ficou melhor que antes (pulos + deslizes rápidos: %d → %d)' % (tot0, tot), [tot0, tot])
     j = ag['jogo'] or {}
     P.confere(j.get('erro') is None and (j.get('medidas') or {}).get('snaps', 0) > SEG * 20, 'o jogo contou os quadros do servidor sem erro (%s)' % json.dumps(j.get('medidas')), j)

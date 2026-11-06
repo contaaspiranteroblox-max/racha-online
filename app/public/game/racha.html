@@ -51935,12 +51935,12 @@ v92SnapPrev = function (s, antesP, antesB, antesJ) {
     V96L.zera(V96R.P); V96L.zera(V96R.B); V96R.J.forEach(V96L.zera);
     V96R.saltoP = V96R.saltoB = true; V96R.saltoJ = M.jog.map(() => true); V96R.medidas.recomecos++;
   } else {
-    if (nP < U(p.teleP)) V96L.soma(V96R.P, dP[0], dP[1]); else { V96L.zera(V96R.P); V96R.saltoP = true; V96R.medidas.pulosP++; }
-    if (nB < U(p.teleB)) V96L.soma(V96R.B, dB[0], dB[1]); else { V96L.zera(V96R.B); V96R.saltoB = true; V96R.medidas.pulosB++; }
+    if (v108Cabe(V96R.P, dP, U(p.teleP))) V96L.soma(V96R.P, dP[0], dP[1]); else { /* v108: o somado também */ V96L.zera(V96R.P); V96R.saltoP = true; V96R.medidas.pulosP++; }
+    if (v108Cabe(V96R.B, dB, U(p.teleB))) V96L.soma(V96R.B, dB[0], dB[1]); else { /* v108: o somado também */ V96L.zera(V96R.B); V96R.saltoB = true; V96R.medidas.pulosB++; }
     M.jog.forEach((q, i) => {
       if (i === V92N.slot) return;
       const d = [antesJ[i][0] - q.x, antesJ[i][1] - q.y];
-      if (Math.hypot(d[0], d[1]) < U(p.teleJ)) V96L.soma(v96Deslize(i), d[0], d[1]); else { V96L.zera(v96Deslize(i)); V96R.saltoJ[i] = true; V96R.medidas.pulosJ++; }
+      if (v108Cabe(v96Deslize(i), d, U(p.teleJ))) V96L.soma(v96Deslize(i), d[0], d[1]); else { /* v108: o somado também */ V96L.zera(v96Deslize(i)); V96R.saltoJ[i] = true; V96R.medidas.pulosJ++; }
     });
   }
   V92N.ofP = [0, 0]; V92N.ofB = [0, 0]; V92N.ofJ = M.jog.map(() => [0, 0]);   // (o desenho da v92 não soma mais nada: os deslizes são estes)
@@ -51961,14 +51961,14 @@ function v96Desenha() {
   const M = V92N.M, C = V92N.C, G = M.G, p = V96L.PADRAO, eu = M.jog[V92N.slot]; if (!eu) return;
   const agora = performance.now(), dt = V96R.tDraw ? Math.min(0.1, (agora - V96R.tDraw) / 1000) : 0; V96R.tDraw = agora;
   const tau = Math.max(0.03, (V92.cfg.tauCorr || 90) / 1000);
-  V96L.anda(V96R.P, dt, tau, V96L.tetoJ(C, p));
+  v108Anda('P', V96R.P, dt, tau, V96L.tetoJ(C, p));   // (v108: com prazo)
   const vb = Math.hypot(M.B.vx, M.B.vy), dEu = Math.hypot(M.B.x - eu.x, M.B.y - eu.y);
-  V96L.anda(V96R.B, dt, tau * 0.9, V96L.tetoB(C, p, vb, dEu, U), p.gB, U(p.livreB));
-  for (let i = 0; i < M.jog.length; i++) if (i !== V92N.slot) V96L.anda(v96Deslize(i), dt, tau, V96L.tetoJ(C, p));
+  v108Anda('B', V96R.B, dt, tau * 0.9, V96L.tetoB(C, p, vb, dEu, U), p.gB, U(p.livreB));   // (v108: com prazo)
+  for (let i = 0; i < M.jog.length; i++) if (i !== V92N.slot) v108Anda('J', v96Deslize(i), dt, tau, V96L.tetoJ(C, p));   // (v108: com prazo)
   const A = V96R.ant || {}, vJ = V96L.guardaJ(C, p), vB = V96L.guardaB(C, p);
   const poe = (pos, ant, d, vmax, salto, x0, y0, r, bola) => {   // o deslize + a guarda + a batida
     let q = [pos[0] + d.x, pos[1] + d.y];
-    if (!salto && ant) { const g = V96L.guarda(q, ant, d, vmax, dt); if (g !== q) V96R.medidas.guardas++; q = g; }
+    if (!salto && ant) { const g = v108Guarda(q, ant, d, vmax, dt); if (g !== q) V96R.medidas.guardas++; q = g; }   // (v108: a guarda acompanha o prazo)
     const b = V96L.varre(V92_NUC, G, x0, y0, q[0], q[1], r, bola);
     if (Math.abs(b[0] - q[0]) + Math.abs(b[1] - q[1]) > 0.5) V96R.medidas.batidas++;
     return b;
@@ -53454,6 +53454,46 @@ module.exports = { criar, decide, NIVEIS };
 
   return module.exports;
 })();
+MODS['./ritmo108'] = (function () {
+  const module = { exports: {} }, exports = module.exports;
+'use strict';
+/* =====================================================================================================================
+   RACHA v108 · O RITMO DOS COMANDOS DA PARTIDA NUM BALDE DE FICHAS (o teto de comandos de cada jogador nas salas do
+   servidor: server/partida/sala.js, sala_mapa.js e rachao.js).
+
+   Até a v107 o teto era uma janela de 1 s com no máximo 120 comandos — e a janela contava também os comandos recusados.
+   Num apagão da internet do celular (0,5 a 3 s) o aparelho continua mandando o comando de cada passo (60 por segundo) e o
+   TCP segura tudo; quando a internet volta, os comandos do apagão chegam juntos. Depois de um apagão de 1 s ou mais a
+   janela enchia com eles e o servidor recusava TODOS os comandos novos do segundo seguinte (e cada recusado ainda contava
+   na janela): a tampinha ficava parada no servidor até ~1 s depois que a internet já tinha voltado, com o jogador
+   apertando o analógico (medido com o jogo de verdade atrás do 4G de mentira: 0,8 s parada depois de um apagão de 2 s).
+   No aparelho isso virava uma correção de ~250 px que deslizava devagar — a "câmera lenta" de uns segundos.
+
+   Agora é um balde de fichas: ele enche POR_S fichas por segundo, até RAJADA; cada comando gasta uma. O jogo manda 60 por
+   segundo, então o balde fica sempre cheio, e a rajada de um apagão inteiro passa (o aparelho para de mandar depois de 2 s
+   sem notícia do servidor: são até ~120 comandos). Quem manda mais que POR_S por segundo sem parar esvazia o balde e o que
+   passar disso é recusado (e anotado como suspeito, no máximo uma linha por segundo — antes era uma por comando). E mandar
+   mais não anda mais: o servidor usa um comando por passo e pula os que sobram na fila (os botões e os toques ficam).
+   ===================================================================================================================== */
+const POR_S = 75;                                     // fichas por segundo (o jogo manda 60: 25% de folga para o relógio do aparelho)
+const RAJADA = 150;                                   // o balde cheio: 2,5 s de comandos (a rajada de um apagão)
+function novo() { return { n: RAJADA, t: null, recusados: 0, aviso: -1e9 }; }
+function garante(b) { return b && typeof b === 'object' && !Array.isArray(b) && Number.isFinite(b.n) ? b : novo(); }
+// o comando que chegou agora (ms) passa (true) ou é recusado (false)
+function passa(b, agora) {
+  if (b.t == null || !(agora >= b.t)) b.t = agora;   // (o primeiro, ou o relógio voltando: não ganha nem perde fichas)
+  b.n = Math.min(RAJADA, b.n + (agora - b.t) * POR_S / 1000); b.t = agora;
+  if (b.n >= 1) { b.n -= 1; return true; }
+  b.recusados++;
+  return false;
+}
+// a linha do suspeito: no máximo uma por segundo por jogador
+function avisa(b, agora) { if (agora - b.aviso < 1000) return false; b.aviso = agora; return true; }
+function texto(b) { return 'mais de ' + POR_S + ' cmd/s (' + b.recusados + ' recusados)'; }
+module.exports = { POR_S, RAJADA, novo, garante, passa, avisa, texto };
+
+  return module.exports;
+})();   // (v108: o ritmo dos comandos num balde de fichas)
 MODS['./sala'] = (function () {
   const module = { exports: {} }, exports = module.exports;
 'use strict';
@@ -53533,7 +53573,9 @@ const SAIDA_LIVRE_TICKS = 480;                       // ninguém deu a saída em
 // (v92: a CURVA — carga de 1,2 s, 0,35 s armado, o efeito e a duração — mora no núcleo: N.curvaTick, N.cvMarca, N.curvaNoAr)
 const MIN_PASSOS_CHUTE = 2;                          // 2 passos (33 ms): o mínimo entre chutes aceitos do MESMO jogador
 const SILENCIO_MS = 350;                             // sem comando por mais que isso: a tampinha para (a regra do jogo)
-const MAX_CMD_S = 120;                               // teto de comandos por segundo por jogador (o jogo manda ~30)
+// (v108: o teto de comandos por segundo de cada jogador é um balde de fichas — server/partida/ritmo108.js: 75 por segundo,
+//  a rajada de um apagão inteiro passa. Era uma janela de 1 s com 120 que, depois de um apagão, recusava o segundo seguinte)
+const R108 = require('./ritmo108');
 const FILA_MAX = 120;                                // o tamanho máximo da fila de comandos (o do jogo)
 const SNAP_A_CADA = 2;                               // 1 quadro a cada 2 passos = 30 por segundo (o ritmo da v82) · v92: a sala de testes pode pedir 60 (o.quadros)
 // v96 · a RECUPERAÇÃO da fila de comandos: os passos em que a tampinha ficou parada esperando comando (o apagão do 4G, o
@@ -53563,7 +53605,13 @@ const NAO_CHUTA = () => false;                       // v99: (a recuperação da
    passo e roda os que faltam). Até a v91 era um setInterval de 1000/60 ms: o Node arredonda para 16 ms e o motor dava
    ~61 passos por segundo (60,7 a 61,2 medidos; tests/v92_nucleo_test.mjs mede os dois), mais rápido que os 60 comandos por segundo dos
    aparelhos — o motor ficava sem comando e andava no palpite. Depois de um engasgo (o processo parado), alcança no
-   máximo 5 passos de uma vez (o resto é perdido, como um quadro pulado). RACHA_MOTOR=v91 volta ao setInterval antigo. */
+   máximo MOTOR_ALCANCA passos de uma vez (o resto é perdido, como um quadro pulado). RACHA_MOTOR=v91 volta ao setInterval antigo.
+   v108: eram 5 passos (83 ms). No servidor com a CPU dividida (o plano grátis do Render: 0,1 CPU) o processo para por mais que
+   isso — a coleta de lixo, a cota de CPU de cada 100 ms — e cada parada de 90 a 200 ms jogava passos fora: a partida inteira
+   ficava em câmera lenta para todo mundo enquanto durasse (medido com o processo travando 150 ms a cada 200 ms: 42 passos/s
+   com 5; 60 com 12). Com 12 (200 ms) o relógio do jogo fica no relógio de verdade nessas paradas; os quadros que saem juntos
+   o aparelho junta num replay só (tools/v108/lento.js). */
+const MOTOR_ALCANCA = Number.isInteger(+process.env.RACHA_MOTOR_ALCANCA) && +process.env.RACHA_MOTOR_ALCANCA > 0 ? +process.env.RACHA_MOTOR_ALCANCA : 12;   // (RACHA_MOTOR_ALCANCA=5: o de antes, para comparar)
 const agoraMs = () => { const t = process.hrtime(); return t[0] * 1e3 + t[1] / 1e6; };
 const MOTOR = {
   set: new Set(), timer: null, modo: process.env.RACHA_MOTOR === 'v91' ? 'v91' : 'acumulador', t0: 0, feitos: 0, atrasos: 0,
@@ -53572,7 +53620,7 @@ const MOTOR = {
     this.timer = null;
     if (!this.set.size) return;
     const alvo = Math.floor((agoraMs() - this.t0) * TPS / 1000);
-    if (alvo - this.feitos > 5) { this.atrasos += alvo - this.feitos - 5; this.feitos = alvo - 5; }
+    if (alvo - this.feitos > MOTOR_ALCANCA) { this.atrasos += alvo - this.feitos - MOTOR_ALCANCA; this.feitos = alvo - MOTOR_ALCANCA; }   // (v108: eram 5)
     while (this.feitos < alvo) { this.feitos++; this.um(); }
     const prox = this.t0 + (this.feitos + 1) * 1000 / TPS;
     this.timer = setTimeout(() => this.laco(), Math.max(0, prox - agoraMs()));
@@ -53614,6 +53662,7 @@ class PartidaSala {
     this.cr = this.jogo === 'futebol' && o.motor !== 'v94' ? N.crOpcoes(o.chutes) : null;   // v99: os chutes do Rachão (null = só o chutar)
     this.snapCada = o.quadros === 60 ? 1 : SNAP_A_CADA;
     this.filaV95 = FILA_V95 || o.fila === 'v95';     // v96: a fila antiga (sem a recuperação), para comparar
+    this.ritmoV107 = process.env.RACHA_RITMO === 'v107' || o.ritmo === 'v107';   // v108: RACHA_RITMO=v107 (ou o.ritmo) = o teto de antes, para comparar
     this.ent102 = o.entradas !== false && process.env.RACHA_ENTRADAS !== '0';   // v102: as direções e o crédito de cada um no quadro (Q.ent, Q.cred)
     this.agora = o.agora || (() => Date.now());
     this.decorrido = o.decorrido || null;            // v80: o relógio oficial (ms, sem as pausas)
@@ -53663,7 +53712,7 @@ class PartidaSala {
       time, k, papel: this.n >= 3 && k === this.n - 1 ? 'gk' : 'campo',
       x: 0, y: 0, vx: 0, vy: 0, mx: 0, my: 0, r: this.C.R_JOG, m: this.C.MASSA_JOG,
       chuteT: -99, fxT: -9, ack49: 0, ultimoChuteMs: -1e9,
-      fila: null, netButton: null, cv70: null, ritmo: [], botAi: null,
+      fila: null, netButton: null, cv70: null, ritmo: R108.novo(), botAi: null,   // (v108: o balde do ritmo dos comandos)
       cr: this.cr ? N.crNovo() : null, suBot: false,  // v99: os chutes do Rachão (o bot também usa)
     };
     if (q.bot) q.botAi = BotSala.criar(q.bot);
@@ -53680,7 +53729,7 @@ class PartidaSala {
     const ja = this.jog.find(x => x.netId === String(netId));
     if (ja) {                                        // v93: já está num lugar: não pega outro (duas tampinhas da mesma pessoa) — e a fila de comandos
       ja.fila = { fila: [], chegou: 0, min: 99, n: 0, ult: null, feito: 0, visto: 0 };   //  recomeça: a conexão nova conta os comandos do zero
-      ja.netButton = N.novoBotao(); ja.cv70 = ja.netButton.cv; ja.ack49 = 0; if (Array.isArray(ja.ritmo)) ja.ritmo.length = 0;
+      ja.netButton = N.novoBotao(); ja.cv70 = ja.netButton.cv; ja.ack49 = 0; ja.ritmo = R108.novo();   // (v108: o balde cheio de novo)
       if (this.cr) ja.cr = N.crNovo();                 // v99
       if (this.v94) S94().reiniciaJogador(this, ja);   // v94: a máquina de comandos do motor também recomeça
       return ja.i;
@@ -53772,8 +53821,13 @@ class PartidaSala {
     const q = this.jog.find(x => x.netId === netId);
     if (!q || !q.fila || this.encerrado) return;
     const ag = this.agora();
-    q.ritmo.push(ag); while (q.ritmo.length && ag - q.ritmo[0] > 1000) q.ritmo.shift();
-    if (q.ritmo.length > MAX_CMD_S) { this.suspeito(netId, 'ritmo', q.ritmo.length + ' cmd/s'); return; }
+    if (this.ritmoV107) {                            // (a v107, para comparar: a janela de 1 s com 120, os recusados contando)
+      const j = q.ritmo107 || (q.ritmo107 = []); j.push(ag); while (j.length && ag - j[0] > 1000) j.shift();
+      if (j.length > 120) { this.suspeito(netId, 'ritmo', j.length + ' cmd/s'); return; }
+    } else {
+      q.ritmo = R108.garante(q.ritmo);               // v108: o balde de fichas (a rajada de um apagão passa; mais de 75/s sem parar, não)
+      if (!R108.passa(q.ritmo, ag)) { if (R108.avisa(q.ritmo, ag)) this.suspeito(netId, 'ritmo', R108.texto(q.ritmo)); return; }
+    }
     const f = q.fila, seq = m.seq | 0;
     if (seq <= f.visto) {
       if (seq > f.visto - 600) return;               // repetido ou fora de ordem
@@ -54238,7 +54292,7 @@ class PartidaSala {
   rodar(ticks) { for (let i = 0; i < ticks && !this.encerrado; i++) this.passo(); }
 }
 
-module.exports = { PartidaSala, MOTOR, STEP, RQ_GOL_TICKS, RQ_FIM_TICKS, SAIDA_LIVRE_TICKS, SNAP_A_CADA, N };
+module.exports = { PartidaSala, MOTOR, MOTOR_ALCANCA, STEP, RQ_GOL_TICKS, RQ_FIM_TICKS, SAIDA_LIVRE_TICKS, SNAP_A_CADA, N };
 
   return module.exports;
 })();
@@ -63050,6 +63104,147 @@ v95SpriteBrancoDe = function(rpx){                           // (a mesma caixa d
   return c;
 };
 window.RachaChute107 = {luz: () => V95S.luz, sprite: rpx => v95SpriteBrancoDe(rpx)};
+
+/* ======================================================================= RACHA v108 · o online sem câmera lenta (tools/v108/lento.js) */
+/* ---------------------------------------------------------------- tools/v108/lento.js */
+/* ======================================================================================================================
+   RACHA v108 · O ONLINE SEM CÂMERA LENTA (tools/v108/lento.js — o MESMO arquivo no jogo, o build cola, e no simulador do Node,
+   tests/v102/sim.mjs com o cliente 'v108'). Duas partes, como o tools/v102/liso.js:
+     1) o núcleo (window.RachaLento108 no jogo; module.exports no Node): as contas, sem nada do jogo;
+     2) os ganchos no jogo (só quando este arquivo está colado no script do jogo, depois da v96, da v102 e da v105).
+   O pedido (05/11/2026): "às vezes o personagem fica lento do nada por uns segundos até clicar no pausar, aí sai o lag" —
+   online, no celular e no PC: "o jogo fica lento, tudo em câmera lenta por uns segundos".
+   O que acontecia (medido com o jogo de verdade, o servidor das salas e o 4G de mentira — tests/v108_lento_test.py):
+     · num apagão da internet de 1 s ou mais, o servidor para a sua tampinha (350 ms sem comando: a regra de sempre), paga
+       no máximo 0,5 s depois (a recuperação da v96) e, até a v107, ainda recusava os comandos do segundo seguinte (o ritmo:
+       server/partida/ritmo108.js). A previsão tinha andado com tudo isso: quando os quadros do servidor voltam, a correção
+       da sua tampinha passa de 250 px (a dos outros, que a previsão empurrou o apagão inteiro, de 500 px);
+     · cada quadro corrige um pouco, abaixo do limite do pulo, e a v96 soma tudo no DESLIZE (a mola). A mola tem teto de
+       velocidade (0,3 × a corrida + 30 = 110 px/s nas tampinhas): 250 px levam 2,3 s para sumir — a tampinha desenhada fica
+       atrás da prevista e anda a 60% da corrida (158 px/s no lugar de 268) por 2 a 3 s; no celular lento (a CPU 5× mais
+       devagar), 500 px e 5 s. É a câmera lenta. E a pausa não curava nada: o deslize continua sumindo no mesmo ritmo com o
+       menu aberto (medido: a pausa de 80 ms não muda nada); com o menu aberto uns segundos, quando ele fecha já acabou.
+   Agora:
+     A) o DESLIZE COM PRAZO: o deslize grande (acima de `tam`) ou o que fica acima de `dur` por mais de `t1` s acaba em ~T2 s
+        — a mola e a guarda passam a andar o que falta em T2 (a mola continua crítica: sem tranco). A tampinha dos outros só
+        passa da guarda de sempre (na tela, 1,5 × a corrida: a regra da v96) com o deslize grande demais (a volta de um
+        apagão); a bola fica com a guarda dela (4 × a corrida). O de sempre (a previsão errando um pouco a cada quadro) fica
+        igual: os limites estão acima do que o jogo normal tem (o simulador mede);
+     B) o PULO PELO SOMADO: o limite do pulo da v96 (14 u a sua, 30 u os outros, 40 u a bola) vale também para o deslize
+        somado, não só para a correção de um quadro (vários quadros abaixo do limite somavam 500 px de deslize);
+     C) O REPLAY UMA VEZ POR QUADRO DA TELA: o quadro do servidor que chega é guardado e o rollback + replay roda no começo do
+        próximo quadro da tela, com o mais novo. Na volta de um apagão chegam ~150 quadros juntos, e cada um refazia até 120
+        comandos (no celular, meio segundo travado e as correções de cada um somando no deslize); agora é um replay só. O
+        resto do quadro (placar, gol, sons, o desenho dos outros) continua quadro a quadro, na hora.
+   A física, a previsão (o mundo, o replay) e as molas da v96 no jogo normal são as mesmas. No servidor (fora deste arquivo):
+   o ritmo dos comandos num balde (server/partida/ritmo108.js) e o motor das salas alcançando 12 passos depois de um engasgo
+   (server/partida/sala.js, MOTOR_ALCANCA). RACHA_CONFIG.lento108 = false desliga esta parte (para comparar nas medidas).
+   ====================================================================================================================== */
+(function (raiz, fabrica) {
+  const m = fabrica();
+  if (typeof module === 'object' && module.exports) module.exports = m;
+  if (raiz) raiz.RachaLento108 = m;
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : null), function () {
+  'use strict';
+  // os limites de cada deslize (u): tam = grande demais (acaba já em T2); dur e t1 = acima de dur por mais de t1 s (acaba em
+  // T2); acelerado, ele vai até ficar abaixo de fim (o resto, pequeno, some na mola de sempre). A sua tampinha: o deslize de
+  // sempre fica abaixo de 2 u e some em menos de 0,3 s; os outros e a bola deslizam mais no jogo normal (a previsão erra mais
+  // neles: até ~8 u por ~0,8 s no 4G ruim do simulador), então o limite deles é mais alto
+  const LIMITES = Object.freeze({
+    P: Object.freeze({ tam: 3, dur: 1.5, t1: 0.3, fim: 1.5 }),
+    J: Object.freeze({ tam: 8, dur: 4, t1: 0.8, fim: 2 }),
+    B: Object.freeze({ tam: 10, dur: 4, t1: 0.8, fim: 2 }),
+  });
+  const T2 = 0.12;                                   // s: o deslize acelerado acaba em ~T2 (a mola crítica + a guarda)
+  // a mola de um deslize d ({x, y, vx, vy}) neste quadro: devolve {vmax, ganho, livre, acel} para o RachaLiso.anda e marca
+  // em d o tempo acima do limite (d.lento108) e se está acelerado (d.acel108: a guarda usa). U: u → px
+  function mola(tipo, d, dt, vmax, ganho, livre, U) {
+    const L = LIMITES[tipo] || LIMITES.J, n = Math.hypot(d.x, d.y);
+    d.tipo108 = tipo;
+    d.lento108 = n > U(L.dur) ? (d.lento108 || 0) + (dt > 0 ? dt : 0) : 0;
+    const acel = n > U(L.tam) || d.lento108 > L.t1 || (d.acel108 === true && n > U(L.fim));   // (acelerado, vai até o fim)
+    d.acel108 = acel; d.grande108 = n > U(L.tam);
+    if (!acel) return { vmax, ganho, livre, acel: false };
+    let v = vmax; if (ganho) v += ganho * Math.max(0, n - (livre || 0));
+    return { vmax: Math.max(v, n / T2), ganho: 0, livre: 0, acel: true };
+  }
+  // a guarda do desenho (o máximo que a coisa desenhada anda por segundo): com o deslize acelerado, mais o que ele precisa — na
+  // sua tampinha. A tampinha dos outros só passa da guarda de sempre (1,5 × a corrida na tela: a regra da v96, que o
+  // tests/v96_online_test.py confere) com o deslize grande demais (acima de `tam`: a volta de um apagão); o que demora, menor,
+  // some com a guarda de sempre (freia na hora; para alcançar a prevista lá na frente, no máximo 1,5 × a corrida). A bola fica
+  // sempre com a guarda dela (4 × a corrida: a bola desenhada nunca dá o pulo que o v96_online conta)
+  function guarda(d, vmax) { return d && d.acel108 && (d.tipo108 === 'P' || (d.tipo108 === 'J' && d.grande108)) ? vmax + Math.hypot(d.x, d.y) / T2 : vmax; }
+  // B) a correção c ([dx, dy]) entra no deslize d só se ela e o somado ficam abaixo do limite do pulo (px); senão pula
+  function cabe(d, c, lim) { return Math.hypot(c[0], c[1]) < lim && Math.hypot(d.x + c[0], d.y + c[1]) < lim; }
+  return { VERSAO: 'v108', LIMITES, T2, mola, guarda, cabe };
+});
+
+/* ---------------------------------------------------------------- 2) os ganchos no jogo */
+// as três chamadas do desenho liso da v96 trocadas pelo tools/v108/lento.py (sem o núcleo, fazem o de antes)
+const V108L = { K: null, ligado: () => false, E: { aceleradas: { P: 0, J: 0, B: 0 }, pulos: 0, juntados: 0, replays: 0, maiorP: 0, erro: null, pend: null } };
+function v108Anda(tipo, d, dt, tau, vmax, ganho, livre) {         // A) a mola com prazo
+  const E = V108L.E;
+  if (d && V108L.K && V108L.ligado()) {
+    try {
+      const r = V108L.K.mola(tipo, d, dt, vmax, ganho, livre, U);
+      if (r.acel) { E.aceleradas[tipo] = (E.aceleradas[tipo] | 0) + 1; vmax = r.vmax; ganho = r.ganho; livre = r.livre; }
+      if (tipo === 'P') E.maiorP = Math.max(E.maiorP, Math.hypot(d.x, d.y));
+    } catch (e) { E.erro = String(e && e.stack || e); }
+  } else if (d) { d.acel108 = false; d.lento108 = 0; }
+  return V96L.anda(d, dt, tau, vmax, ganho, livre);
+}
+function v108Guarda(q, ant, d, vmax, dt) {                       // A) a guarda acompanha a mola acelerada
+  if (V108L.K && V108L.ligado()) { try { vmax = V108L.K.guarda(d, vmax); } catch (e) { V108L.E.erro = String(e && e.stack || e); } }
+  return V96L.guarda(q, ant, d, vmax, dt);
+}
+function v108Cabe(d, c, lim) {                                    // B) o pulo pelo somado
+  if (!V108L.K || !V108L.ligado()) return Math.hypot(c[0], c[1]) < lim;
+  const ok = V108L.K.cabe(d, c, lim);
+  if (!ok && Math.hypot(c[0], c[1]) < lim) V108L.E.pulos++;
+  return ok;
+}
+if (typeof window !== 'undefined' && typeof V96R === 'object' && typeof v92SnapPrev === 'function' && typeof V92N === 'object' && window.RachaLento108) (function () {
+  const E = V108L.E;
+  V108L.K = window.RachaLento108;
+  V108L.ligado = () => !(window.RACHA_CONFIG && window.RACHA_CONFIG.lento108 === false);   // (dá para desligar com o jogo aberto, para comparar)
+
+  // C) o rollback + replay uma vez por quadro da tela: o v92SnapPrev (o da v96, com os ganchos da v102 dentro) guarda o
+  // quadro mais novo; o começo do quadro da tela (o net49RemoteFrame e o net49Draw) refaz com ele. Quem chega junto (no mesmo
+  // quadro da tela) só troca o guardado: os "antes" (onde a previsão estava) ficam os do primeiro, que é onde ela ainda está
+  // (a previsão só anda no quadro da tela).
+  const snapPrevAntes = v92SnapPrev;
+  v92SnapPrev = function (s, antesP, antesB, antesJ) {
+    if (!V108L.ligado() || E.erro) return snapPrevAntes.apply(this, arguments);
+    if (E.pend) { E.pend.s = s; E.juntados++; return; }
+    E.pend = { s, antesP, antesB, antesJ };
+  };
+  function refaz() {
+    const p = E.pend; if (!p) return;
+    E.pend = null;
+    if (!v92RedeAtiva()) return;
+    E.replays++;
+    try { snapPrevAntes.call(null, p.s, p.antesP, p.antesB, p.antesJ); }
+    catch (e) { E.erro = String(e && e.stack || e); try { v92RedeFalhou(e); } catch (_) {} }
+  }
+  const remoteAntes = net49RemoteFrame;
+  net49RemoteFrame = function () { if (E.pend) refaz(); return remoteAntes.apply(this, arguments); };
+  const drawAntes = net49Draw;
+  net49Draw = function () { if (E.pend) refaz(); return drawAntes.apply(this, arguments); };
+  const beginAntes = net49Begin;
+  net49Begin = function () { E.pend = null; return beginAntes.apply(this, arguments); };
+  const stopAntes = x49NetStop;
+  x49NetStop = function () { E.pend = null; return stopAntes.apply(this, arguments); };
+
+  window.RachaLento108Jogo = {
+    ativo: () => V108L.ligado(),
+    refaz,
+    estado: () => ({ ativo: V108L.ligado(), aceleradas: Object.assign({}, E.aceleradas), pulos: E.pulos, juntados: E.juntados, replays: E.replays,
+      maiorP: Math.round(E.maiorP), guardado: !!E.pend, erro: E.erro,
+      deslize: { P: Math.round(Math.hypot(V96R.P.x, V96R.P.y)), B: Math.round(Math.hypot(V96R.B.x, V96R.B.y)),
+        J: Math.round(V96R.J.reduce((m, d) => d ? Math.max(m, Math.hypot(d.x, d.y)) : m, 0)) } }),
+    zera: () => { E.aceleradas = { P: 0, J: 0, B: 0 }; E.pulos = 0; E.juntados = 0; E.replays = 0; E.maiorP = 0; },
+  };
+})();
 
 montaAbas();
 if (onbPrecisa()) onbAbre();   // v57: a primeira vez (antes do presente)

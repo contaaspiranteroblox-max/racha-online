@@ -18,7 +18,8 @@ const crypto = require('crypto');
 const { criaMotorRachao } = require('./rachao_motor');
 const { MOTOR } = require('./sala');
 
-const SILENCIO_MS = 350, MAX_CMD_S = 120, FILA_MAX = 120, SNAP_A_CADA = 2;
+const SILENCIO_MS = 350, FILA_MAX = 120, SNAP_A_CADA = 2;
+const R108 = require('./ritmo108');       // v108: o ritmo dos comandos num balde de fichas (a rajada de um apagão passa)
 const FIM_TICKS = 78;                     // (1,3 s depois do apito final sai o resultado — o tempo da tela do fim do Rachão)
 const PRORROG_MAX_S = 180;                // a prorrogação (gol de ouro) vai até 3 min: depois, empate
 const DURACAO_MAX_S = 45 * 60;            // nenhuma partida passa de 45 min de bola rolando
@@ -161,7 +162,7 @@ class PartidaRachao {
   /* ---- os lugares: quem sai vira bot na hora; quem volta reassume ---- */
   prepara(p) {
     p.fila = { fila: [], chegou: this.agora(), min: 99, n: 0, ult: null, feito: 0, visto: 0, cont: {}, contOk: false };
-    p.toq = {}; p.ritmo = []; p.ack = 0;
+    p.toq = {}; p.ritmo = R108.novo(); p.ack = 0;
     zeraEntrada(p.input);
   }
   poeHumano(p, netId, nome) {
@@ -169,7 +170,7 @@ class PartidaRachao {
     this.prepara(p); p.fila.chegou = 0;                 // (até o primeiro comando chegar, parada)
   }
   viraBot(p, guarda) {
-    p.reserva = guarda ? p.netId : null; p.netId = null; p.nome = ''; p.label = ''; p.human = null; p.bot = novoBot(); p.fila = null; p.ritmo = []; p.ack = 0;
+    p.reserva = guarda ? p.netId : null; p.netId = null; p.nome = ''; p.label = ''; p.human = null; p.bot = novoBot(); p.fila = null; p.ritmo = R108.novo(); p.ack = 0;
     zeraEntrada(p.input);
   }
   entra(netId, nome, slot) {
@@ -210,8 +211,8 @@ class PartidaRachao {
     const p = this.humano(netId);
     if (!p || !p.fila || this.encerrado) return;
     const ag = this.agora();
-    p.ritmo.push(ag); while (p.ritmo.length && ag - p.ritmo[0] > 1000) p.ritmo.shift();
-    if (p.ritmo.length > MAX_CMD_S) { this.suspeito(netId, 'ritmo', p.ritmo.length + ' cmd/s'); return; }
+    p.ritmo = R108.garante(p.ritmo);                 // v108: o balde de fichas (server/partida/ritmo108.js)
+    if (!R108.passa(p.ritmo, ag)) { if (R108.avisa(p.ritmo, ag)) this.suspeito(netId, 'ritmo', R108.texto(p.ritmo)); return; }
     const c = this.Q.comando(m); if (!c) return;
     const f = p.fila;
     if (c.seq <= f.visto) { if (c.seq > f.visto - 600) return; f.fila.length = 0; f.ult = null; f.feito = 0; f.contOk = false; }   // (a contagem do aparelho recomeçou)

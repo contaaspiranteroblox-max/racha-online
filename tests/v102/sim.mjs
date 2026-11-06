@@ -15,10 +15,11 @@ import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const N = require(path.join(RAIZ, 'server/partida/nucleo.js'));
-const { PartidaSala } = require(path.join(RAIZ, 'server/partida/sala.js'));
+const { PartidaSala, MOTOR_ALCANCA } = require(path.join(RAIZ, 'server/partida/sala.js'));
 const L = require(path.join(RAIZ, 'tools/v96/liso.js'));
 let L2 = null; try { L2 = require(path.join(RAIZ, 'tools/v102/liso.js')); } catch (_) {}
 let K105 = null; try { K105 = require(path.join(RAIZ, 'tools/v105/rede.js')); } catch (_) {}   // (v105: o contato desenhado)
+let K108 = null; try { K108 = require(path.join(RAIZ, 'tools/v108/lento.js')); } catch (_) {}   // (v108: o deslize com prazo, o pulo pelo somado e o replay uma vez por quadro)
 const STEP = 1 / 60, STEP_MS = 1000 / 60, U = N.U;
 
 /* ---------------- o acaso com semente e a fila de eventos ---------------- */
@@ -38,7 +39,7 @@ export const REDES = {
   '4g_ruim': { atraso: 80, oscila: 30, pico: 150, picoCada: 2000, rajada: 0.08, rajadaMs: 50 },
 };
 class Radio {                                         // os picos de um aparelho (os dois sentidos juntos): [início, fim]
-  constructor(p, r, dur) { this.jan = []; if (p.pico > 0 && p.picoCada > 0) { let t = -Math.log(1 - r()) * p.picoCada; while (t < dur + 3000) { this.jan.push([t, t + p.pico]); t += -Math.log(1 - r()) * p.picoCada; } } }
+  constructor(p, r, dur, fixos) { this.jan = []; if (fixos) { this.jan = fixos.map(j => j.slice()).sort((a, b) => a[0] - b[0]); return; } /* (v108: os apagões marcados) */ if (p.pico > 0 && p.picoCada > 0) { let t = -Math.log(1 - r()) * p.picoCada; while (t < dur + 3000) { this.jan.push([t, t + p.pico]); t += -Math.log(1 - r()) * p.picoCada; } } }
   ate(t) { let a = 0; for (const j of this.jan) { if (j[0] > t) break; if (t < j[1]) a = Math.max(a, j[1]); } return a; }
 }
 class Link {
@@ -140,9 +141,10 @@ class Aparelho {
     const outro = 1 - this.slot, dJo = [antesJ[outro][0] - M.jog[outro].x, antesJ[outro][1] - M.jog[outro].y];
     this.snaps.push({ t, tick: s.tick, est: s.state, cP: Math.hypot(dP[0], dP[1]), cB: Math.hypot(dB[0], dB[1]), cJ: Math.hypot(dJo[0], dJo[1]), salto: M.tick - tick0, pend: this.pend.length, cred: Array.isArray(s.cred) ? s.cred[this.slot] | 0 : 0, solo });
     if (reinicio) { L.zera(this.dP); L.zera(this.dB); this.dJ.forEach(L.zera); this.saltoP = this.saltoB = true; this.saltoJ = M.jog.map(() => true); return; }
-    if (Math.hypot(dP[0], dP[1]) < U(p.teleP)) L.soma(this.dP, dP[0], dP[1]); else { L.zera(this.dP); this.saltoP = true; }
-    if (Math.hypot(dB[0], dB[1]) < U(p.teleB)) L.soma(this.dB, dB[0], dB[1]); else { L.zera(this.dB); this.saltoB = true; }
-    M.jog.forEach((q, i) => { if (i === this.slot) return; const d = [antesJ[i][0] - q.x, antesJ[i][1] - q.y]; if (Math.hypot(d[0], d[1]) < U(p.teleJ)) L.soma(this.dJ[i], d[0], d[1]); else { L.zera(this.dJ[i]); this.saltoJ[i] = true; } });
+    const cabe = (d, c, lim) => this.o.molas108 && K108 ? K108.cabe(d, c, lim) : Math.hypot(c[0], c[1]) < lim;   // (v108: o somado também)
+    if (cabe(this.dP, dP, U(p.teleP))) L.soma(this.dP, dP[0], dP[1]); else { L.zera(this.dP); this.saltoP = true; }
+    if (cabe(this.dB, dB, U(p.teleB))) L.soma(this.dB, dB[0], dB[1]); else { L.zera(this.dB); this.saltoB = true; }
+    M.jog.forEach((q, i) => { if (i === this.slot) return; const d = [antesJ[i][0] - q.x, antesJ[i][1] - q.y]; if (cabe(this.dJ[i], d, U(p.teleJ))) L.soma(this.dJ[i], d[0], d[1]); else { L.zera(this.dJ[i]); this.saltoJ[i] = true; } });
   }
   bolaAgora(t) {                                       // v92BolaPrevAgora
     const b = this.M.B, C = this.C, G = this.M.G, lq = C.LIMIAR_QUIQUE, o = { x: b.x, y: b.y, vx: b.vx, vy: b.vy, w: 0, r: b.r, m: b.m, I: b.I };
@@ -167,11 +169,15 @@ class Aparelho {
     let B = [bp.x, bp.y];
     let J = M.jog.map((q, i) => i === this.slot ? P : [q.x + q.vx * t, q.y + q.vy * t]);
     const p = L.PADRAO, tau = 0.09;
-    L.anda(this.dP, dt, tau, L.tetoJ(C, p));
-    L.anda(this.dB, dt, tau * 0.9, L.tetoB(C, p, Math.hypot(M.B.vx, M.B.vy), Math.hypot(M.B.x - eu.x, M.B.y - eu.y), U), p.gB, U(p.livreB));
-    M.jog.forEach((q, i) => { if (i !== this.slot) L.anda(this.dJ[i], dt, tau, L.tetoJ(C, p)); });
+    const anda = (tipo, d, tau_, vmax, ganho, livre) => {   // (v108: a mola com prazo — tools/v108/lento.js)
+      if (this.o.molas108 && K108) { const r = K108.mola(tipo, d, dt, vmax, ganho, livre, U); if (r.acel) { vmax = r.vmax; ganho = r.ganho; livre = r.livre; } }
+      return L.anda(d, dt, tau_, vmax, ganho, livre);
+    };
+    anda('P', this.dP, tau, L.tetoJ(C, p));
+    anda('B', this.dB, tau * 0.9, L.tetoB(C, p, Math.hypot(M.B.vx, M.B.vy), Math.hypot(M.B.x - eu.x, M.B.y - eu.y), U), p.gB, U(p.livreB));
+    M.jog.forEach((q, i) => { if (i !== this.slot) anda('J', this.dJ[i], tau, L.tetoJ(C, p)); });
     const A = this.ant || {}, vJ = L.guardaJ(C, p), vB = L.guardaB(C, p);
-    const poe = (pos, ant, dd, vmax, salto, x0, y0, r, bola) => { let q = [pos[0] + dd.x, pos[1] + dd.y]; if (!salto && ant) q = L.guarda(q, ant, dd, vmax, dt); return L.varre(N, G, x0, y0, q[0], q[1], r, bola); };
+    const poe = (pos, ant, dd, vmax, salto, x0, y0, r, bola) => { let q = [pos[0] + dd.x, pos[1] + dd.y]; if (!salto && ant) q = L.guarda(q, ant, dd, this.o.molas108 && K108 ? K108.guarda(dd, vmax) : vmax, dt); return L.varre(N, G, x0, y0, q[0], q[1], r, bola); };
     P = poe(P, A.P, this.dP, vJ, this.saltoP, eu.x, eu.y, eu.r, false);
     B = poe(B, A.B, this.dB, vB, this.saltoB, M.B.x, M.B.y, M.B.r, true);
     J = M.jog.map((q, i) => i === this.slot ? P : poe(J[i], A.J && A.J[i], this.dJ[i], vJ, !!this.saltoJ[i], q.x, q.y, q.r, false));
@@ -192,16 +198,22 @@ class Aparelho {
       }
     }
     this.ant = { P: P.slice(), B: B.slice(), J: J.map(a => a.slice()) }; this.saltoP = this.saltoB = false; this.saltoJ = [];
-    return { P, B, J, offP: Math.hypot(this.dP.x, this.dP.y) };
+    return { P, B, J, offP: Math.hypot(this.dP.x, this.dP.y), offB: Math.hypot(this.dB.x, this.dB.y), offJ: this.dJ.reduce((m, d, i) => i === this.slot || !d ? m : Math.max(m, Math.hypot(d.x, d.y)), 0) };   // (v108: + os deslizes da bola e dos outros)
+  }
+  guardaQuadro(s, t) {                                 // (v108: o quadro do servidor fica guardado até o próximo quadro da tela; o mais novo vale)
+    if (!(s.tick > this.lastTick)) return;
+    this.snapAt = t;
+    if (!this.guardado || s.tick > this.guardado.tick) this.guardado = s;
   }
   quadro(t, inp) {                                     // v92RemoteFrame + net49Draw
+    if (this.guardado) { const s = this.guardado; this.guardado = null; this.snapshot(s, t); }   // (v108: o replay do mais novo, uma vez)
     let dt = this.tFrame == null ? STEP_MS : t - this.tFrame; this.tFrame = t;
     const n = Math.round(dt / STEP_MS); if (n >= 1 && Math.abs(dt - n * STEP_MS) < 6) dt = n * STEP_MS;   // (dtSnap)
     dt = Math.min(dt, 8 * STEP_MS);                  // (DT_MAX_ARC: um quadro alcança no máximo 8 passos; o resto do buraco se perde)
     this.ultInp = { mx: inp.mx, my: inp.my };
     if (t - this.snapAt <= 2000 || this.lastTick < 0) { this.acc += dt / 1000; while (this.acc + 1e-9 >= STEP) { this.comando(inp, t); this.acc = Math.max(0, this.acc - STEP); } }
     const D = this.mostra(t);
-    this.reg.push({ t, est: this.M.estado, P: D.P.slice(), B: D.B.slice(), J: D.J.map(a => a.slice()), offP: D.offP || 0 });
+    this.reg.push({ t, est: this.M.estado, P: D.P.slice(), B: D.B.slice(), J: D.J.map(a => a.slice()), offP: D.offP || 0, offB: D.offB || 0, offJ: D.offJ || 0, tick: this.M.tick });
   }
 }
 
@@ -254,10 +266,11 @@ function roteiroB(r) {                                 // o Beto: vai na bola e 
 export function simula(o = {}) {
   const dur = o.dur || 60000, seed = o.seed || 7, rede = typeof o.rede === 'string' ? REDES[o.rede] : (o.rede || REDES['4g']);
   const sim = { fila: new Fila(), agora: 0 };
-  const v105 = o.cliente === 'v105', v102 = o.cliente === 'v102' || v105;   // (v105: o cliente de hoje — o da v102 + o contato desenhado, com as salas a 60 quadros)
-  const opc = { entradas: o.entradas || (v102 ? "servidor" : "vel"), credito: o.credito != null ? !!o.credito : v102, guarda: o.guarda, reto: o.reto, contato: o.contato != null ? o.contato | 0 : (v105 ? 4 : 0) };
+  const v108 = o.cliente === 'v108', v105 = o.cliente === 'v105' || v108, v102 = o.cliente === 'v102' || v105;   // (v105: o cliente de hoje — o da v102 + o contato desenhado, com as salas a 60 quadros · v108: + o online sem câmera lenta)
+  const opc = { entradas: o.entradas || (v102 ? "servidor" : "vel"), credito: o.credito != null ? !!o.credito : v102, guarda: o.guarda, reto: o.reto, contato: o.contato != null ? o.contato | 0 : (v105 ? 4 : 0), lento: o.lento != null ? !!o.lento : v108 };
+  opc.molas108 = opc.lento && o.molas108 !== false; opc.junta108 = opc.lento && o.junta108 !== false;   // (v108: as partes — as molas com prazo e o pulo pelo somado · o replay uma vez por quadro)
   const apar = [new Aparelho(sim, 'A', 0, opc), new Aparelho(sim, 'B', 1, opc)];
-  const radios = apar.map((_, i) => new Radio(rede, rng(seed * 31 + i), dur));
+  const radios = apar.map((_, i) => new Radio(rede, rng(seed * 31 + i), dur, i === 0 && Array.isArray(o.apagoes) ? o.apagoes : null));   // (v108: o.apagoes = [[início, fim] ms] no rádio da Ana)
   const sobe = apar.map((_, i) => new Link(sim, rede, radios[i], rng(seed * 97 + i)));
   const desce = apar.map((_, i) => new Link(sim, rede, radios[i], rng(seed * 131 + i)));
   const ocup = apar.map(() => 0);                       // (o aparelho ocupado no quadro: a mensagem espera)
@@ -266,9 +279,10 @@ export function simula(o = {}) {
     // (o servidor da v102 — Q.ent, Q.cred e a sobra do crédito que acaba — só com o cliente que usa; o cliente 'v96' joga
     //  com o servidor de antes, como o "antes" das medidas com RACHA_ENTRADAS=0; o.servidor102 escolhe)
     entradas: o.servidor102 != null ? !!o.servidor102 : (opc.entradas === 'servidor' || opc.credito),
+    ritmo: o.ritmo,                                    // (v108: 'v107' = o teto de comandos de antes, para comparar)
     n: 1, jogo: 'futebol', map: 4, tempo: 5, regra: null, quadros: o.quadros || (v105 ? 60 : 30), fila: o.fila || undefined, fisica: o.fisica || undefined,   // (v105: o.fisica compara perfis — o jogo de corpo)
     jogadores: [{ netId: 'A', nome: 'Ana' }, { netId: 'B', nome: 'Beto' }], agora: () => sim.agora,
-    onSnapshot: d => { const txt = JSON.stringify(d); apar.forEach((ap, i) => desce[i].envia(sim.agora, txt, m => { const tt = Math.max(sim.agora, ocup[i]); if (tt > sim.agora) sim.fila.poe(tt, () => ap.snapshot(JSON.parse(m), sim.agora)); else ap.snapshot(JSON.parse(m), sim.agora); })); },
+    onSnapshot: d => { const txt = JSON.stringify(d); apar.forEach((ap, i) => desce[i].envia(sim.agora, txt, m => { const chega = s => ap.o.junta108 ? ap.guardaQuadro(s, sim.agora) : ap.snapshot(s, sim.agora); const tt = Math.max(sim.agora, ocup[i]); if (tt > sim.agora) sim.fila.poe(tt, () => chega(JSON.parse(m))); else chega(JSON.parse(m)); })); },
     onGol: () => {}, onAviso: () => {}, onFim: () => {},
   });
   for (const q of P.jog) q.fila.chegou = 0;
@@ -280,7 +294,8 @@ export function simula(o = {}) {
   // o.servJit (ms): o setTimeout do motor acordando atrasado (o servidor dividindo a CPU: em média servJit ms, sorteado) — ele
   // alcança os passos que faltam de uma vez, como o MOTOR do server/partida/sala.js
   const rs = rng(seed * 89 + 5);
-  const laco = () => { const alvo = Math.floor(sim.agora / STEP_MS + 1e-9); if (alvo - feitos > 5) feitos = alvo - 5; while (feitos < alvo) { feitos++; um(); } const prox = (feitos + 1) * STEP_MS; if (prox < dur) sim.fila.poe(prox + (o.servJit ? -Math.log(1 - rs()) * o.servJit : 0), laco); };
+  const ALC = o.alcanca || MOTOR_ALCANCA || 5;           // (v108: o MOTOR alcança até 12 passos; o.alcanca: 5 = o de antes)
+  const laco = () => { const alvo = Math.floor(sim.agora / STEP_MS + 1e-9); if (alvo - feitos > ALC) feitos = alvo - ALC; while (feitos < alvo) { feitos++; um(); } const prox = (feitos + 1) * STEP_MS; if (prox < dur) sim.fila.poe(prox + (o.servJit ? -Math.log(1 - rs()) * o.servJit : 0), laco); };
   sim.fila.poe(STEP_MS, laco);
   apar.forEach((ap, i) => {                            // as telas a 60 Hz (o relógio oscila; 1,5% dos quadros se perdem)
     const rr = rng(seed * 53 + i), re = rng(seed * 71 + i), iv = 1000 / 60; let tq = 3 + rr() * iv;

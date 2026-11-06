@@ -286,6 +286,16 @@ if out=$(node tests/v106_mascotes_servidor_test.mjs 2>&1); then echo "$out" | ta
 # não conta nada de quem recebe e os amigos pelo ID como antes; < 1 s.
 printf '%-12s ' "v107_convite"
 if out=$(node tests/v107_convite_servidor_test.mjs 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+# v108: O ONLINE SEM CÂMERA LENTA (ver o tools/v108/lento.js e o server/partida/ritmo108.js). O v108_rede (Node)
+# confere o núcleo do deslize com prazo (tools/v108/lento.js) e, no simulador da rede, os apagões de 1 e 2 s (a mola de antes
+# levava de 0,9 a 4 s para sumir; agora menos de meio segundo na sua tampinha) e o jogo normal igual ao da v105; o
+# v108_servidor o ritmo dos comandos num balde (a rajada do apagão passa — a tampinha e o chute logo depois da volta; o excesso,
+# não, com uma linha por segundo, nas salas do RACHA, do mapa e do Rachão) e o motor que alcança 12 passos com o processo
+# travando; ~30 s.
+for t in v108_rede v108_servidor; do
+  printf '%-12s ' "$t"
+  if out=$(node "tests/${t}_test.mjs" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
+done
 # v105: O CHAT NA TELA DO LOBBY. O v105_chat_lobby (Python; a plataforma de teste e dois navegadores na parte 6) a barra do chat
 # da partida de volta à tela inicial: o lugar em 10 tamanhos sem encostar em nenhum botão, tocar abre e minimizar volta, sem
 # servidor/desligada/fora do ar, na partida, nada por quadro e o Chat do Brasil de verdade entre duas contas (o VER PERFIL por cima).
@@ -327,7 +337,12 @@ if out=$(node tests/v107_convite_servidor_test.mjs 2>&1); then echo "$out" | tai
 # com duas sessões; ~9 min.
 # v107: O ANEL DO CHUTE BEM BRANCO (tools/v107/chute.js): o v107_chute (Python) o V95S.luz em 1 e a imagem do anel aceso
 # opaca, os pixels do anel na partida segurando o CHUTE (quase branco) e o PASSE, o soltar e a Oficina com o mesmo branco; ~15 s.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute; do
+# v108: O ONLINE SEM CÂMERA LENTA (tools/v108/lento.js): o v108_lento (Python; o servidor das salas e o 4G de mentira) a internet
+# da Ana sumindo por 2 s, num 1v1 e num 4v4 contra bots com a CPU 5× mais lenta, antes (lento108: false e o servidor como na
+# v107; ou RACHA_ANTES=<pasta> com outra cópia montada) e agora: antes a câmera lenta (a mola sumindo no teto da v96, o atraso
+# acumulado de 70 px·s ou mais) e os comandos recusados; agora a correção some sozinha (até 1,3 s e 65 px·s), nada recusado e o
+# jogo normal igual; ~3 min.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

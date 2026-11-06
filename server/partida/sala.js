@@ -75,7 +75,9 @@ const SAIDA_LIVRE_TICKS = 480;                       // ninguém deu a saída em
 // (v92: a CURVA — carga de 1,2 s, 0,35 s armado, o efeito e a duração — mora no núcleo: N.curvaTick, N.cvMarca, N.curvaNoAr)
 const MIN_PASSOS_CHUTE = 2;                          // 2 passos (33 ms): o mínimo entre chutes aceitos do MESMO jogador
 const SILENCIO_MS = 350;                             // sem comando por mais que isso: a tampinha para (a regra do jogo)
-const MAX_CMD_S = 120;                               // teto de comandos por segundo por jogador (o jogo manda ~30)
+// (v108: o teto de comandos por segundo de cada jogador é um balde de fichas — server/partida/ritmo108.js: 75 por segundo,
+//  a rajada de um apagão inteiro passa. Era uma janela de 1 s com 120 que, depois de um apagão, recusava o segundo seguinte)
+const R108 = require('./ritmo108');
 const FILA_MAX = 120;                                // o tamanho máximo da fila de comandos (o do jogo)
 const SNAP_A_CADA = 2;                               // 1 quadro a cada 2 passos = 30 por segundo (o ritmo da v82) · v92: a sala de testes pode pedir 60 (o.quadros)
 // v96 · a RECUPERAÇÃO da fila de comandos: os passos em que a tampinha ficou parada esperando comando (o apagão do 4G, o
@@ -105,7 +107,13 @@ const NAO_CHUTA = () => false;                       // v99: (a recuperação da
    passo e roda os que faltam). Até a v91 era um setInterval de 1000/60 ms: o Node arredonda para 16 ms e o motor dava
    ~61 passos por segundo (60,7 a 61,2 medidos; tests/v92_nucleo_test.mjs mede os dois), mais rápido que os 60 comandos por segundo dos
    aparelhos — o motor ficava sem comando e andava no palpite. Depois de um engasgo (o processo parado), alcança no
-   máximo 5 passos de uma vez (o resto é perdido, como um quadro pulado). RACHA_MOTOR=v91 volta ao setInterval antigo. */
+   máximo MOTOR_ALCANCA passos de uma vez (o resto é perdido, como um quadro pulado). RACHA_MOTOR=v91 volta ao setInterval antigo.
+   v108: eram 5 passos (83 ms). No servidor com a CPU dividida (o plano grátis do Render: 0,1 CPU) o processo para por mais que
+   isso — a coleta de lixo, a cota de CPU de cada 100 ms — e cada parada de 90 a 200 ms jogava passos fora: a partida inteira
+   ficava em câmera lenta para todo mundo enquanto durasse (medido com o processo travando 150 ms a cada 200 ms: 42 passos/s
+   com 5; 60 com 12). Com 12 (200 ms) o relógio do jogo fica no relógio de verdade nessas paradas; os quadros que saem juntos
+   o aparelho junta num replay só (tools/v108/lento.js). */
+const MOTOR_ALCANCA = Number.isInteger(+process.env.RACHA_MOTOR_ALCANCA) && +process.env.RACHA_MOTOR_ALCANCA > 0 ? +process.env.RACHA_MOTOR_ALCANCA : 12;   // (RACHA_MOTOR_ALCANCA=5: o de antes, para comparar)
 const agoraMs = () => { const t = process.hrtime(); return t[0] * 1e3 + t[1] / 1e6; };
 const MOTOR = {
   set: new Set(), timer: null, modo: process.env.RACHA_MOTOR === 'v91' ? 'v91' : 'acumulador', t0: 0, feitos: 0, atrasos: 0,
@@ -114,7 +122,7 @@ const MOTOR = {
     this.timer = null;
     if (!this.set.size) return;
     const alvo = Math.floor((agoraMs() - this.t0) * TPS / 1000);
-    if (alvo - this.feitos > 5) { this.atrasos += alvo - this.feitos - 5; this.feitos = alvo - 5; }
+    if (alvo - this.feitos > MOTOR_ALCANCA) { this.atrasos += alvo - this.feitos - MOTOR_ALCANCA; this.feitos = alvo - MOTOR_ALCANCA; }   // (v108: eram 5)
     while (this.feitos < alvo) { this.feitos++; this.um(); }
     const prox = this.t0 + (this.feitos + 1) * 1000 / TPS;
     this.timer = setTimeout(() => this.laco(), Math.max(0, prox - agoraMs()));
@@ -156,6 +164,7 @@ class PartidaSala {
     this.cr = this.jogo === 'futebol' && o.motor !== 'v94' ? N.crOpcoes(o.chutes) : null;   // v99: os chutes do Rachão (null = só o chutar)
     this.snapCada = o.quadros === 60 ? 1 : SNAP_A_CADA;
     this.filaV95 = FILA_V95 || o.fila === 'v95';     // v96: a fila antiga (sem a recuperação), para comparar
+    this.ritmoV107 = process.env.RACHA_RITMO === 'v107' || o.ritmo === 'v107';   // v108: RACHA_RITMO=v107 (ou o.ritmo) = o teto de antes, para comparar
     this.ent102 = o.entradas !== false && process.env.RACHA_ENTRADAS !== '0';   // v102: as direções e o crédito de cada um no quadro (Q.ent, Q.cred)
     this.agora = o.agora || (() => Date.now());
     this.decorrido = o.decorrido || null;            // v80: o relógio oficial (ms, sem as pausas)
@@ -205,7 +214,7 @@ class PartidaSala {
       time, k, papel: this.n >= 3 && k === this.n - 1 ? 'gk' : 'campo',
       x: 0, y: 0, vx: 0, vy: 0, mx: 0, my: 0, r: this.C.R_JOG, m: this.C.MASSA_JOG,
       chuteT: -99, fxT: -9, ack49: 0, ultimoChuteMs: -1e9,
-      fila: null, netButton: null, cv70: null, ritmo: [], botAi: null,
+      fila: null, netButton: null, cv70: null, ritmo: R108.novo(), botAi: null,   // (v108: o balde do ritmo dos comandos)
       cr: this.cr ? N.crNovo() : null, suBot: false,  // v99: os chutes do Rachão (o bot também usa)
     };
     if (q.bot) q.botAi = BotSala.criar(q.bot);
@@ -222,7 +231,7 @@ class PartidaSala {
     const ja = this.jog.find(x => x.netId === String(netId));
     if (ja) {                                        // v93: já está num lugar: não pega outro (duas tampinhas da mesma pessoa) — e a fila de comandos
       ja.fila = { fila: [], chegou: 0, min: 99, n: 0, ult: null, feito: 0, visto: 0 };   //  recomeça: a conexão nova conta os comandos do zero
-      ja.netButton = N.novoBotao(); ja.cv70 = ja.netButton.cv; ja.ack49 = 0; if (Array.isArray(ja.ritmo)) ja.ritmo.length = 0;
+      ja.netButton = N.novoBotao(); ja.cv70 = ja.netButton.cv; ja.ack49 = 0; ja.ritmo = R108.novo();   // (v108: o balde cheio de novo)
       if (this.cr) ja.cr = N.crNovo();                 // v99
       if (this.v94) S94().reiniciaJogador(this, ja);   // v94: a máquina de comandos do motor também recomeça
       return ja.i;
@@ -314,8 +323,13 @@ class PartidaSala {
     const q = this.jog.find(x => x.netId === netId);
     if (!q || !q.fila || this.encerrado) return;
     const ag = this.agora();
-    q.ritmo.push(ag); while (q.ritmo.length && ag - q.ritmo[0] > 1000) q.ritmo.shift();
-    if (q.ritmo.length > MAX_CMD_S) { this.suspeito(netId, 'ritmo', q.ritmo.length + ' cmd/s'); return; }
+    if (this.ritmoV107) {                            // (a v107, para comparar: a janela de 1 s com 120, os recusados contando)
+      const j = q.ritmo107 || (q.ritmo107 = []); j.push(ag); while (j.length && ag - j[0] > 1000) j.shift();
+      if (j.length > 120) { this.suspeito(netId, 'ritmo', j.length + ' cmd/s'); return; }
+    } else {
+      q.ritmo = R108.garante(q.ritmo);               // v108: o balde de fichas (a rajada de um apagão passa; mais de 75/s sem parar, não)
+      if (!R108.passa(q.ritmo, ag)) { if (R108.avisa(q.ritmo, ag)) this.suspeito(netId, 'ritmo', R108.texto(q.ritmo)); return; }
+    }
     const f = q.fila, seq = m.seq | 0;
     if (seq <= f.visto) {
       if (seq > f.visto - 600) return;               // repetido ou fora de ordem
@@ -780,4 +794,4 @@ class PartidaSala {
   rodar(ticks) { for (let i = 0; i < ticks && !this.encerrado; i++) this.passo(); }
 }
 
-module.exports = { PartidaSala, MOTOR, STEP, RQ_GOL_TICKS, RQ_FIM_TICKS, SAIDA_LIVRE_TICKS, SNAP_A_CADA, N };
+module.exports = { PartidaSala, MOTOR, MOTOR_ALCANCA, STEP, RQ_GOL_TICKS, RQ_FIM_TICKS, SAIDA_LIVRE_TICKS, SNAP_A_CADA, N };

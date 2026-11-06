@@ -136,9 +136,11 @@ const cmd = (seq, o) => Object.assign({ seq, x: 0, y: 0, f: 0, kn: 0, st: 0, lb:
   confere(a.ack === 64 && a.input.mx === -1, 'os comandos que chegaram depois do palpite são pulados (o passo já foi) e o próximo vale', { ack: a.ack, mx: a.input.mx });
   AG += 400; P.passo();
   confere(a.input.mx === 0 && a.input.kick === false, 'em silêncio por mais de 350 ms (a internet travou): a tampinha fica parada (nada de correr sozinha)');
+  // (v108: o ritmo é um balde de fichas — server/partida/ritmo108.js: a rajada de um apagão, até 150 de uma vez, passa; o que
+  //  passar disso e de 75 por segundo é ignorado e anotado, uma linha por segundo)
   const antes = J.suspeitos.length;
-  for (let i = 0; i < 130; i++) P.entrada('A', cmd(1000 + i));
-  confere(J.suspeitos.length > antes, 'mais de 120 comandos por segundo: o servidor ignora o excesso e anota (sem expulsar ninguém)');
+  for (let i = 0; i < 200; i++) P.entrada('A', cmd(1000 + i));
+  confere(J.suspeitos.length === antes + 1, 'mais que a rajada de um apagão de uma vez (200 comandos; o balde tem 150): o servidor ignora o excesso e anota uma vez (sem expulsar ninguém)', J.suspeitos.length - antes);
   const c = Q.comando({ seq: 5, x: 9, y: 9, f: 255, kn: -3, lb: 'a', cl: 2.5, cr: 1e12, pw: NaN });
   confere(c && Math.abs(Math.hypot(c.x, c.y) - 1) < 0.01 && c.f === 7 && c.kn === 0 && c.lb === 0 && c.cl === 0 && c.cr === 0 && c.pw === 0 && Q.comando({ seq: -1 }) === null && Q.comando({ seq: 'x' }) === null && Q.comando(null) === null,
     'o comando é conferido: a direção vai até 1, só 3 botões e os contadores inteiros (o resto vira 0); seq errada é jogada fora', c);

@@ -13,7 +13,8 @@ const N = require('./nucleo');
 const RachaMapa = require('./mapa');
 const { MOTOR } = require('./sala');
 
-const SILENCIO_MS = 350, MAX_CMD_S = 120, FILA_MAX = 120, SNAP_A_CADA = 2;
+const SILENCIO_MS = 350, FILA_MAX = 120, SNAP_A_CADA = 2;
+const R108 = require('./ritmo108');                   // v108: o ritmo dos comandos num balde de fichas (a rajada de um apagão passa)
 const EVENTOS_REDE = new Set(['chute', 'gol', 'semgol', 'portal', 'mensagem', 'efeito', 'botao', 'eliminado', 'volta', 'aviso', 'fim', 'saida', 'lateral', 'fora', 'reinicio', 'some', 'cronometro']);
 
 class PartidaMapa {
@@ -85,7 +86,7 @@ class PartidaMapa {
   }
   prepara(q) {                                        // o humano: a fila de comandos e a máquina dos botões do núcleo
     q.fila = { fila: [], chegou: this.agora(), min: 99, n: 0, ult: null, feito: 0, visto: 0 };
-    q.netButton = N.novoBotao(); q.ritmo = []; q.ack49 = 0;
+    q.netButton = N.novoBotao(); q.ritmo = R108.novo(); q.ack49 = 0;
   }
 
   /* ---- lugares: quem sai vira bot na hora; quem volta reassume a tampinha ---- */
@@ -110,7 +111,7 @@ class PartidaMapa {
     q.reserva = q.netId;
     if (this.bots) RachaMapa.botAssume(this.P, q);
     else { q.netId = null; q.bot = null; q.ai = null; q.vazio = true; q.fora = true; q.nome = ''; q.mx = q.my = 0; q.vx = q.vy = 0; q.netButton = null; }   // v103: sem bots, quem cai deixa a vaga vazia (volta nela se reconectar)
-    q.fila = null; q.ritmo = [];
+    q.fila = null; q.ritmo = R108.novo();
   }
   gente() { return this.P.jog.filter(q => q.netId).length; }
 
@@ -120,7 +121,7 @@ class PartidaMapa {
     this.fecha(q);
     if (this.bots) { RachaMapa.botAssume(this.P, q); q.nome = 'Bot'; }
     else { q.netId = null; q.bot = null; q.ai = null; q.vazio = true; q.fora = true; q.nome = ''; q.mx = q.my = 0; q.vx = q.vy = 0; q.netButton = null; }
-    q.fila = null; q.ritmo = []; q.reserva = null;
+    q.fila = null; q.ritmo = R108.novo(); q.reserva = null;
   }
   poeHumano(q, netId, nome) {
     const vazia = !!q.vazio;
@@ -154,8 +155,8 @@ class PartidaMapa {
     const q = this.P.jog.find(x => x.netId === netId);
     if (!q || !q.fila || this.P.encerrado) return;
     const ag = this.agora();
-    q.ritmo.push(ag); while (q.ritmo.length && ag - q.ritmo[0] > 1000) q.ritmo.shift();
-    if (q.ritmo.length > MAX_CMD_S) { this.suspeito(netId, 'ritmo', q.ritmo.length + ' cmd/s'); return; }
+    q.ritmo = R108.garante(q.ritmo);                 // v108: o balde de fichas (server/partida/ritmo108.js)
+    if (!R108.passa(q.ritmo, ag)) { if (R108.avisa(q.ritmo, ag)) this.suspeito(netId, 'ritmo', R108.texto(q.ritmo)); return; }
     const f = q.fila, seq = m.seq | 0;
     if (seq <= f.visto) { if (seq > f.visto - 600) return; f.fila.length = 0; f.ult = null; f.feito = 0; }
     f.visto = seq;
