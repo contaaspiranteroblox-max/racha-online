@@ -6,7 +6,7 @@ As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão
 
 A pedido: *"tira tudo que pesa o jogo, versões antigas que não precisa mais, só deixe o que precisa, e atualiza lá"*. Nada
 do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`), as telas, os textos, os sons e o que o
-`config.js` liga e desliga são os mesmos. O backup do antes: a etiqueta git `antes-v110` (a v109).
+`config.js` liga e desliga são os mesmos. O backup do antes: o commit `1b2b8c4` (a v109; daqui não deu para criar a etiqueta `antes-v110` no GitHub).
 
 - **O QUE PESAVA**: o `racha.html` tinha 7.390 KB (3.372 KB com o gzip do Caddy): 2,5 MB de imagens embutidas, 840 KB de
   comentários, o recuo das linhas e ~4,5 MB do código das versões empilhadas. As 35 pastas de `tools/` são o código-fonte do
@@ -29,7 +29,7 @@ do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`
 - **A PASTA DO PROJETO**: as imagens originais geradas por IA (os PNG de `tools/v74` a `tools/v77`, de `tools/v91` e a
   referência da v101, ~27 MB) e os scripts que recortavam as peças delas (`*_kit.py`, `pecas.py`, `tools/v75/lobby_fundo.py`,
   `tools/v91/fundo.py` e `tools/v91/banners.py`) saíram: não entravam no jogo desde a v95 (a arte desenhada em código). A
-  pasta foi de 53 MB para 24 MB; os originais continuam no histórico (`antes-v110`). A medida do fundo da v75 (1844 × 853), que
+  pasta foi de 53 MB para 24 MB; os originais continuam no histórico (o commit `1b2b8c4`). A medida do fundo da v75 (1844 × 853), que
   o build lia do PNG, ficou escrita no `tools/aplicar_rua.py`.
 - **O CI DE VOLTA**: o *Testar e publicar* do GitHub falhava desde a v101 na conferência de tipos da plataforma (o `tsc -b`),
   então os testes no navegador e o deploy na VPS nunca chegaram a rodar. Os dois erros: o `server/ip.js` sem tipos (agora o

@@ -457,7 +457,7 @@ def _lobby75():                                           # v75: o fundo do lobb
     js = (pasta / 'lobby.js').read_text(encoding='utf-8')
     img = pasta / 'lobby_fundo.webp'
     if img.exists():                                     # (a medida é a do PNG original, 1844 × 853 — v110: o PNG de 3 MB saiu da pasta, a
-        w, h = 1844, 853                                 #  medida ficou aqui; o original está no histórico do git, na etiqueta antes-v110)
+        w, h = 1844, 853                                 #  medida ficou aqui; o original está no histórico do git: o commit 1b2b8c4, a v109)
         assert js.count('/*FUNDO75*/null') == 1
         js = js.replace('/*FUNDO75*/null', '{src:"data:image/webp;base64,' + base64.b64encode(img.read_bytes()).decode('ascii') + '",w:%d,h:%d}' % (w, h), 1)
     return js

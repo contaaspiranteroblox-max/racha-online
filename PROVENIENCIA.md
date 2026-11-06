@@ -3,7 +3,7 @@
 > **v110 (06/11/2026): os originais saíram da pasta.** As imagens originais geradas por IA (os PNG de `tools/v74` a
 > `tools/v77` e de `tools/v91`, e a `tools/v101/referencia.png`) e os scripts que recortavam peças delas (`*_kit.py`,
 > `pecas.py`, `tools/v75/lobby_fundo.py`, `tools/v91/fundo.py` e `tools/v91/banners.py`) não entravam no jogo desde a v95 e
-> saíram de `tools/`. Continuam no histórico do git (a etiqueta `antes-v110`): os caminhos citados abaixo valem lá. Os WebP
+> saíram de `tools/`. Continuam no histórico do git (o commit `1b2b8c4`, a v109): os caminhos citados abaixo valem lá. Os WebP
 > antigos ficam (o build ainda os usa para achar e trocar as imagens pela arte da v95). E cinco imagens que o jogo não mostra
 > mais em lugar nenhum viraram um pontinho transparente no jogo publicado (`tools/v110/enxuga.py`, a lista APOSENTADAS).
 
