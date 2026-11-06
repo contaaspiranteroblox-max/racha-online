@@ -16,7 +16,7 @@ Capturas em tests/saida/v75_lobby_*.png. Se a imagem agrada no lugar é com quem
 Rodar: python3 tests/v75_test.py
 """
 import json
-from comum import abre, rt, roda, Placar, async_playwright, RAIZ
+from comum import abre, rt, roda, Placar, async_playwright, RAIZ, PONTINHO
 
 SAIDA = RAIZ / 'tests' / 'saida'; SAIDA.mkdir(exist_ok=True)
 
@@ -66,8 +66,8 @@ async def principal():
     P = Placar('v75 · o fundo do lobby é a imagem enviada')
     html = (RAIZ / 'app' / 'public' / 'game' / 'racha.html').read_text(encoding='utf-8')
     fonte = (RAIZ / 'tools' / 'v75' / 'lobby.js').read_text(encoding='utf-8')
-    P.confere('const LOBBY75 = {src:"data:image/webp;base64,' in html and '",w:1844,h:853}' in html and fonte.count('/*FUNDO75*/null') == 1,
-              'a imagem do lobby (1844 × 853) vai embutida no jogo pelo build')
+    P.confere(('const LOBBY75 = {src:"%s",w:1844,h:853}' % PONTINHO) in html and fonte.count('/*FUNDO75*/null') == 1,
+              'a imagem do lobby (1844 × 853) entra pelo build — e, desde a v110, aposentada (o pontinho, com as medidas: o #lb-fundo está escondido desde a v90)')
     async with async_playwright() as pw:
         for (w, h, d) in [(1920, 888, 1), (1280, 720, 1), (1024, 768, 1), (844, 390, 3), (667, 375, 2)]:
             b, pg, erros = await abre(pw, w, h, dsf=d)

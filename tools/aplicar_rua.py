@@ -132,6 +132,9 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v109 · o silêncio da equipe no jogo (tools/v109/silencio.py + silencio.js, por último; no servidor: server/silencio109.js; na
      plataforma: o RACHA CONTROL com o painel do Dono e o da staff): a staff cala o chat de um jogador por 5 min a 30 dias e o
      jogo mostra o aviso do servidor (quanto falta e o motivo) em todos os chats e nas falas/emojis da partida.
+ v110 · o jogo mais leve (tools/v110/enxuga.py, a última etapa, depois da conferência da física): as imagens embutidas de
+     versões antigas que o jogo não mostra mais viram um pontinho (cada uma com a conferência do porquê) e o racha.html vai
+     para o jogador sem os comentários e sem o recuo (o mesmo programa; a cópia completa fica em tests/build/racha_completo.html).
 Falha se o bloco de física (PHYS_START..PHYS_END) mudar fora das trocas de regra documentadas em tools/v70/*.py:
 o bloco original precisa ter o sha256 de sempre, e o bloco final precisa ser exatamente o original com essas trocas."""
 import re, sys, colorsys, hashlib, pathlib
@@ -448,13 +451,13 @@ def _campo74():                                           # v74: o ESTÁDIO viro
     return js
 V70JS += '\n' + _campo74()
 def _lobby75():                                           # v75: o fundo do lobby é a imagem enviada (tools/v75/lobby.js), embutida
-    import base64, struct
+    import base64
     pasta = RAIZ / 'tools' / 'v75'
     if not (pasta / 'lobby.js').exists(): return ''
     js = (pasta / 'lobby.js').read_text(encoding='utf-8')
-    img, orig = pasta / 'lobby_fundo.webp', pasta / 'lobby_fundo_original.png'
-    if img.exists() and orig.exists():                   # (a medida vem do cabeçalho do PNG original: a mesma imagem, em WebP)
-        w, h = struct.unpack('>II', orig.read_bytes()[16:24])
+    img = pasta / 'lobby_fundo.webp'
+    if img.exists():                                     # (a medida é a do PNG original, 1844 × 853 — v110: o PNG de 3 MB saiu da pasta, a
+        w, h = 1844, 853                                 #  medida ficou aqui; o original está no histórico do git, na etiqueta antes-v110)
         assert js.count('/*FUNDO75*/null') == 1
         js = js.replace('/*FUNDO75*/null', '{src:"data:image/webp;base64,' + base64.b64encode(img.read_bytes()).decode('ascii') + '",w:%d,h:%d}' % (w, h), 1)
     return js
@@ -582,6 +585,19 @@ for nome, subs, sp in V70:
 
 # ---------------------------------------------------------------- conferência: a física não pode mudar
 assert bloco_fisica(out) == fisica_esperada, 'BLOCO DE FISICA ALTERADO (fora das trocas de regra documentadas)'
+
+# ---------------------------------------------------------------- v110: o jogo mais leve (tools/v110/enxuga.py)
+# as imagens de versões antigas que não aparecem mais viram um pontinho (com as conferências do porquê) e o código e o estilo
+# do racha.html vão sem comentários e sem recuo (o programa é o mesmo, token por token; a física fica byte a byte igual).
+# A cópia completa (com os comentários) fica em tests/build/racha_completo.html: o tests/v110_enxuga_test.mjs compara as duas.
+sys.path.insert(0, str(RAIZ / 'tools' / 'v110')); import enxuga as _enxuga110
+_css110 = {n: (SAIDA.parent / n).read_text(encoding='utf-8') for n in ('v90.css', 'v91.css', 'v101.css', 'v102.css')}
+_tam_antes = len(out.encode('utf-8'))
+completo, out, _saiu110 = _enxuga110.monta(out, _css110)
+assert bloco_fisica(out) == fisica_esperada, 'v110: o enxugamento mexeu no bloco de física'
+COMPLETO = RAIZ / 'tests' / 'build' / 'racha_completo.html'
+COMPLETO.parent.mkdir(parents=True, exist_ok=True)
+COMPLETO.write_text(completo, encoding='utf-8')
 SAIDA.write_text(out, encoding='utf-8')
 # a cópia de teste (tests/build/racha_teste.html): o mesmo jogo + window.__RT, que avalia expressões dentro do script do jogo.
 # Só para os testes automáticos (tests/*.py); não vai para a pasta pública nem para o pacote.
@@ -594,3 +610,5 @@ teste = teste.replace('<head>', '<head>\n<base href="../../app/public/game/">', 
 TESTE.write_text(teste, encoding='utf-8')
 print('ok · fisica identica · sha256', hash_antes[:16], '· trocas de regra no bloco:', n_phys, '·', ', '.join(n for n, _, _ in V70))
 print('css bytes', len(css_orig), '->', len(css_novo))
+print('v110 · o jogo mais leve: %.0f KB → %.0f KB (sem comentários nem recuo; imagens aposentadas: %s)' % (
+    _tam_antes / 1024, len(out.encode('utf-8')) / 1024, ', '.join('%s %.0f KB' % (r, b / 1024) for r, b in _saiu110)))

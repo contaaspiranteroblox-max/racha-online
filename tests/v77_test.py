@@ -20,7 +20,7 @@ Isto mede o desenho no Chromium de teste; se fica bonito no aparelho é com quem
 Rodar: python3 tests/v77_test.py            (RACHA_REF=<racha_teste.html da v71.1> compara a física e o caminho da bola)
 """
 import json, os, pathlib
-from comum import abre, rt, roda, Placar, async_playwright, RAIZ
+from comum import abre, rt, roda, Placar, async_playwright, RAIZ, PONTINHO
 
 SAIDA = RAIZ / 'tests' / 'saida'; SAIDA.mkdir(exist_ok=True)
 REF = os.environ.get('RACHA_REF')
@@ -146,9 +146,10 @@ async def principal():
     html = (RAIZ / 'app' / 'public' / 'game' / 'racha.html').read_text(encoding='utf-8')
     fonte = '\n'.join((RAIZ / 'tools' / 'v77' / n).read_text(encoding='utf-8') for n in ('pecas.js', 'quadra.js'))
     P.confere(all(fonte.count(m) == 1 for m in ('/*FUNDO77*/null', '/*LETREIRO77*/null', '/*ICONES77*/null', '/*BANNER77*/null', '/*KIT77*/null'))
-              and all(('const %s = {src:"data:image/webp;base64,' % n) in html or ('%s:{src:"data:image/webp;base64,' % n) in html for n in ('fundo', 'letreiro', 'icones', 'banner'))
+              and all(('%s:{src:"data:image/webp;base64,' % n) in html for n in ('letreiro', 'icones'))
+              and all(('%s:{src:"%s"' % (n, PONTINHO)) in html for n in ('fundo', 'banner'))   # (v110: o fundo e o banner aposentados — não aparecem desde a v90/v91)
               and 'const QD_KIT = {src:"data:image/webp;base64,' in html and '<link rel="stylesheet" href="./v77.css">' in html,
-              'as peças das imagens (o fundo, o letreiro, os ícones, o banner e o kit da quadra) e o v77.css vão no jogo pelo build')
+              'as peças das imagens (o letreiro, os ícones e o kit da quadra; o fundo e o banner aposentados na v110) e o v77.css vão no jogo pelo build')
     async with async_playwright() as pw:
         # ---------------------------------------------------------------- o lobby (computador e celular deitado)
         for (w, h, d, toque) in [(1280, 720, 1, False), (1440, 900, 1, False), (844, 390, 2.185, True), (667, 375, 2, True)]:

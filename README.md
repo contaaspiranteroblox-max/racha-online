@@ -1,6 +1,13 @@
-# RACHA · Futebol de Rua — v101
+# RACHA · Futebol de Rua — v110
 
-> **Novo · v101 (30/10/2026)** — o **lobby no estilo da imagem da noite**: a quadra da quebrada no pôr do sol desenhada em
+> **Novo · v110 (06/11/2026)** — o **jogo mais leve**: o `racha.html` que vai para o jogador caiu de 7,4 MB para 6,1 MB
+> (com o gzip, de 3,4 MB para 2,8 MB) — as imagens de versões antigas que não aparecem mais viraram um pontinho e o código vai
+> sem os comentários e sem o recuo (o mesmo programa; a física byte a byte igual; os comentários continuam em `tools/`). A
+> pasta do projeto foi de 53 MB para 24 MB (saíram os originais das imagens geradas por IA, fora do jogo desde a v95). E o
+> **CI do GitHub voltou a passar da conferência da plataforma** (falhava desde a v101: os testes no navegador e o deploy nem
+> rodavam). Nada do que se vê muda. O detalhe está no [`CHANGELOG.md`](CHANGELOG.md).
+>
+> **v101 (30/10/2026)** — o **lobby no estilo da imagem da noite**: a quadra da quebrada no pôr do sol desenhada em
 > código (o Cristo, a favela acesa, o grafite RACHA, o bar do Seu Zé, o chão molhado) cobrindo a tela toda, os cartões de vidro
 > flutuando por cima (o perfil com o ID, a patente com os pontos, o sinal), os botões baixos dos lados, o cartão dourado da
 > OFICINA, a tampinha no círculo aceso com as **três vagas do grupo**, o CAMPO, o MODO e o JOGAR com a coroa — e **as telas no

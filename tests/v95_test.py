@@ -23,7 +23,7 @@ da tampinha inicial, das linhas só na Oficina e do visual sem cara de IA (o jog
 Rodar: python3 tests/v95_test.py
 """
 import base64, json, pathlib, re
-from comum import abre, rt, roda, Placar, async_playwright, RAIZ
+from comum import abre, rt, roda, Placar, async_playwright, RAIZ, PONTINHO
 
 SAIDA = RAIZ / 'tests' / 'saida'
 SAIDA.mkdir(exist_ok=True)
@@ -43,9 +43,12 @@ async def principal():
               'tools/v76/skins_kit.webp']
     fora = [v for v in velhas if b64(v)[:4000] in html]
     P.confere(not fora, 'as imagens geradas por IA (fundos, letreiro, banners, ícones, kits dos mapas e as caras das tampinhas animadas) saíram do jogo', fora)
-    novas = ['fundo', 'fundo_telas', 'fundo77', 'fundo75', 'letreiro', 'banner_perfil', 'icones', 'banners', 'quadra_kit', 'campo_noite_kit', 'skins_kit']
+    novas = ['fundo', 'letreiro', 'icones', 'banners', 'quadra_kit', 'campo_noite_kit', 'skins_kit']
+    aposentadas = ['fundo_telas', 'fundo77', 'fundo75', 'banner_perfil']   # v110: as que não aparecem mais (tools/v110/enxuga.py)
     faltam = [n for n in novas if b64('tools/v95/arte/%s.webp' % n)[:4000] not in html]
-    P.confere(not faltam, 'no lugar delas, a arte desenhada em código (tools/v95/arte): as 11 imagens', faltam)
+    sobram = [n for n in aposentadas if b64('tools/v95/arte/%s.webp' % n)[:4000] in html]
+    P.confere(not faltam and not sobram and html.count(PONTINHO) == 5,
+              'no lugar delas, a arte desenhada em código (tools/v95/arte): as 7 que aparecem (as outras 4, desde a v110, o pontinho)', (faltam, sobram))
     P.confere('"cria":[0,0,300,300]' in html and '"fe_cruz":[302,604,300,300]' in html, 'o kit das tampinhas animadas novo (as 8 peças, maiores: 300 px)')
 
     async with async_playwright() as pw:

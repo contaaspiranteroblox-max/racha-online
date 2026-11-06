@@ -7,7 +7,7 @@ O pedido (05/11/2026): "quando o jogador chuta, o arco ao redor deve ficar bem b
 · A Oficina usa o mesmo branco opaco (a troca no desenho de lá).
 Capturas em tests/saida/v107_chute_*.png.
 Rodar: python3 tests/v107_chute_test.py"""
-from comum import abre, rt, roda, Placar, async_playwright, RAIZ
+from comum import abre, rt, roda, Placar, async_playwright, RAIZ, texto_do_jogo
 
 SAIDA = RAIZ / 'tests' / 'saida'; SAIDA.mkdir(exist_ok=True)
 
@@ -23,7 +23,7 @@ async def principal():
     P = Placar('v107 · o anel do chute bem branco')
     async with async_playwright() as pw:
         b, pg, erros = await abre(pw, 1280, 720)
-        html = (RAIZ / 'app' / 'public' / 'game' / 'racha.html').read_text(encoding='utf-8')
+        html = texto_do_jogo()   # (v110: os trechos com o comentário estão na cópia completa)
 
         # ---------------------------------------------------------------- 1) o branco de volta forte, e opaco
         r = await rt(pg, """(() => { const c = RachaChute107.sprite(40), g = c.getContext('2d'), m = c.width / 2;

@@ -1,5 +1,12 @@
 # RACHA · proveniência dos componentes (v86; auditoria de 17/10/2026)
 
+> **v110 (06/11/2026): os originais saíram da pasta.** As imagens originais geradas por IA (os PNG de `tools/v74` a
+> `tools/v77` e de `tools/v91`, e a `tools/v101/referencia.png`) e os scripts que recortavam peças delas (`*_kit.py`,
+> `pecas.py`, `tools/v75/lobby_fundo.py`, `tools/v91/fundo.py` e `tools/v91/banners.py`) não entravam no jogo desde a v95 e
+> saíram de `tools/`. Continuam no histórico do git (a etiqueta `antes-v110`): os caminhos citados abaixo valem lá. Os WebP
+> antigos ficam (o build ainda os usa para achar e trocar as imagens pela arte da v95). E cinco imagens que o jogo não mostra
+> mais em lugar nenhum viraram um pontinho transparente no jogo publicado (`tools/v110/enxuga.py`, a lista APOSENTADAS).
+
 > **v86 (17/10/2026), a pedido: a mecânica da v84 voltou.** A física, as quadras, o analógico de 32 direções e os botões
 > da v86 são os da v84 — os que a auditoria achou montados a partir da análise do jogo de referência (a coluna "até a v84"
 > da tabela abaixo) —, com só três números mudados: o PASSE (250 → 212,5), o CHUTE (400 → 340) e o teto da bola (55 → 46,75
@@ -31,7 +38,8 @@
 > trocados: o fundo da tela inicial e o das telas (v91), os fundos antigos do lobby e do perfil (v75 e v77), o letreiro RACHA,
 > o banner do perfil e a folha de ícones (v77), os 22 ícones das telas (v91), os 6 banners de perfil (v91), as peças dos
 > mapas — a Arena (v77) e o Estádio de noite (v74) — e as caras das tampinhas animadas CRIA, CRISTO, PITBULL, FÉ e DRAGÃO
-> (v76). Os arquivos antigos continuam em `tools/` (o histórico), mas não entram no build. **Os emojis da tampinha** (v95) vêm
+> (v76). Os arquivos antigos continuaram em `tools/` (o histórico), sem entrar no build — os originais em PNG saíram na v110
+> (ver no começo). **Os emojis da tampinha** (v95) vêm
 > das três folhas de emojis que o dono do jogo enviou em 28/10/2026 (a origem delas não foi conferida aqui); entram 102, e
 > ficaram de fora 27 (os personagens conhecidos e os escudos/logos de times e marcas — `tools/v95/emojis_atlas.py`). Continuam
 > como decisão jurídica: a titularidade das folhas dos emojis e o Cristo Redentor (agora redesenhado em código, na tampinha

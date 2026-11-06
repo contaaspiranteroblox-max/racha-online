@@ -2,6 +2,48 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v110 — 06/11/2026 · o jogo mais leve (sem o peso das versões antigas) e o CI de volta
+
+A pedido: *"tira tudo que pesa o jogo, versões antigas que não precisa mais, só deixe o que precisa, e atualiza lá"*. Nada
+do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`), as telas, os textos, os sons e o que o
+`config.js` liga e desliga são os mesmos. O backup do antes: a etiqueta git `antes-v110` (a v109).
+
+- **O QUE PESAVA**: o `racha.html` tinha 7.390 KB (3.372 KB com o gzip do Caddy): 2,5 MB de imagens embutidas, 840 KB de
+  comentários, o recuo das linhas e ~4,5 MB do código das versões empilhadas. As 35 pastas de `tools/` são o código-fonte do
+  jogo (cada versão é uma camada por cima da outra, e as de hoje chamam as de antes): elas não vão para o jogador — o que vai
+  é o `racha.html` montado.
+- **AS IMAGENS DE VERSÕES ANTIGAS QUE NÃO APARECEM MAIS** (`tools/v110/enxuga.py`, a lista APOSENTADAS) viram um pontinho
+  transparente (1×1), com as medidas mantidas (o código de antes continua achando o que procura): o fundo das telas da v91 (a
+  v101 troca pelo dela antes de a tela ser pintada), o fundo do lobby da v75 e o da v77 (só eram pintados no `#lb-fundo`,
+  escondido desde a v90), o banner do perfil da v77 (o banner da v91 cobre) e a ilustração do cartão da OFICINA da v101 (a
+  v102 tirou o cartão da tela inicial). Cada uma confere, no jogo montado, o motivo de não aparecer: se uma versão futura
+  voltar a mostrar alguma, o build para e avisa. Ficam (aparecem): o fundo da v91 (é o fundo da tela de ENTRAR, pelo
+  `--v91-fundo`), o letreiro e os ícones da v77, os banners da v91, os emojis, o fundo da v101/v103, os kits dos campos e as
+  tampinhas animadas (as prontas voltam com `skinsProntas: true`).
+- **O CÓDIGO E O ESTILO SEM COMENTÁRIOS NEM RECUO** no que vai para o jogador (a mesma etapa): nada dentro de texto ou de
+  expressão regular muda, as linhas não são juntadas (o ponto e vírgula automático fica igual) e o bloco da física fica byte a
+  byte igual. Os comentários continuam onde se edita (`tools/` e `backup/`); a cópia completa do jogo montado fica em
+  `tests/build/racha_completo.html` (o `tools/mapa_codigo.py` lê ela — e o `tools/MAPA_REDEFINICOES.md` foi refeito).
+- **O RESULTADO**: o `racha.html` de **7.390 KB para 6.080 KB** (−18%); com o gzip, de **3.372 KB para 2.834 KB** (−16%). O
+  celular também deixa de abrir as 5 imagens no começo.
+- **A PASTA DO PROJETO**: as imagens originais geradas por IA (os PNG de `tools/v74` a `tools/v77`, de `tools/v91` e a
+  referência da v101, ~27 MB) e os scripts que recortavam as peças delas (`*_kit.py`, `pecas.py`, `tools/v75/lobby_fundo.py`,
+  `tools/v91/fundo.py` e `tools/v91/banners.py`) saíram: não entravam no jogo desde a v95 (a arte desenhada em código). A
+  pasta foi de 53 MB para 24 MB; os originais continuam no histórico (`antes-v110`). A medida do fundo da v75 (1844 × 853), que
+  o build lia do PNG, ficou escrita no `tools/aplicar_rua.py`.
+- **O CI DE VOLTA**: o *Testar e publicar* do GitHub falhava desde a v101 na conferência de tipos da plataforma (o `tsc -b`),
+  então os testes no navegador e o deploy na VPS nunca chegaram a rodar. Os dois erros: o `server/ip.js` sem tipos (agora o
+  `server/ip.d.ts`, como o `turma.d.ts` e o `ws.d.ts`) e o fundador e as mascotes lidos de dentro de uma transação (as
+  leituras deles aceitam a transação: só o tipo muda).
+- **Testes**: `tests/v110_enxuga_test.mjs` (novo, no CI: o esbuild reescreve cada `<script>` e `<style>` do enxuto e do
+  completo e as saídas precisam ser idênticas; o HTML de fora igual; a física byte a byte; as 5 aposentadas e as que ficam).
+  Os testes que procuram trechos do código com comentário leem a cópia completa (`texto_do_jogo()` no `tests/comum.py`: o
+  `v103_tela` e o `v107_chute`) e os que conferiam as imagens embutidas (`v75`, `v77` e `v95`) conferem as aposentadas. As
+  telas comparadas antes e depois (a entrada, o lobby, as 19 telas, a Oficina e uma partida em cada campo, no computador e no
+  celular deitado): iguais, fora o que muda de uma abertura para outra (a tampinha que balança, o ID e os bots sorteados). Os
+  testes do CI que rodam aqui passam como antes; continuam como estavam o `v92` e o `v92_celular` (o painel da versão de
+  testes: o A ⇄ B mudou na v94), que estão na lista do CI.
+
 ## v109 — 06/11/2026 · os dois painéis do RACHA CONTROL (o do Dono e o da staff) e o 2FA consertado
 
 A pedido: *"o 2 etapas está bugado, e quero que tenha 2 painéis: um meu, do dono, com várias funções — dar verificado, dar

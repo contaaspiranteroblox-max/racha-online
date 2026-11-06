@@ -26,6 +26,9 @@ export const AVISO_MASCOTE = "Essa peça vem com uma mascote da LOJA (TAMPINHAS 
 export const ehItemMascote = (codigo: string) => ITENS_MASCOTE.includes(codigo);
 
 type Conn = ReturnType<typeof getDb>;
+type Tx = Parameters<Parameters<Conn["transaction"]>[0]>[0];
+// v110: a leitura aceita também a transação (o relacoesDe do v88/comum.ts chama com ela; o "tsc -b" do CI recusava)
+type Leitura = Conn | Tx;
 const TP_B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 // as peças de mascote que o código usa: o item da cara (ou null) e se usa a Medalhão — null: nenhuma
@@ -41,7 +44,7 @@ export function pecasDeMascote(codigo: string | null | undefined): { item: strin
   return m || medalhao ? { item: m ? m.item : null, medalhao } : null;
 }
 // as mascotes da conta (os itens tp_m_* do inventário)
-export async function mascotesDaConta(usuarioId: number, db: Conn = getDb()): Promise<string[]> {
+export async function mascotesDaConta(usuarioId: number, db: Leitura = getDb()): Promise<string[]> {
   const its = await db.query.itensUsuario.findMany({
     where: and(eq(itensUsuario.usuarioId, usuarioId), inArray(itensUsuario.codigoItem, ITENS_MASCOTE)), columns: { codigoItem: true },
   });

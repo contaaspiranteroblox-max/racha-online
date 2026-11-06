@@ -25,6 +25,8 @@ let esgotadoAte = 0;
 
 type Conn = ReturnType<typeof getDb>;
 type Tx = Parameters<Parameters<Conn["transaction"]>[0]>[0];
+// v110: as leituras aceitam também a transação (o relacoesDe do v88/comum.ts chama com ela; o "tsc -b" do CI recusava)
+type Leitura = Conn | Tx;
 const linhas = <T>(r: unknown): T[] => (Array.isArray(r) ? (Array.isArray(r[0]) ? (r[0] as T[]) : (r as T[])) : []);
 
 // As peças viajam dentro do código da tampinha (T.… — e do escudo do clube, E.…), pelo lugar nas listas do jogo: a cara
@@ -49,13 +51,13 @@ export async function podeUsarCodigo(usuarioId: number, codigo: string | null | 
 }
 
 // o número do fundador (1 a 30) desta conta, ou null
-export async function numeroFundador(usuarioId: number, db: Conn = getDb()): Promise<number | null> {
+export async function numeroFundador(usuarioId: number, db: Leitura = getDb()): Promise<number | null> {
   const it = await db.query.itensUsuario.findFirst({ where: and(eq(itensUsuario.usuarioId, usuarioId), eq(itensUsuario.codigoItem, ITEM_FUNDADOR)) });
   if (!it) return null;
   const m = /(\d+)/.exec(String(it.origemDetalhe || ""));
   return m ? Number(m[1]) : 0;
 }
-export async function ehFundador(usuarioId: number, db: Conn = getDb()): Promise<boolean> {
+export async function ehFundador(usuarioId: number, db: Leitura = getDb()): Promise<boolean> {
   return (await numeroFundador(usuarioId, db)) !== null;
 }
 
