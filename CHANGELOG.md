@@ -6,7 +6,7 @@ As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão
 
 A pedido: *"tira tudo que pesa o jogo, versões antigas que não precisa mais, só deixe o que precisa, e atualiza lá"*. Nada
 do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`), as telas, os textos, os sons e o que o
-`config.js` liga e desliga são os mesmos. O backup do antes: o commit `1b2b8c4` (a v109; daqui não deu para criar a etiqueta `antes-v111` no GitHub).
+`config.js` liga e desliga são os mesmos. O backup do antes: o commit `848fc2e` (a v110, o botão de metal; daqui não deu para criar a etiqueta `antes-v111` no GitHub).
 
 - **O QUE PESAVA**: o `racha.html` tinha 7.390 KB (3.372 KB com o gzip do Caddy): 2,5 MB de imagens embutidas, 840 KB de
   comentários, o recuo das linhas e ~4,5 MB do código das versões empilhadas. As 35 pastas de `tools/` são o código-fonte do
@@ -54,6 +54,36 @@ do que o jogador vê muda: a física (o build confere: `sha256 ad9f1d2216409b0e`
   computador e no celular deitado, saem iguais aos da v109 pixel a pixel. Fora da lista do CI, falham do mesmo jeito que na
   v109 (nada aqui mexeu neles): o `v73`, o `v75`, o `v76`, o `v77` e o `v96_skins` (conferem coisas das versões antigas que
   as de depois mudaram) e o `v92_pacote` (as salas do Rachão no servidor do ZIP).
+
+## v110 — 06/11/2026 · o botão de metal e as sombras
+
+A pedido, com as imagens de dois botões (azul e vermelho, com a listra branca no meio): *"deixe o jogo parecido com essas
+skins, as sombras etc."* — perguntado, *"em todas as peças"* e *"as cores de agora"* nos times. Na v105 a BOTÃO tinha ficado
+chapada (o aro branco liso, sem relevo e sem a sombra por dentro), como nas imagens daquela vez; as imagens novas têm o aro de
+metal e o desenho afundado, e é isso que volta, medido nelas. Só a pintura das tampinhas: a física não muda (o build confere:
+`sha256 ad9f1d2216409b0e`), nem o tamanho, o alcance ou as medidas da v105. O backup do antes: a etiqueta git `antes-v110`.
+
+- **A BOTÃO de metal** (`tools/v110/botao.js`; a borda de todo mundo — a inicial, as do time e a de fábrica): o contorno preto
+  fino por fora (2% do raio; nunca menos de 1,1 px); o aro de METAL — o lábio claro logo depois do desenho, escurecendo para a
+  beira de fora (nas imagens: 94% de claro no lábio, 73% no meio e 56% perto do contorno), com a luz em cima à esquerda (o mesmo
+  raio mais claro em cima à esquerda que embaixo à direita) —; o sulco escuro entre o aro e o desenho; e o desenho afundado: a
+  sombra por dentro em volta toda (some a 86% do raio do desenho: 12% a 89%, 23% a 93%, 33% a 95% e metade colada no aro),
+  reforçada rente ao aro embaixo e à direita, e o degradê de cima (mais claro) para baixo (mais escuro) que deixa o branco
+  branco (o azul #0561bc vai de #046bc9 em cima a #0452af embaixo; nas imagens, #066ec4 a #0555b5). O aro continua na cor 1 da
+  borda (o ARO do editor): o branco de fábrica vira o metal prateado; um aro colorido vira o metal daquela cor. FINA, NORMAL,
+  GROSSA e SEM BORDA (v105) continuam, com o mesmo desenho do meio.
+- **As sombras em todas as peças**: as tampinhas com as outras bordas (as de dentes, a Medalhão das mascotes, as acesas) e as
+  SEM BORDA ganham a mesma sombra por dentro e o mesmo degradê no desenho; a borda de cada uma continua a dela (as compradas
+  não mudam). As caras animadas ficam como são.
+- **Nada a mais por quadro**: tudo isso vai nas imagens prontas das tampinhas (uma por tampinha e tamanho); as de antes da v110
+  saem ao abrir o jogo. Na partida, o desenho não é refeito a cada quadro.
+- **Testes**: `tests/v110_botao_test.py` (a BOTÃO medida nos pixels no tamanho das imagens: o contorno, o lábio claro e o metal
+  escurecendo para fora, sem cor, a luz em cima à esquerda, o sulco, a sombra por dentro em volta toda e mais forte embaixo à
+  direita, sumindo antes de 80%, o degradê com o branco branco, nada fora, as medidas da v105, o aro dourado, os tamanhos da
+  borda e a SEM BORDA; as sombras na Clássica escolhida, na Medalhão, na Ouro e num aro aceso, com a borda de cada uma; a cara
+  animada com o aro de metal; e a partida tirando as tampinhas das imagens prontas). O `v102`, o `v105_borda` e o
+  `v105_cosmeticos` conferiam o aro branco chapado da v105: agora conferem o aro de metal (claro e sem cor) e o desenho com a
+  sombra rente ao aro; o `v92_pacote` confere os arquivos e a marca da v110.
 
 ## v109 — 06/11/2026 · os dois painéis do RACHA CONTROL (o do Dono e o da staff) e o 2FA consertado
 

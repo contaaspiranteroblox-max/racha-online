@@ -168,6 +168,9 @@ with zipfile.ZipFile(saida) as z:
             'tests/v109_painel_servidor_test.mjs', 'tests/v109_silencio_salas_test.js'} <= nomes, 'faltam os arquivos da v109 (os dois painéis) no ZIP'
     assert b'window.RachaSilencio109' in jogo, 'o jogo do ZIP não tem o aviso do silêncio da v109'
     assert b'silencio109.aplica(Turma)' in z.read('server/turma.js'), 'o servidor do ZIP não tem o silêncio da equipe da v109'
+    # v110: o botão de metal e as sombras (a BOTÃO como nas imagens; a sombra por dentro em todas as tampinhas)
+    assert {'tools/v110/botao.py', 'tools/v110/botao.js', 'tests/v110_botao_test.py'} <= nomes, 'faltam os arquivos da v110 (o botão de metal) no ZIP'
+    assert b'window.RachaBotao110' in jogo, 'o jogo do ZIP não tem o botão de metal da v110'
     # v111: o jogo mais leve — as imagens de versões antigas que não aparecem mais viram o pontinho e o jogo vai sem os comentários
     # e sem o recuo (a cópia completa fica em tests/build, fora do ZIP); e os tipos do server/ip.js (o tsc -b do CI)
     assert {'tools/v111/enxuga.py', 'tests/v111_enxuga_test.mjs', 'server/ip.d.ts'} <= nomes, 'faltam os arquivos da v111 (o jogo mais leve) no ZIP'

@@ -6,7 +6,8 @@
 > pasta do projeto foi de 53 MB para 22 MB (saíram os originais das imagens geradas por IA e os recortes delas, fora do jogo
 > desde a v95, e os originais da v69 do `backup/`). E o **CI do GitHub voltou** (falhava desde a v101 na conferência da
 > plataforma, e os testes no navegador paravam no `v92`: os testes no navegador e o deploy nem rodavam). Nada do que se vê
-> muda. O detalhe está no [`CHANGELOG.md`](CHANGELOG.md).
+> muda. O detalhe está no [`CHANGELOG.md`](CHANGELOG.md), com as versões v102 a v110 (a v110: o botão de metal e as sombras
+> nas tampinhas).
 >
 > **v101 (30/10/2026)** — o **lobby no estilo da imagem da noite**: a quadra da quebrada no pôr do sol desenhada em
 > código (o Cristo, a favela acesa, o grafite RACHA, o bar do Seu Zé, o chão molhado) cobrindo a tela toda, os cartões de vidro

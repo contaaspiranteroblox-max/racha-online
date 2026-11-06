@@ -132,6 +132,9 @@ Lê o backup original (backup/racha.html) e gera public/game/racha.html:
  v109 · o silêncio da equipe no jogo (tools/v109/silencio.py + silencio.js, por último; no servidor: server/silencio109.js; na
      plataforma: o RACHA CONTROL com o painel do Dono e o da staff): a staff cala o chat de um jogador por 5 min a 30 dias e o
      jogo mostra o aviso do servidor (quanto falta e o motivo) em todos os chats e nas falas/emojis da partida.
+ v110 · o botão de metal e as sombras (tools/v110/botao.py + botao.js, por último): a BOTÃO, a borda de todo mundo, como nas
+     imagens enviadas (o contorno preto fino, o aro de metal com a luz em cima à esquerda, o sulco e o desenho afundado com a
+     sombra por dentro) e a mesma sombra no desenho das tampinhas com as outras bordas e sem borda. Só a pintura.
  v111 · o jogo mais leve (tools/v111/enxuga.py, a última etapa, depois da conferência da física): as imagens embutidas de
      versões antigas que o jogo não mostra mais viram um pontinho (cada uma com a conferência do porquê) e o racha.html vai
      para o jogador sem os comentários e sem o recuo (o mesmo programa; a cópia completa fica em tests/build/racha_completo.html).
@@ -193,7 +196,8 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v107/gestos',                                                               # v107: segurar e arrastar no botão do emoji e no das falas (a cruz no meio da tela, o aro e o X; a cruz das frases no COFRE)
               'v107/chute',                                                                # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
               'v108/lento',                                                                # v108: o online sem câmera lenta (o deslize com prazo, o pulo pelo somado e o replay uma vez por quadro da tela)
-              'v109/silencio']                                                             # v109: o silêncio da equipe no jogo (o aviso com quanto falta e o motivo, nos chats e na partida)
+              'v109/silencio',                                                             # v109: o silêncio da equipe no jogo (o aviso com quanto falta e o motivo, nos chats e na partida)
+              'v110/botao']                                                                # v110: o botão de metal e as sombras (a BOTÃO como nas imagens; a sombra por dentro em todas as tampinhas)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

@@ -39,6 +39,7 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `rqPlacar70` | 5 | tools/v80/partida.js | 25365 |
 | `tpCompra` | 5 | tools/v106/conteudo.js | 56919 |
 | `tpSkin` | 5 | tools/v101/semskins.js | 52738 |
+| `tpTampa` | 5 | tools/v110/botao.js | 60470 |
 | `tpeConcluir` | 5 | tools/v106/conteudo.js | 56970 |
 | `tpeFaixa` | 5 | tools/v106/conteudo.js | 56956 |
 | `tpeNomeDe` | 5 | tools/v106/conteudo.js | 57038 |
@@ -76,7 +77,6 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `tpFaltam` | 4 | tools/v106/conteudo.js | 56911 |
 | `tpNoTime` | 4 | tools/v101/semskins.js | 52740 |
 | `tpNoTimeSk` | 4 | tools/v101/semskins.js | 52742 |
-| `tpTampa` | 4 | tools/v105/cosmeticos.js | 55829 |
 | `trAcaba` | 4 | tools/v88/treino.js | 29871 |
 | `v88LojaLista` | 4 | tools/v106/conteudo.js | 57092 |
 | `v88PerfilPinta` | 4 | tools/v107/perfil.js | 59303 |
@@ -167,6 +167,8 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `trHud` | 3 | tools/v93/tutorial.js | 35852 |
 | `trUiMostra` | 3 | tools/v88/treino.js | 29909 |
 | `tuPassos` | 3 | tools/v103/controles.js | 54033 |
+| `v102Aro` | 3 | tools/v110/botao.js | 60436 |
+| `v102Botao` | 3 | tools/v110/botao.js | 60450 |
 | `v104Fim` | 3 | tools/v107/painel.js | 59559 |
 | `v70EvInicio` | 3 | tools/v88/treino.js | 30060 |
 | `v70PfAplica` | 3 | tools/v77/telas.js | 23050 |
@@ -392,8 +394,6 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 | `updateCamera` | 2 | tools/v88/espectador.js | 29621 |
 | `v101EhPronta` | 2 | tools/v106/cofre.js | 58380 |
 | `v101MontaPronta` | 2 | tools/v106/conteudo.js | 56807 |
-| `v102Aro` | 2 | tools/v105/cosmeticos.js | 55811 |
-| `v102Botao` | 2 | tools/v105/cosmeticos.js | 55818 |
 | `v103Ficha` | 2 | tools/v107/perfil.js | 59246 |
 | `v103PadJogo` | 2 | tools/v106/emotes.js | 57986 |
 | `v104Pega` | 2 | tools/v107/painel.js | 59547 |
@@ -466,9 +466,9 @@ de onde vem a versão que VALE (a última). Antes de corrigir algo, confira aqui
 
 ## Resumo
 
-* funções declaradas no script principal: 3494
+* funções declaradas no script principal: 3498
 * funções trocadas pelo menos uma vez: 458 (13%)
-* definições a mais (camadas): 864
+* definições a mais (camadas): 867
 
 A versão que vale, por arquivo:
 
@@ -476,10 +476,10 @@ A versão que vale, por arquivo:
 * tools/v106/conteudo.js: 23
 * tools/v79/ranqueada.js: 18
 * tools/v88/treino.js: 14
-* tools/v105/cosmeticos.js: 14
 * tools/v101/semskins.js: 13
 * tools/v93/partida.js: 13
 * tools/v107/perfil.js: 11
+* tools/v105/cosmeticos.js: 11
 * tools/v99/chutes.js: 10
 * tools/v71/times.js: 10
 * tools/v92/hud.js: 9
@@ -520,6 +520,7 @@ A versão que vale, por arquivo:
 * tools/v93/equipa.js: 4
 * tools/v103/tela.js: 3
 * tools/v95/ranqueada.js: 3
+* tools/v110/botao.js: 3
 * tools/v91/inicio.js: 3
 * tools/v80/gol.js: 3
 * tools/v70/polimento.js: 3

@@ -226,11 +226,11 @@ async def principal():
             P.confere(r['gratis'], 'a BOTÃO é grátis (já é sua)', r['gratis'])
             P.confere(r['volta'] and r['padraoIgual'], 'o código guarda a BOTÃO e a tampinha inicial continua com o mesmo código', r)
             a, k, m2, f = r['aro'], r['contorno'], r['meio'], r['fora']
-            P.confere(min(a[:3]) > 200 and a[3] > 240, 'o aro claro (branco, a cor 1)', a)
+            P.confere(min(a[:3]) > 140 and max(a[:3]) - min(a[:3]) < 16 and a[3] > 240, 'o aro claro (a cor 1, branca; v110: o metal prateado)', a)
             P.confere(max(k[:3]) < 90 and k[3] > 200, 'o contorno escuro por fora', k)
             P.confere(m2[0] > 180 and m2[1] < 90 and m2[3] > 240, 'o desenho no meio (a listra vermelha)', m2)
             P.confere(f[3] < 40, 'nada fora do botão (sem dentes)', f)
-            P.confere(min(r['caraAro'][:3]) > 200, 'com a cara animada: o aro do botão no lugar dos dentes', r['caraAro'])
+            P.confere(min(r['caraAro'][:3]) > 140 and max(r['caraAro'][:3]) - min(r['caraAro'][:3]) < 16, 'com a cara animada: o aro do botão no lugar dos dentes (v110: de metal)', r['caraAro'])
             # o editor: a faixa (BOTÃO logo depois da Lisa), o nome da cor (ARO) e o cabeçalho com os 3 ícones
             await rt(pg, "(() => { tpeAbre(); return 1; })()")
             await pg.wait_for_timeout(600)
