@@ -3,7 +3,7 @@
      animada); a NORMAL não muda o código (200 tampinhas sorteadas: o código é o mesmo do codificador de antes); o leitor de
      antes lê o código novo como a mesma tampinha com a borda normal; o escudo do clube não leva tamanho; o código mais
      comprido continua cabendo (até 44 letras: a regra do jogo, do servidor e da plataforma);
-  2) o desenho, medido nos pixels: na BOTÃO o aro branco fica mais fino ou mais grosso e o desenho do meio cresce ou diminui;
+  2) o desenho, medido nos pixels: na BOTÃO o aro (v110: de metal) fica mais fino ou mais grosso e o desenho do meio cresce ou diminui;
      na de dentes o meio vai a 80% (fina) ou 66% (grossa) do raio; SEM BORDA só o desenho, cheio até a beirada (sem os dentes,
      o aro, o contorno e o fundo da cara animada — também na imagem pronta da cara que mexe); o emoji cobre o meio de cada um;
   3) o editor: na aba BORDA o TAMANHO DA BORDA com SEM · FINA · NORMAL · GROSSA (a NORMAL acesa), tocar troca a tampinha
@@ -34,6 +34,10 @@ def eh(p, tipo):
     if tipo == 'escuro': return a > 200 and .2126*r + .7152*g + .0722*b < 70
     if tipo == 'vazio': return a < 12
     if tipo == 'nao_vermelho': return not (a > 200 and r > 120 and r > 2*g and r > 2*b)
+    # v110: o aro da BOTÃO é de metal (claro e sem cor, mais escuro na beira de fora) e o desenho tem a sombra por dentro
+    # (rente ao aro o vermelho fica escuro, mas continua vermelho)
+    if tipo == 'metal': return a > 200 and max(r, g, b) - min(r, g, b) < 16 and 110 < .2126*r + .7152*g + .0722*b < 245
+    if tipo == 'vermelho_sombra': return a > 200 and r > 60 and r > 2.5*g and r > 2.5*b
     return False
 
 
@@ -110,21 +114,21 @@ async def principal():
         for k in (0, 1, 2, 3):
             px = await rt(pg, '%s(%s("bt", %d), 100, %s)' % (PIXELS, VERMELHA, k, json.dumps(pts)))
             bt[k] = dict(zip([p[0] for p in pts], px))
-        P.confere(eh(bt[0][.78], 'vermelho') and eh(bt[0][.83], 'escuro') and eh(bt[0][.89], 'branco') and eh(bt[0][.95], 'escuro') and eh(bt[0][.985], 'vazio'),
-                  'BOTÃO NORMAL (a de sempre): o desenho até 81%, o filete, o aro branco de 85% a 94%, o contorno e nada fora', [bt[0][k] for k in (.78, .83, .89, .95, .985)])
-        P.confere(eh(bt[1][.83], 'vermelho') and eh(bt[1][.875], 'escuro') and eh(bt[1][.915], 'branco') and eh(bt[1][.95], 'escuro'),
-                  'BOTÃO FINA: o desenho cresce (até 86%) e o aro branco fica fino (de 89% a 94%)', [bt[1][k] for k in (.83, .875, .915, .95)])
-        P.confere(eh(bt[2][.70], 'vermelho') and eh(bt[2][.755], 'escuro') and eh(bt[2][.83], 'branco') and eh(bt[2][.89], 'branco'),
-                  'BOTÃO GROSSA: o desenho diminui (até 74%) e o aro branco fica grosso (de 77% a 94%)', [bt[2][k] for k in (.70, .755, .83, .89)])
-        P.confere(eh(bt[3][.83], 'vermelho') and eh(bt[3][.95], 'vermelho') and eh(bt[3][.985], 'vazio'),
-                  'BOTÃO SEM BORDA: só o desenho, cheio até a beirada (97% do raio), sem aro nem contorno', [bt[3][k] for k in (.83, .95, .985)])
+        P.confere(eh(bt[0][.78], 'vermelho_sombra') and eh(bt[0][.83], 'escuro') and eh(bt[0][.89], 'metal') and eh(bt[0][.95], 'escuro') and eh(bt[0][.985], 'vazio'),
+                  'BOTÃO NORMAL (a de sempre): o desenho até 81%, o filete, o aro (v110: de metal) de 85% a 94%, o contorno e nada fora', [bt[0][k] for k in (.78, .83, .89, .95, .985)])
+        P.confere(eh(bt[1][.83], 'vermelho_sombra') and eh(bt[1][.875], 'escuro') and eh(bt[1][.915], 'metal') and eh(bt[1][.95], 'escuro'),
+                  'BOTÃO FINA: o desenho cresce (até 86%) e o aro (v110: de metal) fica fino (de 89% a 94%)', [bt[1][k] for k in (.83, .875, .915, .95)])
+        P.confere(eh(bt[2][.70], 'vermelho_sombra') and eh(bt[2][.755], 'escuro') and eh(bt[2][.83], 'metal') and eh(bt[2][.89], 'metal'),
+                  'BOTÃO GROSSA: o desenho diminui (até 74%) e o aro (v110: de metal) fica grosso (de 77% a 94%)', [bt[2][k] for k in (.70, .755, .83, .89)])
+        P.confere(eh(bt[3][.83], 'vermelho') and eh(bt[3][.95], 'vermelho_sombra') and eh(bt[3][.985], 'vazio'),
+                  'BOTÃO SEM BORDA: só o desenho, cheio até a beirada (97% do raio), sem aro nem contorno (v110: com a sombra por dentro rente à beirada)', [bt[3][k] for k in (.83, .95, .985)])
         dt = {}
         for k in (0, 1, 2, 3):
             px = await rt(pg, '%s(%s("dt", %d), 100, %s)' % (PIXELS, VERMELHA, k, json.dumps(pts)))
             dt[k] = dict(zip([p[0] for p in pts], px))
         P.confere(eh(dt[0][.70], 'vermelho') and eh(dt[0][.76], 'nao_vermelho') and eh(dt[1][.76], 'vermelho') and eh(dt[2][.62], 'vermelho') and eh(dt[2][.70], 'nao_vermelho'),
                   'a de dentes (Dentada): o meio com 74% do raio na normal, 80% na fina e 66% na grossa', [dt[0][.70], dt[0][.76], dt[1][.76], dt[2][.62], dt[2][.70]])
-        P.confere(eh(dt[3][.95], 'vermelho') and eh(dt[3][.985], 'vazio'), 'a de dentes SEM BORDA: sem a saia e sem os dentes (só o desenho)', [dt[3][.95], dt[3][.985]])
+        P.confere(eh(dt[3][.95], 'vermelho_sombra') and eh(dt[3][.985], 'vazio'), 'a de dentes SEM BORDA: sem a saia e sem os dentes (só o desenho; v110: com a sombra por dentro)', [dt[3][.95], dt[3][.985]])
         voltas = [[.995, a/36*6.2832] for a in range(36)]   # (a 99,5% do raio: as pontas dos dentes; a cara sem borda acaba em 97%)
         cara = {}
         for k in (0, 3):

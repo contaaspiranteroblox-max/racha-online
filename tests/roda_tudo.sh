@@ -357,7 +357,10 @@ if out=$(node tests/v109_silencio_salas_test.js 2>&1); then echo "$out" | tail -
 # v109: OS DOIS PAINÉIS NO NAVEGADOR (tests/v109_painel_test.py; as páginas de verdade do RACHA CONTROL com a plataforma de
 # teste): o 2FA pelo QR code (lido pelo OpenCV), o Dono e o Moderador em cada painel, silenciar pelo painel, os registros e a
 # visão geral do Dono, dar o verificado e moedas, resetar o 2FA, o aviso do silêncio no jogo e o painel no celular; ~20 s.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel; do
+# v110: O BOTÃO DE METAL E AS SOMBRAS (tests/v110_botao_test.py): a BOTÃO medida nos pixels como nas imagens enviadas (o
+# contorno, o aro de metal com a luz em cima à esquerda, o sulco, a sombra por dentro e o degradê com o branco branco), as
+# sombras nas outras bordas e sem borda, e a partida tirando as tampinhas das imagens prontas; ~25 s.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

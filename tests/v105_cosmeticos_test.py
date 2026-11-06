@@ -6,8 +6,10 @@
      códigos de sempre não mudam —; a Clássica de outra cor continua com os dentes; no editor, a inicial abre com a BOTÃO (o
      VOLTAR não troca nada e a inicial continua a inicial), a nova nasce com a BOTÃO e a Clássica escolhida de propósito no
      cinza da inicial continua Clássica;
-  3) a BOTÃO como nas imagens: o aro chapado (a mesma cor em volta toda), o contorno escuro por fora, o filete escuro entre o
-     aro e o desenho, o desenho sem a luz de esmalte, nada fora do botão; nos tamanhos pequenos o aro continua aparecendo;
+  3) a BOTÃO como nas imagens: o contorno escuro por fora, o filete escuro entre o aro e o desenho, o desenho sem a luz de
+     esmalte, nada fora do botão; nos tamanhos pequenos o aro continua aparecendo (v110: o aro chapado da v105 virou o de
+     metal das imagens novas — claro, sem cor e com a luz em cima à esquerda — e o desenho ganhou o degradê de cima para
+     baixo; o resto é conferido no tests/v110_botao_test.py);
   4) as tampinhas dos dois lados juntam no QUAL PROGRESSO FICA? (as duas escolhas) e a apagada de propósito não volta;
   5) com a conta (a plataforma de teste: o código de verdade de app/api), a criada vai para a conta logo (sem esperar o vigia),
      o SAIR DA CONTA logo depois de criar manda antes de sair, e ela está lá ao entrar de novo no mesmo navegador e num
@@ -164,8 +166,9 @@ async def principal():
         px = {}
         for nome, cod in (('inicial', k['ini']), ('timeA', k['times'][0]), ('timeB', k['times'][1]), ('cinza', k['cinza']), ('verm', k['verm'])):
             px[nome] = await pg.evaluate('([cod, r, p]) => window.__RT("(" + %s + ")")(cod, r, p)' % json.dumps(PIXELS), [cod, 90, PONTOS])
-        botao = lambda p: min(p[0][:3]) > 200 and max(p[1][:3]) < 90 and p[1][3] > 200 and p[2][3] < 40 and p[3][3] < 40
-        P.confere(all(botao(px[n]) for n in ('inicial', 'timeA', 'timeB', 'cinza')), 'desenhadas com a BOTÃO: o aro branco, o contorno escuro e nada fora (sem os dentes)', {n: px[n] for n in ('inicial', 'cinza')})
+        # (v110: o aro da BOTÃO é de metal: claro e sem cor, a 90% do raio um cinza claro)
+        botao = lambda p: min(p[0][:3]) > 140 and max(p[0][:3]) - min(p[0][:3]) < 16 and max(p[1][:3]) < 90 and p[1][3] > 200 and p[2][3] < 40 and p[3][3] < 40
+        P.confere(all(botao(px[n]) for n in ('inicial', 'timeA', 'timeB', 'cinza')), 'desenhadas com a BOTÃO: o aro (v110: de metal), o contorno escuro e nada fora (sem os dentes)', {n: px[n] for n in ('inicial', 'cinza')})
         P.confere(px['verm'][2][3] > 200, 'a Clássica vermelha (escolhida de propósito) continua com os dentes', px['verm'])
         # o editor: a inicial abre com a BOTÃO; o VOLTAR não troca nada; a criada nasce com a BOTÃO
         await rt(pg, "(() => { tpeAbre(); return 1; })()")
@@ -189,28 +192,32 @@ async def principal():
         await rt(pg, "(() => { ED.descarta = true; ED.saindo = true; fechaTela(); ED.saindo = false; return 1; })()")
 
         # ---------------------------------------------------------------- 3) a BOTÃO como nas imagens
-        print('\n3) a BOTÃO chapada, como nas imagens')
+        print('\n3) a BOTÃO como nas imagens (v110: o aro de metal)')
         f = await rt(pg, """(() => { const D = TP_PADRAO_D(); D.b = 'bt'; D.bc = ['#f7f7f3', '#1d1d1d']; D.p = 'tc'; D.pc = ['#f7f7f3', '#e2412f', '#e2412f']; D.i = '--';
           const cod = tpCodigo(tpNorm(D)), r = 90, c = document.createElement('canvas'); c.width = c.height = 240; const g = c.getContext('2d'), m = 120;
           tpDesenha(g, m, m, r, tpLe(cod), 7);
           const M = RachaCosmeticos105.medidas(r), p = (k, a) => Array.from(g.getImageData(Math.round(m + Math.cos(a)*k), Math.round(m + Math.sin(a)*k), 1, 1).data);
           const angs = Array.from({length:12}, (_, i) => i/12*Math.PI*2);
-          const aro = angs.map(a => p((M.rt + M.wF + M.R - M.wC)/2, a)), contorno = angs.map(a => p(M.R - M.wC/2, a)), filete = angs.map(a => p(M.rt + M.wF/2, a));
+          const aro = angs.map(a => p((M.rt + M.wF + M.R - M.wC)/2, a)), contorno = angs.map(a => { const w = RachaBotao110.medidas(r).wC, q = [.15, .38, .62, .85].map(k => p(M.R - w*k, a)).filter(x => x[3] > 200);   // (v110: o contorno com 2%: o mais escuro dos opacos)
+            return q.length ? q.reduce((m, x) => (x[0] + x[1] + x[2] < m[0] + m[1] + m[2] ? x : m)) : [255, 255, 255, 0]; }), filete = angs.map(a => p(M.rt + M.wF/2, a));
           const mancha = [p(M.rt*.6, Math.PI*.8), p(M.rt*.6, Math.PI*1.2)];   // (a listra da esquerda em cima e embaixo: sem a luz de esmalte, a mesma cor)
           return {M, aro, contorno, filete, mancha, fora:p(r*.985, 0)[3], cod}; })()""")
         aros = f['aro']
-        var = max(max(p[i] for p in aros) - min(p[i] for p in aros) for i in range(3))
-        P.confere(all(min(p[:3]) > 225 for p in aros) and var <= 3, 'o aro chapado: o mesmo branco em volta toda (sem o degradê de relevo nem o brilho; variação %d)' % var, aros[:4])
-        P.confere(all(max(p[:3]) < 60 and p[3] > 230 for p in f['contorno']), 'o contorno escuro firme por fora, em volta toda', f['contorno'][:3])
+        lum = lambda p: .2126*p[0] + .7152*p[1] + .0722*p[2]
+        P.confere(all(lum(p) > 120 and max(p[:3]) - min(p[:3]) < 14 for p in aros) and lum(aros[7]) > lum(aros[1]) + 8,
+                  'o aro (v110: o de metal das imagens novas): claro e sem cor em volta toda, mais claro em cima à esquerda que embaixo à direita',
+                  [round(lum(p)) for p in aros])
+        P.confere(all(max(p[:3]) < 60 and p[3] > 200 for p in f['contorno']), 'o contorno escuro firme por fora, em volta toda', f['contorno'])
         P.confere(all(max(p[:3]) < 80 and p[3] > 220 for p in f['filete']), 'o filete escuro entre o aro e o desenho, em volta toda', f['filete'][:3])
         a, bb = f['mancha']
-        P.confere(max(abs(a[i] - bb[i]) for i in range(3)) <= 2 and a[0] > 200 and a[1] < 90, 'o desenho sem a luz de esmalte (a listra igual em cima e embaixo: sem a sombra por dentro)', f['mancha'])
+        P.confere(bb[0] >= a[0] and bb[1] > a[1] + 3 and a[0] > 190 and a[1] < 100,
+                  'o desenho sem a luz de esmalte (v110: com o degradê das imagens novas — a listra um pouco mais clara em cima que embaixo, e vermelha)', f['mancha'])
         M = f['M']
         P.confere(abs(M['rt']/M['R'] - .84) < .01 and abs(M['wC']/M['R'] - .035) < .005 and abs(M['wF']/M['R'] - .035) < .005 and f['fora'] < 30,
                   'as proporções das imagens: o desenho até 84% do raio, o filete e o contorno com 3,5%, o aro com 9%; nada fora do botão', M)
         peq = await rt(pg, """(() => { const out = {}; for (const r of [14, 22, 30]){ const M = RachaCosmeticos105.medidas(r), c = document.createElement('canvas'); c.width = c.height = 2*r + 20; const g = c.getContext('2d'), m = c.width/2;
             tpDesenha(g, m, m, r, tpLe(TP_PADRAO_COD), 7); let claro = 0;
-            for (let k = M.rt + M.wF; k <= M.R - M.wC; k += .25){ const d = g.getImageData(Math.round(m + k), Math.round(m), 1, 1).data; if (Math.min(d[0], d[1], d[2]) > 190) claro++; }
+            for (let k = M.rt + M.wF; k <= M.R - M.wC; k += .25){ const d = g.getImageData(Math.round(m + k), Math.round(m), 1, 1).data; if (Math.min(d[0], d[1], d[2]) > 150) claro++; }   // (v110: o metal)
             out[r] = {aro: M.R - M.wC - M.rt - M.wF, claro}; } return out; })()""")
         P.confere(all(v['aro'] >= 1.55 and v['claro'] > 0 for v in peq.values()), 'pequena (r = 14, 22 e 30 px): o aro continua aparecendo (≥ 1,6 px)', peq)
         # as capturas: a folha (grama e escuro, vários tamanhos) e a partida de perto

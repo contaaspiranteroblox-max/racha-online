@@ -168,6 +168,9 @@ with zipfile.ZipFile(saida) as z:
             'tests/v109_painel_servidor_test.mjs', 'tests/v109_silencio_salas_test.js'} <= nomes, 'faltam os arquivos da v109 (os dois painéis) no ZIP'
     assert b'window.RachaSilencio109' in jogo, 'o jogo do ZIP não tem o aviso do silêncio da v109'
     assert b'silencio109.aplica(Turma)' in z.read('server/turma.js'), 'o servidor do ZIP não tem o silêncio da equipe da v109'
+    # v110: o botão de metal e as sombras (a BOTÃO como nas imagens; a sombra por dentro em todas as tampinhas)
+    assert {'tools/v110/botao.py', 'tools/v110/botao.js', 'tests/v110_botao_test.py'} <= nomes, 'faltam os arquivos da v110 (o botão de metal) no ZIP'
+    assert b'window.RachaBotao110' in jogo, 'o jogo do ZIP não tem o botão de metal da v110'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)
