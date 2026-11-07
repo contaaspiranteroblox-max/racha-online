@@ -15389,7 +15389,7 @@ const SL = {el:$('tela-sala'), chat:[], naoLidas:0, lista:null, online:0, server
 privada:false, rapido:0, av:new Map(), vistos:new Set(), pref:{n:1, map:0, jogo:'futebol', tempo:0, bots:false}};
 const SL_FRASES = ['Bora jogar!', 'Tô pronto!', 'Boa sorte!', 'Começa aí!', 'Boa partida!', 'Revanche?'];
 const SL_MODO = {futebol:'Futebol', curva:'Com curva', volei:'Vôlei', americano:'Americano', basquete:'Basquete', ginga:'Ginga'};
-const SL_TEMPOS = [0, 2, 3, 5];
+const SL_TEMPOS = [0, 2, 3, 5, 10];
 const slModo = id => SL_MODO[id] || 'Futebol';
 const slCampo = i => (CAMPOS[i] || CAMPOS[0]).nome;
 const slMeta = jogo => jogo === 'basquete' ? 12 : 3;
@@ -48344,7 +48344,7 @@ this.tempoLim = !this.v80 && o.tempo ? o.tempo * 60 : 0;
 this.meta = this.v80 ? 3 : (this.tempoLim ? 999 : META_PADRAO);
 this.placar = [0, 0];
 this.tick = 0; this.t = 0;
-this.estado = 'saida'; this.saidaTime = this.agora() % 2; this.saidaT0 = 0;
+this.estado = 'saida'; this.saidaTime = this.ranked ? this.agora() % 2 : 0; this.saidaT0 = 0;
 this.golT = 0; this.golTime = -1; this.fimPendente = false; this.fimT = 0;
 this.prorrog = false;
 this.ultimoGol = null;

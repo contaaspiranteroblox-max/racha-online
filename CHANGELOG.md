@@ -2,6 +2,23 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v113 — 07/11/2026 · as salas personalizadas com 10 minutos e a saída do Time Vermelho no começo
+
+A pedido: *"quero 10 min nas salas personalizadas"* e *"quando a sala iniciar é sempre do mesmo lado, porém quando um time
+fizer gol a bola vai pro que sofreu o gol"*.
+
+- **10 MINUTOS**: o TEMPO da sala personalizada vai de "sem tempo" (1º a 3) a 2, 3, 5 e agora **10 minutos** — no CRIAR SALA,
+  nas regras da sala e na sala neste aparelho (`SL_TEMPOS`, `tools/v113/v113.py`); o servidor aceita o mesmo
+  (`server/turma.js`, `TEMPOS`). Empate no fim continua indo para o GOL DE OURO.
+- **A SAÍDA**: na sala personalizada a partida começa **sempre com a saída do Time Vermelho** (o da esquerda) — antes era
+  sorteada pela hora; depois de cada gol sai quem levou o gol, como já era (`server/partida/sala.js`, que a sala neste
+  aparelho também usa). A ranqueada continua sorteando a primeira saída.
+- **Testes**: `tests/v113_salas_test.mjs` (15, sem navegador: a saída do Vermelho a qualquer hora nos dois motores, quem
+  sai depois de cada gol, a ranqueada sorteando, os 10 minutos no motor e no servidor, e os tempos que não existem
+  recusados) e `tests/v113_salas_test.py` (10, no navegador: o TEMPO com 10 minutos, a sala online de 10 minutos com 10:00
+  e a saída do Vermelho nos dois aparelhos, e a sala neste aparelho igual). Passam também `v103_salas`, `v99_chutes_online`,
+  `online`, `v79`, `v93_fase3`, `v112_tela` e os do servidor.
+
 ## v112 — 07/11/2026 · o online tão liso quanto o treino (a tela sem travar, o medidor da partida e o colchão medido)
 
 A pedido: *"No treino livre, a movimentação é fluida, mas nas salas online os jogadores apresentam travamentos, quedas de FPS,

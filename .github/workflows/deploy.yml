@@ -73,6 +73,7 @@ jobs:
           node tests/v92_nucleo_test.mjs
           node tests/v92_db_test.cjs
           node tests/v112_colchao_test.mjs
+          node tests/v113_salas_test.mjs
 
       - name: Testes da plataforma (as rotas de verdade num banco de teste)
         run: |

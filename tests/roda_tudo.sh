@@ -292,7 +292,7 @@ if out=$(node tests/v107_convite_servidor_test.mjs 2>&1); then echo "$out" | tai
 # v108_servidor o ritmo dos comandos num balde (a rajada do apagão passa — a tampinha e o chute logo depois da volta; o excesso,
 # não, com uma linha por segundo, nas salas do RACHA, do mapa e do Rachão) e o motor que alcança 12 passos com o processo
 # travando; ~30 s.
-for t in v108_rede v108_servidor v112_colchao; do
+for t in v108_rede v108_servidor v112_colchao v113_salas; do
   printf '%-12s ' "$t"
   if out=$(node "tests/${t}_test.mjs" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 done
@@ -365,7 +365,9 @@ if out=$(node tests/v109_silencio_salas_test.js 2>&1); then echo "$out" | tail -
 # caixinha dele; ~30 s). O v112_colchao (Node, abaixo): o colchão da fila — desligado por padrão, a mesma verdade quadro a
 # quadro; ligado, os palpites caem e o atraso a mais fica do tamanho do colchão; ~20 s. As MEDIDAS (não são passa/falha):
 # tests/v112_fps_medidas.py, tests/v112_pagina_medidas.py, tests/v112/sim.mjs e tests/v112/pareado.mjs.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao v112_tela; do
+# v113: AS SALAS PERSONALIZADAS COM 10 MINUTOS E A SAÍDA DO VERMELHO (tests/v113_salas_test.py no navegador e o .mjs, em
+# Node, abaixo): o TEMPO com 10 minutos, a saída do Time Vermelho no começo e a de quem levou o gol depois; ~15 s cada.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao v112_tela v113_salas; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

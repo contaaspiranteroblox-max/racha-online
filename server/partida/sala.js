@@ -196,7 +196,9 @@ class PartidaSala {
     this.meta = this.v80 ? 3 : (this.tempoLim ? 999 : META_PADRAO);   // por tempo: sem limite de gols (como o jogo)
     this.placar = [0, 0];
     this.tick = 0; this.t = 0;
-    this.estado = 'saida'; this.saidaTime = this.agora() % 2; this.saidaT0 = 0;
+    // v113: na sala personalizada a partida começa sempre com a saída do Time Vermelho (o time 0, o da esquerda); depois de
+    // cada gol sai quem levou o gol (a saida() do gol). A ranqueada continua sorteando a primeira saída.
+    this.estado = 'saida'; this.saidaTime = this.ranked ? this.agora() % 2 : 0; this.saidaT0 = 0;
     this.golT = 0; this.golTime = -1; this.fimPendente = false; this.fimT = 0;
     this.prorrog = false;                            // gol de ouro (sala por tempo ou 0x0 da v80)
     this.ultimoGol = null;                           // o gol que vai no quadro (o convidado lê quando o placar muda)

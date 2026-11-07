@@ -182,6 +182,9 @@ with zipfile.ZipFile(saida) as z:
             'tests/v112_colchao_test.mjs', 'tests/v112/sim.mjs', 'tests/v112/pareado.mjs', 'tests/v112_fps_medidas.py'} <= nomes, 'faltam os arquivos da v112 no ZIP'
     assert all(x in jogo for x in (b'window.RachaDiag', b'window.RachaTela112', b"MODS['./colchao112']", b"medeTxt(linha, '24px ' + FONT) + 36")), 'o jogo do ZIP não tem a v112'
     assert b"require('./colchao112')" in sala and b"process.env.RACHA_COLCHAO === '1'" in sala, 'o servidor do ZIP não tem o colchão da v112 (desligado por padrão)'
+    # v113: as salas personalizadas com 10 minutos e a saída do Time Vermelho no começo
+    assert {'tools/v113/v113.py', 'tests/v113_salas_test.mjs', 'tests/v113_salas_test.py'} <= nomes, 'faltam os arquivos da v113 no ZIP'
+    assert b'const SL_TEMPOS = [0, 2, 3, 5, 10]' in jogo and b'this.saidaTime = this.ranked ? this.agora() % 2 : 0' in sala, 'o ZIP não tem a v113'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)
