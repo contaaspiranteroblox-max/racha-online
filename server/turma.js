@@ -88,7 +88,7 @@ const TOL80 = {fim:2, atraso:3, adiante:1.5, sozinho:10, linha:64};   // v80 (s)
                                                        // 10 s depois da hora do fim, o servidor encerra · no máximo 64 mudanças de placar
 const SELOS = ['equipe', 'criador', 'verificado', 'parceiro'];   // v79: o selo que aparece na frente do nome (o primeiro que a conta tiver)
 const seloDe = l => Array.isArray(l) ? SELOS.find(s => l.includes(s)) || '' : '';
-const MAX_GENTE = 12, MAX_SALAS = 300;
+const MAX_GENTE = 17, MAX_SALAS = 300;              // v114: a sala personalizada cabe até 17 pessoas (eram 12): os times em campo (até 4x4) + quem assiste e espera a vez
 // v100 (segurança): quantas conexões abertas ao mesmo tempo — por endereço (as operadoras de celular põem muita gente atrás
 // do mesmo IP: o limite é folgado) e no servidor inteiro. Passou: a conexão nova é recusada (código 1013, "tente depois").
 const numeroEnv = (v, padrao) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : padrao; };

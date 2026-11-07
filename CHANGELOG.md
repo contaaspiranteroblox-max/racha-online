@@ -2,6 +2,18 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v114 — 07/11/2026 · a sala personalizada com até 17 pessoas
+
+A pedido: *"pode pôr até 17 jogadores na sala"*. A sala personalizada (a online, do CRIAR SALA) cabia 12 pessoas; agora
+cabe **17** (`server/turma.js`, `MAX_GENTE`): os times em campo (até 4x4) e o resto assistindo, esperando a vez — o
+árbitro troca quem joga pela ficha, como já era. A 18ª pessoa ouve "A sala está cheia (17 pessoas)"; o convite pelo chat e
+a lista das salas usam o mesmo número. A sala do Rachão e a do mapa da Oficina continuam com 20.
+
+- **Testes**: `tests/v114_sala17_test.py` (7, no navegador: 17 conexões de verdade na sala, a 18ª recusada, a tela da sala
+  com as 17 pessoas no PC e no celular deitado — a coluna de quem assiste rola —, a partida começando com 15 assistindo);
+  o `tests/v107_convite_servidor_test.mjs` enche a sala até 17. Passam também `servidor_test`, `v88_social`, `v93_salas` e
+  `v113_salas`.
+
 ## v113 — 07/11/2026 · as salas personalizadas com 10 minutos e a saída do Time Vermelho no começo
 
 A pedido: *"quero 10 min nas salas personalizadas"* e *"quando a sala iniciar é sempre do mesmo lado, porém quando um time
