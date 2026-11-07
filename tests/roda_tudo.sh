@@ -292,7 +292,7 @@ if out=$(node tests/v107_convite_servidor_test.mjs 2>&1); then echo "$out" | tai
 # v108_servidor o ritmo dos comandos num balde (a rajada do apagão passa — a tampinha e o chute logo depois da volta; o excesso,
 # não, com uma linha por segundo, nas salas do RACHA, do mapa e do Rachão) e o motor que alcança 12 passos com o processo
 # travando; ~30 s.
-for t in v108_rede v108_servidor; do
+for t in v108_rede v108_servidor v112_colchao; do
   printf '%-12s ' "$t"
   if out=$(node "tests/${t}_test.mjs" 2>&1); then echo "$out" | tail -1; else falhou=1; echo "$out" | grep -E 'FALHOU' | head -4; echo "$out" | tail -1; fi
 done
@@ -360,7 +360,12 @@ if out=$(node tests/v109_silencio_salas_test.js 2>&1); then echo "$out" | tail -
 # v110: O BOTÃO DE METAL E AS SOMBRAS (tests/v110_botao_test.py): a BOTÃO medida nos pixels como nas imagens enviadas (o
 # contorno, o aro de metal com a luz em cima à esquerda, o sulco, a sombra por dentro e o degradê com o branco branco), as
 # sombras nas outras bordas e sem borda, e a partida tirando as tampinhas das imagens prontas; ~25 s.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao; do
+# v112: O ONLINE SEM TRAVAR A TELA E O MEDIDOR (tests/v112_tela_test.py: a página quase sem mudanças no treino e no online, a
+# barra uma vez por quadro, as janelas da v70 sincronizadas sem rodar a cada quadro, o placar sem medir texto, o medidor e a
+# caixinha dele; ~30 s). O v112_colchao (Node, abaixo): o colchão da fila — desligado por padrão, a mesma verdade quadro a
+# quadro; ligado, os palpites caem e o atraso a mais fica do tamanho do colchão; ~20 s. As MEDIDAS (não são passa/falha):
+# tests/v112_fps_medidas.py, tests/v112_pagina_medidas.py, tests/v112/sim.mjs e tests/v112/pareado.mjs.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao v112_tela; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

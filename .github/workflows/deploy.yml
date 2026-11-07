@@ -72,6 +72,7 @@ jobs:
           node tests/ws_fragmentos_test.js
           node tests/v92_nucleo_test.mjs
           node tests/v92_db_test.cjs
+          node tests/v112_colchao_test.mjs
 
       - name: Testes da plataforma (as rotas de verdade num banco de teste)
         run: |
@@ -108,7 +109,7 @@ jobs:
           for t in regras controles camera enxuto interface interface4 interface5 tutorial perfil eventos; do
             echo "::group::$t"; python3 "tests/${t}_test.py"; echo "::endgroup::"
           done
-          for t in celular hud_salvamento v92 v92_celular v92_online v92_reconexao; do
+          for t in celular hud_salvamento v92 v92_celular v92_online v92_reconexao v112_tela; do
             echo "::group::$t"; python3 "tests/${t}_test.py"; echo "::endgroup::"
           done
 

@@ -2,6 +2,51 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v112 — 07/11/2026 · o online tão liso quanto o treino (a tela sem travar, o medidor da partida e o colchão medido)
+
+A pedido: *"No treino livre, a movimentação é fluida, mas nas salas online os jogadores apresentam travamentos, quedas de FPS,
+movimentos bruscos e teletransportes"* — primeiro as causas no código, depois as correções e as medidas antes × depois. A
+física não muda (o build confere: `sha256 ad9f1d2216409b0e`). O relatório inteiro, com as tabelas: `docs/v112/RESULTADOS.md`.
+
+- **AS CAUSAS (medidas com o perfil da CPU, o jogo de verdade, a CPU 4× mais lenta e o 4G de mentira)**: o online pesava o
+  dobro do treino por coisas que só rodam nele — a faixa do placar (SAÍDA DO SEU TIME…) trocava a fonte e media o texto a
+  cada quadro (10% de toda a CPU numa linha); o texto da barra da sala era reescrito até 4 vezes por quadro pelos embrulhos
+  empilhados do `x49GameUI` e o `hidden` dos botões dela e do chat, reescrito igual — ~1.500 mudanças na página a cada 3 s,
+  cada uma acordando o observador das janelas da v70 (a busca de todas as janelas: mais 6,5%) e sujando o layout que os
+  `getBoundingClientRect` forçavam na hora; e a barra da partida rodava duas vezes por quadro (um segundo laço de
+  `requestAnimationFrame`, o da v49). A previsão e o replay da rede custavam pouco (~1,4 ms por quadro).
+- **A TELA** (`tools/v112/tela.js` e `tools/v112/v112.py`): o placar mede a faixa com a medida guardada (`medeTxt`), sem
+  trocar a fonte; escrever no `hidden` o valor que ele já tem não muda a página; o texto da barra da sala vale só no fim da
+  barra do quadro (a última escrita) e só se mudou; a barra roda uma vez por quadro; as janelas continuam sincronizadas (o
+  observador igual, mais a troca do lobby e uma conferência por segundo); o endereço do servidor fica guardado por texto.
+  **Resultado** (a mediana de 3 rodadas intercaladas, a CPU 4× mais lenta): o online 1×1 de **31 para 52 fps**, o 2×2 de
+  **28 para 50** e o 4×4 de **29 para 50** (o treino 4×4: 53), as travadas acima de 50 ms de 60–126 para 6–12 por minuto, o
+  JavaScript do quadro online pela metade (4×4: 9,4 → 4,4 ms) e o desenho de 7,2 para 2,6 ms. A página: de 1.516 para 49
+  mudanças em 3 s, e a sincronização das janelas de 379 para 11 vezes. O treino também ganhou (45 → 53 fps): o `hidden`
+  repetido acontecia nele também.
+- **O MEDIDOR DA PARTIDA** (`tools/v112/diag.js`; Ajustes › Visual › *Medidor da partida*, desligado por padrão, e
+  `window.RachaDiag.estado()`): o FPS, as quedas, as travadas e o tempo de cada quadro; o ping, a variação (jitter), os quadros
+  do servidor por segundo, os apagões e os passos sem quadro (a perda de pacotes no WebSocket aparece assim: o TCP reenvia e
+  tudo chega junto); o tempo até o comando voltar confirmado; as correções por minuto (você, a bola, cada outro), os pulos, os
+  recomeços e a divergência cliente × servidor (95% e máximo). Vetores fixos (nada novo a cada quadro); a caixinha só é escrita
+  duas vezes por segundo, e não pega o toque.
+- **O COLCHÃO DA FILA DE COMANDOS** (`server/partida/colchao112.js`, no `server/partida/sala.js`), **desligado por padrão**: a
+  causa dos trancos na "verdade" do servidor é a fila sem folga (o servidor adivinha o comando em 18 a 29% dos passos; no 4G,
+  36 a 64 paradas por minuto na verdade de cada um). Com o colchão (1 a 2 passos, do tamanho da oscilação de cada jogador; o
+  atrasado anda no passo seguinte), os palpites caem para 1–9% e as paradas 50–65% — mas o comando passa a valer 16 a 34 ms
+  mais tarde e a bola prevista fica mais longe da verdade (no 4×4, os outros pulam mais). Medido em 1×1, 2×2 e 4×4 com Wi-Fi,
+  4G, 4G ruim e 4G com perda (40 partidas de 60 s por caso, as mesmas com e sem: `tests/v112/pareado.mjs`). Como o pedido é
+  não atrasar os controles nem mexer na disputa da bola, fica desligado (a fila de sempre, quadro a quadro igual: os testes da
+  v92, v96, v99, v102 e v108 conferem) — `RACHA_COLCHAO=1` no servidor liga. A sala neste aparelho (o pacote da v99) leva o
+  `colchao112.js`, desligado.
+- **Testes**: `tests/v112_tela_test.py` (26 verificações, no navegador) e `tests/v112_colchao_test.mjs` (27, sem navegador),
+  novos; as medidas (não são passa/falha): `tests/v112_fps_medidas.py`, `tests/v112_pagina_medidas.py`, `tests/v112/sim.mjs`
+  (o simulador do online para 1×1, 2×2 e 4×4, com a perda de pacotes do TCP) e `tests/v112/pareado.mjs`. Passam também os de
+  antes que mexem no que mudou: `polimento`, `ajustes_linhas`, `v79`, `v103_salas`, `v99_chutes_online`, `v92`, `online`,
+  `v111_enxuga`, `v108_lento`, `v96_online`, `v88_cliente`, `v92_online` e os do servidor (`v83_sala`, `v92_nucleo`, `v93_salas`, `v94_sala`, `v96_rede`, `v102_rede`,
+  `v105_rede`, `v108_rede`, `v108_servidor`, `v99_chutes`, `v103_ranqueada`, `v106_corpo`, `v109_silencio_salas`). O
+  `tools/v92/pacote.py` confere os arquivos da v112 no ZIP.
+
 ## v111 — 06/11/2026 · o jogo mais leve (sem o peso das versões antigas) e o CI de volta
 
 A pedido: *"tira tudo que pesa o jogo, versões antigas que não precisa mais, só deixe o que precisa, e atualiza lá"*. Nada

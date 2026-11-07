@@ -197,7 +197,8 @@ V70_ETAPAS = ['regras', 'camera', 'interface', 'perfil', 'online', 'polimento', 
               'v107/chute',                                                                # v107: o anel do chute bem branco (o V95S.luz de volta a 1 e o branco opaco, na partida e na Oficina)
               'v108/lento',                                                                # v108: o online sem câmera lenta (o deslize com prazo, o pulo pelo somado e o replay uma vez por quadro da tela)
               'v109/silencio',                                                             # v109: o silêncio da equipe no jogo (o aviso com quanto falta e o motivo, nos chats e na partida)
-              'v110/botao']                                                                # v110: o botão de metal e as sombras (a BOTÃO como nas imagens; a sombra por dentro em todas as tampinhas)
+              'v110/botao',                                                                # v110: o botão de metal e as sombras (a BOTÃO como nas imagens; a sombra por dentro em todas as tampinhas)
+              'v112/v112']                                                                 # v112: o online tão liso quanto o treino (a tela sem mudar a página a cada quadro, o placar sem medir texto, o medidor da partida)
 # (v73: o TESTE da v72 saiu, a pedido: 'v72/teste' e os 2 ganchos dele no physicsStep não entram mais; o bloco volta ao da v71.1)
 V70 = []
 for nome in V70_ETAPAS:

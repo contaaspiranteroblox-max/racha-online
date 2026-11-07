@@ -176,6 +176,12 @@ with zipfile.ZipFile(saida) as z:
     assert {'tools/v111/enxuga.py', 'tests/v111_enxuga_test.mjs', 'server/ip.d.ts'} <= nomes, 'faltam os arquivos da v111 (o jogo mais leve) no ZIP'
     assert jogo.count(b'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') == 5 and b'/*PHYS_START*/' in jogo \
         and 'RACHA v103 · tela cheia'.encode() not in jogo, 'o jogo do ZIP não é o enxuto da v111'
+    # v112: o online sem travar a tela (a página sem mudar a cada quadro, o placar sem medir texto), o medidor da partida e o
+    # colchão da fila de comandos no servidor (desligado por padrão: RACHA_COLCHAO=1 liga)
+    assert {'tools/v112/v112.py', 'tools/v112/tela.js', 'tools/v112/diag.js', 'server/partida/colchao112.js', 'tests/v112_tela_test.py',
+            'tests/v112_colchao_test.mjs', 'tests/v112/sim.mjs', 'tests/v112/pareado.mjs', 'tests/v112_fps_medidas.py'} <= nomes, 'faltam os arquivos da v112 no ZIP'
+    assert all(x in jogo for x in (b'window.RachaDiag', b'window.RachaTela112', b"MODS['./colchao112']", b"medeTxt(linha, '24px ' + FONT) + 36")), 'o jogo do ZIP não tem a v112'
+    assert b"require('./colchao112')" in sala and b"process.env.RACHA_COLCHAO === '1'" in sala, 'o servidor do ZIP não tem o colchão da v112 (desligado por padrão)'
     # v101: as migrações do banco que o deploy aplica (deploy/migracoes.conf) vão no ZIP (antes o app/.gitignore as deixava de fora)
     migr = [l.split()[0] for l in (RAIZ / 'deploy' / 'migracoes.conf').read_text(encoding='utf-8').splitlines() if l.strip() and not l.lstrip().startswith('#')]
     assert migr and all('app/db/migrations/' + m in nomes for m in migr), 'faltam migrações do banco no ZIP: ' + ', '.join(m for m in migr if 'app/db/migrations/' + m not in nomes)

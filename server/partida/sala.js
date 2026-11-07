@@ -78,6 +78,10 @@ const SILENCIO_MS = 350;                             // sem comando por mais que
 // (v108: o teto de comandos por segundo de cada jogador é um balde de fichas — server/partida/ritmo108.js: 75 por segundo,
 //  a rajada de um apagão inteiro passa. Era uma janela de 1 s com 120 que, depois de um apagão, recusava o segundo seguinte)
 const R108 = require('./ritmo108');
+// v112 · o colchão da fila de comandos (server/partida/colchao112.js, DESLIGADO por padrão: RACHA_COLCHAO=1 liga): cada jogador
+// com a folga do tamanho da oscilação da internet dele, e o comando atrasado andando no passo seguinte (segurar) em vez de ser
+// trocado por um palpite e jogado fora
+const C112 = require('./colchao112');
 const FILA_MAX = 120;                                // o tamanho máximo da fila de comandos (o do jogo)
 const SNAP_A_CADA = 2;                               // 1 quadro a cada 2 passos = 30 por segundo (o ritmo da v82) · v92: a sala de testes pode pedir 60 (o.quadros)
 // v96 · a RECUPERAÇÃO da fila de comandos: os passos em que a tampinha ficou parada esperando comando (o apagão do 4G, o
@@ -164,6 +168,11 @@ class PartidaSala {
     this.cr = this.jogo === 'futebol' && o.motor !== 'v94' ? N.crOpcoes(o.chutes) : null;   // v99: os chutes do Rachão (null = só o chutar)
     this.snapCada = o.quadros === 60 ? 1 : SNAP_A_CADA;
     this.filaV95 = FILA_V95 || o.fila === 'v95';     // v96: a fila antiga (sem a recuperação), para comparar
+    // v112: o colchão — DESLIGADO por padrão (a fila de sempre): liga com RACHA_COLCHAO=1 ou o.colchao: true/{...}. As medidas
+    // (tests/v112/sim.mjs) mostram a troca: a verdade do servidor bem mais lisa no 4G e a sua tampinha com menos correção, mas
+    // 16 a 34 ms a mais até o comando valer e a bola prevista com mais erro — então fica para quem quiser experimentar.
+    this.colchao = !this.filaV95 && (o.colchao != null ? !!o.colchao : process.env.RACHA_COLCHAO === '1');
+    this.colchaoOpc = o.colchao && typeof o.colchao === 'object' ? o.colchao : null;   // (as medidas comparam colchões: {min, max, pct, folga})
     this.ritmoV107 = process.env.RACHA_RITMO === 'v107' || o.ritmo === 'v107';   // v108: RACHA_RITMO=v107 (ou o.ritmo) = o teto de antes, para comparar
     this.ent102 = o.entradas !== false && process.env.RACHA_ENTRADAS !== '0';   // v102: as direções e o crédito de cada um no quadro (Q.ent, Q.cred)
     this.agora = o.agora || (() => Date.now());
@@ -334,6 +343,7 @@ class PartidaSala {
     if (seq <= f.visto) {
       if (seq > f.visto - 600) return;               // repetido ou fora de ordem
       f.fila.length = 0; f.ult = null; f.feito = 0;  // os números recomeçaram (partida nova)
+      f.segura = 0; f.desloc = 0; if (f.k112) C112.zera(f.k112);     // (v112: o colchão mede de novo)
       if (this.v94) S94().reiniciaJogador(this, q);
     }
     f.visto = seq;
@@ -351,6 +361,7 @@ class PartidaSala {
     }
     f.fila.push(c);
     f.chegou = ag;
+    if (this.colchao) C112.chegou(f.k112 || (f.k112 = C112.novo(this.colchaoOpc)), seq, ag);   // v112: a chegada medida (o colchão de cada um)
     if (f.fila.length > FILA_MAX) f.fila.splice(0, f.fila.length - FILA_MAX);
   }
 
@@ -385,7 +396,7 @@ class PartidaSala {
   controle(q) {                                        // (uma vez por passo para cada humano — o net49Control do jogo)
     const f = q.fila, b = q.netButton;
     if (!f || this.agora() - f.chegou > SILENCIO_MS) {   // sem notícia dele: parado
-      if (f) { f.fila.length = 0; f.ult = null; if (!this.filaV95 && (this.estado === 'saida' || this.estado === 'jogo')) this.nsCredita(f); }
+      if (f) { f.fila.length = 0; f.ult = null; f.segura = 0; f.desloc = 0; if (!this.filaV95 && (this.estado === 'saida' || this.estado === 'jogo')) this.nsCredita(f); }
       q.mx = q.my = 0; b.livre = true; b.arma = 0; b.cP = b.cC = null;
       if (q.cr) { q.cr.segura = false; q.cr.cT = 0; q.cr.espera = 0; q.cr.su = false; }   // v99: a internet sumiu — o super carregando não sai sozinho
       return;
@@ -395,23 +406,33 @@ class PartidaSala {
     // atrasado também passa pelo tick do botão, e o palpite (sem comando) não mexe nos botões: o ping não muda a decisão
     const porComando = this.C.DB_MODO === 1;
     const recupera = !this.filaV95 && vale && !porComando;   // (o DB por estados, experimental, conta os botões comando a comando: fica na fila de antes)
+    const col = this.colchao && !porComando;          // v112: o colchão (o DB por estados fica na fila de antes)
+    const K = col ? (f.k112 || (f.k112 = C112.novo(this.colchaoOpc))) : null;
     if (f.cred > 0 && !(this.agora() <= (f.credAte || 0))) f.cred = 0;   // (o crédito velho acaba: não vira pique guardado)
     if (this.filaV95 ? f.fila.length > 8 : f.fila.length > FILA_GRANDE) while (f.fila.length > (this.filaV95 ? 3 : 8)) this.nsDescarta(f, q);   // voltou de um tranco: alcança de uma vez
     while (f.fila.length && f.fila[0].seq <= f.feito) { const c = f.fila.shift(); f.ult = c; if (vale) { this.nsBotao(b, c); if (porComando) this.nsSegura(q, b); } if (this.cr) N.crComando(q.cr, c, this); }
     f.min = Math.min(f.min, f.fila.length);
     if (++f.n >= 30) {                                 // meio segundo com comando sobrando (atraso à toa): recupera (com crédito) ou pula
-      if (f.min >= 2) for (let i = 1; i < f.min; i++) { if (recupera && f.cred > 0 && f.fila.length > 1) this.nsRecupera(q, f, b, porComando); else this.nsDescarta(f, q); }
+      if (col) {                                       // v112: fica o colchão (o atraso que as seguradas deram, até o alvo); sai o que sobra
+        const alvo = C112.mede(K), d = f.desloc | 0, fica = Math.min(d, alvo);
+        const sobra = Math.max(0, f.min - 1 - K.folga - fica);
+        for (let i = 0; i < sobra; i++) { if (recupera && f.cred > 0 && f.fila.length > 1) this.nsRecupera(q, f, b, porComando); else { this.nsDescarta(f, q); K.cortes++; } }
+        f.desloc = Math.max(fica, d - sobra);
+      } else if (f.min >= 2) for (let i = 1; i < f.min; i++) { if (recupera && f.cred > 0 && f.fila.length > 1) this.nsRecupera(q, f, b, porComando); else this.nsDescarta(f, q); }
       f.min = 99; f.n = 0;
     }
-    if (recupera && f.cred > 0 && f.fila.length > 2) this.nsRecupera(q, f, b, porComando);   // v96: a fila passou do colchão e há passo para pagar
-    const c = f.fila[0];
+    // (v112: fora do jogo — a comemoração do gol, o fim — o comando não mexe em nada: o colchão enche ali sem ninguém ver)
+    const espera = col && !vale && f.fila.length <= K.alvo;
+    if (recupera && f.cred > 0 && f.fila.length > (col ? 2 + K.alvo : 2)) this.nsRecupera(q, f, b, porComando);   // v96: a fila passou do colchão e há passo para pagar
+    const c = espera ? null : f.fila[0];
     let dir = null, consumiu = false;
     if (!c) {
-      if (vale && f.ult && f.feito - f.ult.seq < 4) { f.feito++; dir = f.ult; }        // palpite (segue o último)
+      if (col && vale && f.ult && (f.segura | 0) < C112.SEGURA_MAX && (f.desloc | 0) < K.alvo) { f.segura = (f.segura | 0) + 1; f.desloc = (f.desloc | 0) + 1; dir = f.ult; K.seguras++; }   // v112: segura (o atrasado anda no próximo passo; o colchão cresce um passo, até o alvo)
+      else if (vale && f.ult && f.feito - f.ult.seq < 4) { f.feito++; dir = f.ult; }        // palpite (segue o último)
       else if (recupera) this.nsCredita(f);                                             // v96: parado sem comando — um passo para pagar depois
     }
-    else if (f.feito && c.seq > f.feito + 1) { f.feito++; dir = c; }                             // uma se perdeu: anda como a próxima
-    else { f.fila.shift(); f.ult = c; f.feito = c.seq; dir = c; if (vale) { this.nsBotao(b, c); consumiu = true; } if (this.cr) N.crComando(q.cr, c, this); }
+    else if (f.feito && c.seq > f.feito + 1) { f.feito++; dir = c; f.segura = 0; }               // uma se perdeu: anda como a próxima
+    else { f.segura = 0; f.fila.shift(); f.ult = c; f.feito = c.seq; dir = c; if (vale) { this.nsBotao(b, c); consumiu = true; } if (this.cr) N.crComando(q.cr, c, this); }
     if (dir && vale) { q.mx = dir.x; q.my = dir.y; q.ack49 = f.feito; }
     else { q.mx = q.my = 0; if (dir) q.ack49 = f.feito; }
     // v99: o super (antes do PASSE/CHUTE: carregando, eles esperam). Sem comando nenhum neste passo (o buraco da internet, depois
@@ -713,8 +734,10 @@ class PartidaSala {
   // com o crédito inteiro no quadro a sua tampinha piorava no navegador (o deslize p95 dobrava no 4G de mentira)
   credito102(q) {
     const f = q.fila; if (!f || !(f.cred > 0)) return 0;
-    const esperando = !f.fila.length && !(f.ult && f.feito - f.ult.seq < 4);
-    const pagando = f.fila.length > 2 || (f.pagou != null && this.tick - f.pagou <= CREDITO_PAGANDO);
+    const col = this.colchao && f.k112 && this.C.DB_MODO !== 1;   // (v112: com o colchão, o "esperando" é depois das seguradas)
+    const pode = !!f.ult && ((col && (f.segura | 0) < C112.SEGURA_MAX && (f.desloc | 0) < f.k112.alvo) || f.feito - f.ult.seq < 4);   // (segurar ou o palpite)
+    const esperando = !f.fila.length && !pode;
+    const pagando = f.fila.length > (col ? 2 + f.k112.alvo : 2) || (f.pagou != null && this.tick - f.pagou <= CREDITO_PAGANDO);
     return esperando || pagando ? f.cred | 0 : 0;
   }
 
