@@ -369,7 +369,9 @@ if out=$(node tests/v109_silencio_salas_test.js 2>&1); then echo "$out" | tail -
 # Node, abaixo): o TEMPO com 10 minutos, a saída do Time Vermelho no começo e a de quem levou o gol depois; ~15 s cada.
 # v114: A SALA COM ATÉ 17 PESSOAS (tests/v114_sala17_test.py): 17 conexões de verdade, a 18ª recusada, a tela da sala no PC e
 # no celular e a partida com 15 assistindo; ~15 s.
-for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao v112_tela v113_salas v114_sala17; do
+# v115: A PARTIDA DA SALA LIMPA (tests/v115_limpa_test.py): os botões da faixa só com o desenho, do lado da pausa, o FPS e o
+# ping no canto, quem joga e quem assiste, e a ranqueada como antes; ~30 s.
+for t in v105_chat_lobby v105_cosmeticos v105_borda v106_conteudo v106_emotes v106_cofre v107_perfil v107_painel v107_gestos v107_chute v108_lento v109_painel v110_botao v112_tela v113_salas v114_sala17 v115_limpa; do
   printf '%-12s ' "$t"
   if out=$(python3 "tests/${t}_test.py" 2>&1); then echo "$out" | grep -E 'verificações ok' | tail -1; else falhou=1; echo "$out" | grep -E 'verificações ok|FALHOU|Error' | tail -6; fi
 done

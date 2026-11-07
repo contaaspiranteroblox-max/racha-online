@@ -182,6 +182,8 @@ with zipfile.ZipFile(saida) as z:
             'tests/v112_colchao_test.mjs', 'tests/v112/sim.mjs', 'tests/v112/pareado.mjs', 'tests/v112_fps_medidas.py'} <= nomes, 'faltam os arquivos da v112 no ZIP'
     assert all(x in jogo for x in (b'window.RachaDiag', b'window.RachaTela112', b"MODS['./colchao112']", b"medeTxt(linha, '24px ' + FONT) + 36")), 'o jogo do ZIP não tem a v112'
     assert b"require('./colchao112')" in sala and b"process.env.RACHA_COLCHAO === '1'" in sala, 'o servidor do ZIP não tem o colchão da v112 (desligado por padrão)'
+    # v115: a partida da sala personalizada limpa
+    assert {'tools/v115/v115.py', 'tools/v115/limpa.js', 'tests/v115_limpa_test.py'} <= nomes and b'window.RachaLimpa115' in jogo, 'o ZIP não tem a v115 (a partida da sala limpa)'
     # v114: a sala personalizada com até 17 pessoas
     assert 'tests/v114_sala17_test.py' in nomes and b'const MAX_GENTE = 17' in z.read('server/turma.js'), 'o ZIP não tem a v114 (a sala com 17)'
     # v113: as salas personalizadas com 10 minutos e a saída do Time Vermelho no começo

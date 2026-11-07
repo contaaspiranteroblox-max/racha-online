@@ -2,6 +2,25 @@
 
 As versões até a v83 estão descritas no `LEIA-ME.md` (uma seção por versão). Este arquivo começa na v85.
 
+## v115 — 07/11/2026 · a partida da sala personalizada limpa
+
+A pedido, com a foto de como estava e a de como queria: *"um bagulho bem limpo… isso tá poluindo muito o jogo"*. A faixa de
+cima da partida nas salas ("SALA KL6S6Q · árbitro" com SALA, CÂMERA: BOLA e SAIR escritos) ocupava o canto de cima à direita —
+no celular deitado ela até cortava os botões e encostava no PASSE.
+
+- **Os botões só com o desenho** (`tools/v115/limpa.js`), quadrados como o da pausa (o contorno escuro e a sombra dura), em
+  fila do lado da pausa, no canto de cima à esquerda: **SALA** (azul, o desenho de menu: abre a sala) para todo mundo e, para
+  quem assiste, **CÂMERA** (azul: troca quem ela acompanha) e **SAIR** (vermelho, a porta). São os mesmos botões de antes (o
+  que cada um faz não muda); se os botões do placar estiverem no caminho, a fila desce embaixo da pausa, e com a pausa mudada
+  de lugar no EDITAR HUD ela fica no canto de cima à direita. Os desenhos são nossos (SVG simples).
+- **Sem o texto da faixa**: o código da sala e o "· árbitro" saem da partida (estão na tela da sala); a pausa do árbitro já
+  tem o aviso grande no meio da tela; só o "esperando quem roda a partida" continua, numa plaquinha.
+- **O FPS e o ping** pequenos no canto de baixo à esquerda (o ping some na sala neste aparelho).
+- Vale nas salas personalizadas (online, neste aparelho, do Rachão e do mapa); **a ranqueada fica como estava**.
+- **Testes**: `tests/v115_limpa_test.py` (20, no navegador: quem joga e quem assiste, no celular e no PC, os botões do lado da
+  pausa sem encostar no placar, nas falas, no emoji nem no PASSE, o FPS e o ping, o SALA, a CÂMERA, a pausa do árbitro, o
+  SAIR e a ranqueada igual), com as fotos em `tests/saida/`.
+
 ## v114 — 07/11/2026 · a sala personalizada com até 17 pessoas
 
 A pedido: *"pode pôr até 17 jogadores na sala"*. A sala personalizada (a online, do CRIAR SALA) cabia 12 pessoas; agora
