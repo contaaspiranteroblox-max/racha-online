@@ -1,0 +1,19 @@
+{
+  "name": "racha-prototipo-colyseus",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Protótipo isolado: as partidas do RACHA (o motor de sempre, server/partida) dentro das salas do Colyseus 0.18 — não é usado pelo jogo",
+  "type": "module",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "start": "node servidor/index.mjs --porta 2567",
+    "junto": "node servidor/index.mjs --porta 2567 --junto",
+    "test": "node testes/roda.mjs"
+  },
+  "dependencies": {
+    "@colyseus/core": "^0.18.27",
+    "@colyseus/schema": "^5.0.45",
+    "@colyseus/sdk": "^0.18.9",
+    "@colyseus/ws-transport": "^0.18.4"
+  }
+}
